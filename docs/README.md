@@ -2,6 +2,18 @@
 
 This documentation set supports the blueprint project for building multi-agent apps on Databricks.
 
+## Team Onboarding: Skills and Capabilities
+
+Primary project skills:
+
+- `add-tools`, `create-tools`, `discover-tools`, `modify-agent`, `deploy`, `quickstart`, `run-locally`
+
+Capabilities enabled:
+
+- Multi-agent orchestration with governed routing and guardrails.
+- Genie Agent and AI Search integrations with environment-specific config.
+- Hybrid authorization (`app` and `obo`) and deployment promotion across environments.
+
 Use this index to navigate project documentation by purpose:
 
 - [product/business-specs.md](product/business-specs.md): business goals, requirements, constraints, and success metrics.

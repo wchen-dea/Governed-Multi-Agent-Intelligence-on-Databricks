@@ -42,6 +42,26 @@ This project currently uses the following Databricks features:
 - Databricks SQL Warehouse: backend execution path for UC-governed audit table writes.
 - Databricks Apps telemetry export: application telemetry routing to a Unity Catalog table.
 
+## Team Onboarding: Project Skills and Capabilities
+
+Core project skills used in this repository:
+
+- `add-tools`: wire new Databricks tools and grant required app/runtime permissions.
+- `create-tools`: create or prepare Genie Agent spaces and serving resources.
+- `discover-tools`: discover space IDs, serving endpoints, and route-ready resources.
+- `modify-agent`: update orchestrator behavior and subagent routing/config.
+- `deploy`: validate/deploy/troubleshoot target releases with DAB.
+- `quickstart`: bootstrap local environment and baseline setup.
+- `run-locally`: run backend/frontend locally and validate request paths.
+
+What these skills enable:
+
+- Governed multi-agent routing and policy-aware tool execution.
+- Genie Agent and AI Search integration with environment-specific configuration.
+- Hybrid authorization support (`app` and `obo`) for runtime tool calls.
+- Repeatable promotion across `dev`, `qa`, `stg`, and `prod`.
+- Operational validation with observability and quality-gate alignment.
+
 ## Introduction Dependencies
 
 The current implementation depends on business semantics and AI metadata across governed tools and indexes.
