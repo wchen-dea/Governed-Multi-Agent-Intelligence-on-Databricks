@@ -1,6 +1,7 @@
 # Multi-Agent App on Databricks
 
 A production-oriented multi-agent AI application on Databricks for governed tool routing, hybrid authorization, and environment-aware deployment.
+This repository is the blueprint project for designing, building, and deploying multi-agent apps on Databricks.
 
 ## Why This Project
 
@@ -21,6 +22,26 @@ Key project strengths:
 - Resilient deployment workflow with Terraform-free fallback, health checks, and smoke checks.
 - Strong architecture and governance traceability through ADRs and domain-specific specifications.
 
+## Databricks Features Used
+
+This project currently uses the following Databricks features:
+
+- Databricks Apps: hosts the deployed multi-agent application runtime.
+- Databricks Declarative Automation Bundles (DAB): environment-aware deploy configuration and overlays.
+- Databricks Model Serving: specialist serving-endpoint integrations and model-access routing.
+- Databricks Foundation Model APIs (OpenAI-compatible): orchestrator model calls through Databricks OpenAI APIs.
+- Unity AI Gateway-ready configuration: optional base URL and timeout settings for gateway-based routing.
+- Mosaic AI Agent Evaluation with MLflow: quality KPI scoring and release-gate checks.
+- MLflow Agent Server: invoke and stream handlers for agent runtime execution.
+- MLflow Tracing: execution traces and evaluation artifacts for observability and validation.
+- Databricks MCP tool routes: managed MCP endpoints for Genie Agent and AI Search integrations.
+- Genie Agents: natural-language access to governed structured business data.
+- Unity Catalog Semantic Metric Views: recommended semantic source layer for Genie Agents and KPI-aligned business metrics.
+- AI Search: retrieval integration via MCP route-backed index access.
+- Unity Catalog: governed data access controls, metadata boundaries, and environment isolation.
+- Databricks SQL Warehouse: backend execution path for UC-governed audit table writes.
+- Databricks Apps telemetry export: application telemetry routing to a Unity Catalog table.
+
 ## Introduction Dependencies
 
 The current implementation depends on business semantics and AI metadata across governed tools and indexes.
@@ -30,6 +51,11 @@ Current dev target examples:
 
 - Genie Agent: `sales_insights_agent` (space id configured in `subagents.dev.json`)
 - AI Search MCP index: `product_index_assistant` using `/api/2.0/mcp/ai-search/dt_dev_gold/dwh_dbx/dim_product_search_index`
+
+Typical Genie Agent source pattern:
+
+- Unity Catalog Semantic Metric Views are the recommended structured source layer for Genie Agents.
+- Blueprint reference: [Unity-Catalog-Semantic-Metric-Views-Blueprint](https://github.com/wchen-dea/Unity-Catalog-Semantic-Metric-Views-Blueprint)
 
 ## Backend UC Security and Governance Guidelines
 

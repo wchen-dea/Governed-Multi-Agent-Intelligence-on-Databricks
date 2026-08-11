@@ -198,6 +198,33 @@ databricks apps delete APP_NAME --profile PROFILE
 databricks bundle deploy -t TARGET --profile PROFILE
 ```
 
+### Genie Agent Semantic Metric View Checklist
+
+Use this short checklist when onboarding or updating a Genie Agent backed by business metrics.
+
+1. Model Semantic Metric Views in Unity Catalog
+
+- Define business KPI scope, grain, dimensions, and measures.
+- Apply consistent semantic metadata (for example domain, subject, owner, grain).
+- Recommended blueprint: [Unity-Catalog-Semantic-Metric-Views-Blueprint](https://github.com/wchen-dea/Unity-Catalog-Semantic-Metric-Views-Blueprint)
+
+2. Validate with representative Genie prompts
+
+- Run prompt sets for trend, comparison, anomaly, and segmentation questions.
+- Verify metric definitions, filters, and aggregation behavior match business expectations.
+- Confirm source traceability and naming consistency in generated answers.
+
+3. Register Genie Agent runtime configuration
+
+- Add or update the target entry in `src/backend/domain/subagents.<target>.json`.
+- Verify `space_id`, `auth_mode`, classification metadata, and owner metadata.
+
+4. Grant and verify permissions
+
+- Ensure app resource grants include the Genie Agent space in `resources/multiagent_app.yml`.
+- Grant runtime identity permissions (`CAN_RUN`) and validate OBO/app auth paths as required.
+- Re-run deploy-time verification and smoke checks before promotion.
+
 ### Post-Deploy Verification
 
 - Non-streaming request succeeds.

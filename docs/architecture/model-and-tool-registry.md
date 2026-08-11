@@ -28,6 +28,11 @@ Provide an auditable and maintainable registry for runtime integrations and owne
 
 ## Active Genie Agents (Dev)
 
+Typical source pattern for Genie Agents:
+
+- Use Unity Catalog Semantic Metric Views as the semantic source layer for business metrics and KPI queries.
+- Blueprint reference: [Unity-Catalog-Semantic-Metric-Views-Blueprint](https://github.com/wchen-dea/Unity-Catalog-Semantic-Metric-Views-Blueprint)
+
 ### sales_insights_agent
 
 - Type: genie

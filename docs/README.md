@@ -1,5 +1,7 @@
 # Documentation Index
 
+This documentation set supports the blueprint project for building multi-agent apps on Databricks.
+
 Use this index to navigate project documentation by purpose:
 
 - [product/business-specs.md](product/business-specs.md): business goals, requirements, constraints, and success metrics.
