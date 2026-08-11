@@ -62,6 +62,13 @@ What these skills enable:
 - Repeatable promotion across `dev`, `qa`, `stg`, and `prod`.
 - Operational validation with observability and quality-gate alignment.
 
+Runtime skills playbooks:
+
+- [runtime-routing](.claude/skills/runtime-routing/SKILL.md): orchestrator route selection, policy-aware targeting, and route validation.
+- [runtime-guardrails](.claude/skills/runtime-guardrails/SKILL.md): evidence/citation enforcement and blocked-output controls.
+- [runtime-auth-obo](.claude/skills/runtime-auth-obo/SKILL.md): app-vs-obo auth-mode enforcement and forwarded-token requirements.
+- [runtime-audit-observability](.claude/skills/runtime-audit-observability/SKILL.md): lifecycle event auditing, UC audit persistence, and backend observability checks.
+
 ## Introduction Dependencies
 
 The current implementation depends on business semantics and AI metadata across governed tools and indexes.

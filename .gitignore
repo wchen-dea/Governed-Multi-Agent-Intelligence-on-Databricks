@@ -1,6 +1,23 @@
+# NOTE FOR CONTRIBUTORS
+# We ignore most of .claude workspace internals, but we intentionally track
+# .claude/skills/** because SKILL playbooks are project source artifacts.
+# Keep the pair below together:
+#   .claude/*
+#   !.claude/skills/**
+# If you change these lines, verify SKILL files still appear in git status.
+
 # OS and editor
 .DS_Store
 .vscode/
+
+# Environments and local secrets
+.env
+.env.*
+!.env.example
+.venv/
+ENV/
+env/
+venv/
 
 # Python caches and compiled artifacts
 __pycache__/
@@ -8,77 +25,54 @@ __pycache__/
 *.so
 
 # Python build and packaging outputs
-build/
-dist/
-site/
 .eggs/
 *.egg
 *.egg-info/
+build/
+dist/
 pip-wheel-metadata/
+site/
 
 # Python tooling and test outputs
-.mypy_cache/
-.pytest_cache/
-.ruff_cache/
-.hypothesis/
-.pyre/
-.pytype/
-.tox/
-.nox/
 .coverage*
+.hypothesis/
+.mypy_cache/
+.nox/
+.pyre/
+.pytest_cache/
+.pytype/
+.ruff_cache/
+.tox/
 htmlcov/
-
-# Environments and local secrets
-.env
-.env.*
-!.env.example
-.venv/
-venv/
-env/
-ENV/
-
-# Logs
-*.log
-logs/
 
 # Jupyter
 .ipynb_checkpoints/
 
 # Frontend dependencies and build cache
-node_modules/
-bower_components/
 **/.vite/
+bower_components/
+node_modules/
 
-# Databricks and MLFlow local artifacts
+# Databricks and MLflow local artifacts
 .databricks/
 **/.databricks
 **/mlruns/
-load-test-runs/
 .databricks_app_source/wheels/*.whl
 !.databricks_app_source/wheels/.gitkeep
+load-test-runs/
 
-# Docs build output
+# Logs and local runtime output
+*.log
+logs/
+
+# Documentation build output
 docs/_build/
 
-# Ignore .claude directory but track template-provided skills
+# Agent workspace internals
 .claude/*
 !.claude/skills/
-.claude/skills/*
-!.claude/skills/quickstart/
-!.claude/skills/discover-tools/
-!.claude/skills/create-tools/
-!.claude/skills/deploy/
-!.claude/skills/managed-memory/
-!.claude/skills/add-tools/
-!.claude/skills/run-locally/
-!.claude/skills/modify-agent/
-!.claude/skills/migrate-from-model-serving/
-!.claude/skills/long-running-server/
-!.claude/skills/load-testing/
-!.claude/skills/supervisor-api/
-!.claude/skills/supervisor-api-background-mode/
-!.claude/skills/supervisor-api-client-function-calling/
+!.claude/skills/**
 
-# Chainlit — ignore auto-generated config and runtime files
+# Chainlit auto-generated config and runtime files
 .chainlit/
 chainlit.md

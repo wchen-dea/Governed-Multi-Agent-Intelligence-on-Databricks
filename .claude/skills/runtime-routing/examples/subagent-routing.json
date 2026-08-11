@@ -1,0 +1,24 @@
+[
+  {
+    "name": "sales_insights_agent",
+    "type": "genie",
+    "space_id": "<genie-space-id>",
+    "description": "Sales analytics over governed semantic metrics",
+    "auth_mode": "obo",
+    "data_classification": "confidential",
+    "allowed_personas": ["manager", "executive"],
+    "requires_evidence": true,
+    "owner": "sales-analytics"
+  },
+  {
+    "name": "product_index_assistant",
+    "type": "mcp",
+    "mcp_url": "/api/2.0/mcp/ai-search/<catalog>/<schema>/<index>",
+    "description": "Product policy and knowledge retrieval",
+    "auth_mode": "app",
+    "data_classification": "internal",
+    "allowed_personas": ["manager", "analyst", "executive"],
+    "requires_evidence": true,
+    "owner": "platform-docs"
+  }
+]

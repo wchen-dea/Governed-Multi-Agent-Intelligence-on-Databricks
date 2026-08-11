@@ -14,6 +14,13 @@ Capabilities enabled:
 - Genie Agent and AI Search integrations with environment-specific config.
 - Hybrid authorization (`app` and `obo`) and deployment promotion across environments.
 
+Runtime skills playbooks:
+
+- [runtime-routing](../.claude/skills/runtime-routing/SKILL.md)
+- [runtime-guardrails](../.claude/skills/runtime-guardrails/SKILL.md)
+- [runtime-auth-obo](../.claude/skills/runtime-auth-obo/SKILL.md)
+- [runtime-audit-observability](../.claude/skills/runtime-audit-observability/SKILL.md)
+
 Use this index to navigate project documentation by purpose:
 
 - [product/business-specs.md](product/business-specs.md): business goals, requirements, constraints, and success metrics.
