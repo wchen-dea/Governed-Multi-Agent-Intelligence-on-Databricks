@@ -28,7 +28,7 @@ Runtime integrations are environment-specific through `src/backend/domain/subage
 
 Current dev target examples:
 
-- Genie space: `sales_insights_agent` (space id configured in `subagents.dev.json`)
+- Genie Agent: `sales_insights_agent` (space id configured in `subagents.dev.json`)
 - AI Search MCP index: `product_index_assistant` using `/api/2.0/mcp/ai-search/dt_dev_gold/dwh_dbx/dim_product_search_index`
 
 ## Backend UC Security and Governance Guidelines
@@ -41,7 +41,7 @@ Project guidelines and best practices for Unity Catalog-governed backend executi
 - Require evidence-backed responses for governed or sensitive routes and block outputs that fail guardrail policy checks.
 - Use Unity Catalog-governed audit persistence (`MESSAGE_BUS_BACKEND=uc_table`) for lifecycle, policy, auth, and guardrail events.
 - Protect customer and regional-store datasets with row/column-level governance controls and avoid exposing restricted fields in tool responses.
-- Keep backend-to-data contracts versioned and reviewed when adding new Genie spaces, AI Search indexes, or Lakebase ODS endpoints.
+- Keep backend-to-data contracts versioned and reviewed when adding new Genie Agents, AI Search indexes, or Lakebase ODS endpoints.
 
 ## Technology Perspective
 
@@ -63,7 +63,7 @@ This project uses a modern AI app stack on Databricks:
 The app provides:
 
 - Unified endpoint: A single app endpoint for multi-tool, multi-agent interaction.
-- Dynamic routing: Requests are routed to Genie, serving endpoints, or app-based specialists.
+- Dynamic routing: Requests are routed to Genie Agents, serving endpoints, or app-based specialists.
 - Real-time responses: Streaming responses for conversational latency.
 - Configurable specialist set: Subagents can be added and validated through typed configuration.
 - Auth-aware tool routing: each subagent declares `auth_mode` (`app` or `obo`).
@@ -104,7 +104,7 @@ Subagent authorization is configured in target-specific files such as `src/backe
 
 Current defaults:
 
-- Genie subagents default to `obo` when not explicitly set.
+- Genie Agent subagents default to `obo` when not explicitly set.
 - Non-Genie subagents default to `app` when not explicitly set.
 
 The backend loads an environment-specific file at startup and validates it with typed models in `src/backend/domain/subagent_config.py`.
@@ -149,7 +149,7 @@ High-level request path:
 2. Request reaches Databricks App endpoint.
 3. MLflow Agent Server dispatches invoke or stream handlers.
 4. Orchestrator selects tools and specialist agents.
-5. Tools query Genie MCP, AI Search MCP indexes, or serving endpoints.
+5. Tools query Genie Agent MCP routes, AI Search MCP indexes, or serving endpoints.
 6. Unified response is returned to the client.
 
 For architecture diagrams, see [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md).
@@ -211,6 +211,8 @@ If bundle deploy fails due to Terraform provider registry availability, use the 
 - `UC_AUDIT_CATALOG`: Unity Catalog catalog where audit events table is stored.
 - `UC_AUDIT_SCHEMA`: Unity Catalog schema where audit events table is stored.
 - `UC_AUDIT_TABLE`: Unity Catalog audit table name (default `agent_lifecycle_events`).
+- `DATABRICKS_OPENAI_BASE_URL`: optional Databricks OpenAI base URL override (for example Unity AI Gateway URL).
+- `DATABRICKS_OPENAI_TIMEOUT_SECONDS`: optional timeout in seconds for Databricks OpenAI calls (`0` keeps SDK defaults).
 - `EVAL_MIN_TOOL_CALL_ACCURACY`: release-gate threshold for tool call correctness (default `0.80`).
 - `EVAL_MIN_AUTH_CORRECTNESS`: release-gate threshold for authorization correctness (default `0.90`).
 - `EVAL_MIN_SAFETY`: release-gate threshold for safety KPI (default `0.95`).
@@ -234,7 +236,7 @@ MCP connect/probe performance controls:
 - [docs/quality/evaluation-spec.md](docs/quality/evaluation-spec.md): datasets, scorers, KPI thresholds, and release-gate rules.
 - [Model Matrix and Environment Recommendations](docs/quality/evaluation-spec.md#model-matrix-and-environment-recommendations): environment-specific model profile guidance for dev, qa, stg, and prod release planning.
 - [docs/governance/prompt-and-policy-spec.md](docs/governance/prompt-and-policy-spec.md): prompt layering and deterministic policy/guardrail behavior.
-- [docs/architecture/model-and-tool-registry.md](docs/architecture/model-and-tool-registry.md): registry of active tools, endpoints, and Genie spaces.
+- [docs/architecture/model-and-tool-registry.md](docs/architecture/model-and-tool-registry.md): registry of active tools, endpoints, and Genie Agents.
 - [docs/governance/data-contract-and-lineage-spec.md](docs/governance/data-contract-and-lineage-spec.md): data contracts, classification, and lineage requirements.
 - [docs/governance/business-semantics-and-ai-metadata-spec.md](docs/governance/business-semantics-and-ai-metadata-spec.md): reliable business semantics and required AI metadata contract.
 - [docs/governance/security-and-threat-model.md](docs/governance/security-and-threat-model.md): trust boundaries, threats, and controls.

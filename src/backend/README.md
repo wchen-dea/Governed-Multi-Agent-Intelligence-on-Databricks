@@ -80,6 +80,8 @@ Tip:
 General:
 
 - `ORCHESTRATOR_MODEL`: orchestrator model name.
+- `DATABRICKS_OPENAI_BASE_URL`: optional Databricks OpenAI base URL override (for example Unity AI Gateway URL).
+- `DATABRICKS_OPENAI_TIMEOUT_SECONDS`: optional Databricks OpenAI timeout in seconds; `0` keeps SDK defaults.
 - `BACKEND_LOG_LEVEL`, `BACKEND_LOG_FORMAT`, `BACKEND_LOG_DATE_FORMAT`.
 
 Message bus:

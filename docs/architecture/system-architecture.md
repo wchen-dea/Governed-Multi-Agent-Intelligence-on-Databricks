@@ -21,7 +21,7 @@ This document covers high-level architecture only. Implementation-level details 
 This project is an MVP multi-agent orchestrator deployed on Databricks Apps.
 It routes user requests across backend capabilities:
 
-- Genie space tools (via MCP)
+- Genie Agent tools (via MCP)
 - Serving endpoint agents
 - Optional app-based specialists
 
@@ -47,7 +47,7 @@ Runtime stack:
 - Entry runtime: MLflow Agent Server (`ResponsesAgent`)
 - Orchestration layer: tool selection and response composition
 - Integration layer: MCP + serving endpoint calls
-- Data and semantic layer: Genie space, enterprise data assets
+- Data and semantic layer: Genie Agent space, enterprise data assets
 
 ### Frameworks and Platform Stack
 
@@ -91,7 +91,7 @@ flowchart LR
         end
 
         subgraph Semantic[Business Semantic Layer]
-            BSL[Genie Space / Semantic Model]
+            BSL[Genie Agent Space / Semantic Model]
         end
     end
 
@@ -157,7 +157,7 @@ flowchart TD
     O --> K[MCP AI Search Agent product_index_assistant]
     O --> L[Serving Endpoint Agent optional specialist]
 
-    G --> M[MCP Genie Space]
+    G --> M[MCP Genie Agent]
     K --> R1[Databricks MCP AI Search]
     L --> R2[Model Serving Responses API]
 

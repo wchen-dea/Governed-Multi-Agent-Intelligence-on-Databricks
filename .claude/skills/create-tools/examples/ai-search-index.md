@@ -1,6 +1,6 @@
-# Create a Vector Search Index
+# Create an AI Search Index
 
-Vector Search indexes let agents search unstructured data (documents, knowledge bases) using semantic similarity. The managed MCP server handles embedding and retrieval automatically.
+AI Search indexes let agents search unstructured data (documents, knowledge bases) using semantic similarity. The managed MCP server handles embedding and retrieval automatically.
 
 ## Prerequisites
 
@@ -10,7 +10,9 @@ Vector Search indexes let agents search unstructured data (documents, knowledge 
 - Change Data Feed enabled on the source table (for standard endpoints)
 - The index must use **Databricks-managed embeddings** for the managed MCP server
 
-## Step 1: Create a Vector Search endpoint (if needed)
+## Step 1: Create an AI Search endpoint (if needed)
+
+Note: Databricks CLI/API commands still use the `vector-search` namespace.
 
 ```bash
 databricks vector-search-endpoints create-endpoint my-vs-endpoint STANDARD --profile <profile>
@@ -47,7 +49,7 @@ databricks vector-search-indexes create-index --json '{
 
 Key parameters:
 - `name`: Full 3-part index name (catalog.schema.index)
-- `endpoint_name`: The Vector Search endpoint that will serve the index
+- `endpoint_name`: The AI Search endpoint that will serve the index
 - `primary_key`: Unique row identifier in the source table
 - `index_type`: `DELTA_SYNC` or `DIRECT_ACCESS`
 - `source_table`: The Delta table to index
@@ -73,6 +75,6 @@ Check that `status.ready` is `true` before connecting your agent.
 
 ## Next step
 
-Wire the Vector Search index into your agent. See the **add-tools** skill and use `examples/vector-search.yaml` for the `databricks.yml` resource grant.
+Wire the AI Search index into your agent. See the **add-tools** skill and use `examples/vector-search.yaml` for the `databricks.yml` resource grant.
 
 MCP URL: `{host}/api/2.0/mcp/vector-search/{catalog}/{schema}/{index_name}` (OAuth scope for on-behalf-of-user auth: `vector-search`)

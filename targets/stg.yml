@@ -9,6 +9,8 @@ targets:
       state_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}/state
     variables:
       app_name: multiagent-app-stg
+      openai_base_url: ""
+      openai_timeout_seconds: "0"
       subagents_config_path: "/app/python/source_code/.venv/lib/python3.11/site-packages/backend/domain/subagents.stg.json"
       # MLflow owner: experiment used for traces and eval in STG.
       # Example: "1234567890123456" (numeric experiment id as string)
@@ -30,6 +32,8 @@ targets:
       ai_search_endpoint_name: "<STG-AI-SEARCH-ENDPOINT>"
       # Example: app name that this app can call, e.g. "analytics-assistant-stg"
       target_app_name: "<STG-TARGET-APP-NAME>"
+      # Example: Unity Catalog table for Databricks Apps telemetry logs
+      app_telemetry_logs_table: "<STG-APP-TELEMETRY-LOGS-TABLE>"
       # Observability owner: lifecycle audit sink in STG.
       message_bus_backend: uc_table
       message_bus_topic: agent-lifecycle-events
@@ -58,22 +62,22 @@ targets:
           resources:
           - name: genie_space
             genie_space:
-              name: Genie Space
+              name: Genie Agent
               space_id: ${var.genie_space_id}
               permission: CAN_RUN
           - name: store_manager_genie_space
             genie_space:
-              name: Store Manager Genie Space
+              name: Store Manager Genie Agent
               space_id: ${var.store_manager_genie_space_id}
               permission: CAN_RUN
           - name: executive_genie_space
             genie_space:
-              name: Executive Genie Space
+              name: Executive Genie Agent
               space_id: ${var.executive_genie_space_id}
               permission: CAN_RUN
           - name: supply_chain_genie_space
             genie_space:
-              name: Supply Chain Genie Space
+              name: Supply Chain Genie Agent
               space_id: ${var.supply_chain_genie_space_id}
               permission: CAN_RUN
           - name: ai_search_endpoint

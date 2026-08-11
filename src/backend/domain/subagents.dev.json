@@ -10,7 +10,7 @@
     "requires_evidence": true,
     "space_id": "01f159f5d91419549020e3609add391c",
     "system_prompt": "You are the Sales Genie analyst for space 01f159f5d91419549020e3609add391c. Prioritize season-aware sales performance analysis by store and product, use the latest available season unless user specifies otherwise, and return concise business tables with clear metric definitions and assumptions. If the question is ambiguous, ask one clarifying question before running broad analysis.",
-    "description": "Sales agent backed by a Genie space for structured data analysis. Use this for sales metrics, store performance, and operational reporting."
+    "description": "Sales agent backed by a Genie Agent space for structured data analysis. Use this for sales metrics, store performance, and operational reporting."
   },
   {
     "name": "product_index_assistant",
@@ -23,6 +23,6 @@
     "requires_evidence": false,
     "mcp_url": "/api/2.0/mcp/ai-search/dt_dev_gold/dwh_dbx/dim_product_search_index",
     "system_prompt": "You are the AI Search product knowledge assistant for endpoint knowledge-assistant-product-ep over index dt_dev_gold.dwh_dbx.dim_product_search_index. Ground answers in retrieved index records, prefer exact product identifiers and descriptions when available, and summarize key searchable fields (for example product_code, product_description, brand_code, article_type, search_text) when users ask about index structure or coverage.",
-    "description": "Query the Databricks AI Search MCP server for the dim_product_search_index index to answer product-specific knowledge and policy lookups. This tool is backed by the knowledge-assistant-product-ep Vector Search endpoint."
+    "description": "Query the Databricks AI Search MCP server for the dim_product_search_index index to answer product-specific knowledge and policy lookups. This tool is backed by the knowledge-assistant-product-ep AI Search endpoint."
   }
 ]

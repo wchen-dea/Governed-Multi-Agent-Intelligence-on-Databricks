@@ -3,12 +3,12 @@
 This script performs these actions:
 1) Resolves app service principal client id from app name.
 2) Discovers configured runtime resources for the selected target.
-3) Checks underlying resource existence (Genie spaces, UC catalog/schema, vector search,
+3) Checks underlying resource existence (Genie Agents, UC catalog/schema, AI Search,
    serving endpoints, SQL warehouse).
 4) Grants required permissions to the app service principal:
    - Unity Catalog: USE CATALOG, USE SCHEMA, SELECT ON ALL TABLES
-   - Genie spaces: CAN_RUN
-    - Vector search endpoints: CAN_USE
+    - Genie Agents: CAN_RUN
+    - AI Search endpoints: CAN_USE
    - Serving endpoints: CAN_QUERY
    - SQL warehouse: CAN_USE
 
@@ -132,7 +132,7 @@ class PermissionManager:
 
         Returns:
             A tuple of:
-            - Genie space ids.
+            - Genie Agent space ids.
             - Serving endpoint names.
             - AI Search MCP triples as `(catalog, schema, index)`.
 
@@ -507,7 +507,7 @@ class PermissionManager:
 
     def _grant_genie_can_run(self, genie_space_ids: list[str], sp_client_id: str) -> None:
         if not genie_space_ids:
-            print("INFO: No Genie spaces configured for target.")
+            print("INFO: No Genie Agents configured for target.")
             return
 
         for space_id in genie_space_ids:
@@ -515,7 +515,7 @@ class PermissionManager:
                 continue
             exists = self.cli.run(["genie", "get-space", space_id], check=False).returncode == 0
             if not exists:
-                self._warn_or_fail(f"Genie space not found or inaccessible: {space_id}")
+                self._warn_or_fail(f"Genie Agent not found or inaccessible: {space_id}")
                 continue
 
             ok = self._update_permissions("genie", space_id, "CAN_RUN", sp_client_id)
@@ -541,31 +541,31 @@ class PermissionManager:
             if not ok:
                 self._warn_or_fail(f"Failed to grant serving endpoint CAN_QUERY: {endpoint}")
 
-    def _grant_vector_search_can_query(
+    def _grant_ai_search_can_use(
         self,
-        vector_search_endpoint_names: list[str],
+        ai_search_endpoint_names: list[str],
         sp_client_id: str,
     ) -> None:
-        if not vector_search_endpoint_names:
-            print("INFO: No vector search endpoints configured for target.")
+        if not ai_search_endpoint_names:
+            print("INFO: No AI Search endpoints configured for target.")
             return
 
-        for endpoint in vector_search_endpoint_names:
+        for endpoint in ai_search_endpoint_names:
             if _is_placeholder(endpoint):
                 continue
 
             endpoint_id = self._resolve_vector_endpoint_id(endpoint)
             if not endpoint_id:
-                self._warn_or_fail(f"Vector search endpoint not found or inaccessible: {endpoint}")
+                self._warn_or_fail(f"AI Search endpoint not found or inaccessible: {endpoint}")
                 continue
 
             endpoint_ok = self._update_permissions("vector-search-endpoints", endpoint_id, "CAN_USE", sp_client_id)
             print(
-                f"VECTOR SEARCH ENDPOINT PERMISSION: {'OK' if endpoint_ok else 'FAILED'} -> "
+                f"AI SEARCH ENDPOINT PERMISSION: {'OK' if endpoint_ok else 'FAILED'} -> "
                 f"{endpoint} CAN_USE"
             )
             if not endpoint_ok:
-                self._warn_or_fail(f"Failed to grant vector search endpoint CAN_USE: {endpoint}")
+                self._warn_or_fail(f"Failed to grant AI Search endpoint CAN_USE: {endpoint}")
 
     def run(self) -> int:
         """Execute permission discovery, validation, and grant application.
@@ -620,7 +620,7 @@ class PermissionManager:
             }
         )
 
-        vector_search_endpoints = sorted(
+        ai_search_endpoints = sorted(
             {
                 str(v).strip()
                 for v in [
@@ -636,9 +636,9 @@ class PermissionManager:
         warehouse_id = target_vars.get("uc_audit_warehouse_id")
         message_bus_backend = str(target_vars.get("message_bus_backend") or "").strip().lower()
 
-        print(f"Genie spaces: {genie_space_ids or 'none'}")
+        print(f"Genie Agents: {genie_space_ids or 'none'}")
         print(f"Serving endpoints: {serving_endpoints or 'none'}")
-        print(f"Vector search endpoints: {vector_search_endpoints or 'none'}")
+        print(f"AI Search endpoints: {ai_search_endpoints or 'none'}")
         if ai_search_indexes:
             print(f"AI Search UC objects: {ai_search_indexes}")
         else:
@@ -652,7 +652,7 @@ class PermissionManager:
 
         self._grant_genie_can_run(genie_space_ids, sp_client_id)
         self._grant_serving_can_query(serving_endpoints, sp_client_id)
-        self._grant_vector_search_can_query(vector_search_endpoints, sp_client_id)
+        self._grant_ai_search_can_use(ai_search_endpoints, sp_client_id)
         self._grant_ai_search_uc_permissions(validated_ai_search, sp_client_id)
         if message_bus_backend == "uc_table":
             self._grant_uc_permissions(

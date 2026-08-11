@@ -17,7 +17,7 @@ flowchart TD
 |----|----|----|
 | Governance | Unity Catalog, system tables, lineage, tags, data classification | IAM, Lake Formation, Glue Catalog, CloudTrail, KMS |
 | Model and Agent Serving | Mosaic AI Model Serving, Agent Framework, Databricks Apps | Amazon Bedrock, Bedrock Agents or AgentCore, Lambda, API Gateway |
-| RAG and Vector Search | Vector Search, AI Search, Delta Lake, MLflow evaluation | Bedrock Knowledge Bases, OpenSearch Serverless, S3 |
+| RAG and AI Search | AI Search, Delta Lake, MLflow evaluation | Bedrock Knowledge Bases, OpenSearch Serverless, S3 |
 | Streaming | Spark Structured Streaming, Delta Live Tables, Workflows | Amazon MSK, Managed Service for Apache Flink, Kinesis |
 | Observability | MLflow tracing, Databricks monitoring, system tables | CloudWatch, CloudTrail, X-Ray, Bedrock invocation logs |
 
@@ -42,7 +42,7 @@ orchestration, AWS data services, and AWS operational tooling.
 | Lifecycle Area | Databricks-First | AWS-First |
 |----|----|----|
 | Discovery and Data Readiness | Strong fit for use cases that depend on governed Delta tables, Unity Catalog permissions, lineage, feature tables, and existing Databricks pipelines. | Strong fit when source data and integration points are already organized around AWS services such as S3, Glue, MSK, Flink, OpenSearch, Lambda, and API Gateway. |
-| Prototype and Experimentation | Faster for data-centric AI because notebooks, SQL, MLflow, Vector Search, model serving, and evaluation can be used within a common workspace. | Faster for service-centric GenAI because Bedrock provides managed foundation model access, agents, guardrails, and knowledge-base capabilities through AWS APIs. |
+| Prototype and Experimentation | Faster for data-centric AI because notebooks, SQL, MLflow, AI Search, model serving, and evaluation can be used within a common workspace. | Faster for service-centric GenAI because Bedrock provides managed foundation model access, agents, guardrails, and knowledge-base capabilities through AWS APIs. |
 | Build and Integration | Lower integration effort for lakehouse-native RAG, ML, feature serving, model evaluation, and governed AI apps. | Lower integration effort for AWS-native APIs, serverless workflows, event-driven applications, security controls, and application deployment pipelines. |
 | Testing and Evaluation | Stronger built-in lifecycle alignment through MLflow tracing, evaluation, prompt and app versioning, production monitoring, and Unity Catalog governance. | Requires composition of Bedrock evaluation, CloudWatch, CloudTrail, X-Ray, application logs, custom evaluation pipelines, and third-party or internal quality tooling. |
 | Release and Promotion | Well suited for Databricks Asset Bundles, workspace promotion, MLflow model registry, serving endpoint promotion, and lakehouse release governance. | Well suited for AWS CDK or Terraform, CodePipeline, Lambda/ECS/EKS deployment, IAM policies, Bedrock configuration promotion, and API Gateway releases. |
@@ -54,7 +54,7 @@ orchestration, AWS data services, and AWS operational tooling.
 |----|----|----|
 | Enterprise Architect | Defines lakehouse-centric architecture, governance patterns, workspace strategy, data product boundaries, and Databricks-to-AWS integration model. | Defines AWS service architecture, network/security boundaries, service integration patterns, event-driven workflows, and Bedrock operating model. |
 | Data Engineer | High demand for Delta Lake, Spark, streaming, Databricks workflows, Unity Catalog, feature pipelines, and data quality engineering. | High demand for S3, Glue, MSK, Flink, Lambda, OpenSearch ingestion, event schemas, and AWS-native data pipelines. |
-| AI / ML Engineer | Focuses on Mosaic AI, MLflow, Model Serving, Vector Search, feature serving, agent evaluation, and governed experiment management. | Focuses on Bedrock model selection, agents, knowledge bases, guardrails, prompt routing, OpenSearch vector stores, and serverless AI orchestration. |
+| AI / ML Engineer | Focuses on Mosaic AI, MLflow, Model Serving, AI Search, feature serving, agent evaluation, and governed experiment management. | Focuses on Bedrock model selection, agents, knowledge bases, guardrails, prompt routing, OpenSearch vector stores, and serverless AI orchestration. |
 | Platform Engineer | Manages Databricks workspaces, clusters, serverless policies, endpoint configuration, Asset Bundles, secrets, and cost controls. | Manages AWS accounts, IAM, VPCs, API Gateway, Lambda, ECS/EKS, Bedrock access, CloudWatch, KMS, and service quotas. |
 | Security / Governance | Prioritizes Unity Catalog permissions, lineage, data classification, serving endpoint controls, MLflow trace governance, and workspace access. | Prioritizes IAM, KMS, CloudTrail, Lake Formation, VPC endpoints, service control policies, Bedrock guardrails, and cross-service auditability. |
 | Operations / SRE | Monitors Databricks workflows, serving endpoints, MLflow metrics, system tables, job failures, DBU consumption, and data freshness. | Monitors CloudWatch metrics, Bedrock invocations, Lambda/API failures, MSK/Flink health, OpenSearch capacity, alarms, and service quotas. |
@@ -73,9 +73,9 @@ orchestration, AWS data services, and AWS operational tooling.
 
 | Cost Area | Databricks-First Cost Drivers | AWS-First Cost Drivers |
 |----|----|----|
-| Core Platform | DBU consumption for jobs, SQL, streaming, model serving, serverless compute, vector search, and interactive development; underlying cloud storage and networking may also apply depending on workload type. | AWS service consumption across Bedrock inference, agents, knowledge bases, OpenSearch, Lambda, API Gateway, ECS/EKS, MSK, Flink, S3, Glue, CloudWatch, and data transfer. |
+| Core Platform | DBU consumption for jobs, SQL, streaming, model serving, serverless compute, AI Search, and interactive development; underlying cloud storage and networking may also apply depending on workload type. | AWS service consumption across Bedrock inference, agents, knowledge bases, OpenSearch, Lambda, API Gateway, ECS/EKS, MSK, Flink, S3, Glue, CloudWatch, and data transfer. |
 | Model Inference | Model serving compute, provisioned concurrency, GPU or CPU endpoint sizing, pay-per-token endpoints where applicable, and endpoint idle-time configuration. | Bedrock input and output tokens, model tier, provisioned throughput, batch inference, guardrails, prompt routing, agent orchestration, and retrieved context size. |
-| RAG and Vector Search | Vector index storage, endpoint capacity, embedding jobs, Delta table sync, reranking, and retrieval query volume. | OpenSearch Serverless or managed cluster compute and storage, embedding model usage, knowledge-base ingestion, query volume, and index refresh frequency. |
+| RAG and AI Search | AI Search index storage, endpoint capacity, embedding jobs, Delta table sync, reranking, and retrieval query volume. | OpenSearch Serverless or managed cluster compute and storage, embedding model usage, knowledge-base ingestion, query volume, and index refresh frequency. |
 | Streaming and Data Processing | Databricks streaming jobs, structured streaming clusters, workflows, Delta storage, and checkpointing. | MSK broker capacity, Flink KPUs, Kinesis where used, Lambda processing, S3 storage, Glue catalog, and downstream OpenSearch indexing. |
 | Governance and Observability | Unity Catalog governance operations, system tables, MLflow tracing, evaluation jobs, dashboard queries, logs, and endpoint telemetry storage. | CloudWatch metrics/logs, CloudTrail, X-Ray, GuardDuty/Security Hub where applicable, Bedrock invocation logs, OpenSearch monitoring, and custom evaluation pipelines. |
 
@@ -84,7 +84,7 @@ orchestration, AWS data services, and AWS operational tooling.
 | Operational Area | Databricks-First Operational Cost | AWS-First Operational Cost |
 |----|----|----|
 | Platform Administration | Moderate when centralized Databricks workspace, cluster, endpoint, Unity Catalog, and cost-policy governance are already mature. | Moderate to high depending on the number of AWS services, accounts, IAM boundaries, networking patterns, and service quotas involved. |
-| Incident Response | Lower for Databricks-native job, model, vector search, and data quality incidents when telemetry is centralized in Databricks and MLflow. | Lower for AWS infrastructure and service incidents when CloudWatch, CloudTrail, X-Ray, and AWS operational practices are already standardized. |
+| Incident Response | Lower for Databricks-native job, model, AI Search, and data quality incidents when telemetry is centralized in Databricks and MLflow. | Lower for AWS infrastructure and service incidents when CloudWatch, CloudTrail, X-Ray, and AWS operational practices are already standardized. |
 | FinOps | Requires strong DBU attribution, endpoint usage tracking, workload tagging, job optimization, scale-to-zero policies, and compute right-sizing. | Requires multi-service cost attribution across Bedrock tokens, OpenSearch capacity, MSK/Flink resources, Lambda/API Gateway traffic, logs, and data transfer. |
 | Security Operations | Focused on workspace access, Unity Catalog privileges, endpoint permissions, model trace visibility, secret scopes, and data lineage. | Focused on IAM policies, KMS keys, VPC endpoints, Bedrock access controls, service control policies, CloudTrail, Guardrails, and cross-service audit correlation. |
 | Runbook Complexity | Lower for lakehouse-native use cases because data, AI assets, workflows, and evaluations are managed in fewer control planes. | Higher when the solution spans many AWS services, but lower for teams already operating production-grade AWS serverless and event-driven systems. |
@@ -115,7 +115,7 @@ application integration services.
   cloud controls.
 
 - Require a cost model before implementation that estimates Databricks
-  DBU usage, model serving usage, Bedrock token usage, vector index
+  DBU usage, model serving usage, Bedrock token usage, AI Search index
   cost, streaming cost, storage cost, observability cost, and
   operational staffing cost.
 
@@ -130,7 +130,7 @@ observability retention.
 
 | Token Cost Dimension | Databricks-First Cost Behavior | AWS-First Cost Behavior | Enterprise Control Requirement |
 |----|----|----|----|
-| Billing Unit | Foundation Model APIs can use pay-per-token pricing for supported models or provisioned throughput for production workloads; custom model serving may also consume endpoint compute capacity. | Amazon Bedrock commonly bills by model-specific input and output tokens, with additional billing modes such as batch inference, provisioned throughput, guardrails, agents, and knowledge-base usage. | The cost model must separate model token cost from endpoint, vector, orchestration, logging, and platform infrastructure cost. |
+| Billing Unit | Foundation Model APIs can use pay-per-token pricing for supported models or provisioned throughput for production workloads; custom model serving may also consume endpoint compute capacity. | Amazon Bedrock commonly bills by model-specific input and output tokens, with additional billing modes such as batch inference, provisioned throughput, guardrails, agents, and knowledge-base usage. | The cost model must separate model token cost from endpoint, AI Search, orchestration, logging, and platform infrastructure cost. |
 | Input Tokens | Input cost increases with system prompts, user prompts, retrieved context, conversation history, tool schemas, and few-shot examples passed through Databricks model endpoints. | Input cost increases with Bedrock prompt size, retrieved Knowledge Base context, agent instructions, tool/action schemas, conversation history, and guardrail evaluation context. | Prompt templates must define maximum context size, retrieval limits, summarization rules, and conversation-window truncation. |
 | Output Tokens | Output cost increases with long-form responses, reasoning-heavy tasks, verbose summaries, generated reports, and multi-step assistant responses. | Output cost increases with generated responses from Bedrock models; output tokens are typically more expensive than input tokens for many frontier models. | Applications must enforce response-length controls, task-specific answer formats, and concise default response policies. |
 | RAG Token Amplification | RAG workloads add token cost through retrieved chunks, metadata, reranked passages, source summaries, and grounding instructions sent to the model. | RAG workloads add token cost through Knowledge Base retrieval, OpenSearch-backed context, citations, guardrails, and additional model calls for reranking or summarization. | RAG pipelines must tune chunk size, top-k retrieval, metadata filters, reranking thresholds, and context compression before production release. |
@@ -146,7 +146,7 @@ model: monthly token cost equals monthly request volume multiplied by
 average input tokens per request multiplied by the selected model
 input-token rate, plus monthly request volume multiplied by average
 output tokens per request multiplied by the selected model output-token
-rate. The estimate must then add non-token costs such as vector search,
+rate. The estimate must then add non-token costs such as AI Search,
 embedding generation, endpoint capacity, agent orchestration,
 guardrails, logging, monitoring, data transfer, and operational support.
 
@@ -191,7 +191,7 @@ minimizing spend in isolation.
 |----|----|----|----|
 | Model Routing | Route simple tasks to lower-cost endpoints or smaller models; reserve premium models for complex reasoning, executive workflows, or high-risk tasks. | Use Bedrock model tiering, prompt routing, and task classification to select the lowest-cost model that satisfies quality and latency requirements. | Maintain a model routing policy with quality thresholds, fallback logic, and cost-per-request targets. |
 | Prompt and Context Optimization | Minimize system prompts, few-shot examples, conversation history, and retrieved context passed to Databricks model endpoints. | Minimize Bedrock prompt size, agent instructions, tool schemas, retrieved Knowledge Base passages, and guardrail evaluation scope where appropriate. | Define maximum input-token budgets by use case, persona, channel, and response type. |
-| RAG Optimization | Tune chunk size, embedding refresh frequency, top-k retrieval, metadata filters, reranking, and Vector Search endpoint sizing. | Tune Knowledge Base retrieval count, OpenSearch index design, embedding model selection, refresh cadence, and reranking strategy. | Measure retrieval quality, context-token size, groundedness, and cost per grounded answer before production approval. |
+| RAG Optimization | Tune chunk size, embedding refresh frequency, top-k retrieval, metadata filters, reranking, and AI Search endpoint sizing. | Tune Knowledge Base retrieval count, OpenSearch index design, embedding model selection, refresh cadence, and reranking strategy. | Measure retrieval quality, context-token size, groundedness, and cost per grounded answer before production approval. |
 | Agent Workflow Optimization | Limit planning loops, tool calls, retries, reflection steps, and intermediate trace verbosity for Mosaic AI agent workflows. | Limit Bedrock agent orchestration steps, action group retries, tool-response payload size, and repeated model invocations. | Set maximum agent steps, timeout limits, retry limits, and cost-per-completed-task thresholds. |
 | Compute Rightsizing | Right-size jobs, warehouses, serving endpoints, clusters, and serverless workloads; use scale-to-zero where latency requirements allow. | Right-size Lambda memory, ECS/EKS capacity, OpenSearch capacity, MSK brokers, Flink KPUs, and Bedrock provisioned throughput. | Review utilization, idle time, p95 latency, saturation, and cost trend monthly. |
 | Batch versus Real-Time Execution | Use scheduled batch jobs for summarization, enrichment, embedding refresh, and offline evaluation when interactive latency is not required. | Use Bedrock batch inference, scheduled Lambda/ECS jobs, and asynchronous workflows for non-interactive workloads. | Classify workloads as interactive, near-real-time, scheduled batch, or offline before implementation. |
@@ -219,7 +219,7 @@ minimizing spend in isolation.
   technical owner, model, endpoint, workload, and cost center.
 
 - Review idle resources, endpoint utilization, streaming resource
-  utilization, vector index capacity, and log retention monthly.
+  utilization, AI Search index capacity, and log retention monthly.
 
 - Use anomaly alerts for sudden increases in token volume, DBU
   consumption, Bedrock spend, OpenSearch capacity, MSK/Flink usage,

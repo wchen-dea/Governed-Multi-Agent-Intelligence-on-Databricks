@@ -72,7 +72,7 @@ flowchart LR
 
 | Category | Requirement |
 |----|----|
-| Scalability | Scale independently across ingestion, processing, vector search, model serving, and application layers. |
+| Scalability | Scale independently across ingestion, processing, AI Search, model serving, and application layers. |
 | Reliability | Support retry, timeout, circuit breaker, dead-letter handling, fallback model routing, and graceful degradation. |
 | Performance | Meet defined p95 latency targets for retrieval, inference, and full response generation under expected production load. |
 | Cost Control | Track cost by application, model, endpoint, user group, and workload; enforce budgets, quotas, and routing policies. |

@@ -5,8 +5,8 @@ Discover available tools and data sources for Databricks agents.
 This script scans for:
 - Unity Catalog functions (data retrieval tools e.g. SQL UDFs)
 - Unity Catalog tables (data sources)
-- Vector search indexes (RAG data sources)
-- Genie spaces (conversational interface over structured data)
+- AI Search indexes (RAG data sources)
+- Genie Agents (conversational interface over structured data)
 - Custom MCP servers (Databricks apps with name mcp-*)
 - External MCP servers (via Unity Catalog connections)
 """
@@ -166,11 +166,11 @@ def discover_uc_tables(w: WorkspaceClient, catalog: str = None, schema: str = No
 
 
 def discover_vector_search_indexes(w: WorkspaceClient) -> List[Dict[str, Any]]:
-    """Discover Vector Search indexes for RAG applications."""
+    """Discover AI Search indexes for RAG applications."""
     indexes = []
 
     try:
-        # Enumerate vector search endpoints first.
+        # Enumerate AI Search endpoints first.
         endpoints = list(w.vector_search_endpoints.list_endpoints())
 
         for endpoint in endpoints:
@@ -191,17 +191,17 @@ def discover_vector_search_indexes(w: WorkspaceClient) -> List[Dict[str, Any]]:
                 continue
 
     except Exception as e:
-        print(f"Error discovering vector search indexes: {e}", file=sys.stderr)
+        print(f"Error discovering AI Search indexes: {e}", file=sys.stderr)
 
     return indexes
 
 
 def discover_genie_spaces(w: WorkspaceClient) -> List[Dict[str, Any]]:
-    """Discover Genie spaces for conversational data access."""
+    """Discover Genie Agents for conversational data access."""
     spaces = []
 
     try:
-        # Use the SDK to enumerate Genie spaces.
+        # Use the SDK to enumerate Genie Agents.
         response = w.genie.list_spaces()
         genie_spaces = response.spaces if hasattr(response, "spaces") else []
         for space in genie_spaces:
@@ -212,7 +212,7 @@ def discover_genie_spaces(w: WorkspaceClient) -> List[Dict[str, Any]]:
                 "description": space.description,
             })
     except Exception as e:
-        print(f"Error discovering Genie spaces: {e}", file=sys.stderr)
+        print(f"Error discovering Genie Agents: {e}", file=sys.stderr)
 
     return spaces
 
@@ -297,10 +297,10 @@ def format_output_markdown(results: Dict[str, List[Dict[str, Any]]]) -> str:
             lines.append(f"\n*...and {len(tables) - 10} more*\n")
         lines.append("")
 
-    # Vector Search indexes.
+    # AI Search indexes.
     indexes = results.get("vector_search_indexes", [])
     if indexes:
-        lines.append(f"## Vector Search Indexes ({len(indexes)})\n")
+        lines.append(f"## AI Search Indexes ({len(indexes)})\n")
         lines.append("These can be used for RAG applications with unstructured data.\n")
         lines.append("**How to use:** Connect via MCP server at `{workspace_host}/api/2.0/mcp/vector-search/{catalog}/{schema}` or\n")
         lines.append("`{workspace_host}/api/2.0/mcp/vector-search/{catalog}/{schema}/{index_name}`\n")
@@ -310,10 +310,10 @@ def format_output_markdown(results: Dict[str, List[Dict[str, Any]]]) -> str:
             lines.append(f"  - Status: {idx['status']}")
         lines.append("")
 
-    # Genie spaces.
+    # Genie Agents.
     spaces = results.get("genie_spaces", [])
     if spaces:
-        lines.append(f"## Genie Spaces ({len(spaces)})\n")
+        lines.append(f"## Genie Agents ({len(spaces)})\n")
         lines.append("**What they are:** Natural language interface to your data\n")
         lines.append("**How to use:** Connect via Genie MCP server at `{workspace_host}/api/2.0/mcp/genie/{space_id}`\n")
         for space in spaces:
@@ -396,10 +396,10 @@ def main():
     print("- UC Tables...", file=sys.stderr)
     results["uc_tables"] = discover_uc_tables(w, catalog=args.catalog, schema=args.schema, max_schemas=args.max_schemas)[:args.max_results]
 
-    print("- Vector Search Indexes...", file=sys.stderr)
+    print("- AI Search Indexes...", file=sys.stderr)
     results["vector_search_indexes"] = discover_vector_search_indexes(w)[:args.max_results]
 
-    print("- Genie Spaces...", file=sys.stderr)
+    print("- Genie Agents...", file=sys.stderr)
     results["genie_spaces"] = discover_genie_spaces(w)[:args.max_results]
 
     print("- Custom MCP Servers (Apps)...", file=sys.stderr)
@@ -425,8 +425,8 @@ def main():
     print("\n=== Discovery Summary ===", file=sys.stderr)
     print(f"UC Functions: {len(results['uc_functions'])}", file=sys.stderr)
     print(f"UC Tables: {len(results['uc_tables'])}", file=sys.stderr)
-    print(f"Vector Search Indexes: {len(results['vector_search_indexes'])}", file=sys.stderr)
-    print(f"Genie Spaces: {len(results['genie_spaces'])}", file=sys.stderr)
+    print(f"AI Search Indexes: {len(results['vector_search_indexes'])}", file=sys.stderr)
+    print(f"Genie Agents: {len(results['genie_spaces'])}", file=sys.stderr)
     print(f"Custom MCP Servers: {len(results['custom_mcp_servers'])}", file=sys.stderr)
     print(f"External MCP Servers: {len(results['external_mcp_servers'])}", file=sys.stderr)
 

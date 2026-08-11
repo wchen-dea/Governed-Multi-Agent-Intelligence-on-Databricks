@@ -45,7 +45,7 @@
     "allowed_personas": ["analyst", "operator", "manager"],
     "requires_evidence": true,
     "space_id": "01f159f5d91419549020e3609add391c",
-    "description": "Sales agent backed by a Genie space for structured data analysis. Use this for sales metrics, store performance, and operational reporting."
+    "description": "Sales agent backed by a Genie Agent space for structured data analysis. Use this for sales metrics, store performance, and operational reporting."
   },
   {
     "name": "knowledge_assistant",
@@ -81,6 +81,6 @@
     "allowed_personas": ["engineer", "operator"],
     "requires_evidence": true,
     "endpoint": "lakebase_vector_storage",
-    "description": "Query the Lakebase-backed vector storage endpoint on Model Serving. Use this for semantic retrieval and vector-search style lookups. The endpoint must have task type agent/v1/responses."
+    "description": "Query the Lakebase-backed AI Search storage endpoint on Model Serving. Use this for semantic retrieval and AI Search-style lookups. The endpoint must have task type agent/v1/responses."
   }
 ]

@@ -29,7 +29,7 @@ flowchart TB
 
   %% Retrieval
   subgraph L4[Retrieval and Knowledge Layer]
-    R1[Databricks Vector Search]
+    R1[Databricks AI Search]
     R2[Bedrock Knowledge Bases]
     R3[OpenSearch Serverless]
     R4[Delta Lake and S3 Knowledge Assets]

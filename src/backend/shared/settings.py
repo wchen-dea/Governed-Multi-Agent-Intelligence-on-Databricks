@@ -9,7 +9,9 @@ import os
 class AppSettings:
     """Typed runtime settings loaded from environment."""
 
-    orchestrator_model: str = "databricks-gpt-5-2"
+    orchestrator_model: str = "databricks-gpt-5-6-luna"
+    openai_base_url: str = ""
+    openai_timeout_seconds: float = 0.0
     log_level: str = "INFO"
     log_format: str = "%(asctime)s %(levelname)s %(name)s: %(message)s"
     log_date_format: str = "%Y-%m-%d %H:%M:%S"
@@ -51,7 +53,9 @@ def get_settings() -> AppSettings:
             return default
 
     return AppSettings(
-        orchestrator_model=os.getenv("ORCHESTRATOR_MODEL", "databricks-gpt-5-2"),
+        orchestrator_model=os.getenv("ORCHESTRATOR_MODEL", "databricks-gpt-5-6-luna"),
+        openai_base_url=os.getenv("DATABRICKS_OPENAI_BASE_URL", ""),
+        openai_timeout_seconds=_env_float("DATABRICKS_OPENAI_TIMEOUT_SECONDS", 0.0),
         log_level=os.getenv("BACKEND_LOG_LEVEL", "INFO"),
         log_format=os.getenv(
             "BACKEND_LOG_FORMAT",

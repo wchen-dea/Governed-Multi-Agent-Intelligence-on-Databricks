@@ -16,6 +16,12 @@ variables:
   mlflow_registry_uri:
     description: MLFLOW_REGISTRY_URI for the app
     default: databricks-uc
+  openai_base_url:
+    description: Optional base URL override for Databricks OpenAI calls (for example Unity AI Gateway URL)
+    default: ""
+  openai_timeout_seconds:
+    description: Optional timeout in seconds for Databricks OpenAI calls; 0 keeps SDK defaults
+    default: "0"
   api_proxy:
     description: API proxy URL for the chat app
     default: http://localhost:8000/invocations
@@ -32,16 +38,16 @@ variables:
     description: Optional default persona used when request does not provide custom_inputs.persona
     default: ""
   genie_space_id:
-    description: Genie space ID for the current environment
+    description: Genie Agent space ID for the current environment
     default: ""
   store_manager_genie_space_id:
-    description: Store Manager Genie space ID for the current environment
+    description: Store Manager Genie Agent space ID for the current environment
     default: ""
   executive_genie_space_id:
-    description: Executive Genie space ID for the current environment
+    description: Executive Genie Agent space ID for the current environment
     default: ""
   supply_chain_genie_space_id:
-    description: Supply Chain Genie space ID for the current environment
+    description: Supply Chain Genie Agent space ID for the current environment
     default: ""
   knowledge_assistant_endpoint_name:
     description: Knowledge assistant serving endpoint name for the current environment
@@ -79,3 +85,6 @@ variables:
   uc_audit_table:
     description: Unity Catalog table name for lifecycle events
     default: agent_lifecycle_events
+  app_telemetry_logs_table:
+    description: Unity Catalog table for Databricks Apps telemetry export
+    default: main.observability.app_logs

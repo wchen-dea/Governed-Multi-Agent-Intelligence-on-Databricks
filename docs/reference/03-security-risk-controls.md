@@ -11,7 +11,7 @@ flowchart TD
 # 7. Security, Governance, and Compliance Requirements
 
 - Use least-privilege access for users, service principals, model
-  endpoints, vector indexes, functions, tools, and storage locations.
+  endpoints, AI Search indexes, functions, tools, and storage locations.
 
 - Use Unity Catalog privileges, IAM policies, workspace bindings, KMS
   encryption, secret management, and network controls to enforce data
@@ -53,7 +53,7 @@ flowchart TD
 
 | ID | Requirement Statement | Control Owner | Verification Evidence |
 |----|----|----|----|
-| SR-001 | The system shall enforce least-privilege access across users, service principals, model endpoints, vector indexes, storage, tools, APIs, and logs. | Security Owner | Access review, entitlement test, and audit log sample. |
+| SR-001 | The system shall enforce least-privilege access across users, service principals, model endpoints, AI Search indexes, storage, tools, APIs, and logs. | Security Owner | Access review, entitlement test, and audit log sample. |
 | SR-002 | The system shall encrypt sensitive data in transit and at rest using approved platform encryption and key-management controls. | Security Owner | Encryption configuration review and key ownership evidence. |
 | SR-003 | The system shall prevent unauthorized exposure of sensitive data through classification, masking, redaction, permission-aware retrieval, output validation, and audit monitoring. | Data Owner | Data classification, masking test, retrieval authorization test, and output validation results. |
 | SR-004 | Agentic workflows shall use tool allowlists, scoped credentials, execution limits, human approval for sensitive actions, and full tool-call traceability. | Security Owner | Tool registry review, approval workflow test, and trace sample. |
@@ -99,8 +99,8 @@ incident response processes.
 | Hallucination and Incorrect Recommendations | The system may generate unsupported, outdated, inaccurate, or misleading answers that affect customer experience, store operations, pricing, inventory, or executive decisions. | Use grounded retrieval, source traceability, evaluation datasets, confidence thresholds, response validation, fallback behavior, and human escalation. | AI Product Owner and Model Owner |
 | Prompt Injection and Tool Abuse | Malicious or unintended instructions may cause the system to ignore policies, expose data, call unauthorized tools, or perform unsafe actions. | Enforce system prompts, input filtering, tool allowlists, scoped credentials, execution limits, approval gates, output inspection, and adversarial testing. | Security Owner and Platform Owner |
 | Model, Retrieval, and Data Drift | Model behavior, source data, embeddings, indexes, or retrieval quality may degrade over time due to changing products, pricing, inventory, policies, or customer behavior. | Monitor drift, freshness, retrieval hit rate, groundedness, regression tests, index refresh status, and business KPI movement. | Model Owner and Data Owner |
-| Operational Reliability | AI endpoints, streaming pipelines, vector indexes, model services, or agent tools may become unavailable, slow, or inconsistent under production load. | Define SLOs, autoscaling, retries, timeouts, circuit breakers, fallback routing, queueing, disaster recovery, alerting, and runbooks. | Operations Owner and Platform Owner |
-| Cost and Consumption Risk | Token usage, endpoint traffic, vector indexing, streaming workloads, or model inference may create unplanned cost growth. | Track cost per request, budget by use case, enforce quotas, rate limits, routing policies, usage dashboards, and anomaly alerts. | Business Owner and Platform Owner |
+| Operational Reliability | AI endpoints, streaming pipelines, AI Search indexes, model services, or agent tools may become unavailable, slow, or inconsistent under production load. | Define SLOs, autoscaling, retries, timeouts, circuit breakers, fallback routing, queueing, disaster recovery, alerting, and runbooks. | Operations Owner and Platform Owner |
+| Cost and Consumption Risk | Token usage, endpoint traffic, AI Search indexing, streaming workloads, or model inference may create unplanned cost growth. | Track cost per request, budget by use case, enforce quotas, rate limits, routing policies, usage dashboards, and anomaly alerts. | Business Owner and Platform Owner |
 | Regulatory and Compliance Risk | AI decisions, data retention, audit evidence, or customer-facing outputs may fail to meet internal policy or external compliance expectations. | Maintain approval records, logs, traceability, retention controls, access reviews, policy mapping, and periodic compliance validation. | Compliance Owner and Security Owner |
 | Adoption and Change Management Risk | Users may over-trust, under-use, misuse, or bypass AI capabilities if training, communication, and support are insufficient. | Provide user training, usage guidance, disclaimers where appropriate, feedback channels, support processes, and adoption measurement. | Business Owner and Change Owner |
 

@@ -25,7 +25,7 @@ Use this order when sections are relevant:
 ### Project-Specific Requirements
 
 - State auth expectations explicitly (`app` vs `obo`) for request- or tool-bound code.
-- Document Databricks resource semantics when relevant (Genie space, serving endpoint, vector endpoint, UC catalog/schema/table).
+- Document Databricks resource semantics when relevant (Genie Agent space, serving endpoint, AI Search endpoint, UC catalog/schema/table).
 - Call out side effects for infra code (permissions updates, SQL grants, external API calls).
 - Document idempotency expectations for scripts and deployment helpers.
 - Describe failure behavior clearly (fail-open vs fail-closed and retry assumptions).

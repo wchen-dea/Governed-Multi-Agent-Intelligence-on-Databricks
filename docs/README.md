@@ -6,7 +6,7 @@ Use this index to navigate project documentation by purpose:
 - [architecture/technical-specs.md](architecture/technical-specs.md): centralized technical implementation specification.
 - [quality/evaluation-spec.md](quality/evaluation-spec.md): datasets, scorers, KPI thresholds, and release-gate behavior.
 - [governance/prompt-and-policy-spec.md](governance/prompt-and-policy-spec.md): prompt layering, deterministic policy checks, and guardrail controls.
-- [architecture/model-and-tool-registry.md](architecture/model-and-tool-registry.md): inventory of active models, endpoints, and Genie spaces.
+- [architecture/model-and-tool-registry.md](architecture/model-and-tool-registry.md): inventory of active models, endpoints, and Genie Agents.
 - [governance/data-contract-and-lineage-spec.md](governance/data-contract-and-lineage-spec.md): request and response contracts, sensitivity model, and audit lineage requirements.
 - [governance/business-semantics-and-ai-metadata-spec.md](governance/business-semantics-and-ai-metadata-spec.md): canonical business semantics and required AI metadata contract.
 - [governance/security-and-threat-model.md](governance/security-and-threat-model.md): trust boundaries, threats, and implemented controls.

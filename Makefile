@@ -27,7 +27,7 @@ help:
 	@printf "  make import            Upload .databricks_app_source into app workspace path\n"
 	@printf "  make stop              Stop app compute for APP_NAME\n"
 	@printf "  make deploy            Deploy uploaded app source with Databricks Apps\n"
-	@printf "  make grant-runtime-permissions  Grant app SP permissions on Genie/UC/VS/serving/warehouse\n"
+	@printf "  make grant-runtime-permissions  Grant app SP permissions on Genie Agents/UC/AI Search/serving/warehouse\n"
 	@printf "  make redeploy          Full redeploy with auto fallback: validate, try bundle deploy, then import/deploy/permissions/health/smoke\n"
 	@printf "  make health            Verify app deployment/app state is healthy\n"
 	@printf "  make smoke            Smoke-check app URL, React index shell, and /invocations route\n"

@@ -1,6 +1,6 @@
 ---
 name: create-tools
-description: "Create or prepare Databricks resources this app can route to. Use when: required Genie spaces/endpoints/resources do not exist yet."
+description: "Create or prepare Databricks resources this app can route to. Use when: required Genie Agents/endpoints/resources do not exist yet."
 ---
 
 # Create Tools
@@ -9,7 +9,7 @@ Use this skill when the target resource does not exist yet.
 
 ## Resource Types Typically Used by This Repo
 
-- Genie space (for `type: genie` routes)
+- Genie Agent space (for `type: genie` routes)
 - Model Serving endpoint with Responses API support (for `type: serving_endpoint` routes)
 - Databricks App endpoint (for `type: app` routes)
 - AI Search MCP route (for `type: mcp` routes)

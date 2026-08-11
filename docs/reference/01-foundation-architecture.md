@@ -62,7 +62,7 @@ classification, and funding approval.
 
 - The architecture must support both real-time and batch workloads,
   including streaming ingestion from Kafka/MSK, data processing with
-  Apache Flink or Spark, lakehouse storage, vector indexing, model
+  Apache Flink or Spark, lakehouse storage, AI Search indexing, model
   serving, and application endpoints.
 
 - The platform must be designed for regulated enterprise operations,
@@ -181,7 +181,7 @@ criteria.
   updates.
 
 - **AI foundation:** Use Databricks Mosaic AI, MLflow, Model Serving,
-  Vector Search, Feature Store, Databricks Apps, and Unity Catalog for
+  AI Search, Feature Store, Databricks Apps, and Unity Catalog for
   governed development and deployment.
 
 - **AWS GenAI foundation:** Use Amazon Bedrock, Bedrock Knowledge Bases,
@@ -198,7 +198,7 @@ criteria.
 | ID | Requirement Statement | Control Owner | Verification Method |
 |----|----|----|----|
 | AR-001 | The architecture shall separate user channels, application services, AI orchestration, retrieval, data processing, model serving, governance, and observability into explicit layers. | Enterprise Architect | Architecture review and approved diagram. |
-| AR-002 | The architecture shall define integration contracts for Databricks, AWS services, identity providers, data sources, model endpoints, vector indexes, and operational monitoring systems. | Technical Owner | Interface contract review and dependency map. |
+| AR-002 | The architecture shall define integration contracts for Databricks, AWS services, identity providers, data sources, model endpoints, AI Search indexes, and operational monitoring systems. | Technical Owner | Interface contract review and dependency map. |
 | AR-003 | The architecture shall support batch, streaming, interactive, and asynchronous AI workloads with workload-specific cost, latency, and reliability controls. | Enterprise Architect | Workload classification review and non-functional test results. |
 | AR-004 | The architecture shall support a hybrid Databricks-first with AWS-native integration pattern when governed lakehouse data and AWS-native services are both required. | Enterprise Architect | Architecture decision record and platform mapping approval. |
 
@@ -214,7 +214,7 @@ system.
 | User and Channel Layer | Business users, analysts, engineers, internal web apps, Databricks Apps, APIs, service portals | Users submit prompts, questions, operational tasks, or workflow requests through authenticated channels. |
 | Application and API Layer | Databricks Apps, API Gateway, Lambda, ECS/EKS services, enterprise identity provider | Requests are authenticated, authorized, rate-limited, logged, and routed to AI orchestration services. |
 | AI Orchestration Layer | Mosaic AI Agent Framework, MLflow tracing, Bedrock Agents or AgentCore, prompt templates, tool registry | Agents classify intent, select retrieval or tool workflows, enforce guardrails, and coordinate model calls. |
-| Retrieval and Knowledge Layer | Databricks Vector Search, Bedrock Knowledge Bases, OpenSearch Serverless, Delta Lake, S3, metadata filters | Relevant governed context is retrieved, filtered by permissions, re-ranked, and passed to the model for grounded generation. |
+| Retrieval and Knowledge Layer | Databricks AI Search, Bedrock Knowledge Bases, OpenSearch Serverless, Delta Lake, S3, metadata filters | Relevant governed context is retrieved, filtered by permissions, re-ranked, and passed to the model for grounded generation. |
 | Data and Streaming Layer | Amazon MSK, Managed Service for Apache Flink, Spark Structured Streaming, Delta Lake, Unity Catalog, AWS Glue | Batch and streaming data pipelines update curated tables, features, embeddings, graph relationships, and operational state. |
 | Model and Inference Layer | Databricks Model Serving, Foundation Models, custom ML models, Amazon Bedrock models, feature lookups | Models generate responses, predictions, summaries, recommendations, and tool plans using governed context and runtime features. |
 | Governance and Security Layer | Unity Catalog, IAM, KMS, secrets, row filters, column masks, audit logs, guardrails, policy checks | Security controls apply across data access, retrieval, model invocation, tool execution, deployment, and audit review. |
@@ -232,7 +232,7 @@ system.
     direct inference, retrieval-augmented generation, tool execution,
     feature lookup, or a multi-step agent workflow.
 
-4.  The retrieval layer fetches governed context from Delta Lake, Vector
+4.  The retrieval layer fetches governed context from Delta Lake, AI
     Search, Bedrock Knowledge Bases, OpenSearch Serverless, or S3-backed
     knowledge stores.
 

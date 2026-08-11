@@ -9,8 +9,11 @@ targets:
     variables:
       app_name: multiagent-app-dev
       mlflow_experiment_id: "2041388166228723"
+      openai_base_url: ""
+      openai_timeout_seconds: "0"
       subagents_config_path: "/app/python/source_code/.venv/lib/python3.11/site-packages/backend/domain/subagents.dev.json"
       default_request_persona: "manager"
+      app_telemetry_logs_table: "main.observability.app_logs"
       genie_space_id: "01f159f5d91419549020e3609add391c"
       store_manager_genie_space_id: ""
       executive_genie_space_id: ""
@@ -31,6 +34,6 @@ targets:
           resources:
           - name: genie_space
             genie_space:
-              name: Genie Space
+              name: Genie Agent
               space_id: ${var.genie_space_id}
               permission: CAN_RUN

@@ -112,7 +112,7 @@ def auth_correctness_scorer(
 simulator = ConversationSimulator(
     test_cases=test_cases,
     max_turns=5,
-    user_model="databricks:/databricks-claude-sonnet-4-5",
+    user_model="databricks:/databricks-claude-sonnet-5",
 )
 
 # Retrieve the invoke function registered by the @invoke decorator.

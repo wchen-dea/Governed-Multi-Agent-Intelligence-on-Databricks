@@ -17,7 +17,7 @@ flowchart LR
 | Requirement Area | Requirement | Preferred Platform Capability |
 |----|----|----|
 | Model Access | The system must support multiple foundation models, custom models, and model fallback strategies for latency, quality, and cost optimization. | Databricks Model Serving, Foundation Models, Amazon Bedrock model catalog |
-| RAG | The system must retrieve grounded context from governed enterprise data and return traceable, source-aware responses. | Databricks Vector Search, Bedrock Knowledge Bases, OpenSearch Serverless |
+| RAG | The system must retrieve grounded context from governed enterprise data and return traceable, source-aware responses. | Databricks AI Search, Bedrock Knowledge Bases, OpenSearch Serverless |
 | Agents | The system must support constrained tool-calling agents with explicit permissions, bounded execution loops, and human approval for sensitive actions. | Mosaic AI Agent Framework, MLflow tracing, Bedrock Agents or AgentCore, Lambda action groups |
 | Feature Serving | The system must serve offline and online features consistently to reduce training-serving skew. | Databricks Feature Store, Online Feature Store, Lakebase, model serving feature lookup |
 | Applications | The system must provide authenticated user-facing AI applications and service APIs for internal enterprise users. | Databricks Apps, API Gateway, Lambda, ECS, EKS |
@@ -42,7 +42,7 @@ flowchart LR
   extraction, embedding generation, incremental refresh, re-ranking, and
   quality validation before publishing to production indexes.
 
-- Vector indexes must support low-latency semantic retrieval, metadata
+- AI Search indexes must support low-latency semantic retrieval, metadata
   filtering, access-aware retrieval, and index refresh workflows aligned
   to source data change frequency.
 

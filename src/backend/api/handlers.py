@@ -26,7 +26,22 @@ from backend.shared.runtime_utils import process_agent_stream_events
 SETTINGS = get_settings()
 HANDLER_DEPS = get_handler_dependencies()
 
-_client = AsyncDatabricksOpenAI()
+
+def _build_openai_client() -> AsyncDatabricksOpenAI:
+    """Build Databricks OpenAI client with optional runtime overrides.
+
+    The defaults keep existing behavior. Operators can opt in to alternate
+    routing (for example Unity AI Gateway) by setting `DATABRICKS_OPENAI_BASE_URL`.
+    """
+    kwargs: dict[str, Any] = {}
+    if SETTINGS.openai_base_url.strip():
+        kwargs["base_url"] = SETTINGS.openai_base_url.strip()
+    if SETTINGS.openai_timeout_seconds > 0:
+        kwargs["timeout"] = SETTINGS.openai_timeout_seconds
+    return AsyncDatabricksOpenAI(**kwargs)
+
+
+_client = _build_openai_client()
 set_default_openai_client(_client)
 set_default_openai_api("chat_completions")
 set_trace_processors([])

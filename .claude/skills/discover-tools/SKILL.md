@@ -1,6 +1,6 @@
 ---
 name: discover-tools
-description: "Discover Databricks resources available to this project. Use when: planning tool routing, finding Genie space IDs, or checking serving endpoint names."
+description: "Discover Databricks resources available to this project. Use when: planning tool routing, finding Genie Agent space IDs, or checking serving endpoint names."
 ---
 
 # Discover Tools
@@ -23,7 +23,7 @@ uv run discover-tools --format json --output tools.json
 
 ## Typical Outputs to Capture
 
-- Genie spaces (`space_id`)
+- Genie Agents (`space_id`)
 - Serving endpoints (`endpoint` names)
 - UC resources relevant to future tool integrations
 

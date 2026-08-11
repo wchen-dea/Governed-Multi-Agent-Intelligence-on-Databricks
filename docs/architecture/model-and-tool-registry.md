@@ -1,6 +1,6 @@
 # Model and Tool Registry
 
-Inventory of active model endpoints, tools, Genie spaces, and MCP routes.
+Inventory of active model endpoints, tools, Genie Agents, and MCP routes.
 
 ## Purpose
 
@@ -26,7 +26,7 @@ Provide an auditable and maintainable registry for runtime integrations and owne
 	- `src/backend/domain/subagents.stg.json`
 	- `src/backend/domain/subagents.prod.json`
 
-## Active Genie Spaces (Dev)
+## Active Genie Agents (Dev)
 
 ### sales_insights_agent
 

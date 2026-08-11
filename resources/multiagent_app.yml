@@ -2,7 +2,7 @@ resources:
   apps:
     multiagent-app:
       name: ${var.app_name}
-      description: "Multi-agent orchestrator that queries other agents, Genie spaces, and serving endpoints"
+      description: "Multi-agent orchestrator that queries other agents, Genie Agents, and serving endpoints"
       # App access control: assign principals that can use/manage this app.
       # permissions:
       # - level: CAN_USE
@@ -28,9 +28,9 @@ resources:
       # - level: CAN_USE
       #   group_name: users
       # space: my-space
-      # telemetry_export_destinations:
-      # - unity_catalog:
-      #     logs_table: main.observability.app_logs
+        telemetry_export_destinations:
+        - unity_catalog:
+          logs_table: ${var.app_telemetry_logs_table}
       # usage_policy_id: ${var.app_usage_policy_id}
       # user_api_scopes:
       # - sql
@@ -43,6 +43,10 @@ resources:
           value: ${var.mlflow_tracking_uri}
         - name: MLFLOW_REGISTRY_URI
           value: ${var.mlflow_registry_uri}
+        - name: DATABRICKS_OPENAI_BASE_URL
+          value: ${var.openai_base_url}
+        - name: DATABRICKS_OPENAI_TIMEOUT_SECONDS
+          value: ${var.openai_timeout_seconds}
         - name: API_PROXY
           value: ${var.api_proxy}
         - name: CHAT_APP_PORT
@@ -71,6 +75,6 @@ resources:
       resources:
       - name: 'genie_space'
         genie_space:
-          name: 'Genie Space'
+          name: 'Genie Agent'
           space_id: ${var.genie_space_id}
           permission: 'CAN_RUN'

@@ -108,7 +108,7 @@ Constraints: If app exists, bind instead of delete.
 
 - Use when required resources are missing in the target workspace.
 - Typical resources in this repo:
-  - Genie space
+  - Genie Agent space
   - Responses-compatible serving endpoint
   - Databricks app endpoint for specialist routing
 

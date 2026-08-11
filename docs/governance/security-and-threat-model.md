@@ -38,7 +38,7 @@ Provide a practical security model for prompt injection resilience, auth safety,
 ## Required Operational Practices
 
 - Never store raw tokens in logs.
-- Validate environment-specific permissions for all Genie spaces.
+- Validate environment-specific permissions for all Genie Agents.
 - Enforce release-gate thresholds before deploy.
 - Run incident review for guardrail or policy regression events.
 

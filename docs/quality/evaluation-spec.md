@@ -98,8 +98,8 @@ The project supports model selection at three layers:
 
 | Profile | Orchestrator model | Subagent model strategy | Evaluation model | Cost | Quality | Latency | Use case |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Balanced (default) | `databricks-gpt-5-2` | Keep current target-specific Genie and AI Search MCP routes | `databricks:/databricks-claude-sonnet-4-5` | Medium | High | Medium | Day-to-day development and standard release checks |
-| Quality-first | `databricks-claude-sonnet-4-5` | Keep current routes and enforce strict guardrails/evidence on governed paths | `databricks:/databricks-claude-sonnet-4-5` | High | Very high | Medium-high | High-stakes release validation and executive-facing workflows |
+| Balanced (default) | `databricks-gpt-5-6-luna` | Keep current target-specific Genie and AI Search MCP routes | `databricks:/databricks-claude-sonnet-5` | Medium | High | Medium | Day-to-day development and standard release checks |
+| Quality-first | `databricks-claude-sonnet-5` | Keep current routes and enforce strict guardrails/evidence on governed paths | `databricks:/databricks-claude-sonnet-5` | High | Very high | Medium-high | High-stakes release validation and executive-facing workflows |
 | Cost-first | Smaller served instruction model endpoint in workspace | Keep Genie and AI Search routes unchanged; optimize only orchestration cost first | Smaller model for fast loops plus nightly Sonnet baseline | Low | Medium | Fast | High-volume internal traffic and rapid iteration |
 
 ### Environment-Specific Recommendation
@@ -107,19 +107,19 @@ The project supports model selection at three layers:
 - `dev`:
 	- Profile: Cost-first for inner loop, plus Balanced once per day.
 	- Orchestrator: smaller workspace-served model for local/branch testing.
-	- Evaluation: fast model for PR loops and `databricks:/databricks-claude-sonnet-4-5` before merge to shared branch.
+	- Evaluation: fast model for PR loops and `databricks:/databricks-claude-sonnet-5` before merge to shared branch.
 - `qa`:
 	- Profile: Balanced.
-	- Orchestrator: `databricks-gpt-5-2`.
-	- Evaluation: `databricks:/databricks-claude-sonnet-4-5` on each integration cycle.
+	- Orchestrator: `databricks-gpt-5-6-luna`.
+	- Evaluation: `databricks:/databricks-claude-sonnet-5` on each integration cycle.
 - `stg`:
 	- Profile: Quality-first.
-	- Orchestrator: `databricks-claude-sonnet-4-5`.
-	- Evaluation: `databricks:/databricks-claude-sonnet-4-5` with strict KPI enforcement (`EVAL_REQUIRE_ALL_KPIS=true`).
+	- Orchestrator: `databricks-claude-sonnet-5`.
+	- Evaluation: `databricks:/databricks-claude-sonnet-5` with strict KPI enforcement (`EVAL_REQUIRE_ALL_KPIS=true`).
 - `prod`:
 	- Profile: Balanced runtime with Quality-first pre-release gate.
-	- Orchestrator: `databricks-gpt-5-2` by default; temporarily promote to `databricks-claude-sonnet-4-5` for sensitive launches.
-	- Evaluation: required Sonnet gate before deployment and periodic post-release drift checks.
+	- Orchestrator: `databricks-gpt-5-6-luna` by default; temporarily promote to `databricks-claude-sonnet-5` for sensitive launches.
+	- Evaluation: required Sonnet 5 gate before deployment and periodic post-release drift checks.
 
 ### Promotion Rule
 

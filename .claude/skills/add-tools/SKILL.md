@@ -56,7 +56,7 @@ Genie example:
 ```yaml
 - name: genie_space
   genie_space:
-    name: Genie Space
+    name: Genie Agent Space
     space_id: ${var.genie_space_id}
     permission: CAN_RUN
 ```
