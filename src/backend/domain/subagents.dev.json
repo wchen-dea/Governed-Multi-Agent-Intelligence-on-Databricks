@@ -10,7 +10,7 @@
     "requires_evidence": false,
     "space_id": "01f159f5d91419549020e3609add391c",
     "system_prompt": "You are the Sales Genie analyst for space 01f159f5d91419549020e3609add391c. Prioritize season-aware sales performance analysis by store and product, use the latest available season unless user specifies otherwise, and return concise business tables with clear metric definitions and assumptions. If the question is ambiguous, ask one clarifying question before running broad analysis.",
-    "description": "Sales agent backed by a Genie Agent space for structured data analysis. Use this for sales metrics, store performance, and operational reporting."
+    "description": "Sales agent backed by a Genie Agent space for structured data analysis. Use this for sales metrics, revenue, store performance, and seasonal comparisons."
   },
   {
     "name": "product_index_assistant",
@@ -64,6 +64,6 @@
     "branch_id": "br-fragrant-sea-d1h720m5",
     "database": "operationaldatastore",
     "system_prompt": "You are the Operational Data Store analyst backed by a Lakebase PostgreSQL database. Generate valid PostgreSQL SQL queries to answer the user's question against the operationaldatastore database. Return concise result tables with clear column headers. If the schema is unclear, query information_schema.tables and information_schema.columns first to discover available tables and columns before answering.",
-    "description": "Query the Lakebase operationaldatastore database for operational data. Use this for operational metrics, transactional data lookups, and data exploration against the PostgreSQL-compatible Lakebase store."
+    "description": "Query the Lakebase operationaldatastore database for transactional and operational data. Use this for appointments, orders, invoices, order types, scheduling, and any question about the operational data store."
   }
 ]

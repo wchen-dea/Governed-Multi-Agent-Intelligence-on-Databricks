@@ -75,9 +75,9 @@ resources:
           value: ${var.uc_audit_table}
       # Resources which this app has access to
       resources:
-      - name: 'genie_space'
+      - name: 'sales_genie_space'
         genie_space:
-          name: 'Genie Agent'
+          name: 'Sales Genie Agent'
           space_id: ${var.genie_space_id}
           permission: 'CAN_RUN'
       - name: 'cdi_genie_space'
