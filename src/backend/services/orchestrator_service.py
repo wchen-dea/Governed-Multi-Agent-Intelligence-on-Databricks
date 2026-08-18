@@ -2,6 +2,7 @@
 
 import asyncio
 from dataclasses import dataclass
+import json
 import logging
 from contextlib import AsyncExitStack
 import os
@@ -18,6 +19,7 @@ from databricks_openai.agents import McpServer
 from backend.domain.subagent_config import SubagentConfig
 from backend.services.interfaces import (
     FunctionToolWrapper,
+    LakebaseToolsBuilder,
     McpServerFactory,
     MessageBus,
     TraceMetadataUpdater,
@@ -113,6 +115,13 @@ def _build_base_orchestrator_instructions(subagents: list[SubagentConfig]) -> st
                 "- MCP tools "
                 f"({subagent.name}, auth={subagent.auth_mode}, "
                 f"classification={subagent.data_classification}, evidence={subagent.requires_evidence}): "
+                f"{subagent.description}"
+            )
+        elif subagent.is_lakebase:
+            base = (
+                f"- {subagent.tool_name} (auth={subagent.auth_mode}, "
+                f"classification={subagent.data_classification}, evidence={subagent.requires_evidence}, "
+                f"type=lakebase, database={subagent.database}): "
                 f"{subagent.description}"
             )
         else:
@@ -340,7 +349,103 @@ def build_subagent_tools(
     for subagent in subagents:
         if subagent.is_genie or subagent.is_mcp:
             continue
+        if subagent.is_lakebase:
+            continue
         tools.append(dependencies.function_tool_wrapper(_make_tool(subagent)))
+    return tools
+
+
+def _format_lakebase_results(data: dict) -> str:
+    """Format Lakebase API response into a readable string."""
+    if "data" in data and isinstance(data["data"], list):
+        columns = [col.get("name", f"col_{i}") for i, col in enumerate(data.get("columns", []))]
+        rows = data["data"]
+        if not rows:
+            return "Query returned 0 rows."
+        header = " | ".join(columns)
+        lines = [header, "-" * len(header)]
+        for row in rows[:200]:
+            lines.append(" | ".join(str(v) for v in row))
+        result = "\n".join(lines)
+        if len(rows) > 200:
+            result += f"\n... ({len(rows) - 200} more rows truncated)"
+        return result
+    return json.dumps(data, indent=2)
+
+
+def build_lakebase_tools(
+    subagents: list[SubagentConfig],
+    identity_ctx: RequestIdentityContext,
+    deps: OrchestratorDependencies | None = None,
+) -> list:
+    """Build function tools for Lakebase subagents.
+
+    Each Lakebase subagent becomes a function tool that accepts a SQL query
+    and executes it against the configured Lakebase project and branch.
+    """
+    dependencies = deps or OrchestratorDependencies()
+    tools = []
+
+    for subagent in subagents:
+        if not subagent.is_lakebase:
+            continue
+
+        if subagent.is_obo:
+            if not identity_ctx.has_user_identity:
+                continue
+            workspace_client = identity_ctx.user_workspace_client
+        else:
+            workspace_client = identity_ctx.app_workspace_client
+
+        def _make_lakebase_tool(cfg: SubagentConfig, ws_client):
+            async def _call(sql_query: str, cfg_param: SubagentConfig = cfg) -> str:
+                dependencies.message_bus.publish(
+                    "tool.call.started",
+                    {
+                        "tool_name": cfg_param.tool_name,
+                        "subagent": cfg_param.name,
+                        "auth_mode": cfg_param.auth_mode,
+                    },
+                )
+                try:
+                    path = (
+                        f"/api/2.0/lakebase/projects/{cfg_param.project_id}"
+                        f"/branches/{cfg_param.branch_id}/sql"
+                    )
+                    body = {"statement": sql_query, "database": cfg_param.database}
+                    response = await asyncio.to_thread(
+                        ws_client.api_client.do, "POST", path, body=body
+                    )
+                    result = _format_lakebase_results(response) if isinstance(response, dict) else str(response)
+                    dependencies.message_bus.publish(
+                        "tool.call.succeeded",
+                        {
+                            "tool_name": cfg_param.tool_name,
+                            "subagent": cfg_param.name,
+                            "auth_mode": cfg_param.auth_mode,
+                        },
+                    )
+                    return result
+                except Exception as exc:
+                    dependencies.message_bus.publish(
+                        "tool.call.failed",
+                        {
+                            "tool_name": cfg_param.tool_name,
+                            "subagent": cfg_param.name,
+                            "auth_mode": cfg_param.auth_mode,
+                            "error_type": type(exc).__name__,
+                        },
+                    )
+                    raise
+
+            _call.__name__ = cfg.tool_name
+            _call.__doc__ = cfg.description
+            return _call
+
+        tools.append(dependencies.function_tool_wrapper(
+            _make_lakebase_tool(subagent, workspace_client)
+        ))
+
     return tools
 
 

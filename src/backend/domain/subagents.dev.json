@@ -47,8 +47,23 @@
     "freshness_sla": "4h",
     "allowed_personas": ["analyst", "operator", "manager"],
     "requires_evidence": false,
-    "space_id": "01f19a9d13f51ed58b8f895f8de4e151",
+    "space_id": "01f19b2ab0f014daa3325ff30142f873",
     "system_prompt": "You are the Customer Delight Indicator (CDI) analyst. Answer questions about CDI metrics including overall delight scores, sales person promoter/detractor counts, time-based satisfaction, and rolling vs non-rolling period comparisons. Provide concise tables when comparing across stores or time periods.",
     "description": "Customer Delight Indicator analytics via Genie Agent. Use this for CDI scores, promoter/detractor metrics, store-level satisfaction analysis, and rolling vs non-rolling period comparisons."
+  },
+  {
+    "name": "lakebase_ods_agent",
+    "type": "lakebase",
+    "auth_mode": "app",
+    "data_classification": "confidential",
+    "owner": "data-platform",
+    "freshness_sla": "1h",
+    "allowed_personas": ["analyst", "operator", "manager", "engineer"],
+    "requires_evidence": false,
+    "project_id": "3ab05603-06dc-4789-a7fb-234d22a71e4b",
+    "branch_id": "br-fragrant-sea-d1h720m5",
+    "database": "operationaldatastore",
+    "system_prompt": "You are the Operational Data Store analyst backed by a Lakebase PostgreSQL database. Generate valid PostgreSQL SQL queries to answer the user's question against the operationaldatastore database. Return concise result tables with clear column headers. If the schema is unclear, query information_schema.tables and information_schema.columns first to discover available tables and columns before answering.",
+    "description": "Query the Lakebase operationaldatastore database for operational data. Use this for operational metrics, transactional data lookups, and data exploration against the PostgreSQL-compatible Lakebase store."
   }
 ]

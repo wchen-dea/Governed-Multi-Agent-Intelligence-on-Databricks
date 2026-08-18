@@ -479,6 +479,18 @@ App URL: `https://multiagent-app-dev-4225037891036111.aws.databricksapps.com`
 4. Follow up: `Which stores have the lowest overall delight score this month?`
 5. Verify ranked results with evidence citation.
 
+### 5. Lakebase ODS Agent (Lakebase SQL)
+
+**Scenario:** Operations analyst checks appointment volume by order type in the operational data store.
+
+**Steps:**
+
+1. Open the app URL in a browser.
+2. Type: `How many appointments have an invoice order type name?`
+3. Verify the agent generates a SQL query against the Lakebase `operationaldatastore` database and returns a count.
+4. Follow up: `Break that down by month for the last 6 months`
+5. Verify the response contains a formatted table with monthly counts and evidence citation.
+
 ### Verification Notes
 
 - No agent selection is needed — the orchestrator routes automatically based on question intent.

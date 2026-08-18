@@ -20,10 +20,13 @@ targets:
       store_manager_genie_space_id: ""
       executive_genie_space_id: ""
       supply_chain_genie_space_id: ""
-      cdi_genie_space_id: "01f19a9d13f51ed58b8f895f8de4e151"
+      cdi_genie_space_id: "01f19b2ab0f014daa3325ff30142f873"
       knowledge_assistant_endpoint_name: ""
-      ai_search_endpoint_name: "knowledge-assistant-product-ep"
+      ai_search_endpoint_name: "product-search-vs-endpoint"
       flink_support_vs_endpoint_name: "flink-support-vs-endpoint"
+      lakebase_project_id: "3ab05603-06dc-4789-a7fb-234d22a71e4b"
+      lakebase_branch_id: "br-fragrant-sea-d1h720m5"
+      lakebase_database: "operationaldatastore"
       message_bus_backend: structured_logging
       message_bus_topic: agent-lifecycle-events
       uc_audit_warehouse_id: "unused-for-structured-logging"
@@ -36,13 +39,13 @@ targets:
           name: multiagent-app-dev
           usage_policy_id: "06846952-d579-4cd7-ab90-b86f0a1e3ed7"
           resources:
-          - name: genie_space
+          - name: sales_genie_space
             genie_space:
-              name: Genie Agent
+              name: Sales Analysis Agent
               space_id: ${var.genie_space_id}
-              permission: CAN_RUN
+              permission: 'CAN_RUN'
           - name: cdi_genie_space
             genie_space:
               name: CDI Metrics Agent
               space_id: ${var.cdi_genie_space_id}
-              permission: CAN_RUN
+              permission: 'CAN_RUN'

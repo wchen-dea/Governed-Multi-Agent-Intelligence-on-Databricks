@@ -80,10 +80,6 @@ resources:
           name: 'Genie Agent'
           space_id: ${var.genie_space_id}
           permission: 'CAN_RUN'
-      - name: 'flink_support_search_endpoint'
-        serving_endpoint:
-          name: ${var.flink_support_vs_endpoint_name}
-          permission: 'CAN_QUERY'
       - name: 'cdi_genie_space'
         genie_space:
           name: 'CDI Metrics Agent'

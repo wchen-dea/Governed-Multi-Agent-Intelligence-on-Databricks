@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Literal
 
-SubagentKind = Literal["genie", "serving_endpoint", "app", "mcp"]
-ALLOWED_SUBAGENT_KINDS = {"genie", "serving_endpoint", "app", "mcp"}
+SubagentKind = Literal["genie", "serving_endpoint", "app", "mcp", "lakebase"]
+ALLOWED_SUBAGENT_KINDS = {"genie", "serving_endpoint", "app", "mcp", "lakebase"}
 SubagentAuthMode = Literal["app", "obo"]
 ALLOWED_SUBAGENT_AUTH_MODES = {"app", "obo"}
 DataClassification = Literal["public", "internal", "confidential", "restricted"]
@@ -35,6 +35,9 @@ class SubagentConfig:
     endpoint: str | None = None
     space_id: str | None = None
     mcp_url: str | None = None
+    project_id: str | None = None
+    branch_id: str | None = None
+    database: str | None = None
     auth_mode: SubagentAuthMode = "app"
     data_classification: DataClassification = "internal"
     owner: str | None = None
@@ -68,7 +71,14 @@ class SubagentConfig:
             raise ValueError(f"Genie subagent {self.name!r} must define space_id")
         if self.kind == "mcp" and not self.mcp_url:
             raise ValueError(f"MCP subagent {self.name!r} must define mcp_url")
-        if self.kind not in {"genie", "mcp"} and not self.endpoint:
+        if self.kind == "lakebase":
+            if not self.project_id:
+                raise ValueError(f"Lakebase subagent {self.name!r} must define project_id")
+            if not self.branch_id:
+                raise ValueError(f"Lakebase subagent {self.name!r} must define branch_id")
+            if not self.database:
+                raise ValueError(f"Lakebase subagent {self.name!r} must define database")
+        if self.kind not in {"genie", "mcp", "lakebase"} and not self.endpoint:
             raise ValueError(f"Non-genie subagent {self.name!r} must define endpoint")
         if any(not persona.strip() for persona in self.allowed_personas):
             raise ValueError(f"Subagent {self.name!r} has invalid allowed_personas entry")
@@ -80,6 +90,10 @@ class SubagentConfig:
     @property
     def is_mcp(self) -> bool:
         return self.kind == "mcp"
+
+    @property
+    def is_lakebase(self) -> bool:
+        return self.kind == "lakebase"
 
     @property
     def is_obo(self) -> bool:
@@ -134,6 +148,9 @@ class SubagentConfig:
                 endpoint=value.get("endpoint"),
                 space_id=value.get("space_id"),
                 mcp_url=value.get("mcp_url"),
+                project_id=value.get("project_id"),
+                branch_id=value.get("branch_id"),
+                database=value.get("database"),
                 auth_mode=auth_mode,
                 data_classification=value["data_classification"],
                 owner=owner,
@@ -162,7 +179,9 @@ def _is_configured_subagent(entry: dict[str, Any]) -> bool:
         return False
     if kind == "mcp" and _is_placeholder(entry.get("mcp_url")):
         return False
-    if kind not in {"genie", "mcp"} and _is_placeholder(entry.get("endpoint")):
+    if kind == "lakebase" and _is_placeholder(entry.get("project_id")):
+        return False
+    if kind not in {"genie", "mcp", "lakebase"} and _is_placeholder(entry.get("endpoint")):
         return False
     return True
 

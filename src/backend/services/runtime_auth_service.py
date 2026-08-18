@@ -16,6 +16,7 @@ from mlflow.types.responses import ResponsesAgentRequest
 from backend.domain.subagent_config import SubagentConfig
 from backend.services.interfaces import (
     IdentityContextProvider,
+    LakebaseToolsBuilder,
     McpServersBuilder,
     MessageBus,
     OboClientFactory,
@@ -24,7 +25,7 @@ from backend.services.interfaces import (
     TraceMetadataUpdater,
 )
 from backend.services.message_bus import NoOpMessageBus
-from backend.services.orchestrator_service import build_mcp_servers, build_subagent_tools
+from backend.services.orchestrator_service import build_lakebase_tools, build_mcp_servers, build_subagent_tools
 from backend.services.policy_service import (
     PolicyDecision,
     PolicyContext,
@@ -94,6 +95,7 @@ class RuntimeAuthDependencies:
     obo_client_factory: OboClientFactory = AsyncDatabricksOpenAI
     subagent_tools_builder: SubagentToolsBuilder = build_subagent_tools
     mcp_servers_builder: McpServersBuilder = build_mcp_servers
+    lakebase_tools_builder: LakebaseToolsBuilder = build_lakebase_tools
     policy_context_builder: Callable[
         [ResponsesAgentRequest, RequestIdentityContext], PolicyContext
     ] = build_policy_context
@@ -206,18 +208,19 @@ def build_runtime_auth_context(
     )
 
     subagent_tools = dependencies.subagent_tools_builder(allowed_subagents, app_client, obo_client)
+    lakebase_tools = dependencies.lakebase_tools_builder(allowed_subagents, identity_ctx)
     mcp_servers, unavailable_auth = dependencies.mcp_servers_builder(allowed_subagents, identity_ctx)
     unavailable = denied_by_policy + unavailable_auth
     dependencies.message_bus.publish(
         "auth.context.built",
         {
-            "subagent_tools": len(subagent_tools),
+            "subagent_tools": len(subagent_tools) + len(lakebase_tools),
             "mcp_servers": len(mcp_servers),
             "unavailable_auth": len(unavailable),
         },
     )
     return RuntimeAuthContext(
-        subagent_tools=subagent_tools,
+        subagent_tools=subagent_tools + lakebase_tools,
         mcp_servers=mcp_servers,
         unavailable_auth=unavailable,
         policy_allowed_subagents=allowed_subagents,

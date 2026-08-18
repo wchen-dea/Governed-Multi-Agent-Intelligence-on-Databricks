@@ -55,6 +55,16 @@ class McpServersBuilder(Protocol):
     ) -> tuple[list[McpServer], list[str]]: ...
 
 
+class LakebaseToolsBuilder(Protocol):
+    """Build function tools for Lakebase subagents."""
+
+    def __call__(
+        self,
+        subagents: list[SubagentConfig],
+        identity_ctx: RequestIdentityContext,
+    ) -> list: ...
+
+
 class FunctionToolWrapper(Protocol):
     """Wrap an async callable as an agent function tool."""
 
