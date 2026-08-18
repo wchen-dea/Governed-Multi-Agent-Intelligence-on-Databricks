@@ -32,6 +32,9 @@ dev = [
 
 setup = [
     "ruamel.yaml>=0.18.0",
+    "python-docx>=1.1.0",
+    "pypdf>=5.0.0",
+    "openpyxl>=3.1.0",
 ]
 
 [tool.uv]
@@ -52,3 +55,5 @@ agent-evaluate = "backend.evaluate_agent:evaluate"
 discover-tools = "scripts.discover_tools:main"
 preflight = "scripts.preflight:main"
 prepare-app-source = "scripts.prepare_app_source:main"
+setup-flink-support-rag = "scripts.setup_flink_support_rag:main"
+setup-cdi-agent = "scripts.setup_cdi_agent:main"

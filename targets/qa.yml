@@ -34,6 +34,8 @@ targets:
       target_app_name: "<QA-TARGET-APP-NAME>"
       # Example: Unity Catalog table for Databricks Apps telemetry logs
       app_telemetry_logs_table: "<QA-APP-TELEMETRY-LOGS-TABLE>"
+      app_telemetry_metrics_table: "<QA-APP-TELEMETRY-METRICS-TABLE>"
+      app_telemetry_traces_table: "<QA-APP-TELEMETRY-TRACES-TABLE>"
       # Observability owner: lifecycle audit sink in QA.
       message_bus_backend: uc_table
       message_bus_topic: agent-lifecycle-events

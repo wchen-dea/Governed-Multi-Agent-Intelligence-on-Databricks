@@ -140,6 +140,14 @@ Operational focus areas:
   - do not rely on `x-forwarded-access-token` in raw curl flows, which can enter OIDC redirect paths.
 - Policy or guardrail blocks:
   - inspect backend logs for deny reasons and guardrail reason codes.
+  - Genie agents should have `requires_evidence: false` since their output format doesn't include citation markers.
 - Message bus backend initialization failure:
   - with `MESSAGE_BUS_FAIL_OPEN=true`, runtime should fall back to structured logging.
   - otherwise fix backend credentials/connectivity for selected transport.
+- Reasoning model errors (400):
+  - ensure `set_default_openai_api("responses")` in handlers.py, not `"chat_completions"`.
+
+## Setup Scripts
+
+- `uv run setup-flink-support-rag`: create Vector Search index from support KB volume for Flink RAG agent.
+- `uv run setup-cdi-agent`: verify CDI materialized view exists and create Genie space.

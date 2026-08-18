@@ -28,9 +28,11 @@ resources:
       # - level: CAN_USE
       #   group_name: users
       # space: my-space
-        telemetry_export_destinations:
-        - unity_catalog:
+      telemetry_export_destinations:
+      - unity_catalog:
           logs_table: ${var.app_telemetry_logs_table}
+          metrics_table: ${var.app_telemetry_metrics_table}
+          traces_table: ${var.app_telemetry_traces_table}
       # usage_policy_id: ${var.app_usage_policy_id}
       # user_api_scopes:
       # - sql
@@ -77,4 +79,13 @@ resources:
         genie_space:
           name: 'Genie Agent'
           space_id: ${var.genie_space_id}
+          permission: 'CAN_RUN'
+      - name: 'flink_support_search_endpoint'
+        serving_endpoint:
+          name: ${var.flink_support_vs_endpoint_name}
+          permission: 'CAN_QUERY'
+      - name: 'cdi_genie_space'
+        genie_space:
+          name: 'CDI Metrics Agent'
+          space_id: ${var.cdi_genie_space_id}
           permission: 'CAN_RUN'

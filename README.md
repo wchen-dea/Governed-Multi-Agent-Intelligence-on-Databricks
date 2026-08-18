@@ -77,7 +77,9 @@ Runtime integrations are environment-specific through `src/backend/domain/subage
 Current dev target examples:
 
 - Genie Agent: `sales_insights_agent` (space id configured in `subagents.dev.json`)
-- AI Search MCP index: `product_index_assistant` using `/api/2.0/mcp/ai-search/dt_dev_gold/dwh_dbx/dim_product_search_index`
+- Genie Agent: `cdi_agent` — Customer Delight Indicator analytics backed by materialized view `quickstart_catalog.multi_agent_schema.fct_cdi_trusted_expert_score_metric_view`
+- AI Search MCP index: `product_index_assistant` using `/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/dim_product_search_index`
+- AI Search MCP index: `flink_support_agent` using `/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/flink_support_search_index` (RAG over support KB volume)
 
 Typical Genie Agent source pattern:
 

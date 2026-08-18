@@ -43,7 +43,7 @@ def _build_openai_client() -> AsyncDatabricksOpenAI:
 
 _client = _build_openai_client()
 set_default_openai_client(_client)
-set_default_openai_api("chat_completions")
+set_default_openai_api("responses")
 set_trace_processors([])
 cast(Any, mlflow).openai.autolog()
 logger = logging.getLogger(__name__)

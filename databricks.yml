@@ -49,6 +49,9 @@ variables:
   supply_chain_genie_space_id:
     description: Supply Chain Genie Agent space ID for the current environment
     default: ""
+  cdi_genie_space_id:
+    description: CDI Genie Agent space ID for the current environment
+    default: ""
   knowledge_assistant_endpoint_name:
     description: Knowledge assistant serving endpoint name for the current environment
     default: ""
@@ -58,6 +61,9 @@ variables:
   ai_search_endpoint_name:
     description: AI search serving endpoint name for the current environment
     default: ""
+  flink_support_vs_endpoint_name:
+    description: Vector Search endpoint name for the Flink support RAG index
+    default: "flink-support-vs-endpoint"
   target_app_name:
     description: Target Databricks app name granted CAN_USE for the current environment
     default: ""
@@ -87,4 +93,10 @@ variables:
     default: agent_lifecycle_events
   app_telemetry_logs_table:
     description: Unity Catalog table for Databricks Apps telemetry export
-    default: main.observability.app_logs
+    default: quickstart_catalog.multi_agent_schema.app_logs
+  app_telemetry_metrics_table:
+    description: Unity Catalog table for Databricks Apps telemetry metrics
+    default: quickstart_catalog.multi_agent_schema.app_metrics
+  app_telemetry_traces_table:
+    description: Unity Catalog table for Databricks Apps telemetry traces
+    default: quickstart_catalog.multi_agent_schema.app_traces

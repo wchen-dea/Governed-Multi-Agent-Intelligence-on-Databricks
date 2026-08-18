@@ -49,11 +49,35 @@ Typical source pattern for Genie Agents:
 
 - Type: mcp
 - Runtime name: `product_index_assistant`
-- MCP URL: `/api/2.0/mcp/ai-search/dt_dev_gold/dwh_dbx/dim_product_search_index`
+- MCP URL: `/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/dim_product_search_index`
 - Backing AI Search endpoint: `knowledge-assistant-product-ep`
 - Auth mode: app
 - Classification: internal
 - Owner: platform-docs
+- Status: active
+
+### flink_support_agent
+
+- Type: mcp
+- Runtime name: `flink_support_agent`
+- MCP URL: `/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/flink_support_search_index`
+- Source: RAG over `/Volumes/quickstart_catalog/multi_agent_schema/support_kb`
+- Auth mode: app
+- Classification: internal
+- Owner: platform-support
+- Status: active
+
+## Active Genie Agents (Dev) — CDI
+
+### cdi_agent
+
+- Type: genie
+- Runtime name: `cdi_agent`
+- Space ID source: `src/backend/domain/subagents.dev.json`
+- Source: materialized view `quickstart_catalog.multi_agent_schema.fct_cdi_trusted_expert_score_metric_view`
+- Auth mode: app
+- Classification: confidential
+- Owner: customer-experience
 - Status: active
 
 ## Other Environments

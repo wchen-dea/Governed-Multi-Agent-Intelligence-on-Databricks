@@ -82,5 +82,31 @@
     "requires_evidence": true,
     "endpoint": "lakebase_vector_storage",
     "description": "Query the Lakebase-backed AI Search storage endpoint on Model Serving. Use this for semantic retrieval and AI Search-style lookups. The endpoint must have task type agent/v1/responses."
+  },
+  {
+    "name": "flink_support_agent",
+    "type": "mcp",
+    "auth_mode": "app",
+    "data_classification": "internal",
+    "owner": "platform-support",
+    "freshness_sla": "24h",
+    "allowed_personas": ["analyst", "operator", "manager", "engineer"],
+    "requires_evidence": false,
+    "mcp_url": "/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/flink_support_search_index",
+    "system_prompt": "You are the Flink Support assistant backed by an AI Search index over the support knowledge base. Ground all answers in retrieved documents. For every claim, append a bracketed citation like [1] referencing the source document path. End your answer with a Source: line listing each cited document. If retrieved context is insufficient, say so explicitly instead of guessing.",
+    "description": "Retrieve and answer Flink support questions using RAG over the support knowledge base. Use this for Flink troubleshooting, configuration guidance, best practices, and operational support."
+  },
+  {
+    "name": "cdi_agent",
+    "type": "genie",
+    "auth_mode": "obo",
+    "data_classification": "confidential",
+    "owner": "customer-experience",
+    "freshness_sla": "4h",
+    "allowed_personas": ["analyst", "operator", "manager"],
+    "requires_evidence": true,
+    "space_id": "<CDI-GENIE-SPACE-ID>",
+    "system_prompt": "You are the Customer Delight Indicator (CDI) analyst. Answer questions about CDI metrics including overall delight scores, sales person promoter/detractor counts, time-based satisfaction, and rolling vs non-rolling period comparisons. Provide concise tables when comparing across stores or time periods.",
+    "description": "Customer Delight Indicator analytics via Genie Agent. Use this for CDI scores, promoter/detractor metrics, store-level satisfaction analysis, and rolling vs non-rolling period comparisons."
   }
 ]

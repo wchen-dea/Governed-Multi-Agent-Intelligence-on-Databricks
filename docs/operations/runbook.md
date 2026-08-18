@@ -426,3 +426,201 @@ After:
 - `docs/architecture/system-architecture.md`: high-level architecture
 - `docs/architecture/system-design.md`: low-level design
 - `docs/internal/claude.md`: Claude skill usage and operator workflow
+
+## Agent Use Cases (Web UI Verification)
+
+App URL: `https://multiagent-app-dev-4225037891036111.aws.databricksapps.com`
+
+### 1. Sales Insights Agent (Genie)
+
+**Scenario:** Regional manager reviews top stores by revenue for the current season.
+
+**Steps:**
+
+1. Open the app URL in a browser.
+2. Type: `What are the top 10 stores by total revenue this season?`
+3. Verify the response contains a table with store codes, revenue figures, and season context.
+4. Follow up: `Compare those stores to last season`
+5. Verify comparative data is returned with evidence citation.
+
+### 2. Product Index Assistant (AI Search RAG)
+
+**Scenario:** Store associate looks up a product by partial description.
+
+**Steps:**
+
+1. Open the app URL in a browser.
+2. Type: `Find products matching "all season 225/65R17 tire"`
+3. Verify the response returns product codes, descriptions, brand codes, and article types.
+4. Follow up: `What brand is product code 12345?`
+5. Verify a specific product record is returned from the index.
+
+### 3. Flink Support Agent (AI Search RAG)
+
+**Scenario:** Data engineer troubleshoots a Flink streaming job with growing consumer lag.
+
+**Steps:**
+
+1. Open the app URL in a browser.
+2. Type: `Our Flink streaming job has increasing consumer lag. What are the common causes and how do we fix it?`
+3. Verify the response is grounded in retrieved documents with bracketed citations (e.g., `[1]`).
+4. Verify a `Source:` line lists the cited document paths.
+5. Follow up: `How do we configure checkpointing for exactly-once processing?`
+
+### 4. CDI Agent (Genie)
+
+**Scenario:** District manager reviews Customer Delight Indicator scores across stores.
+
+**Steps:**
+
+1. Open the app URL in a browser.
+2. Type: `Show me the CDI promoter and detractor counts by store for the last rolling period`
+3. Verify the response contains a table with store-level promoter/detractor/response counts.
+4. Follow up: `Which stores have the lowest overall delight score this month?`
+5. Verify ranked results with evidence citation.
+
+### Verification Notes
+
+- No agent selection is needed — the orchestrator routes automatically based on question intent.
+- Genie agents (sales, CDI) return SQL-grounded results; `requires_evidence` should be `false` for Genie agents since their output format doesn't include citation markers.
+- Default persona is `manager` per dev config; set via custom_inputs if testing persona-restricted agents.
+
+## Troubleshooting
+
+### "evidence_required" guardrail blocks response
+
+**Symptom:** "The backend ended the stream without returning visible content. This often means the response was blocked before it could be shown, for example by an `evidence_required` guardrail."
+
+**Cause:** The subagent has `requires_evidence: true` but the response doesn't contain citation markers (`[1]`, `Source:`, or `Citation:`). Genie agents return tables/SQL results that never include these markers. MCP/RAG agents may also omit them if the system prompt doesn't explicitly require them.
+
+**Fix:**
+
+- For Genie agents: set `requires_evidence: false` in `src/backend/domain/subagents.<target>.json`. Genie output is inherently grounded in SQL.
+- For MCP/RAG agents: either set `requires_evidence: false`, or strengthen the system prompt to explicitly instruct: "append a bracketed citation like `[1]`" and "end with a `Source:` line."
+- Rebuild and redeploy after changes.
+
+### "Function tools with reasoning_effort are not supported" (HTTP 400)
+
+**Symptom:** `{"detail": "Error code: 400 ... Function tools with reasoning_effort are not supported for gpt-5.6-luna in /v1/chat/completions."}`
+
+**Cause:** The openai-agents SDK API mode is set to `chat_completions` in `src/backend/api/handlers.py`, but the orchestrator model (e.g., `gpt-5.6-luna`) requires the `/v1/responses` endpoint for function tool support.
+
+**Fix:**
+
+In `src/backend/api/handlers.py`, ensure:
+
+```python
+set_default_openai_api("responses")
+```
+
+Not `"chat_completions"`. Rebuild and redeploy.
+
+### HTTP 502 Bad Gateway
+
+**Symptom:** `Databricks App - 502 Bad Gateway` on any query.
+
+**Possible causes:**
+
+1. **Missing wheel artifact:** The deployed `wheels/` directory contains no `.whl` file. The launcher raises `FileNotFoundError` on startup.
+   - Fix: `make build-app-source && make import TARGET=dev && make deploy TARGET=dev APP_NAME=multiagent-app-dev`
+
+2. **Cold-start timeout:** First request after deployment takes longer (MCP connections, Genie space warm-up). The platform gateway times out.
+   - Fix: Retry the query — subsequent requests use cached MCP connections.
+
+3. **Backend process crash:** App reports RUNNING but backend died during request handling.
+   - Fix: Restart the app: `databricks apps stop <app-name> && databricks apps start <app-name>`, then redeploy if crash persists.
+
+**Diagnosis:** Invoke directly with curl to see the actual error:
+
+```bash
+curl -s --noproxy '*' --max-time 120 -X POST \
+  "https://<app-url>/invocations" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $(databricks auth token | python3 -c 'import sys,json; print(json.load(sys.stdin)[\"access_token\"])')" \
+  -d '{"input": [{"role": "user", "content": "test"}], "custom_inputs": {"persona": "manager"}}'
+```
+
+### "Backend proxy request failed: All connection attempts failed"
+
+**Symptom:** Curl returns `{"detail":"Backend proxy request failed: All connection attempts failed"}` while app status shows RUNNING.
+
+**Cause:** The backend process crashed after initial startup. The platform reports the compute as active, but the Python process (uvicorn) is no longer listening.
+
+**Fix:** Stop and restart the app:
+
+```bash
+databricks apps stop <app-name>
+databricks apps start <app-name>
+```
+
+If it recurs, check for import errors or startup crashes in the wheel (e.g., missing dependencies, incompatible SDK versions).
+
+### Genie agent returns "permission denied" or "table does not exist"
+
+**Symptom:** The orchestrator routes correctly to a Genie agent, but the response says the app lacks permission to query the underlying table.
+
+**Cause:** The app's service principal does not have `SELECT` access to the tables referenced by the Genie space.
+
+**Fix:**
+
+1. Run the grant script:
+   ```bash
+   make grant-runtime-permissions TARGET=dev APP_NAME=multiagent-app-dev
+   ```
+
+2. Or grant manually in a SQL editor:
+   ```sql
+   GRANT USE CATALOG ON CATALOG <catalog> TO `<app-service-principal-name>`;
+   GRANT USE SCHEMA ON SCHEMA <catalog>.<schema> TO `<app-service-principal-name>`;
+   GRANT SELECT ON TABLE <catalog>.<schema>.<table> TO `<app-service-principal-name>`;
+   ```
+
+   The app service principal name is in the format `app-XXXXX <app-name>` (visible via `databricks apps get <app-name>`).
+
+### Genie agent "unavailable" — missing resource grant
+
+**Symptom:** Response says the agent is unavailable or lacks access to the Genie space.
+
+**Cause:** The Genie space is not registered as an app resource with `CAN_RUN` permission.
+
+**Fix:**
+
+```bash
+databricks apps update <app-name> --json '{
+  "resources": [
+    {"name": "genie_space", "genie_space": {"name": "Genie Agent", "space_id": "<space-id>", "permission": "CAN_RUN"}}
+  ]
+}'
+```
+
+Also update `targets/<target>.yml` with the space ID variable and `resources/multiagent_app.yml` with the resource declaration for future deploys.
+
+### Terraform registry unreachable during `bundle deploy`
+
+**Symptom:** `Error: terraform init: exit status 1 — Could not retrieve the list of available versions for provider databricks/databricks: could not connect to registry.terraform.io`
+
+**Cause:** Network/VPN/firewall blocking access to `registry.terraform.io`, often an IPv6 routing issue.
+
+**Fix:** Use the fallback import/deploy workflow:
+
+```bash
+make build-app-source
+make import TARGET=dev
+make deploy TARGET=dev APP_NAME=multiagent-app-dev
+```
+
+Or use `make redeploy` which has built-in fallback logic.
+
+### Vector Search index "table does not exist" during setup
+
+**Symptom:** `setup-flink-support-rag` or similar script fails with `Table ... does not exist` when creating the Delta Sync index.
+
+**Cause:** The source table was created without Change Data Feed enabled, which Delta Sync indexes require.
+
+**Fix:** Enable CDF on the source table:
+
+```sql
+ALTER TABLE <catalog>.<schema>.<table> SET TBLPROPERTIES (delta.enableChangeDataFeed = true);
+```
+
+The setup scripts handle this automatically on re-run.
