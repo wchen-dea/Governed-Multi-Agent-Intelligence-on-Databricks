@@ -17,6 +17,12 @@ class SubagentConfig {
   +endpoint: str?
   +space_id: str?
   +mcp_url: str?
+  +project_id: str?
+  +branch_id: str?
+  +database: str?
+  +pg_host: str?
+  +pg_user: str?
+  +endpoint_id: str?
   +auth_mode: SubagentAuthMode
   +data_classification: DataClassification
   +owner: str?
@@ -25,6 +31,7 @@ class SubagentConfig {
   +requires_evidence: bool
   +is_genie: bool
   +is_mcp: bool
+  +is_lakebase: bool
   +is_obo: bool
   +tool_name: str
   +model_name: str

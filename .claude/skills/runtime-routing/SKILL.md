@@ -40,7 +40,7 @@ This skill does not cover:
 ### 1) Define routing contract
 
 - Identify user intent, allowed personas, and required evidence behavior.
-- Choose `type` (`genie`, `mcp`, `serving_endpoint`, or `app`).
+- Choose `type` (`genie`, `mcp`, `serving_endpoint`, `app`, or `lakebase`).
 - Set `auth_mode` based on data sensitivity and user-context needs.
 
 ### 2) Update target subagent config

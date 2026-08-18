@@ -34,9 +34,9 @@ resources:
           metrics_table: ${var.app_telemetry_metrics_table}
           traces_table: ${var.app_telemetry_traces_table}
       # usage_policy_id: ${var.app_usage_policy_id}
-      # user_api_scopes:
-      # - sql
-      # - serving-endpoints
+      user_api_scopes:
+      - sql
+      - databases
       source_code_path: ../.databricks_app_source
       config:
         command: ["python", "launcher.py"]
@@ -85,3 +85,7 @@ resources:
           name: 'CDI Metrics Agent'
           space_id: ${var.cdi_genie_space_id}
           permission: 'CAN_RUN'
+      - name: 'lakebase_ods'
+        sql_warehouse:
+          id: ${var.lakebase_sql_warehouse_id}
+          permission: 'CAN_USE'

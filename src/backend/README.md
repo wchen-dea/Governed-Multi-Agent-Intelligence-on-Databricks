@@ -29,6 +29,13 @@ Primary entrypoint:
   - `guardrails_service.py`: deterministic response-time guardrail checks.
   - `message_bus.py`: structured logging, noop, Kafka, RabbitMQ, UC table backends.
   - `interfaces.py`: service protocols for dependency injection.
+
+Supported subagent types:
+  - `genie`: Genie Agent via MCP protocol.
+  - `serving_endpoint`: Databricks Model Serving via Responses API.
+  - `app`: Databricks App via Responses API.
+  - `mcp`: AI Search or generic MCP route.
+  - `lakebase`: Lakebase PostgreSQL via psycopg2 with OAuth credentials.
 - `src/backend/domain/`
   - `subagent_config.py`: typed config model and validation.
   - `subagents.<target>.json`: environment-specific subagent/tool registry config.

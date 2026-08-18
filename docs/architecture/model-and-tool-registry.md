@@ -9,7 +9,7 @@ Provide an auditable and maintainable registry for runtime integrations and owne
 ## Registry Fields
 
 - id
-- type (genie, serving_endpoint, app, mcp, model)
+- type (genie, serving_endpoint, app, mcp, lakebase, model)
 - runtime name
 - owner
 - auth mode
@@ -84,6 +84,21 @@ Typical source pattern for Genie Agents:
 
 - QA/STG/PROD currently include additional placeholder and serving-endpoint entries.
 - Entries with placeholder identifiers are skipped at runtime until concrete IDs are configured.
+
+## Active Lakebase Agents (Dev)
+
+### lakebase_ods_agent
+
+- Type: lakebase
+- Runtime name: `lakebase_ods_agent`
+- Project: `ore` (uid: `3ab05603-06dc-4789-a7fb-234d22a71e4b`)
+- Branch: `production` (uid: `br-fragrant-sea-d1h720m5`)
+- Endpoint: `primary` (host: `ep-falling-cake-d1j29nc5.database.us-west-2.cloud.databricks.com`)
+- Database: `operationaldatastore`
+- Auth mode: app
+- Classification: confidential
+- Owner: data-platform
+- Status: active
 
 ## Maintenance Rules
 

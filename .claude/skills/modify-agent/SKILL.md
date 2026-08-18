@@ -24,7 +24,7 @@ Change orchestrator behavior:
 Add or edit subagents:
 
 - Update entries in `backend/domain/subagents.<target>.json`.
-- Supported types: `genie`, `serving_endpoint`, `app`, `mcp`.
+- Supported types: `genie`, `serving_endpoint`, `app`, `mcp`, `lakebase`.
 - Required fields:
   - `genie`: `space_id`
   - `serving_endpoint` and `app`: `endpoint`

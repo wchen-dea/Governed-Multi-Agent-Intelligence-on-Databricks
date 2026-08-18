@@ -2,7 +2,6 @@
 
 import asyncio
 from dataclasses import dataclass
-import json
 import logging
 from contextlib import AsyncExitStack
 import os
@@ -373,20 +372,25 @@ def _execute_lakebase_query(
     ws_client, cfg: SubagentConfig, sql_query: str
 ) -> str:
     """Execute a SQL query against Lakebase via psycopg2 with OAuth credentials."""
+    import httpx
     import psycopg2
 
     # Generate short-lived OAuth credential via Databricks Postgres API
-    cred_response = ws_client.api_client.do(
-        "POST",
-        "/api/2.0/postgres/credentials",
-        body={
-            "endpoint": (
-                f"projects/{cfg.project_id}/branches/{cfg.branch_id}"
-                f"/endpoints/{cfg.endpoint_id}"
-            )
-        },
+    host = ws_client.config.host.rstrip("/")
+    headers = {}
+    ws_client.config.authenticate(headers)
+    endpoint_path = (
+        f"projects/{cfg.project_id}/branches/{cfg.branch_id}"
+        f"/endpoints/{cfg.endpoint_id}"
     )
-    token = cred_response["token"]
+    resp = httpx.post(
+        f"{host}/api/2.0/postgres/credentials",
+        json={"endpoint": endpoint_path},
+        headers=headers,
+        timeout=15.0,
+    )
+    resp.raise_for_status()
+    token = resp.json()["token"]
 
     conn = psycopg2.connect(
         host=cfg.pg_host,

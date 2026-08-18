@@ -24,6 +24,8 @@ It routes user requests across backend capabilities:
 - Genie Agent tools (via MCP)
 - Serving endpoint agents
 - Optional app-based specialists
+- AI Search MCP routes (RAG)
+- Lakebase PostgreSQL databases (SQL via psycopg2 with OAuth credentials)
 
 Authorization boundary:
 
@@ -46,7 +48,7 @@ Runtime stack:
 - Client: React UI static app + proxy
 - Entry runtime: MLflow Agent Server (`ResponsesAgent`)
 - Orchestration layer: tool selection and response composition
-- Integration layer: MCP + serving endpoint calls
+- Integration layer: MCP + serving endpoint + Lakebase PostgreSQL calls
 - Data and semantic layer: Genie Agent space, enterprise data assets
 
 ### Frameworks and Platform Stack

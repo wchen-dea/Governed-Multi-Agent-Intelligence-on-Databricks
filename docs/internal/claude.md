@@ -121,6 +121,7 @@ Constraints: If app exists, bind instead of delete.
   - `serving_endpoint` requires `endpoint`
   - `app` requires `endpoint`
   - `mcp` requires `mcp_url`
+  - `lakebase` requires `project_id`, `branch_id`, `endpoint_id`, `database`, `pg_host`
 
 ### modify-agent
 

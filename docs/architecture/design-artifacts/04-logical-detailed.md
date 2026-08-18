@@ -16,11 +16,13 @@ flowchart TB
     OR --> SC[Subagent Config Domain]
     OR --> TL[Tool Builders serving_endpoint/app]
     OR --> MCP[MCP Server Builders genie/mcp]
+    OR --> LB[Lakebase Tool Builders lakebase]
 
     SC --> S1[sales_insights_agent Genie]
     SC --> S2[product_index_assistant MCP AI Search]
     SC --> S3[flink_support_agent MCP AI Search RAG]
     SC --> S4[cdi_agent Genie]
+    SC --> S5[lakebase_ods_agent Lakebase PostgreSQL]
 ```
 
 ## 2. Orchestration and Tool Call Sequence

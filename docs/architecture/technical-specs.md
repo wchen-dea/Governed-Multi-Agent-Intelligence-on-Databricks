@@ -21,9 +21,10 @@ Primary implementation:
 ## 2. Tool Routing Specification
 
 - Subagent configuration is externalized in JSON and validated through typed domain models.
-- Supported subagent kinds include genie, serving_endpoint, app, and mcp.
+- Supported subagent kinds include genie, serving_endpoint, app, mcp, and lakebase.
 - Non-Genie function tools are generated dynamically from subagent metadata.
 - Genie integrations use MCP server registration with parallel runtime health checks and short TTL health caching.
+- Lakebase integrations use PostgreSQL wire protocol with OAuth credentials generated at invocation time.
 
 Primary implementation:
 

@@ -114,7 +114,7 @@ This contract is mandatory for every subagent/tool route.
   "tool_calls": [
     {
       "tool_name": "string",
-      "source": "genie|serving_endpoint|app|mcp",
+      "source": "genie|serving_endpoint|app|mcp|lakebase",
       "query_or_operation_id": "string"
     }
   ],

@@ -27,6 +27,7 @@ targets:
       lakebase_project_id: "3ab05603-06dc-4789-a7fb-234d22a71e4b"
       lakebase_branch_id: "br-fragrant-sea-d1h720m5"
       lakebase_database: "operationaldatastore"
+      lakebase_sql_warehouse_id: "ep-falling-cake-d1j29nc5"
       message_bus_backend: structured_logging
       message_bus_topic: agent-lifecycle-events
       uc_audit_warehouse_id: "unused-for-structured-logging"
@@ -49,3 +50,7 @@ targets:
               name: CDI Metrics Agent
               space_id: ${var.cdi_genie_space_id}
               permission: 'CAN_RUN'
+          - name: lakebase_ods
+            sql_warehouse:
+              id: ${var.lakebase_sql_warehouse_id}
+              permission: 'CAN_USE'

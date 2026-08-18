@@ -47,6 +47,20 @@ Edit `backend/domain/subagents.<target>.json`:
 }
 ```
 
+```python
+{
+  "name": "lakebase_agent",
+  "type": "lakebase",
+  "project_id": "<lakebase-project-id>",
+  "branch_id": "<branch-id>",
+  "endpoint_id": "<endpoint-id>",
+  "database": "<database-name>",
+  "pg_host": "<endpoint-host>.database.<region>.cloud.databricks.com",
+  "pg_user": "<app-sp-application-id>",
+  "description": "Lakebase PostgreSQL data retrieval"
+}
+```
+
 ## Step 2: Grant App Resource Access
 
 Edit `resources/multiagent_app.yml` under `resources.apps.multiagent-app.resources`.
@@ -68,6 +82,15 @@ Serving endpoint example:
   serving_endpoint:
     name: ${var.knowledge_assistant_endpoint_name}
     permission: CAN_QUERY
+```
+
+Lakebase example (requires `user_api_scopes: [sql]` and a Postgres role for the app SP):
+
+```yaml
+- name: lakebase_ods
+  sql_warehouse:
+    id: ${var.lakebase_sql_warehouse_id}
+    permission: CAN_USE
 ```
 
 ## Step 3: Validate and Deploy
