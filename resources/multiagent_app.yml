@@ -36,7 +36,6 @@ resources:
       # usage_policy_id: ${var.app_usage_policy_id}
       user_api_scopes:
       - sql
-      - databases
       source_code_path: ../.databricks_app_source
       config:
         command: ["python", "launcher.py"]
@@ -73,6 +72,8 @@ resources:
           value: ${var.uc_audit_schema}
         - name: UC_AUDIT_TABLE
           value: ${var.uc_audit_table}
+        - name: LAKEBASE_PG_PASSWORD
+          value: ${var.lakebase_pg_password}
       # Resources which this app has access to
       resources:
       - name: 'sales_genie_space'
@@ -86,6 +87,6 @@ resources:
           space_id: ${var.cdi_genie_space_id}
           permission: 'CAN_RUN'
       - name: 'lakebase_ods'
-        sql_warehouse:
+        postgres:
           id: ${var.lakebase_sql_warehouse_id}
           permission: 'CAN_USE'

@@ -368,14 +368,17 @@ def _format_lakebase_results(columns: list[str], rows: list[tuple]) -> str:
     return result
 
 
-def _execute_lakebase_query(
-    ws_client, cfg: SubagentConfig, sql_query: str
-) -> str:
-    """Execute a SQL query against Lakebase via psycopg2 with OAuth credentials."""
-    import httpx
-    import psycopg2
+def _get_lakebase_token(ws_client, cfg: SubagentConfig) -> str:
+    """Get a PostgreSQL password or OAuth token for Lakebase connection."""
+    import os
 
-    # Generate short-lived OAuth credential via Databricks Postgres API
+    # Use explicit PG password env var if set (bypasses credentials API scope requirement)
+    pg_password = os.environ.get("LAKEBASE_PG_PASSWORD")
+    if pg_password:
+        return pg_password
+
+    import httpx
+
     host = ws_client.config.host.rstrip("/")
     headers = {}
     ws_client.config.authenticate(headers)
@@ -383,24 +386,54 @@ def _execute_lakebase_query(
         f"projects/{cfg.project_id}/branches/{cfg.branch_id}"
         f"/endpoints/{cfg.endpoint_id}"
     )
-    resp = httpx.post(
-        f"{host}/api/2.0/postgres/credentials",
-        json={"endpoint": endpoint_path},
-        headers=headers,
-        timeout=15.0,
-    )
-    resp.raise_for_status()
-    token = resp.json()["token"]
+    try:
+        resp = httpx.post(
+            f"{host}/api/2.0/postgres/credentials",
+            json={"endpoint": endpoint_path},
+            headers=headers,
+            timeout=15.0,
+        )
+        resp.raise_for_status()
+        return resp.json()["token"]
+    except Exception as cred_exc:
+        logger.warning(
+            "Postgres credentials API failed (%s: %s); using workspace token",
+            type(cred_exc).__name__,
+            str(cred_exc)[:200],
+        )
+        auth_token = headers.get("Authorization", "")
+        if auth_token.startswith("Bearer "):
+            return auth_token[7:]
+        raise ValueError(
+            f"Cannot obtain Lakebase token: credentials API failed ({cred_exc}) "
+            "and no Bearer token available from workspace client"
+        ) from cred_exc
 
-    conn = psycopg2.connect(
-        host=cfg.pg_host,
-        port=5432,
-        dbname=cfg.database,
-        user=cfg.pg_user or "databricks",
-        password=token,
-        sslmode="require",
-        connect_timeout=15,
-    )
+
+def _execute_lakebase_query(
+    ws_client, cfg: SubagentConfig, sql_query: str
+) -> str:
+    """Execute a SQL query against Lakebase via psycopg2 with OAuth credentials."""
+    import psycopg2
+
+    token = _get_lakebase_token(ws_client, cfg)
+
+    try:
+        conn = psycopg2.connect(
+            host=cfg.pg_host,
+            port=5432,
+            dbname=cfg.database,
+            user=cfg.pg_user or "databricks",
+            password=token,
+            sslmode="require",
+            connect_timeout=15,
+        )
+    except psycopg2.OperationalError as conn_exc:
+        logger.error(
+            "Lakebase psycopg2 connection failed: host=%s user=%s db=%s error=%s",
+            cfg.pg_host, cfg.pg_user, cfg.database, str(conn_exc)[:300],
+        )
+        raise
     try:
         with conn.cursor() as cur:
             cur.execute(sql_query)
