@@ -483,6 +483,14 @@ App URL: `https://multiagent-app-dev-4225037891036111.aws.databricksapps.com`
 
 **Scenario:** Operations analyst checks appointment volume by order type in the operational data store.
 
+**Lakebase config:**
+
+- Project: `ore` (uid: `3ab05603-06dc-4789-a7fb-234d22a71e4b`)
+- Branch: `production` (uid: `br-fragrant-sea-d1h720m5`)
+- Endpoint: `primary` (host: `ep-falling-cake-d1j29nc5.database.us-west-2.cloud.databricks.com`)
+- Database: `operationaldatastore`
+- App SP role: `sp-multiagent-app` (postgres_role: `da6ab9ef-2c0f-4f9b-9950-b618b9f4fede`, membership: `DATABRICKS_SUPERUSER`)
+
 **Steps:**
 
 1. Open the app URL in a browser.

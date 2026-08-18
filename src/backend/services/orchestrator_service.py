@@ -355,22 +355,58 @@ def build_subagent_tools(
     return tools
 
 
-def _format_lakebase_results(data: dict) -> str:
-    """Format Lakebase API response into a readable string."""
-    if "data" in data and isinstance(data["data"], list):
-        columns = [col.get("name", f"col_{i}") for i, col in enumerate(data.get("columns", []))]
-        rows = data["data"]
-        if not rows:
-            return "Query returned 0 rows."
-        header = " | ".join(columns)
-        lines = [header, "-" * len(header)]
-        for row in rows[:200]:
-            lines.append(" | ".join(str(v) for v in row))
-        result = "\n".join(lines)
-        if len(rows) > 200:
-            result += f"\n... ({len(rows) - 200} more rows truncated)"
-        return result
-    return json.dumps(data, indent=2)
+def _format_lakebase_results(columns: list[str], rows: list[tuple]) -> str:
+    """Format psycopg2 query results into a readable table string."""
+    if not rows:
+        return "Query returned 0 rows."
+    header = " | ".join(columns)
+    lines = [header, "-" * len(header)]
+    for row in rows[:200]:
+        lines.append(" | ".join(str(v) for v in row))
+    result = "\n".join(lines)
+    if len(rows) > 200:
+        result += f"\n... ({len(rows) - 200} more rows truncated)"
+    return result
+
+
+def _execute_lakebase_query(
+    ws_client, cfg: SubagentConfig, sql_query: str
+) -> str:
+    """Execute a SQL query against Lakebase via psycopg2 with OAuth credentials."""
+    import psycopg2
+
+    # Generate short-lived OAuth credential via Databricks Postgres API
+    cred_response = ws_client.api_client.do(
+        "POST",
+        "/api/2.0/postgres/credentials",
+        body={
+            "endpoint": (
+                f"projects/{cfg.project_id}/branches/{cfg.branch_id}"
+                f"/endpoints/{cfg.endpoint_id}"
+            )
+        },
+    )
+    token = cred_response["token"]
+
+    conn = psycopg2.connect(
+        host=cfg.pg_host,
+        port=5432,
+        dbname=cfg.database,
+        user=cfg.pg_user or "databricks",
+        password=token,
+        sslmode="require",
+        connect_timeout=15,
+    )
+    try:
+        with conn.cursor() as cur:
+            cur.execute(sql_query)
+            if cur.description:
+                columns = [desc[0] for desc in cur.description]
+                rows = cur.fetchmany(200)
+                return _format_lakebase_results(columns, rows)
+            return f"Statement executed successfully. Rows affected: {cur.rowcount}"
+    finally:
+        conn.close()
 
 
 def build_lakebase_tools(
@@ -408,15 +444,9 @@ def build_lakebase_tools(
                     },
                 )
                 try:
-                    path = (
-                        f"/api/2.0/lakebase/projects/{cfg_param.project_id}"
-                        f"/branches/{cfg_param.branch_id}/sql"
+                    result = await asyncio.to_thread(
+                        _execute_lakebase_query, ws_client, cfg_param, sql_query
                     )
-                    body = {"statement": sql_query, "database": cfg_param.database}
-                    response = await asyncio.to_thread(
-                        ws_client.api_client.do, "POST", path, body=body
-                    )
-                    result = _format_lakebase_results(response) if isinstance(response, dict) else str(response)
                     dependencies.message_bus.publish(
                         "tool.call.succeeded",
                         {

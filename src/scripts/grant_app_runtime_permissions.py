@@ -127,7 +127,7 @@ class PermissionManager:
         except Exception as exc:
             raise CliError(f"Could not read variables from {target_file}") from exc
 
-    def _read_subagent_resource_hints(self) -> tuple[list[str], list[str], list[tuple[str, str, str]]]:
+    def _read_subagent_resource_hints(self) -> tuple[list[str], list[str], list[tuple[str, str, str]], list[dict[str, str]]]:
         """Extract resource hints from target subagent configuration.
 
         Returns:
@@ -135,13 +135,14 @@ class PermissionManager:
             - Genie Agent space ids.
             - Serving endpoint names.
             - AI Search MCP triples as `(catalog, schema, index)`.
+            - Lakebase project configs as dicts with project_id, branch_id, endpoint_id keys.
 
         Raises:
             CliError: If the subagent file exists but contains invalid JSON.
         """
         config_file = Path("src/backend/domain") / f"subagents.{self.target}.json"
         if not config_file.exists():
-            return [], [], []
+            return [], [], [], []
 
         try:
             raw = json.loads(config_file.read_text(encoding="utf-8"))
@@ -151,6 +152,7 @@ class PermissionManager:
         genie_space_ids: list[str] = []
         serving_endpoints: list[str] = []
         ai_search_indexes: list[tuple[str, str, str]] = []
+        lakebase_configs: list[dict[str, str]] = []
         for item in raw:
             if not isinstance(item, dict):
                 continue
@@ -169,11 +171,22 @@ class PermissionManager:
                     parsed = self._parse_ai_search_mcp_url(mcp_url)
                     if parsed is not None:
                         ai_search_indexes.append(parsed)
+            elif kind == "lakebase":
+                project_id = item.get("project_id", "")
+                branch_id = item.get("branch_id", "")
+                endpoint_id = item.get("endpoint_id", "")
+                if project_id and branch_id and endpoint_id and not _is_placeholder(project_id):
+                    lakebase_configs.append({
+                        "project_id": project_id,
+                        "branch_id": branch_id,
+                        "endpoint_id": endpoint_id,
+                    })
 
         return (
             sorted(set(genie_space_ids)),
             sorted(set(serving_endpoints)),
             sorted(set(ai_search_indexes)),
+            lakebase_configs,
         )
 
     def _parse_ai_search_mcp_url(self, mcp_url: str) -> tuple[str, str, str] | None:
@@ -567,6 +580,65 @@ class PermissionManager:
             if not endpoint_ok:
                 self._warn_or_fail(f"Failed to grant AI Search endpoint CAN_USE: {endpoint}")
 
+    def _grant_lakebase_postgres_role(
+        self,
+        lakebase_configs: list[dict[str, str]],
+        sp_client_id: str,
+    ) -> None:
+        if not lakebase_configs:
+            print("INFO: No Lakebase projects configured for target.")
+            return
+
+        for cfg in lakebase_configs:
+            project_id = cfg["project_id"]
+            branch_id = cfg["branch_id"]
+            endpoint_id = cfg["endpoint_id"]
+            branch_path = f"projects/{project_id}/branches/{branch_id}"
+
+            # Check if the SP already has a role on this branch.
+            existing_roles = self.cli.run(
+                ["postgres", "list-roles", branch_path, "--output", "json"],
+                expect_json=True, check=False,
+            )
+            already_granted = False
+            if isinstance(existing_roles, list):
+                for role in existing_roles:
+                    if isinstance(role, dict):
+                        pg_role = (role.get("status") or role.get("spec") or {}).get("postgres_role", "")
+                        if pg_role == sp_client_id:
+                            already_granted = True
+                            break
+
+            if already_granted:
+                print(f"LAKEBASE ROLE: ALREADY EXISTS -> {branch_path} for {sp_client_id}")
+                continue
+
+            role_id = f"sp-{self.app_name}"[:63]
+            create_args = [
+                "postgres", "create-role", branch_path,
+                "--role-id", role_id,
+                "--json", json.dumps({
+                    "spec": {
+                        "identity_type": "SERVICE_PRINCIPAL",
+                        "postgres_role": sp_client_id,
+                        "auth_method": "LAKEBASE_OAUTH_V1",
+                        "membership_roles": ["DATABRICKS_SUPERUSER"],
+                    }
+                }),
+            ]
+            if self.dry_run:
+                print(f"DRY RUN: databricks {' '.join(create_args)}")
+                continue
+
+            result = self.cli.run(create_args, check=False)
+            ok = result.returncode == 0
+            print(f"LAKEBASE ROLE: {'OK' if ok else 'FAILED'} -> {branch_path} role={role_id}")
+            if not ok:
+                self._warn_or_fail(
+                    f"Failed to create Lakebase Postgres role on {branch_path}: "
+                    f"{(result.stderr or '').strip()}"
+                )
+
     def run(self) -> int:
         """Execute permission discovery, validation, and grant application.
 
@@ -590,7 +662,7 @@ class PermissionManager:
         print(f"App: {self.app_name}")
         print(f"Service principal client id: {sp_client_id}")
 
-        subagent_genie, subagent_serving, ai_search_indexes = self._read_subagent_resource_hints()
+        subagent_genie, subagent_serving, ai_search_indexes, lakebase_configs = self._read_subagent_resource_hints()
 
         configured_genie = [
             target_vars.get("genie_space_id"),
@@ -643,6 +715,10 @@ class PermissionManager:
             print(f"AI Search UC objects: {ai_search_indexes}")
         else:
             print("AI Search UC objects: none")
+        if lakebase_configs:
+            print(f"Lakebase projects: {[c['project_id'] + '/' + c['branch_id'] for c in lakebase_configs]}")
+        else:
+            print("Lakebase projects: none")
         print(f"UC catalog/schema: {uc_catalog}.{uc_schema}")
         print(f"SQL warehouse: {warehouse_id}")
         if self.dry_run:
@@ -654,6 +730,7 @@ class PermissionManager:
         self._grant_serving_can_query(serving_endpoints, sp_client_id)
         self._grant_ai_search_can_use(ai_search_endpoints, sp_client_id)
         self._grant_ai_search_uc_permissions(validated_ai_search, sp_client_id)
+        self._grant_lakebase_postgres_role(lakebase_configs, sp_client_id)
         if message_bus_backend == "uc_table":
             self._grant_uc_permissions(
                 str(uc_catalog) if isinstance(uc_catalog, str) else None,

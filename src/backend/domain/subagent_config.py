@@ -38,6 +38,9 @@ class SubagentConfig:
     project_id: str | None = None
     branch_id: str | None = None
     database: str | None = None
+    pg_host: str | None = None
+    pg_user: str | None = None
+    endpoint_id: str | None = None
     auth_mode: SubagentAuthMode = "app"
     data_classification: DataClassification = "internal"
     owner: str | None = None
@@ -78,6 +81,10 @@ class SubagentConfig:
                 raise ValueError(f"Lakebase subagent {self.name!r} must define branch_id")
             if not self.database:
                 raise ValueError(f"Lakebase subagent {self.name!r} must define database")
+            if not self.pg_host:
+                raise ValueError(f"Lakebase subagent {self.name!r} must define pg_host")
+            if not self.endpoint_id:
+                raise ValueError(f"Lakebase subagent {self.name!r} must define endpoint_id")
         if self.kind not in {"genie", "mcp", "lakebase"} and not self.endpoint:
             raise ValueError(f"Non-genie subagent {self.name!r} must define endpoint")
         if any(not persona.strip() for persona in self.allowed_personas):
@@ -151,6 +158,9 @@ class SubagentConfig:
                 project_id=value.get("project_id"),
                 branch_id=value.get("branch_id"),
                 database=value.get("database"),
+                pg_host=value.get("pg_host"),
+                pg_user=value.get("pg_user"),
+                endpoint_id=value.get("endpoint_id"),
                 auth_mode=auth_mode,
                 data_classification=value["data_classification"],
                 owner=owner,
