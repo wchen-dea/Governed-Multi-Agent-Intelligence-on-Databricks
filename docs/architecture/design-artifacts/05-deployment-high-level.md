@@ -20,13 +20,14 @@ flowchart LR
 ```mermaid
 flowchart TB
     subgraph DatabricksApp[Databricks App Runtime]
-        FE[Frontend]
+        FE[Frontend React UI]
         BE[Backend Agent Server]
     end
 
     FE --> BE
-    BE --> MOD[Model Serving Endpoints]
-    BE --> GEN[Genie and MCP Integrations]
-    BE --> AUD[Audit Storage]
-    BE --> OBS[Observability Stack]
+    BE --> MOD[Foundation Model APIs gpt-5.6-luna]
+    BE --> GEN[Genie MCP Sales / CDI Spaces]
+    BE --> VS[Vector Search MCP Product / Flink Support]
+    BE --> AUD[Audit Storage UC Table]
+    BE --> OBS[Observability / Telemetry Export]
 ```

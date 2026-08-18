@@ -8,11 +8,16 @@ This document captures high-level logical architecture and end-to-end runtime fl
 flowchart LR
     User[User] --> FE[Frontend Chat UI]
     FE --> API[Backend API Handlers]
-    API --> ORCH[Orchestrator Service]
+    API --> ORCH[Orchestrator Service Responses API]
     ORCH --> POL[Policy and Guardrails]
     ORCH --> TOOL[Tool and MCP Adapter Layer]
-    TOOL --> GENIE[Genie Spaces]
+    TOOL --> GENIE[Genie Spaces Sales CDI]
+    TOOL --> VS[Vector Search AI Search Indexes]
     TOOL --> SEP[Serving Endpoints]
+    VS --> KB[Support KB Volume]
+    VS --> PT[Product Data]
+    GENIE --> ST[Sales Tables]
+    GENIE --> MV[CDI Materialized View]
     ORCH --> BUS[Message Bus]
     BUS --> AUDIT[Audit Storage]
 ```

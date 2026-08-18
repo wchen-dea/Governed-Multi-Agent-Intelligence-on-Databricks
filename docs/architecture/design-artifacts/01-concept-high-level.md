@@ -43,8 +43,9 @@ flowchart TB
 flowchart LR
     User[User Channels] --> UI[Chat UI]
     UI --> AISYS[AI Orchestrator System]
-    AISYS --> Genie[Genie Spaces]
-    AISYS --> Models[Serving Endpoints and LLM]
+    AISYS --> Genie[Genie Spaces Sales CDI]
+    AISYS --> VS[Vector Search AI Search Indexes]
+    AISYS --> Models[Foundation Model APIs]
     AISYS --> Audit[Audit and Observability Sinks]
     AISYS --> Identity[Identity and Authorization Services]
 ```

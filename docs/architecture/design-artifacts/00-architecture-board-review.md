@@ -55,8 +55,9 @@ flowchart TB
 flowchart LR
     User[User Channels] --> UI[Chat UI]
     UI --> AISYS[AI Orchestrator System]
-    AISYS --> Genie[Genie Spaces]
-    AISYS --> Models[Serving Endpoints and LLM]
+    AISYS --> Genie[Genie Spaces Sales CDI]
+    AISYS --> VS[Vector Search AI Search Indexes]
+    AISYS --> Models[Foundation Model APIs]
     AISYS --> Audit[Audit and Observability Sinks]
     AISYS --> Identity[Identity and Authorization Services]
 ```
@@ -135,10 +136,11 @@ flowchart TB
 flowchart LR
     User[User] --> FE[Frontend Chat UI]
     FE --> API[Backend API Handlers]
-    API --> ORCH[Orchestrator Service]
+    API --> ORCH[Orchestrator Service Responses API]
     ORCH --> POL[Policy and Guardrails]
     ORCH --> TOOL[Tool and MCP Adapter Layer]
-    TOOL --> GENIE[Genie Spaces]
+    TOOL --> GENIE[Genie Spaces Sales CDI]
+    TOOL --> VS[Vector Search AI Search Indexes]
     TOOL --> SEP[Serving Endpoints]
     ORCH --> BUS[Message Bus]
     BUS --> AUDIT[Audit Storage]

@@ -14,8 +14,13 @@ flowchart TB
     D --> MB[Message Bus]
 
     OR --> SC[Subagent Config Domain]
-    OR --> TL[Tool Builders]
-    OR --> MCP[MCP Server Builders]
+    OR --> TL[Tool Builders serving_endpoint/app]
+    OR --> MCP[MCP Server Builders genie/mcp]
+
+    SC --> S1[sales_insights_agent Genie]
+    SC --> S2[product_index_assistant MCP AI Search]
+    SC --> S3[flink_support_agent MCP AI Search RAG]
+    SC --> S4[cdi_agent Genie]
 ```
 
 ## 2. Orchestration and Tool Call Sequence
