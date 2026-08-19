@@ -113,6 +113,7 @@ class RuntimeAuthDependencies {
   +obo_client_factory
   +subagent_tools_builder
   +mcp_servers_builder
+  +lakebase_tools_builder
   +policy_context_builder
   +subagent_policy_filter
   +message_bus
@@ -161,6 +162,9 @@ class SubagentToolsBuilder {
 class McpServersBuilder {
   <<protocol>>
 }
+class LakebaseToolsBuilder {
+  <<protocol>>
+}
 class FunctionToolWrapper {
   <<protocol>>
 }
@@ -183,6 +187,7 @@ RuntimeAuthDependencies ..> TraceMetadataUpdater
 RuntimeAuthDependencies ..> OboClientFactory
 RuntimeAuthDependencies ..> SubagentToolsBuilder
 RuntimeAuthDependencies ..> McpServersBuilder
+RuntimeAuthDependencies ..> LakebaseToolsBuilder
 RuntimeAuthDependencies ..> MessageBus
 
 HandlerDependencies ..> RuntimeAuthContext

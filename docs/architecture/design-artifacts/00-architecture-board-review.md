@@ -57,6 +57,7 @@ flowchart LR
     UI --> AISYS[AI Orchestrator System]
     AISYS --> Genie[Genie Spaces Sales CDI]
     AISYS --> VS[Vector Search AI Search Indexes]
+    AISYS --> LB[Lakebase PostgreSQL ODS]
     AISYS --> Models[Foundation Model APIs]
     AISYS --> Audit[Audit and Observability Sinks]
     AISYS --> Identity[Identity and Authorization Services]
@@ -142,6 +143,7 @@ flowchart LR
     TOOL --> GENIE[Genie Spaces Sales CDI]
     TOOL --> VS[Vector Search AI Search Indexes]
     TOOL --> SEP[Serving Endpoints]
+    TOOL --> LB[Lakebase PostgreSQL ODS psycopg2]
     ORCH --> BUS[Message Bus]
     BUS --> AUDIT[Audit Storage]
 ```
@@ -222,8 +224,9 @@ flowchart TB
     D --> MB[Message Bus]
 
     OR --> SC[Subagent Config Domain]
-    OR --> TL[Tool Builders]
-    OR --> MCP[MCP Server Builders]
+    OR --> TL[Tool Builders Serving Endpoint and App]
+    OR --> MCP[MCP Server Builders Genie and AI Search]
+    OR --> LB[Lakebase Tools Builder psycopg2 OAuth]
 ```
 
 ### Orchestration and Tool Call Sequence
@@ -327,6 +330,7 @@ flowchart TB
     FE --> BE
     BE --> MOD[Model Serving Endpoints]
     BE --> GEN[Genie and MCP Integrations]
+    BE --> LB[Lakebase PostgreSQL ODS]
     BE --> AUD[Audit Storage]
     BE --> OBS[Observability Stack]
 ```
@@ -344,6 +348,7 @@ flowchart LR
     BE --> IDP[Identity Provider]
     BE --> MCP[MCP and Tool Integrations]
     BE --> SEP[Serving Endpoints]
+    BE --> LB[Lakebase PostgreSQL Endpoint]
     BE --> UC[UC Audit Table]
 
     SEC[Security Monitoring] --> Ingress

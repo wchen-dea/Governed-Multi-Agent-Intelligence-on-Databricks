@@ -14,10 +14,12 @@ flowchart LR
     TOOL --> GENIE[Genie Spaces Sales CDI]
     TOOL --> VS[Vector Search AI Search Indexes]
     TOOL --> SEP[Serving Endpoints]
+    TOOL --> LB[Lakebase PostgreSQL ODS psycopg2]
     VS --> KB[Support KB Volume]
     VS --> PT[Product Data]
     GENIE --> ST[Sales Tables]
     GENIE --> MV[CDI Materialized View]
+    LB --> OD[Appointment and Order Data]
     ORCH --> BUS[Message Bus]
     BUS --> AUDIT[Audit Storage]
 ```

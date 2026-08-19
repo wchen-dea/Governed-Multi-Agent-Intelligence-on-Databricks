@@ -14,8 +14,10 @@ This document covers deployment and operations only. High-level system context i
 - Dev app is running and user-accessible.
 - Hosted startup uses UI mode with backend internal port remapping.
 - Bundle validation is stable.
-- Deployment can fail intermittently when Terraform provider registry is unreachable.
-- Fallback workflow is in active use when registry outage occurs.
+- Deployment can fail intermittently when Terraform provider registry is unreachable or the provider crashes.
+- Fallback workflow is in active use when registry outage or provider crash occurs.
+- SNAPSHOT-mode deploys do not inject `app.yml` env vars at the platform level; the launcher reads them from `app.yml` at startup.
+- Lakebase ODS agent uses OAuth authentication via the app service principal's Postgres role.
 
 ## Start Here
 
@@ -373,12 +375,15 @@ Escalate immediately if issue affects multiple targets or production user traffi
 ### Common Failure Patterns
 
 - Missing CI secrets for environment.
-- Terraform registry unreachable.
+- Terraform registry unreachable or Terraform provider crash (`Plugin did not respond`).
 - Deploy completed but app-source import/deploy path was skipped.
+- SNAPSHOT deploy did not inject env vars — launcher must read them from `app.yml`.
 - Missing Unity Catalog grants for Genie query paths.
 - OBO flow missing forwarded token (`x-forwarded-access-token`) for tools configured with `auth_mode: obo`.
 - User identity has insufficient data permissions even when app identity has access.
 - Invalid local credentials in `.env` (for example stale `DATABRICKS_TOKEN`).
+- Lakebase auth failure due to SCRAM password mismatch or OAuth `pg_user` misconfiguration.
+- Databricks SDK `Config.authenticate()` signature change breaking Lakebase OAuth token retrieval.
 
 ### Rollback
 
@@ -474,7 +479,7 @@ App URL: `https://multiagent-app-dev-4225037891036111.aws.databricksapps.com`
 **Steps:**
 
 1. Open the app URL in a browser.
-2. Type: `Show me the CDI promoter and detractor counts by store for the last rolling period`
+2. Type: `What are the current CDI scores across all stores?`
 3. Verify the response contains a table with store-level promoter/detractor/response counts.
 4. Follow up: `Which stores have the lowest overall delight score this month?`
 5. Verify ranked results with evidence citation.
@@ -630,6 +635,102 @@ make deploy TARGET=dev APP_NAME=multiagent-app-dev
 ```
 
 Or use `make redeploy` which has built-in fallback logic.
+
+### Terraform provider crash during `bundle deploy`
+
+**Symptom:** `Error: terraform apply: exit status 1 — Error: Plugin did not respond` with a stack trace from `terraform-provider-databricks`.
+
+**Cause:** The Terraform provider binary crashed during resource apply. This is distinct from registry unreachability — the provider was downloaded but failed at runtime.
+
+**Impact:** When `bundle deploy` fails this way, app-level configuration (env vars, resource grants) defined in `resources/multiagent_app.yml` is **not applied**. The app's `config.env` will be `null` and resource grants may be missing.
+
+**Fix:**
+
+1. Use `make redeploy` — its `bundle-deploy-optional` step tolerates the failure and falls through to import/deploy.
+2. Verify env vars are present in `.databricks_app_source/app.yml` — the launcher reads them at startup.
+3. Restore resource grants manually if needed:
+   ```bash
+   # Restore Genie space resources
+   databricks apps update <app-name> --json '{
+     "resources": [
+       {"name": "sales_genie_space", "genie_space": {"name": "Sales Analysis Agent", "space_id": "<id>", "permission": "CAN_RUN"}}
+     ],
+     "user_api_scopes": ["sql"]
+   }'
+   # Re-run permission grants
+   make grant-runtime-permissions TARGET=dev APP_NAME=multiagent-app-dev
+   ```
+4. Note: the Databricks Apps API does not currently support adding `postgres` resources via PATCH — Lakebase access requires OAuth-based auth (see Lakebase troubleshooting below).
+
+### Missing env vars after SNAPSHOT deploy
+
+**Symptom:** App is RUNNING but tools fail with auth errors, missing config, or unexpected defaults. `databricks apps get <app-name>` shows `config.env` as `null` or empty.
+
+**Cause:** Databricks Apps SNAPSHOT-mode deploys do not inject env vars defined in the source `app.yml` at the platform level. The `config` field on the app API remains empty.
+
+**Fix:** The `launcher.py` in `.databricks_app_source/` contains `_load_app_yml_env()` which reads env vars from `app.yml` at startup and injects them into the process environment (without overriding existing vars). Ensure:
+
+1. All required env vars are listed in `.databricks_app_source/app.yml` under the `env:` key.
+2. The launcher is up to date (contains `_load_app_yml_env`).
+3. After editing `app.yml`, re-import and redeploy:
+   ```bash
+   make import TARGET=dev APP_NAME=multiagent-app-dev
+   make deploy TARGET=dev APP_NAME=multiagent-app-dev
+   ```
+
+### Lakebase ODS agent authentication failure
+
+**Symptom:** `password authentication failed for user 'multiagent_svc'` or `password authentication failed for user 'databricks'`.
+
+**Cause:** One of:
+- SCRAM password mismatch: the `LAKEBASE_PG_PASSWORD` value doesn't match the Lakebase role's password.
+- OAuth user mismatch: `pg_user` in the subagent config doesn't match a valid Lakebase OAuth role.
+- SDK API change: `Config.authenticate()` signature changed from `authenticate(headers_dict)` to `authenticate() -> dict`.
+
+**Fix (OAuth — recommended):**
+
+1. Verify the app SP has an OAuth role in Lakebase:
+   ```bash
+   databricks postgres list-roles "projects/<project>/branches/<branch>" --profile DEFAULT
+   ```
+   Look for a role with `auth_method: LAKEBASE_OAUTH_V1` and `identity_type: SERVICE_PRINCIPAL` — note its `postgres_role` value (the SP client ID).
+
+2. Set `pg_user` in `src/backend/domain/subagents.<target>.json` to the SP's `postgres_role` value (e.g., `da6ab9ef-2c0f-4f9b-9950-b618b9f4fede`).
+
+3. Remove `LAKEBASE_PG_PASSWORD` from `.databricks_app_source/app.yml` so the code uses the OAuth credentials API.
+
+4. Ensure `_get_lakebase_token()` in `orchestrator_service.py` calls `ws_client.config.authenticate()` (no arguments, returns dict).
+
+5. Rebuild and redeploy.
+
+**Fix (SCRAM password):**
+
+If you prefer SCRAM auth, reset the password via the Lakebase CLI:
+
+```bash
+# Delete and recreate the role
+databricks postgres delete-role "projects/<project>/branches/<branch>/roles/<role-id>"
+databricks postgres create-role "projects/<project>/branches/<branch>" \
+  --role-id "<role-id>" \
+  --json '{"spec": {"auth_method": "PG_PASSWORD_SCRAM_SHA_256", "postgres_role": "<pg_user>"}}'
+```
+
+Note: the `password` field is not currently accepted by the CLI `create-role` command; password must be set through a direct PG session from within the Databricks VPC. The Lakebase PG endpoint is not reachable from local machines.
+
+**Lakebase role management commands:**
+
+```bash
+# List projects
+databricks postgres list-projects --profile DEFAULT
+# List branches
+databricks postgres list-branches "projects/<project>" --profile DEFAULT
+# List endpoints
+databricks postgres list-endpoints "projects/<project>/branches/<branch>" --profile DEFAULT
+# List roles
+databricks postgres list-roles "projects/<project>/branches/<branch>" --profile DEFAULT
+# Get OAuth credential token (for testing)
+databricks postgres generate-database-credential --json '{"endpoint": "projects/<project>/branches/<branch>/endpoints/<endpoint>"}' --profile DEFAULT
+```
 
 ### Vector Search index "table does not exist" during setup
 

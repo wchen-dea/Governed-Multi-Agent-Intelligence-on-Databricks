@@ -28,6 +28,7 @@ flowchart TB
     BE --> MOD[Foundation Model APIs gpt-5.6-luna]
     BE --> GEN[Genie MCP Sales / CDI Spaces]
     BE --> VS[Vector Search MCP Product / Flink Support]
+    BE --> LB[Lakebase PostgreSQL ODS]
     BE --> AUD[Audit Storage UC Table]
     BE --> OBS[Observability / Telemetry Export]
 ```

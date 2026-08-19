@@ -45,6 +45,7 @@ flowchart LR
     UI --> AISYS[AI Orchestrator System]
     AISYS --> Genie[Genie Spaces Sales CDI]
     AISYS --> VS[Vector Search AI Search Indexes]
+    AISYS --> LB[Lakebase PostgreSQL ODS]
     AISYS --> Models[Foundation Model APIs]
     AISYS --> Audit[Audit and Observability Sinks]
     AISYS --> Identity[Identity and Authorization Services]

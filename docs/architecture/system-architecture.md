@@ -91,11 +91,16 @@ flowchart LR
             A2[MCP Product Index Assistant AI Search]
             A3[MCP Flink Support Agent RAG]
             A4[Genie CDI Agent]
+            A5[Lakebase ODS Agent psycopg2 OAuth]
         end
 
         subgraph Semantic[Business Semantic Layer]
             BSL[Genie Agent Spaces / Semantic Models]
             VS[Vector Search Indexes]
+        end
+
+        subgraph ODS[Operational Data Store]
+            LB[Lakebase PostgreSQL]
         end
     end
 
@@ -104,6 +109,7 @@ flowchart LR
         MV[Materialized Views CDI Metrics]
         PT[Product Tables]
         ST[Sales Tables]
+        OD[Appointment and Order Data]
     end
 
     P1 --> UI
@@ -119,6 +125,7 @@ flowchart LR
     ORCH --> A2
     ORCH --> A3
     ORCH --> A4
+    ORCH --> A5
 
     ORCH --> LLM
 
@@ -127,10 +134,12 @@ flowchart LR
     OBOID --> MCP
     MCP --> BSL
     MCP --> VS
+    A5 --> LB
     BSL --> ST
     BSL --> MV
     VS --> PT
     VS --> KB
+    LB --> OD
 
     classDef auth fill:#eef7ff,stroke:#2b6cb0,stroke-width:1px;
     class AUTH,APPID,OBOID auth;
@@ -158,16 +167,19 @@ flowchart TD
     O --> K[MCP AI Search product_index_assistant]
     O --> F[MCP AI Search flink_support_agent RAG]
     O --> CDI[Genie CDI Agent via MCP]
+    O --> LB[Lakebase ODS Agent psycopg2]
 
     G --> M[MCP Genie Space sales]
     K --> R1[Vector Search dim_product_search_index]
     F --> R3[Vector Search flink_support_search_index]
     CDI --> M2[MCP Genie Space CDI metrics]
+    LB --> PG[Lakebase PostgreSQL OAuth via Credentials API]
 
     M --> R[Response Aggregation and Guardrails]
     R1 --> R
     R3 --> R
     M2 --> R
+    PG --> R
     ERR --> R
     R --> UI
     UI --> U

@@ -23,14 +23,14 @@ env:
 - name: DEFAULT_REQUEST_PERSONA
   value: manager
 - name: MESSAGE_BUS_BACKEND
-  value: structured_logging
+  value: uc_table
 - name: MESSAGE_BUS_TOPIC
   value: agent-lifecycle-events
 - name: UC_AUDIT_WAREHOUSE_ID
-  value: unused-for-structured-logging
+  value: b20f70f71c2f52e2
 - name: UC_AUDIT_CATALOG
-  value: main
+  value: quickstart_catalog
 - name: UC_AUDIT_SCHEMA
-  value: observability
+  value: multi_agent_schema
 - name: UC_AUDIT_TABLE
   value: agent_lifecycle_events

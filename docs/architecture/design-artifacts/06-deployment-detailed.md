@@ -13,6 +13,7 @@ flowchart LR
     BE --> IDP[Identity Provider]
     BE --> MCP[MCP and Tool Integrations]
     BE --> SEP[Serving Endpoints]
+    BE --> LB[Lakebase PostgreSQL Endpoint]
     BE --> UC[UC Audit Table]
 
     SEC[Security Monitoring] --> Ingress
