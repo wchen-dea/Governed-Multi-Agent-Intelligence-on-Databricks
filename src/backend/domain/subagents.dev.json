@@ -34,7 +34,7 @@
     "freshness_sla": "24h",
     "allowed_personas": ["analyst", "operator", "manager", "engineer"],
     "requires_evidence": false,
-    "mcp_url": "/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/flink_support_search_index",
+    "mcp_url": "/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/flink_support_index",
     "system_prompt": "You are the Flink Support assistant backed by an AI Search index over the support knowledge base. Ground all answers in retrieved documents. For every claim, append a bracketed citation like [1] referencing the source document path. End your answer with a Source: line listing each cited document. If retrieved context is insufficient, say so explicitly instead of guessing.",
     "description": "Retrieve and answer Flink support questions using RAG over the support knowledge base. Use this for Flink troubleshooting, configuration guidance, best practices, and operational support."
   },
@@ -65,7 +65,7 @@
     "endpoint_id": "primary",
     "database": "operationaldatastore",
     "pg_host": "ep-falling-cake-d1j29nc5.database.us-west-2.cloud.databricks.com",
-    "pg_user": "multiagent_svc",
+    "pg_user": "da6ab9ef-2c0f-4f9b-9950-b618b9f4fede",
     "system_prompt": "You are the Operational Data Store analyst backed by a Lakebase PostgreSQL database. Generate valid PostgreSQL SQL queries to answer the user's question against the operationaldatastore database. Return concise result tables with clear column headers. If the schema is unclear, query information_schema.tables and information_schema.columns first to discover available tables and columns before answering.",
     "description": "Query the Lakebase operationaldatastore database for transactional and operational data. Use this for appointments, orders, invoices, order types, scheduling, and any question about the operational data store."
   }

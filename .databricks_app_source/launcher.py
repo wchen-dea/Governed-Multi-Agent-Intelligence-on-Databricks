@@ -36,6 +36,41 @@ def _install_wheel(wheel_path: Path) -> None:
     )
 
 
+def _load_app_yml_env(source_root: Path) -> dict[str, str]:
+    """Load env vars from app.yml since Databricks Apps SNAPSHOT mode may not inject them."""
+    import json as _json
+    import re
+
+    app_yml = source_root / "app.yml"
+    if not app_yml.exists():
+        return {}
+    try:
+        text = app_yml.read_text()
+        env_vars: dict[str, str] = {}
+        in_env = False
+        current_name = None
+        for line in text.splitlines():
+            stripped = line.strip()
+            if stripped == "env:":
+                in_env = True
+                continue
+            if in_env:
+                if not stripped or (not line.startswith(" ") and not line.startswith("-")):
+                    break
+                m_name = re.match(r"-?\s*name:\s*(.+)", stripped)
+                m_value = re.match(r"value:\s*(.*)", stripped)
+                if m_name:
+                    current_name = m_name.group(1).strip().strip("'\"")
+                elif m_value and current_name:
+                    val = m_value.group(1).strip().strip("'\"")
+                    env_vars[current_name] = val
+                    current_name = None
+        return env_vars
+    except Exception as exc:
+        print(f"Warning: failed to parse app.yml env: {exc}")
+        return {}
+
+
 def main() -> None:
     source_root = Path(__file__).resolve().parent
     wheel_path = _find_wheel()
@@ -43,6 +78,9 @@ def main() -> None:
     _install_wheel(wheel_path)
 
     env = os.environ.copy()
+    # Inject env vars from app.yml (don't override existing env)
+    for key, value in _load_app_yml_env(source_root).items():
+        env.setdefault(key, value)
     env.setdefault("REACT_UI_DIST_DIR", str(source_root / "reactui-dist"))
     # Start the packaged app entrypoint after installation.
     cmd = ["uv", "run", "python", "-m", "scripts.start_app"]

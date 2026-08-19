@@ -1,3 +1,36 @@
 command:
 - python
 - launcher.py
+env:
+- name: MLFLOW_TRACKING_URI
+  value: databricks
+- name: MLFLOW_REGISTRY_URI
+  value: databricks-uc
+- name: MLFLOW_EXPERIMENT_ID
+  value: "2041388166228723"
+- name: DATABRICKS_OPENAI_BASE_URL
+  value: ""
+- name: DATABRICKS_OPENAI_TIMEOUT_SECONDS
+  value: "0"
+- name: API_PROXY
+  value: http://localhost:8000/invocations
+- name: CHAT_APP_PORT
+  value: "3000"
+- name: CHAT_PROXY_TIMEOUT_SECONDS
+  value: "300"
+- name: SUBAGENTS_CONFIG_PATH
+  value: "/app/python/source_code/.venv/lib/python3.11/site-packages/backend/domain/subagents.dev.json"
+- name: DEFAULT_REQUEST_PERSONA
+  value: manager
+- name: MESSAGE_BUS_BACKEND
+  value: structured_logging
+- name: MESSAGE_BUS_TOPIC
+  value: agent-lifecycle-events
+- name: UC_AUDIT_WAREHOUSE_ID
+  value: unused-for-structured-logging
+- name: UC_AUDIT_CATALOG
+  value: main
+- name: UC_AUDIT_SCHEMA
+  value: observability
+- name: UC_AUDIT_TABLE
+  value: agent_lifecycle_events

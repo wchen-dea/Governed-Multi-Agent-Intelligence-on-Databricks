@@ -380,8 +380,7 @@ def _get_lakebase_token(ws_client, cfg: SubagentConfig) -> str:
     import httpx
 
     host = ws_client.config.host.rstrip("/")
-    headers = {}
-    ws_client.config.authenticate(headers)
+    headers = ws_client.config.authenticate()
     endpoint_path = (
         f"projects/{cfg.project_id}/branches/{cfg.branch_id}"
         f"/endpoints/{cfg.endpoint_id}"
