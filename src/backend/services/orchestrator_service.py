@@ -471,6 +471,11 @@ def build_lakebase_tools(
 
         def _make_lakebase_tool(cfg: SubagentConfig, ws_client):
             async def _call(sql_query: str, cfg_param: SubagentConfig = cfg) -> str:
+                """Execute a PostgreSQL SQL query against the Lakebase database.
+
+                Args:
+                    sql_query: A valid PostgreSQL SQL statement (SELECT, etc.). Do NOT pass natural language — generate SQL first.
+                """
                 dependencies.message_bus.publish(
                     "tool.call.started",
                     {
