@@ -1,5 +1,6 @@
 """Orchestrate multi-agent request routing handlers."""
 
+import asyncio
 import logging
 from contextlib import AsyncExitStack
 from dataclasses import dataclass
@@ -145,20 +146,32 @@ async def _connect_request_stage(
     )
 
 
+_TRANSIENT_RETRIES = 2
+_RETRY_BACKOFF_SECONDS = 1.0
+
+
+def _is_transient(exc: BaseException) -> bool:
+    """Return True for connection errors worth retrying."""
+    name = type(exc).__name__
+    return "APIConnectionError" in name or "ConnectionError" in name
+
+
 async def _execute_invoke_stage(
     connected: ConnectedStage,
     messages: list[Any],
 ) -> Any:
-    """Run the orchestrator agent for invoke.
-
-    Args:
-        connected: Connected invoke stage containing orchestrator agent.
-        messages: Normalized request messages.
-
-    Returns:
-        Runner result containing output items.
-    """
-    return await Runner.run(connected.agent, messages)
+    """Run the orchestrator agent for invoke with retry on transient errors."""
+    last_exc: BaseException | None = None
+    for attempt in range(_TRANSIENT_RETRIES + 1):
+        try:
+            return await Runner.run(connected.agent, messages)
+        except Exception as exc:
+            if not _is_transient(exc) or attempt >= _TRANSIENT_RETRIES:
+                raise
+            last_exc = exc
+            logger.warning("Transient error on invoke attempt %d, retrying: %s", attempt + 1, exc)
+            await asyncio.sleep(_RETRY_BACKOFF_SECONDS * (attempt + 1))
+    raise last_exc  # unreachable but satisfies type checker
 
 
 def _finalize_invoke_stage(
@@ -220,15 +233,25 @@ async def _execute_stream_stage(
     connected: ConnectedStage,
     messages: list[Any],
 ) -> StreamExecutedStage:
-    """Run streamed orchestration and precompute finalization inputs.
+    """Run streamed orchestration with retry on transient errors."""
+    last_exc: BaseException | None = None
+    for attempt in range(_TRANSIENT_RETRIES + 1):
+        try:
+            return await _execute_stream_stage_inner(connected, messages)
+        except Exception as exc:
+            if not _is_transient(exc) or attempt >= _TRANSIENT_RETRIES:
+                raise
+            last_exc = exc
+            logger.warning("Transient error on stream attempt %d, retrying: %s", attempt + 1, exc)
+            await asyncio.sleep(_RETRY_BACKOFF_SECONDS * (attempt + 1))
+    raise last_exc  # unreachable
 
-    Args:
-        connected: Connected stage containing orchestrator agent.
-        messages: Normalized request messages.
 
-    Returns:
-        Buffered stream execution stage with precomputed source and guardrail
-        inputs.
+async def _execute_stream_stage_inner(
+    connected: ConnectedStage,
+    messages: list[Any],
+) -> StreamExecutedStage:
+    """Run streamed orchestration and precompute finalization inputs."""
     """
     result = Runner.run_streamed(connected.agent, input=messages)
     event_count = 0
