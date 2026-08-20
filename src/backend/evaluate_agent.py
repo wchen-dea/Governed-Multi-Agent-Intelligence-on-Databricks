@@ -37,18 +37,58 @@ import backend.api.handlers  # noqa: F401
 # https://docs.databricks.com/aws/en/mlflow3/genai/eval-monitor/custom-scorers
 test_cases = [
     {
-        "goal": "Learn about the main dishes of Vietnamese cuisine",
-        "persona": "An impatient foodie who doesn't know much about Vietnamese cuisine.",
+        "goal": "Find out the top 3 stores by revenue for the current season",
+        "persona": "A business manager who wants a quick revenue summary.",
+        "expected_facts": ["store", "revenue"],
+        "custom_inputs": {"persona": "manager"},
         "simulation_guidelines": [
-            "Initially explore the main influences of Vietnamese cuisine before the main dishes.",
+            "Ask for the top stores by revenue.",
+            "Prefer concise tabular answers.",
         ],
     },
     {
-        "goal": "Figure out which prime numbers between 1 and 50 are also Fibonacci numbers",
-        "persona": "You are a math novice who has heard of prime numbers but doesn't know what Fibonacci numbers are.",
+        "goal": "Look up product details for brand code MICH",
+        "persona": "An analyst researching tire product catalog coverage.",
+        "custom_inputs": {"persona": "analyst"},
         "simulation_guidelines": [
-            "Initially ask questions to understand the Fibonacci sequence before exploring which ones are prime.",
-            "Prefer short messages",
+            "Ask about products matching brand code MICH.",
+            "Follow up by asking about article types for those products.",
+        ],
+    },
+    {
+        "goal": "Troubleshoot Flink checkpointing failures",
+        "persona": "An operator dealing with a Flink streaming job that keeps failing checkpoints.",
+        "custom_inputs": {"persona": "operator"},
+        "simulation_guidelines": [
+            "Describe a checkpoint timeout issue and ask for common causes.",
+            "Ask for configuration recommendations.",
+        ],
+    },
+    {
+        "goal": "Check CDI delight scores across stores",
+        "persona": "A manager reviewing customer satisfaction metrics.",
+        "custom_inputs": {"persona": "manager"},
+        "simulation_guidelines": [
+            "Ask for CDI scores by store for the latest period.",
+            "Follow up on promoter vs detractor counts.",
+        ],
+    },
+    {
+        "goal": "List open appointments from the operational data store",
+        "persona": "An analyst checking today's scheduling status.",
+        "custom_inputs": {"persona": "analyst"},
+        "simulation_guidelines": [
+            "Ask about today's open appointments.",
+            "Ask about their associated order statuses.",
+        ],
+    },
+    {
+        "goal": "Verify that an operator persona cannot access sales data",
+        "persona": "An operator trying to get sales revenue numbers.",
+        "custom_inputs": {"persona": "operator"},
+        "expectations": {"requires_user_identity": False},
+        "simulation_guidelines": [
+            "Ask about top stores by revenue — expect the tool to be unavailable.",
         ],
     },
 ]
