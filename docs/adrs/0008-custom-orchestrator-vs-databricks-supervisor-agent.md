@@ -6,11 +6,16 @@ Accepted
 
 ## Context
 
-The project currently runs a custom multi-agent orchestrator in Databricks Apps with explicit policy and guardrail enforcement, hybrid app/OBO authorization, environment-scoped subagent configuration, and deployment runbooks with fallback behaviors.
+The project runs a custom multi-agent orchestrator in Databricks Apps using the OpenAI Agents SDK (`openai-agents`) with:
 
-Databricks Supervisor Agent offers a managed supervisory orchestration model that can reduce custom runtime and operations code, but introduces tighter platform opinionation over routing and orchestration behavior.
+- Staged pipeline execution (`Runner.run` / `Runner.run_streamed`)
+- 5 subagents: 2 Genie MCP, 2 AI Search MCP, 1 Lakebase PostgreSQL
+- Persona-based policy enforcement with 4 personas (manager, analyst, operator, engineer)
+- Hybrid app/OBO authorization
+- Response guardrails with source attribution
+- Lifecycle event bus with UC audit persistence
 
-We compared both approaches for this codebase across control, governance fidelity, auth behavior, tooling flexibility, operations overhead, and delivery speed.
+Databricks Supervisor Agent offers a managed supervisory orchestration model that can reduce custom runtime code, but introduces tighter platform opinionation over routing, auth, and orchestration behavior.
 
 ## Decision
 
@@ -18,18 +23,17 @@ Use the current custom orchestrator as the primary production runtime for govern
 
 Adopt Supervisor Agent selectively for standardized, lower-risk use cases where reduced orchestration maintenance is more valuable than deep custom control.
 
-Comparison summary for this decision:
+### Comparison
 
-- Custom orchestrator (current app):
-  - Highest control over routing, prompts, failover, and policy/guardrail logic.
-  - Explicit per-tool auth branching (app identity and OBO identity).
-  - Strong fit for domain-specific governance and evidence requirements.
-  - Higher implementation and operational ownership.
-- Databricks Supervisor Agent:
-  - Faster initial setup with more managed orchestration behavior.
-  - Lower maintenance for common orchestration patterns.
-  - Less flexible for bespoke policy/auth/routing behavior.
-  - Stronger coupling to Databricks-managed orchestration semantics.
+| Dimension | Custom Orchestrator (current) | Databricks Supervisor Agent |
+|-----------|-------------------------------|----------------------------|
+| Routing control | Full — per-subagent policy rules, persona matrix | Platform-managed — less granular |
+| Auth model | Hybrid app + OBO per subagent | Platform-managed identity |
+| Guardrails | Custom evidence/safety/PII checks + AI Gateway | Platform guardrails only |
+| Tool types | Genie MCP, AI Search MCP, Lakebase, serving endpoints, apps | Managed tool integrations |
+| Observability | Custom message bus → UC audit table | Platform telemetry |
+| Maintenance | Full ownership of pipeline code | Managed by Databricks |
+| Governance precision | Exact — persona ACLs, confidence gating, source attribution | Coarser — platform defaults |
 
 ## Alternatives Considered
 
@@ -41,20 +45,22 @@ Comparison summary for this decision:
 
 ### Positive
 
-- Preserves governance precision already implemented in this repository.
-- Keeps explicit control over auth-mode routing and evidence-backed behavior.
+- Preserves governance precision already implemented (persona-based routing, evidence attribution).
+- Keeps explicit control over auth-mode routing and OBO identity branching.
 - Avoids immediate migration risk for critical enterprise paths.
 - Enables incremental experimentation with Supervisor Agent where it is a strong fit.
 
 ### Trade-offs
 
-- Ongoing ownership of custom orchestrator behavior and deployment operations remains.
-- Feature parity with new managed orchestration capabilities must be monitored over time.
+- Ongoing ownership of custom orchestrator behavior and deployment operations.
+- Feature parity with new managed orchestration capabilities must be monitored.
 - Hybrid adoption increases architecture complexity if boundaries are not kept clear.
 
 ## Implementation Notes
 
-- Current orchestrator implementation: [src/backend/services/orchestrator_service.py](../../src/backend/services/orchestrator_service.py)
-- Runtime auth and policy controls: [src/backend/services/runtime_auth_service.py](../../src/backend/services/runtime_auth_service.py), [src/backend/services/policy_service.py](../../src/backend/services/policy_service.py), [src/backend/services/guardrails_service.py](../../src/backend/services/guardrails_service.py)
-- Subagent registry and auth metadata: [src/backend/domain/subagents.dev.json](../../src/backend/domain/subagents.dev.json)
-- Deployment and fallback operations: [Makefile](../../Makefile), [docs/operations/runbook.md](../operations/runbook.md)
+- Orchestrator service: [src/backend/services/orchestrator_service.py](../../src/backend/services/orchestrator_service.py) (`create_orchestrator_agent`, `connect_healthy_mcp_servers`, `build_subagent_tools`, `build_lakebase_tools`)
+- Pipeline execution: [src/backend/api/handlers.py](../../src/backend/api/handlers.py) (staged pipeline using `Runner.run` / `Runner.run_streamed`)
+- Runtime auth and policy: [src/backend/services/runtime_auth_service.py](../../src/backend/services/runtime_auth_service.py), [src/backend/services/policy_service.py](../../src/backend/services/policy_service.py)
+- Guardrails: [src/backend/services/guardrails_service.py](../../src/backend/services/guardrails_service.py)
+- Subagent registry: [src/backend/domain/subagents.dev.json](../../src/backend/domain/subagents.dev.json) (5 subagents, per-persona access)
+- Deployment: [Makefile](../../Makefile) (`make deploy`, `make redeploy`), [docs/operations/operations-runbook.md](../operations/operations-runbook.md)

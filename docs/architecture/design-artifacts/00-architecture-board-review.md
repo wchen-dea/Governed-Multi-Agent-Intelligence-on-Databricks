@@ -1,10 +1,9 @@
 # Architecture Board Review Pack
 
-This document is the single-page review pack that embeds the complete AI system design diagram set across concept, logical, and deployment phases.
+Single-page review pack embedding the complete AI system design across concept, logical, and deployment phases. Reflects current implementation as of the active codebase.
 
 ## Source Artifact Set
 
-- [README.md](README.md)
 - [01-concept-high-level.md](01-concept-high-level.md)
 - [02-concept-detailed.md](02-concept-detailed.md)
 - [03-logical-high-level.md](03-logical-high-level.md)
@@ -12,16 +11,18 @@ This document is the single-page review pack that embeds the complete AI system 
 - [05-deployment-high-level.md](05-deployment-high-level.md)
 - [06-deployment-detailed.md](06-deployment-detailed.md)
 
+---
+
 ## Concept Phase: High Level
 
 ### Business Capability Map
 
 ```mermaid
 flowchart LR
-    A[Conversational Access] --> B[Governed Routing]
-    B --> C[Safe Response Generation]
-    C --> D[Auditable Outcomes]
-    D --> E[Reliable Multi-Environment Delivery]
+    A[Conversational Access] --> B[Persona-Governed Routing]
+    B --> C[Tool-Backed Response Generation]
+    C --> D[Evidence-Attributed Outcomes]
+    D --> E[Auditable Multi-Environment Delivery]
 ```
 
 ### Stakeholder and Actor Map
@@ -29,69 +30,70 @@ flowchart LR
 ```mermaid
 flowchart TB
     subgraph Business
-        U1[Business User]
-        U2[Analyst]
-        U3[Executive]
+        U1[Manager — full agent access]
+        U2[Analyst — Product Index + Lakebase ODS]
+        U3[Operator — Flink Support only]
+        U4[Engineer — Product Index + Flink Support + Lakebase ODS]
     end
 
     subgraph Platform
         O1[Platform Engineer]
-        O2[Operator]
-        O3[Security and Governance]
+        O2[Security and Governance]
     end
 
-    U1 --> SYS[AI System]
+    U1 --> SYS[Multi-Agent Orchestrator]
     U2 --> SYS
     U3 --> SYS
-
+    U4 --> SYS
     O1 --> SYS
     O2 --> SYS
-    O3 --> SYS
 ```
 
 ### System Context Diagram
 
 ```mermaid
 flowchart LR
-    User[User Channels] --> UI[Chat UI]
-    UI --> AISYS[AI Orchestrator System]
-    AISYS --> Genie[Genie Spaces Sales CDI]
-    AISYS --> VS[Vector Search AI Search Indexes]
-    AISYS --> LB[Lakebase PostgreSQL ODS]
-    AISYS --> Models[Foundation Model APIs]
-    AISYS --> Audit[Audit and Observability Sinks]
-    AISYS --> Identity[Identity and Authorization Services]
+    User[Enterprise Users] --> UI[React Chat UI]
+    UI --> AISYS[AI Orchestrator — Databricks App]
+    AISYS --> Genie[Genie Spaces — Sales / CDI]
+    AISYS --> AIS[AI Search MCP — Product Index / Flink Support]
+    AISYS --> LB[Lakebase PostgreSQL — ODS]
+    AISYS --> FM[Foundation Models — databricks-claude-sonnet-4]
+    AISYS --> AIGW[AI Gateway — optional]
+    AISYS --> Audit[UC Audit Table / Message Bus]
+    AISYS --> Identity[Workspace Identity — App + OBO]
 ```
 
-### Business Value and Decision Flow
-
-```mermaid
-flowchart TD
-    Q[Business Question] --> Ctx[Context and Intent Understanding]
-    Ctx --> Route[Tool and Agent Route Decision]
-    Route --> Ans[Answer with Evidence]
-    Ans --> Action[Business Action]
-    Action --> Outcome[Measured Outcome and Feedback]
-```
+---
 
 ## Concept Phase: Detailed
 
-### Product Scope Map
+### Persona-Agent Access Matrix
 
 ```mermaid
-flowchart LR
-    subgraph InScope[In Scope]
-        S1[Multi-agent orchestration]
-        S2[Policy and guardrails]
-        S3[Audit event lifecycle]
-        S4[Release quality gate]
+flowchart TB
+    subgraph Agents
+        SA[sales_insights_agent — Genie]
+        CDI[cdi_agent — Genie]
+        PI[product_index_assistant — AI Search]
+        FS[flink_support_agent — AI Search]
+        LB[lakebase_ods_agent — Lakebase]
     end
 
-    subgraph OutScope[Out of Scope]
-        O1[Custom BI dashboarding]
-        O2[Long-running agent mailbox workflows]
-        O3[Cross-tenant orchestration]
-    end
+    M[manager] --> SA
+    M --> CDI
+    M --> PI
+    M --> FS
+    M --> LB
+
+    A[analyst] --> PI
+    A --> LB
+
+    OP[operator] --> FS
+
+    E[engineer] --> PI
+    E --> FS
+    E --> LB
 ```
 
 ### Trust Boundary and Risk Sketch
@@ -99,35 +101,45 @@ flowchart LR
 ```mermaid
 flowchart TB
     subgraph Zone1[User Zone]
-        U[User Session]
+        U[User Session + Persona]
     end
 
     subgraph Zone2[App Runtime Zone]
-        UI[Frontend]
-        ORCH[Orchestrator]
-        POL[Policy and Guardrails]
+        UI[React Frontend]
+        ORCH[Orchestrator + OpenAI Agents SDK]
+        POL[Policy Service + Guardrails Service]
     end
 
     subgraph Zone3[Enterprise Services Zone]
-        TOOL[Tools and MCP]
-        DATA[Governed Data Assets]
+        GENIE[Genie MCP — Sales / CDI]
+        AIS[AI Search MCP — Product / Flink]
+        LBZ[Lakebase — PostgreSQL ODS]
+        FM[Foundation Model Serving]
+        AIGW[AI Gateway — optional]
     end
 
     subgraph Zone4[Control Zone]
-        AUDIT[Audit Sink]
+        AUDIT[UC Audit Table]
         SEC[Security Monitoring]
     end
 
-    U --> UI --> ORCH --> TOOL --> DATA
+    U --> UI --> ORCH --> GENIE
+    ORCH --> AIS
+    ORCH --> LBZ
+    ORCH --> FM
+    FM -.-> AIGW
     ORCH --> POL
     ORCH --> AUDIT
     POL --> AUDIT
     AUDIT --> SEC
 
     R1[Risk: prompt injection] -.mitigate.-> POL
-    R2[Risk: unauthorized access] -.mitigate.-> ORCH
+    R2[Risk: unauthorized persona access] -.mitigate.-> POL
     R3[Risk: untraceable output] -.mitigate.-> AUDIT
+    R4[Risk: PII in LLM traffic] -.mitigate.-> AIGW
 ```
+
+---
 
 ## Logical Phase: High Level
 
@@ -135,17 +147,18 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    User[User] --> FE[Frontend Chat UI]
-    FE --> API[Backend API Handlers]
-    API --> ORCH[Orchestrator Service Responses API]
-    ORCH --> POL[Policy and Guardrails]
-    ORCH --> TOOL[Tool and MCP Adapter Layer]
-    TOOL --> GENIE[Genie Spaces Sales CDI]
-    TOOL --> VS[Vector Search AI Search Indexes]
-    TOOL --> SEP[Serving Endpoints]
-    TOOL --> LB[Lakebase PostgreSQL ODS psycopg2]
+    User[User] --> FE[React Chat UI — Vite/TS]
+    FE --> API[Backend API — MLflow Agent Server]
+    API --> ORCH[Orchestrator — OpenAI Agents SDK Runner]
+    ORCH --> POL[Policy Service + Guardrails Service]
+    ORCH --> TOOL[Tool + MCP Adapter Layer]
+    TOOL --> GENIE[Genie MCP — sales_insights / cdi]
+    TOOL --> AIS[AI Search MCP — product_index / flink_support]
+    TOOL --> LB[Lakebase — lakebase_ods — psycopg2 + OAuth]
+    ORCH --> FM[Foundation Model — databricks-claude-sonnet-4]
+    FM -.-> AIGW[AI Gateway — optional]
     ORCH --> BUS[Message Bus]
-    BUS --> AUDIT[Audit Storage]
+    BUS --> AUDIT[UC Audit Table]
 ```
 
 ### End-to-End Request Flow
@@ -153,62 +166,51 @@ flowchart LR
 ```mermaid
 sequenceDiagram
     participant U as User
-    participant FE as Frontend
+    participant FE as React Frontend
     participant BE as Backend Handler
-    participant OR as Orchestrator
+    participant RA as Runtime Auth Service
+    participant POL as Policy Service
+    participant OR as Orchestrator Agent
     participant TL as Tool Layer
+    participant GR as Guardrails Service
+    participant MB as Message Bus
 
-    U->>FE: Send prompt
+    U->>FE: Send prompt with persona
     FE->>BE: POST /invocations
-    BE->>OR: Build runtime context
-    OR->>OR: Policy checks
-    OR->>TL: Call selected tool
+    BE->>MB: request.started
+    BE->>RA: Build identity + policy context
+    RA->>POL: Filter subagents by persona + auth
+    POL-->>RA: Allowed/denied subagents
+    RA-->>BE: RuntimeAuthContext
+    BE->>OR: Build Agent with allowed tools + MCP
+    OR->>TL: Execute selected tool
     TL-->>OR: Tool result
-    OR->>OR: Guardrail checks
-    OR-->>BE: Final response
-    BE-->>FE: Stream response
-    FE-->>U: Render response
-```
-
-### Data Flow and Lineage
-
-```mermaid
-flowchart TD
-    I[User Input] --> N[Normalized Request]
-    N --> P[Policy Decision]
-    P --> T[Tool Invocation]
-    T --> R[Retrieved Data]
-    R --> G[Generated Response]
-    G --> O[Output to User]
-
-    N --> E1[Request Event]
-    P --> E2[Policy Event]
-    T --> E3[Tool Event]
-    G --> E4[Guardrail Event]
-    O --> E5[Response Event]
-    E1 --> L[Lineage and Audit Store]
-    E2 --> L
-    E3 --> L
-    E4 --> L
-    E5 --> L
+    OR-->>BE: Response items
+    BE->>GR: Evaluate guardrails
+    GR-->>BE: Pass/block decision
+    BE->>MB: request.succeeded
+    BE-->>FE: Stream/invoke response
+    FE-->>U: Render response with source
 ```
 
 ### Security and Identity Flow
 
 ```mermaid
 flowchart LR
-    UI[UI Session] --> HDR[Forwarded Token Header Optional]
+    UI[React UI Session] --> HDR[x-forwarded-access-token — optional]
     HDR --> AUTH[Runtime Auth Builder]
-    AUTH --> APP[App Identity Path]
-    AUTH --> OBO[User OBO Path]
+    AUTH --> APP[App Identity — WorkspaceClient]
+    AUTH --> OBO[User OBO Identity — user WorkspaceClient]
 
-    APP --> TOOL1[App-Auth Tool Calls]
-    OBO --> TOOL2[User-Auth Tool Calls]
+    APP --> TOOL1[App-auth tools — all current subagents]
+    OBO --> TOOL2[OBO-auth tools — when auth_mode=obo]
 
-    AUTH --> POL[Policy Decision]
-    POL --> ALLOW[Allowed Tools]
-    POL --> DENY[Denied Tools]
+    AUTH --> POL[Policy Filter]
+    POL --> ALLOW[Allowed subagents by persona]
+    POL --> DENY[Denied — persona_not_allowed / obo_identity_required]
 ```
+
+---
 
 ## Logical Phase: Detailed
 
@@ -216,92 +218,65 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-    H[API Handlers] --> D[Dependency Container]
+    H[API Handlers — handlers.py] --> D[Dependency Container — dependencies.py]
     D --> RA[Runtime Auth Service]
     D --> OR[Orchestrator Service]
     D --> PO[Policy Service]
     D --> GR[Guardrails Service]
     D --> MB[Message Bus]
 
-    OR --> SC[Subagent Config Domain]
-    OR --> TL[Tool Builders Serving Endpoint and App]
-    OR --> MCP[MCP Server Builders Genie and AI Search]
-    OR --> LB[Lakebase Tools Builder psycopg2 OAuth]
+    OR --> SC[Subagent Config — subagent_config.py]
+    OR --> TL[Tool Builders — serving_endpoint / app]
+    OR --> MCP[MCP Server Builders — genie / mcp]
+    OR --> LB[Lakebase Tools Builder — psycopg2 + OAuth]
+
+    SC --> S1[sales_insights_agent — Genie — manager only]
+    SC --> S2[product_index_assistant — AI Search — analyst, manager, engineer]
+    SC --> S3[flink_support_agent — AI Search — operator, manager, engineer]
+    SC --> S4[cdi_agent — Genie — manager only]
+    SC --> S5[lakebase_ods_agent — Lakebase — analyst, manager, engineer]
 ```
 
-### Orchestration and Tool Call Sequence
-
-```mermaid
-sequenceDiagram
-    participant H as Handler
-    participant RA as Runtime Auth
-    participant OR as Orchestrator
-    participant TS as Tool Service
-    participant MB as Message Bus
-
-    H->>MB: request.started
-    H->>RA: Build auth and policy context
-    RA-->>H: Allowed tools and unavailable tools
-    H->>OR: Build agent with allowed tools
-    OR->>TS: Execute selected tool
-    TS-->>OR: Tool result
-    OR-->>H: Response items
-    H->>MB: request.succeeded
-```
-
-### Prompt and Policy Layering
+### Policy Rules Decision Tree
 
 ```mermaid
 flowchart TD
-    A[Base System Instructions] --> B[Orchestrator Instructions]
-    B --> C[Tool-specific Invocation Context]
-    C --> D[Model Output]
-
-    P1[Request-time Policy] --> G[Allowed Tool Set]
-    G --> C
-    D --> P2[Response-time Guardrails]
-    P2 --> E[Allowed Response]
-    P2 --> F[Blocked Response with Reason]
-```
-
-### Session and State Model
-
-```mermaid
-flowchart LR
-    S[Chat Session] --> H[Conversation History]
-    S --> T[Optional Forwarded Token]
-    H --> R[Request Payload]
-    T --> R
-    R --> O[Orchestrator Execution]
-    O --> U[Updated History]
+    Start[Per-subagent evaluation] --> HasPersona{Persona set?}
+    HasPersona -- No --> PR[persona_required — block if subagent restricts]
+    HasPersona -- Yes --> InList{Persona in allowed_personas?}
+    InList -- No --> PNA[persona_not_allowed — block]
+    InList -- Yes --> AuthMode{auth_mode = obo?}
+    AuthMode -- Yes --> HasToken{Forwarded token present?}
+    HasToken -- No --> OBO[obo_identity_required — block]
+    HasToken -- Yes --> Confidence
+    AuthMode -- No --> Confidence{Confidence check needed?}
+    Confidence -- Yes --> ConfOK{confidence >= 0.75?}
+    ConfOK -- No --> LCS[low_confidence_sensitive — block]
+    ConfOK -- Yes --> Allow[ALLOWED]
+    Confidence -- No --> Allow
 ```
 
 ### Failure and Recovery Flow
 
 ```mermaid
 flowchart TD
-    Start[Request Start] --> Tool{Tool Available}
-    Tool -- No --> Unavailable[Return unavailable-tool behavior]
-    Tool -- Yes --> Exec[Execute tool]
-    Exec --> Ok{Execution OK}
-    Ok -- No --> FailOpen{Fail-open enabled}
-    FailOpen -- Yes --> Fallback[Use structured logging fallback and continue]
-    FailOpen -- No --> Error[Return explicit error]
-    Ok -- Yes --> Guard{Guardrail pass}
-    Guard -- No --> Block[Return blocked response reason]
-    Guard -- Yes --> Success[Return answer]
+    Start[Request Start] --> MCP{MCP Health Check}
+    MCP -- Unhealthy --> Cache[Cache failure 10s TTL — add to unavailable]
+    MCP -- Healthy --> Cache2[Cache success 30s TTL]
+    Cache --> Tool{Other tools available?}
+    Cache2 --> Tool
+    Tool -- None --> NoTool[Run without tools — LLM-only response]
+    Tool -- Yes --> Exec[Execute via Runner]
+    Exec --> Ok{Execution OK?}
+    Ok -- No --> FailOpen{Message bus fail_open?}
+    FailOpen -- Yes --> Fallback[Structured logging fallback — continue]
+    FailOpen -- No --> Error[Raise exception]
+    Ok -- Yes --> Guard{Guardrail pass?}
+    Guard -- No --> Block[Invoke: raise UserError / Stream: emit block delta]
+    Guard -- Yes --> Success[Return response with source suffix]
 ```
 
-### Evaluation and Release Gate Flow
-
-```mermaid
-flowchart LR
-    Code[Code and Config Change] --> Test[Automated Tests]
-    Test --> Eval[Agent Evaluation Run]
-    Eval --> KPI{KPI Thresholds Met}
-    KPI -- Yes --> Promote[Deploy Promotion Allowed]
-    KPI -- No --> Stop[Deployment Blocked]
-```
+---
 
 ## Deployment Phase: High Level
 
@@ -309,101 +284,68 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    Dev[dev] --> QA[qa]
+    Dev[dev — dbc-baff2b7f-4402] --> QA[qa]
     QA --> STG[stg]
     STG --> PRD[prod]
 
-    Dev -. validate .-> QA
-    QA -. promote .-> STG
-    STG -. release .-> PRD
+    Dev -. bundle validate .-> QA
+    QA -. bundle deploy .-> STG
+    STG -. release gate .-> PRD
 ```
 
 ### Runtime Deployment Map
 
 ```mermaid
 flowchart TB
-    subgraph DatabricksApp[Databricks App Runtime]
-        FE[Frontend]
-        BE[Backend Agent Server]
+    subgraph DatabricksApp[Databricks App — multiagent-app-dev]
+        FE[React Chat UI — Vite build]
+        BE[Backend — MLflow Agent Server — uvicorn]
     end
 
     FE --> BE
-    BE --> MOD[Model Serving Endpoints]
-    BE --> GEN[Genie and MCP Integrations]
-    BE --> LB[Lakebase PostgreSQL ODS]
-    BE --> AUD[Audit Storage]
-    BE --> OBS[Observability Stack]
+    BE --> FM[Foundation Model — databricks-claude-sonnet-4]
+    FM -.-> AIGW[AI Gateway — optional]
+    BE --> GENIE[Genie MCP — Sales / CDI Spaces]
+    BE --> AIS[AI Search MCP — Product Index / Flink Support]
+    BE --> LB[Lakebase PostgreSQL — ODS]
+    BE --> AUD[UC Audit Table]
+    BE --> OBS[MLflow Tracing]
 ```
+
+---
 
 ## Deployment Phase: Detailed
-
-### Network and Security Topology
-
-```mermaid
-flowchart LR
-    User[Enterprise Users] --> Ingress[App Ingress]
-    Ingress --> FE[Frontend Service]
-    FE --> BE[Backend Service]
-
-    BE --> IDP[Identity Provider]
-    BE --> MCP[MCP and Tool Integrations]
-    BE --> SEP[Serving Endpoints]
-    BE --> LB[Lakebase PostgreSQL Endpoint]
-    BE --> UC[UC Audit Table]
-
-    SEC[Security Monitoring] --> Ingress
-    SEC --> BE
-    SEC --> UC
-```
 
 ### CI/CD and Promotion Pipeline
 
 ```mermaid
 flowchart TD
-    Commit[Commit to Main] --> Build[Build and Static Checks]
-    Build --> Unit[Unit and Integration Tests]
-    Unit --> Eval[Evaluation KPI Gate]
-    Eval --> Validate[Bundle Validate]
-    Validate --> DeployDev[Deploy dev]
-    DeployDev --> DeployQA[Deploy qa]
-    DeployQA --> DeployStg[Deploy stg]
-    DeployStg --> DeployProd[Deploy prod]
+    Commit[Commit to main] --> Lint[Static Checks — ruff / mypy]
+    Lint --> Unit[pytest — test_*.py]
+    Unit --> Eval[make evaluate — MLflow KPI gate]
+    Eval --> Validate[databricks bundle validate -t dev]
+    Validate --> DeployDev[make deploy — dev target]
+    DeployDev --> Smoke[make test-deployed — health + invoke check]
+    Smoke --> DeployQA[bundle deploy -t qa]
+    DeployQA --> DeployStg[bundle deploy -t stg]
+    DeployStg --> DeployProd[bundle deploy -t prod]
 ```
 
 ### Observability Architecture
 
 ```mermaid
 flowchart TB
-    Req[Request Lifecycle] --> MB[Message Bus]
-    Tool[Tool Lifecycle] --> MB
-    Pol[Policy and Guardrail Decisions] --> MB
+    Req[Request Lifecycle Events] --> MB[Message Bus]
+    Tool[Tool Lifecycle Events] --> MB
+    Pol[Policy + Guardrail Decisions] --> MB
 
-    MB --> Log[Structured Logs]
-    MB --> Queue[Kafka or RabbitMQ]
-    MB --> UCTable[UC Audit Table]
+    MB --> Log[StructuredLoggingMessageBus]
+    MB --> Kafka[KafkaMessageBus]
+    MB --> Rabbit[RabbitMQMessageBus]
+    MB --> UCT[UcAuditTableMessageBus]
 
-    Log --> Dash[Dashboards and Alerts]
-    Queue --> Dash
-    UCTable --> Dash
-```
-
-### HA and DR Topology
-
-```mermaid
-flowchart LR
-    subgraph Primary[Primary Region]
-        A1[App Runtime]
-        A2[Model Integrations]
-        A3[Audit Storage]
-    end
-
-    subgraph Recovery[Recovery Region]
-        B1[Standby Runtime]
-        B2[Standby Integrations]
-        B3[Replicated Audit Storage]
-    end
-
-    A1 -. failover .-> B1
-    A2 -. failover .-> B2
-    A3 -. replicate .-> B3
+    UCT --> Delta[quickstart_catalog.multi_agent_schema.agent_lifecycle_events]
+    Trace[MLflow Tracing] --> Exp[MLflow Experiment]
+    Delta --> Dash[Dashboards and Alerts]
+    Exp --> Dash
 ```

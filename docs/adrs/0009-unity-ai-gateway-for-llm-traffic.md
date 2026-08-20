@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-The orchestrator calls Databricks-hosted foundation models (e.g., `databricks-claude-sonnet-4`) via `AsyncDatabricksOpenAI`. By default these calls go directly to model serving endpoints, which provides basic usage tracking but no centralized rate-limiting, PII controls, inference logging, or platform-level guardrails.
+The orchestrator calls Databricks-hosted foundation models (default: `databricks-gpt-5-6-luna`) via `AsyncDatabricksOpenAI`. By default these calls go directly to model serving endpoints, which provides basic usage tracking but no centralized rate-limiting, PII controls, inference logging, or platform-level guardrails.
 
 Unity AI Gateway adds a governance layer on top of serving endpoints with configurable rate limits, PII detection and masking, safety filters, inference table capture, and usage tracking — all managed through endpoint configuration rather than application code.
 
@@ -41,6 +41,12 @@ AI Gateway guardrails and application guardrails (ADR 0005) are complementary:
 
 Neither replaces the other. AI Gateway catches broad platform-level violations; application guardrails enforce domain-specific governance.
 
+### Available gateway endpoints in dev workspace
+
+Endpoints with AI Gateway enabled: `kc-ai-assistant-v1` (full guardrails, PII, rate limits, inference tables), plus several `agents_dt_analytics-*` agent endpoints.
+
+Foundation model endpoints (e.g., `databricks-claude-sonnet-4`, `databricks-gpt-5-6-luna`) have basic `usage_tracking` but no custom AI Gateway config — operators can configure these via the Databricks UI.
+
 ## Alternatives Considered
 
 - **Hardcode a gateway URL per environment.** Rejected because it couples deployment config to application code and prevents quick toggling.
@@ -68,4 +74,4 @@ Neither replaces the other. AI Gateway catches broad platform-level violations; 
 - Client construction with base URL override: [src/backend/api/handlers.py](../../src/backend/api/handlers.py) (`_build_openai_client`)
 - Settings: [src/backend/shared/settings.py](../../src/backend/shared/settings.py) (`openai_base_url`, `openai_timeout_seconds`)
 - Bundle variables: [databricks.yml](../../databricks.yml) (`openai_base_url`, `openai_timeout_seconds`)
-- Per-target values: [targets/dev.yml](../../targets/dev.yml), [targets/qa.yml](../../targets/qa.yml), [targets/stg.yml](../../targets/stg.yml), [targets/prod.yml](../../targets/prod.yml)
+- Per-target values: [targets/dev.yml](../../targets/dev.yml) (currently `openai_base_url=""` — direct to model serving)

@@ -6,37 +6,48 @@ Accepted
 
 ## Context
 
-The orchestrator routes requests to tools with different access requirements. Some tools should run with app identity; others must run with user identity for governed data access.
+The orchestrator routes requests to tools with different access requirements. Some tools (Genie spaces, AI Search indexes, Lakebase) run with the app's service principal identity. Others may need to operate with the end-user's identity for governed data access and per-user audit trails.
 
 ## Decision
 
-Adopt subagent-level auth selection using auth_mode:
+Adopt per-subagent auth mode selection via `auth_mode` field in subagent config:
 
-- `app`: execute with app identity
-- `obo`: execute with forwarded user token identity
+- `app` — execute with the Databricks App service principal (WorkspaceClient from app environment).
+- `obo` — execute with the user's forwarded token (user WorkspaceClient from `x-forwarded-access-token` header).
 
-Request identity context is built per request. OBO-only tool paths fail clearly when no forwarded token is present.
+Identity resolution happens per-request in `build_request_identity_context()`:
+
+1. App identity is always available (from the app's service principal).
+2. User identity is available only when the request carries `x-forwarded-access-token`.
+3. Policy service blocks `obo`-mode subagents when no user token is present (reason code: `obo_identity_required`).
+
+Current state: all 5 configured subagents use `auth_mode=app`. OBO paths are wired and tested but not yet active in production subagent configs.
 
 ## Alternatives Considered
 
-- App-only auth for all tools (rejected for user-scoped governance requirements).
-- OBO-only auth for all tools (rejected due to operational friction and availability concerns).
+- App-only auth for all tools — rejected because it prevents user-scoped governance when needed.
+- OBO-only auth for all tools — rejected because operational friction (token forwarding) and availability concerns for app-managed tools.
+- Per-request global auth selection instead of per-subagent — rejected because tools have different trust requirements.
 
 ## Consequences
 
 ### Positive
 
-- Supports least-privilege access per tool
-- Enables user-scoped governance and auditability
-- Avoids silent privilege escalation by blocking missing-token OBO paths
+- Supports least-privilege access per tool at the subagent config level.
+- Enables user-scoped governance and auditability when activated.
+- Blocks missing-token OBO paths with clear reason codes before tool execution.
+- Auth mode is declarative per subagent — no code changes needed to switch a tool from app to OBO.
 
 ### Trade-offs
 
-- More runtime auth branching and error paths
-- Additional UX and operational guidance required for token forwarding
+- Runtime auth branching and additional error paths.
+- UX guidance required for users to understand token forwarding via `/token` command.
+- OBO clients add per-request WorkspaceClient construction overhead.
 
 ## Implementation Notes
 
-Forwarded token header: `x-forwarded-access-token`.
-
-For direct non-interactive Databricks Apps invocation tests, use `Authorization: Bearer <token>`.
+- Identity resolution: [src/backend/shared/runtime_utils.py](../../src/backend/shared/runtime_utils.py) (`RequestIdentityContext`, `build_request_identity_context`)
+- Auth context assembly: [src/backend/services/runtime_auth_service.py](../../src/backend/services/runtime_auth_service.py) (`build_runtime_auth_context`)
+- Policy enforcement: [src/backend/services/policy_service.py](../../src/backend/services/policy_service.py) (`obo_identity_required` reason code)
+- Token forwarding UX: React UI `/token <databricks_access_token>` command sets `x-forwarded-access-token` header
+- Auth mode config: `auth_mode` field in [src/backend/domain/subagents.dev.json](../../src/backend/domain/subagents.dev.json)

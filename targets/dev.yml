@@ -8,7 +8,7 @@ targets:
       state_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}/state
     variables:
       app_name: multiagent-app-dev
-      mlflow_experiment_id: "2041388166228723"
+      mlflow_experiment_id: "3025644123415124"
       openai_base_url: ""
       openai_timeout_seconds: "0"
       subagents_config_path: "/app/python/source_code/.venv/lib/python3.11/site-packages/backend/domain/subagents.dev.json"

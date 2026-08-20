@@ -51,6 +51,6 @@ Optional headers:
 
 ## Related Documents
 
-- technical-specs.md
-- ../governance/prompt-and-policy-spec.md
-- ../operations/runbook.md
+- runtime-technical-specs.md
+- ../governance/prompt-policy-controls.md
+- ../operations/operations-runbook.md

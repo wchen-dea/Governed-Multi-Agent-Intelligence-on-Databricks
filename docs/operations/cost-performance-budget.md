@@ -104,5 +104,5 @@ Suggested optimization validation order:
 ## Related Documents
 
 - ../quality/evaluation-spec.md
-- runbook.md
-- ../architecture/system-architecture.md
+- operations-runbook.md
+- ../architecture/high-level-architecture.md

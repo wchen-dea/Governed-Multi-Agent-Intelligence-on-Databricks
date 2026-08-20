@@ -108,6 +108,6 @@ Typical source pattern for Genie Agents:
 
 ## Related Documents
 
-- technical-specs.md
+- runtime-technical-specs.md
 - ../product/business-specs.md
-- system-architecture.md
+- high-level-architecture.md

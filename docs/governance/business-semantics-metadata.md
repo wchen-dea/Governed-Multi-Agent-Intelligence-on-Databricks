@@ -228,8 +228,8 @@ Current repository components aligned to this spec:
 
 ## Related Documents
 
-- data-contract-and-lineage-spec.md
-- prompt-and-policy-spec.md
-- security-and-threat-model.md
-- ../architecture/model-and-tool-registry.md
+- data-contracts-lineage.md
+- prompt-policy-controls.md
+- security-threat-model.md
+- ../architecture/tool-and-model-registry.md
 - ../quality/evaluation-spec.md

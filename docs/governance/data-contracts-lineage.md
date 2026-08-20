@@ -71,7 +71,7 @@ Required identifiers:
 
 ## Related Documents
 
-- business-semantics-and-ai-metadata-spec.md
-- ../architecture/technical-specs.md
-- ../architecture/model-and-tool-registry.md
-- ../operations/runbook.md
+- business-semantics-metadata.md
+- ../architecture/runtime-technical-specs.md
+- ../architecture/tool-and-model-registry.md
+- ../operations/operations-runbook.md

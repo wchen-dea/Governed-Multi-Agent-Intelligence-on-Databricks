@@ -142,7 +142,7 @@ For each release candidate, capture:
 
 ## Related Documents
 
-- ../architecture/technical-specs.md
+- ../architecture/runtime-technical-specs.md
 - ../product/business-specs.md
-- ../operations/runbook.md
+- ../operations/operations-runbook.md
 - ../adrs/0007-evaluation-kpi-release-gate.md

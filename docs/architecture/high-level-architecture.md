@@ -6,7 +6,7 @@ Describe the system shape, major boundaries, and end-to-end request flow.
 
 ## Scope
 
-This document covers high-level architecture only. Implementation-level details are in `docs/architecture/system-design.md`, and operational procedures are in `docs/operations/runbook.md`.
+This document covers high-level architecture only. Implementation-level details are in `docs/architecture/low-level-design.md`, and operational procedures are in `docs/operations/operations-runbook.md`.
 
 ## Current Status
 
@@ -232,8 +232,8 @@ Optional runtime mode:
 ## Related Docs
 
 - `docs/product/business-specs.md`: business goals and requirements
-- `docs/architecture/technical-specs.md`: centralized technical domain map
-- `docs/architecture/system-design.md`: low-level implementation details
+- `docs/architecture/runtime-technical-specs.md`: centralized technical domain map
+- `docs/architecture/low-level-design.md`: low-level implementation details
 - `docs/architecture/design-artifacts/README.md`: centralized full design diagram set across concept, logical, and deployment phases
 - `docs/architecture/design-artifacts/07-request-execution-flow-class-diagram.md`: simplified invoke/stream staged request execution class diagram
-- `docs/operations/runbook.md`: operations and incident handling
+- `docs/operations/operations-runbook.md`: operations and incident handling

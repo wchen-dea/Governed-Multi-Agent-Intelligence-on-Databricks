@@ -207,7 +207,7 @@ High-level request path:
 5. Tools query Genie Agent MCP routes, AI Search MCP indexes, or serving endpoints.
 6. Unified response is returned to the client.
 
-For architecture diagrams, see [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md).
+For architecture diagrams, see [docs/architecture/high-level-architecture.md](docs/architecture/high-level-architecture.md).
 
 ## Project Layout
 
@@ -244,7 +244,7 @@ Validate and deploy:
 make redeploy TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT
 ```
 
-If bundle deploy fails due to Terraform provider registry availability, use the operational fallback documented in [docs/operations/runbook.md](docs/operations/runbook.md).
+If bundle deploy fails due to Terraform provider registry availability, use the operational fallback documented in [docs/operations/operations-runbook.md](docs/operations/operations-runbook.md).
 
 ## Runtime Environment Variables
 
@@ -287,23 +287,23 @@ MCP connect/probe performance controls:
 - [CONTRIBUTING.md](CONTRIBUTING.md): contributor workflow and project docstring standard.
 - [COPYRIGHT](COPYRIGHT): project copyright notice and usage restrictions.
 - [docs/product/business-specs.md](docs/product/business-specs.md): business requirements, constraints, and success metrics.
-- [docs/architecture/technical-specs.md](docs/architecture/technical-specs.md): centralized technical implementation map and cross-space contracts.
+- [docs/architecture/runtime-technical-specs.md](docs/architecture/runtime-technical-specs.md): centralized technical implementation map and cross-space contracts.
 - [docs/quality/evaluation-spec.md](docs/quality/evaluation-spec.md): datasets, scorers, KPI thresholds, and release-gate rules.
 - [Model Matrix and Environment Recommendations](docs/quality/evaluation-spec.md#model-matrix-and-environment-recommendations): environment-specific model profile guidance for dev, qa, stg, and prod release planning.
-- [docs/governance/prompt-and-policy-spec.md](docs/governance/prompt-and-policy-spec.md): prompt layering and deterministic policy/guardrail behavior.
-- [docs/architecture/model-and-tool-registry.md](docs/architecture/model-and-tool-registry.md): registry of active tools, endpoints, and Genie Agents.
-- [docs/governance/data-contract-and-lineage-spec.md](docs/governance/data-contract-and-lineage-spec.md): data contracts, classification, and lineage requirements.
-- [docs/governance/business-semantics-and-ai-metadata-spec.md](docs/governance/business-semantics-and-ai-metadata-spec.md): reliable business semantics and required AI metadata contract.
-- [docs/governance/security-and-threat-model.md](docs/governance/security-and-threat-model.md): trust boundaries, threats, and controls.
-- [docs/operations/cost-and-performance-budget.md](docs/operations/cost-and-performance-budget.md): latency/cost budget framework and operating signals.
-- [docs/operations/mlflow-implementation-checklist.md](docs/operations/mlflow-implementation-checklist.md): one-page MLflow rollout checklist with owners, tasks, and acceptance criteria.
-- [docs/operations/mlflow-execution-tracker.md](docs/operations/mlflow-execution-tracker.md): live execution tracker template for status, ownership, due dates, dependencies, and evidence.
-- [docs/architecture/api-contract-spec.md](docs/architecture/api-contract-spec.md): invoke/stream API contract and error semantics.
+- [docs/governance/prompt-policy-controls.md](docs/governance/prompt-policy-controls.md): prompt layering and deterministic policy/guardrail behavior.
+- [docs/architecture/tool-and-model-registry.md](docs/architecture/tool-and-model-registry.md): registry of active tools, endpoints, and Genie Agents.
+- [docs/governance/data-contracts-lineage.md](docs/governance/data-contracts-lineage.md): data contracts, classification, and lineage requirements.
+- [docs/governance/business-semantics-metadata.md](docs/governance/business-semantics-metadata.md): reliable business semantics and required AI metadata contract.
+- [docs/governance/security-threat-model.md](docs/governance/security-threat-model.md): trust boundaries, threats, and controls.
+- [docs/operations/cost-performance-budget.md](docs/operations/cost-performance-budget.md): latency/cost budget framework and operating signals.
+- [docs/operations/mlflow-rollout-checklist.md](docs/operations/mlflow-rollout-checklist.md): one-page MLflow rollout checklist with owners, tasks, and acceptance criteria.
+- [docs/operations/mlflow-rollout-tracker.md](docs/operations/mlflow-rollout-tracker.md): live execution tracker template for status, ownership, due dates, dependencies, and evidence.
+- [docs/architecture/api-contracts.md](docs/architecture/api-contracts.md): invoke/stream API contract and error semantics.
 - [docs/operations/postmortem-template.md](docs/operations/postmortem-template.md): incident and regression postmortem template.
-- [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md): high-level architecture and request flow
-- [docs/architecture/system-design.md](docs/architecture/system-design.md): low-level module design and runtime behavior
+- [docs/architecture/high-level-architecture.md](docs/architecture/high-level-architecture.md): high-level architecture and request flow
+- [docs/architecture/low-level-design.md](docs/architecture/low-level-design.md): low-level module design and runtime behavior
 - [docs/architecture/design-artifacts/README.md](docs/architecture/design-artifacts/README.md): centralized concept, logical, and deployment design diagrams
-- [docs/operations/runbook.md](docs/operations/runbook.md): deployment, operations, incident handling, rollback
+- [docs/operations/operations-runbook.md](docs/operations/operations-runbook.md): deployment, operations, incident handling, rollback
 
 ## Makefile Helpers
 

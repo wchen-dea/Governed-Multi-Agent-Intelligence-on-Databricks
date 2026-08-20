@@ -6,35 +6,53 @@ Accepted
 
 ## Context
 
-The orchestrator now routes across tools with different data classifications and governance requirements. Without explicit policy and response controls, the system risks over-broad tool access, weak justification quality, and unsafe disclosure patterns.
+The orchestrator routes across 5 subagents with different data classifications (`internal`, `confidential`), persona restrictions, and governance requirements. Without explicit policy and response controls, the system risks over-broad tool access, weak justification quality, and unsafe disclosure patterns.
 
 ## Decision
 
-Introduce two enforcement layers:
+Introduce two deterministic enforcement layers:
 
-- Request-time governed routing policy before tool and MCP assembly.
-- Response-time guardrails before returning content to clients.
+### Request-time policy (before tool assembly)
 
-Request-time policy controls include:
+Per-subagent evaluation using `filter_subagents_by_policy()`. Rules applied in order:
 
-- Per-subagent auth mode checks (`app` vs `obo`) and identity presence.
-- Data-classification-aware checks.
-- Persona allow-list checks.
-- Optional requested-tool and confidence checks.
+| Rule | Reason Code | Blocks When |
+|------|-------------|------------|
+| Explicit tool routing miss | `tool_not_requested` | Request names a specific tool that doesn't match this subagent |
+| Persona required | `persona_required` | No persona set and subagent restricts by `allowed_personas` |
+| Persona not allowed | `persona_not_allowed` | Active persona not in subagent's `allowed_personas` |
+| OBO identity required | `obo_identity_required` | `auth_mode=obo` but no forwarded token present |
+| Low confidence + sensitive | `low_confidence_sensitive` | `request_confidence < 0.75` for `confidential`/`restricted` data |
 
-Response-time guardrails include:
+Denied subagents are excluded from tool assembly and reported as `unavailable_auth`.
 
-- Evidence/citation requirement for governed answers when `requires_evidence=true`.
-- Unsafe output pattern checks.
-- Low-confidence blocking for sensitive data contexts.
+### Response-time guardrails (before returning content)
 
-All allow/deny decisions are emitted as lifecycle events.
+Post-execution evaluation using `evaluate_response_guardrails()`:
+
+| Check | Reason Code | Blocks When |
+|-------|-------------|------------|
+| Evidence required | `evidence_required` | `requires_evidence=true` subagent contributed but response lacks `[N]`, `Source:`, or `Citation:` |
+| Unsafe output | `unsafe_output` | Response contains SSN, credit card, private key, API key, or password patterns |
+| Low confidence sensitive | `low_confidence_sensitive` | Hedging language detected for confidential/restricted data context |
+
+All allow/deny decisions are emitted as lifecycle events (`response.guardrail.passed`, `response.guardrail.blocked`).
+
+### Current persona-agent matrix
+
+| Persona | Accessible Agents |
+|---------|-------------------|
+| manager | all 5 agents |
+| analyst | product_index_assistant, lakebase_ods_agent |
+| operator | flink_support_agent |
+| engineer | product_index_assistant, flink_support_agent, lakebase_ods_agent |
 
 ## Alternatives Considered
 
 - Prompt-only policy guidance without deterministic enforcement.
 - Response filtering only, without pre-tool policy gates.
 - Per-tool ad hoc checks embedded in each tool function.
+- Single global persona check instead of per-subagent evaluation.
 
 ## Consequences
 
@@ -43,15 +61,19 @@ All allow/deny decisions are emitted as lifecycle events.
 - Enforces least-privilege routing before tool execution.
 - Improves explainability of allow/deny outcomes via explicit reason codes.
 - Reduces risk of sensitive low-confidence output.
+- Persona restrictions are declarative in subagent config — no code changes needed to adjust access.
 
 ### Trade-offs
 
 - Additional policy and guardrail logic to maintain and tune.
-- Potentially more false positives if heuristics are too strict.
+- Potentially more false positives if heuristics are too strict (especially `evidence_required`).
+- Guardrail divergence between invoke (raises `UserError`) and stream (emits block delta).
 
 ## Implementation Notes
 
-- Policy service: [src/backend/services/policy_service.py](../../src/backend/services/policy_service.py)
-- Runtime integration: [src/backend/services/runtime_auth_service.py](../../src/backend/services/runtime_auth_service.py)
-- Guardrails service: [src/backend/services/guardrails_service.py](../../src/backend/services/guardrails_service.py)
-- Handler enforcement: [src/backend/api/handlers.py](../../src/backend/api/handlers.py)
+- Policy service: [src/backend/services/policy_service.py](../../src/backend/services/policy_service.py) (`PolicyContext`, `PolicyDecision`, `filter_subagents_by_policy`)
+- Guardrails service: [src/backend/services/guardrails_service.py](../../src/backend/services/guardrails_service.py) (`GuardrailResult`, `evaluate_response_guardrails`)
+- Runtime integration: [src/backend/services/runtime_auth_service.py](../../src/backend/services/runtime_auth_service.py) (`build_runtime_auth_context`)
+- Handler enforcement: [src/backend/api/handlers.py](../../src/backend/api/handlers.py) (`_finalize_invoke_stage`, `_finalize_stream_stage`)
+- Persona config: `allowed_personas` field in [src/backend/domain/subagents.dev.json](../../src/backend/domain/subagents.dev.json)
+- Tests: [tests/test_policy_service.py](../../tests/test_policy_service.py), [tests/test_guardrails_service.py](../../tests/test_guardrails_service.py)

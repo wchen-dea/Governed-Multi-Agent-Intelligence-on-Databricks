@@ -32,7 +32,7 @@ This skill does not cover:
 - `src/backend/services/orchestrator_service.py`
 - `src/backend/domain/subagents.<target>.json`
 - `tests/test_runtime_auth.py`
-- `docs/governance/security-and-threat-model.md`
+- `docs/governance/security-threat-model.md`
 
 ## Workflow
 

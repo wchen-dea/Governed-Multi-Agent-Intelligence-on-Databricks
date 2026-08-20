@@ -33,7 +33,7 @@ This skill does not cover:
 - `src/backend/services/orchestrator_service.py`
 - `src/backend/services/policy_service.py`
 - `src/backend/services/runtime_auth.py`
-- `docs/architecture/model-and-tool-registry.md`
+- `docs/architecture/tool-and-model-registry.md`
 
 ## Workflow
 

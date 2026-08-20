@@ -6,7 +6,7 @@ Define implementation details, code structure, runtime behavior, and configurati
 
 ## Scope
 
-This document covers low-level design and implementation details. High-level architecture is in `docs/architecture/system-architecture.md`, and operations guidance is in `docs/operations/runbook.md`.
+This document covers low-level design and implementation details. High-level architecture is in `docs/architecture/high-level-architecture.md`, and operations guidance is in `docs/operations/operations-runbook.md`.
 
 ## Current Status
 
@@ -262,8 +262,8 @@ Direct non-interactive Databricks Apps invocation tests should use:
 ## Related Docs
 
 - `docs/product/business-specs.md`: business goals and requirements
-- `docs/architecture/technical-specs.md`: centralized technical domain map
-- `docs/architecture/system-architecture.md`: high-level architecture and request flow
+- `docs/architecture/runtime-technical-specs.md`: centralized technical domain map
+- `docs/architecture/high-level-architecture.md`: high-level architecture and request flow
 - `docs/architecture/design-artifacts/README.md`: centralized full design diagram set across concept, logical, and deployment phases
 - `docs/architecture/design-artifacts/08-backend-class-diagram-as-is.md`: concrete as-is backend class diagram
-- `docs/operations/runbook.md`: operations and incident handling
+- `docs/operations/operations-runbook.md`: operations and incident handling
