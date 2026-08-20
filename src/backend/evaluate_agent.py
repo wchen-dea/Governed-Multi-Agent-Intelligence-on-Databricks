@@ -170,15 +170,15 @@ if asyncio.iscoroutinefunction(invoke_fn):
 
     nest_asyncio.apply()
 
-    def predict_fn(input: list[dict], **kwargs) -> dict:
-        req = ResponsesAgentRequest(input=input)
+    def predict_fn(input: list[dict], custom_inputs: dict | None = None, **kwargs) -> dict:
+        req = ResponsesAgentRequest(input=input, custom_inputs=custom_inputs)
         loop = asyncio.get_event_loop()
         response = loop.run_until_complete(invoke_fn(req))
         return response.model_dump()
 else:
 
-    def predict_fn(input: list[dict], **kwargs) -> dict:
-        req = ResponsesAgentRequest(input=input)
+    def predict_fn(input: list[dict], custom_inputs: dict | None = None, **kwargs) -> dict:
+        req = ResponsesAgentRequest(input=input, custom_inputs=custom_inputs)
         response = invoke_fn(req)
         return response.model_dump()
 

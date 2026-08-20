@@ -83,11 +83,42 @@ uv run agent-evaluate
 
 ### Viewing evaluation results
 
-In the MLflow Experiments UI, switch to the **Runs** tab. Each evaluation run shows:
-- Logged parameters (case count, thresholds)
-- Logged metrics (per-scorer aggregates)
-- `gate.release_passed` metric (1.0 = passed, 0.0 = failed)
-- Per-conversation scorer results in a table view
+There are two options for viewing evaluation runs and scorer results:
+
+#### Option A: Databricks workspace UI (recommended for team visibility)
+
+Set `.env` to point to the workspace:
+
+```bash
+MLFLOW_TRACKING_URI=databricks
+MLFLOW_EXPERIMENT_ID=3025644123415124
+```
+
+Run `make evaluate`. Results appear in the workspace at:
+```
+https://dbc-baff2b7f-4402.cloud.databricks.com/ml/experiments/3025644123415124
+```
+
+In the Experiments UI:
+- **Runs tab** → select the `agent-quality-evaluation` run → view logged params, KPI metrics, and `gate.release_passed`
+- **Evaluation tab** (inside the run) → per-conversation scorer breakdown table with all 10+ scorers
+- **Traces tab** → each simulated conversation generates a full trace with LLM call spans
+
+#### Option B: Local MLflow UI (offline, no workspace auth needed)
+
+Remove or comment out `MLFLOW_TRACKING_URI` in `.env` (or delete `.env`). Runs go to the local `mlruns/` directory.
+
+```bash
+# Run evaluation (results saved locally)
+make evaluate
+
+# Start local MLflow UI
+uv run mlflow ui --port 5000
+```
+
+Open http://localhost:5000 → select the default experiment → click the evaluation run to see params, metrics, and scorer tables.
+
+Both options show the same data: run parameters, aggregate KPI metrics, per-conversation scorer results, and the release gate outcome.
 
 ## 3. Release Gate
 
@@ -123,6 +154,31 @@ In [.github/workflows/databricks-cicd.yml](../../.github/workflows/databricks-ci
 Copy `.env.example` to `.env` and set `MLFLOW_EXPERIMENT_ID` to a valid experiment. Run `uv run quickstart` to auto-create one.
 
 Traces from `uv run start-server` will appear in the configured experiment when `MLFLOW_TRACKING_URI=databricks` and you have valid Databricks auth.
+
+### Viewing evaluation runs locally
+
+When `MLFLOW_TRACKING_URI` is not set (or not in `.env`), evaluation runs are stored in the local `mlruns/` directory. To view them:
+
+```bash
+# Run evaluation (results go to ./mlruns/)
+make evaluate
+
+# Start local MLflow UI
+uv run mlflow ui --port 5000
+```
+
+Open http://localhost:5000 to browse runs, metrics, and scorer results. The default experiment (`0`) will contain evaluation runs with logged parameters, KPI metrics, and `gate.release_passed` status.
+
+### Viewing evaluation runs from Databricks Workspace
+
+To send evaluation runs to the **Databricks workspace** instead (same experiment as the deployed app), create a `.env`:
+
+```bash
+MLFLOW_TRACKING_URI=databricks
+MLFLOW_EXPERIMENT_ID=3025644123415124
+```
+
+With this set, `make evaluate` writes runs directly to the workspace experiment visible at the MLflow Experiments UI in Databricks.
 
 ### Platform telemetry (separate from MLflow)
 
