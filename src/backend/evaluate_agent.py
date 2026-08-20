@@ -47,21 +47,21 @@ test_cases = [
         ],
     },
     {
-        "goal": "Look up product details for brand code MICH",
+        "goal": "Look up product details for brand code MCH",
         "persona": "An analyst researching tire product catalog coverage.",
         "custom_inputs": {"persona": "analyst"},
         "simulation_guidelines": [
-            "Ask about products matching brand code MICH.",
+            "Ask about products matching brand code MCH.",
             "Follow up by asking about article types for those products.",
         ],
     },
     {
-        "goal": "Troubleshoot Flink checkpointing failures",
-        "persona": "An operator dealing with a Flink streaming job that keeps failing checkpoints.",
+        "goal": "Diagnose increasing consumer lag in a Flink streaming job",
+        "persona": "An operator dealing with a Flink streaming job that has increasing consumer lag.",
         "custom_inputs": {"persona": "operator"},
         "simulation_guidelines": [
-            "Describe a checkpoint timeout issue and ask for common causes.",
-            "Ask for configuration recommendations.",
+            "Ask: Flink streaming job has increasing consumer lag. What are the common causes and how do we fix it?",
+            "Follow up on specific configuration tuning recommendations.",
         ],
     },
     {
@@ -74,19 +74,14 @@ test_cases = [
         ],
     },
     {
-        "goal": "List open appointments from the operational data store",
-        "persona": "An analyst checking today's scheduling status.",
-        "custom_inputs": {"persona": "analyst"},
-        "simulation_guidelines": [
-            "Ask about today's open appointments.",
-            "Ask about their associated order statuses.",
-        ],
-    },
-    {
         "goal": "Verify that an operator persona cannot access sales data",
         "persona": "An operator trying to get sales revenue numbers.",
         "custom_inputs": {"persona": "operator"},
-        "expectations": {"requires_user_identity": False},
+        "expectations": {
+            "requires_user_identity": False,
+            "restricted_tools": ["sales_insights_agent", "cdi_agent"],
+            "restricted_keywords": ["revenue", "$", "sales"],
+        },
         "simulation_guidelines": [
             "Ask about top stores by revenue — expect the tool to be unavailable.",
         ],
@@ -127,12 +122,13 @@ def auth_correctness_scorer(
     expectations: object = None,
     **_: object,
 ) -> float:
-    """Score correctness of authorization handling and user-facing auth messaging."""
+    """Score auth correctness: OBO token handling and role-based tool restrictions."""
     response_text = _output_text(outputs).lower()
     trace_text = str(trace).lower() if trace is not None else ""
     expected = expectations if isinstance(expectations, dict) else {}
     requires_user_identity = bool(expected.get("requires_user_identity", False))
 
+    # Check OBO auth handling.
     saw_obo_denial = "obo_identity_required" in trace_text or "authorization" in trace_text
     has_auth_error_text = (
         "requires user authorization" in response_text
@@ -147,6 +143,18 @@ def auth_correctness_scorer(
 
     if has_auth_error_text and not saw_obo_denial:
         return 0.0
+
+    # Check role-based tool restrictions.
+    restricted_tools = expected.get("restricted_tools", [])
+    restricted_keywords = expected.get("restricted_keywords", [])
+    if restricted_tools:
+        for tool in restricted_tools:
+            if tool.lower() in trace_text:
+                return 0.0
+        for keyword in restricted_keywords:
+            if keyword.lower() in response_text:
+                return 0.0
+
     return 1.0
 
 simulator = ConversationSimulator(
