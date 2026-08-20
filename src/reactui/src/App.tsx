@@ -41,13 +41,13 @@ export default function App() {
       content:
         `## ${settings.companyName} AI Workspace\n${settings.companyTagline}\n\n${settings.chatGreeting}\n\n` +
         "### Available Agents\n" +
-        "|      Agent     |    Type   |    Description                                                | Personas              |\n" +
-        "| -------------- | --------- | ------------------------------------------------------------- | --------------------- |\n" +
-        "| Sales Insights | Genie     | Revenue trends, store performance, seasonal comparisons       | manager               |\n" +
-        "| CDI    Metrics | Genie     | Customer Delight Index scores, promoter/detractor analysis    | manager               |\n" +
-        "| Product  Index | AI Search | Product catalog lookups by code, brand, or description        | analyst, manager, engineer |\n" +
-        "| Flink  Support | AI Search | Flink troubleshooting, configuration guidance, best practices | operator, manager, engineer |\n" +
-        "| Lakebase   ODS | Lakebase  | Operational data — appointments, orders, invoices, scheduling | analyst, manager, engineer |\n\n" +
+        "|      Agent     |    Type   |    Description                                                |\n" +
+        "| -------------- | --------- | ------------------------------------------------------------- |\n" +
+        "| Sales Insights | Genie     | Revenue trends, store performance, seasonal comparisons       |\n" +
+        "| CDI    Metrics | Genie     | Customer Delight Index scores, promoter/detractor analysis    |\n" +
+        "| Product  Index | AI Search | Product catalog lookups by code, brand, or description        |\n" +
+        "| Flink  Support | AI Search | Flink troubleshooting, configuration guidance, best practices |\n" +
+        "| Lakebase   ODS | Lakebase  | Operational data — appointments, orders, invoices, scheduling |\n\n" +
         "### Persona Selection\n" +
         "Pick a persona from the starter chips, or run /persona <persona>.\n" +
         `Accepted personas: ${settings.allowedPersonas.join(", ")}\n\n` +
