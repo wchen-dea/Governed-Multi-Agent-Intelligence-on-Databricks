@@ -24,10 +24,12 @@ const STARTERS = [
   "/persona analyst",
   "/persona operator",
   "/persona engineer",
-  "Summarize weekly sales trends and highlight top 3 drivers.",
-  "Use sales data and format the top 5 stores by revenue with rank, store, revenue, delta WoW, and one-line insight.",
-  "Find the latest policy for production rollout approvals.",
-  "Give me an operations health snapshot and active risks.",
+  "Any products matching 'all season 225/65R17 tire'",
+  "How do delight scores compare for appointments vs walk-ins?",
+  "What is the distribution of sales_receipt_document_type_code to understand the different document types in sales receipts?",
+  "Flink streaming job has increasing consumer lag. What are the common causes and how do we fix it?",
+  "List today's open appointments and their current order status.",
+  "Look up product details for brand code 'MICH' and list matching article types.",
 ];
 
 export default function App() {
@@ -38,6 +40,14 @@ export default function App() {
       role: "assistant",
       content:
         `## ${settings.companyName} AI Workspace\n${settings.companyTagline}\n\n${settings.chatGreeting}\n\n` +
+        "### Available Agents\n" +
+        "|      Agent     |    Type   |    Description                                                | Personas              |\n" +
+        "| -------------- | --------- | ------------------------------------------------------------- | --------------------- |\n" +
+        "| Sales Insights | Genie     | Revenue trends, store performance, seasonal comparisons       | manager               |\n" +
+        "| CDI    Metrics | Genie     | Customer Delight Index scores, promoter/detractor analysis    | manager               |\n" +
+        "| Product  Index | AI Search | Product catalog lookups by code, brand, or description        | analyst, manager, engineer |\n" +
+        "| Flink  Support | AI Search | Flink troubleshooting, configuration guidance, best practices | operator, manager, engineer |\n" +
+        "| Lakebase   ODS | Lakebase  | Operational data — appointments, orders, invoices, scheduling | analyst, manager, engineer |\n\n" +
         "### Persona Selection\n" +
         "Pick a persona from the starter chips, or run /persona <persona>.\n" +
         `Accepted personas: ${settings.allowedPersonas.join(", ")}\n\n` +
