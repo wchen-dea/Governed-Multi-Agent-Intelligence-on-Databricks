@@ -24,8 +24,8 @@ targets:
       knowledge_assistant_endpoint_name: ""
       ai_search_endpoint_name: "product-search-vs-endpoint"
       flink_support_vs_endpoint_name: "flink-support-vs-endpoint"
-      lakebase_project_id: "3ab05603-06dc-4789-a7fb-234d22a71e4b"
-      lakebase_branch_id: "br-fragrant-sea-d1h720m5"
+      lakebase_project_id: "ore"
+      lakebase_branch_id: "production"
       lakebase_database: "operationaldatastore"
       lakebase_sql_warehouse_id: "ep-falling-cake-d1j29nc5"
       lakebase_pg_password: "Lkb-M4g3nt-0ds-2026!"
@@ -53,5 +53,6 @@ targets:
               permission: 'CAN_RUN'
           - name: lakebase_ods
             postgres:
-              id: ${var.lakebase_sql_warehouse_id}
-              permission: 'CAN_USE'
+              branch: projects/${var.lakebase_project_id}/branches/${var.lakebase_branch_id}
+              database: projects/${var.lakebase_project_id}/branches/${var.lakebase_branch_id}/databases/${var.lakebase_database}
+              permission: 'CAN_CONNECT_AND_CREATE'

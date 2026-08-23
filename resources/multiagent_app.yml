@@ -92,5 +92,6 @@ resources:
           permission: 'CAN_RUN'
       - name: 'lakebase_ods'
         postgres:
-          id: ${var.lakebase_sql_warehouse_id}
-          permission: 'CAN_USE'
+          branch: projects/${var.lakebase_project_id}/branches/${var.lakebase_branch_id}
+          database: projects/${var.lakebase_project_id}/branches/${var.lakebase_branch_id}/databases/${var.lakebase_database}
+          permission: 'CAN_CONNECT_AND_CREATE'
