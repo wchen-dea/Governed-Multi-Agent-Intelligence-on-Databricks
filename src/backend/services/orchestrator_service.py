@@ -25,6 +25,7 @@ from backend.services.interfaces import (
 )
 from backend.services.message_bus import NoOpMessageBus
 from backend.shared.runtime_utils import RequestIdentityContext, build_mcp_url
+from backend.domain.execution_contracts import ToolExecutionResult
 
 logger = logging.getLogger(__name__)
 
@@ -295,6 +296,7 @@ def build_subagent_tools(
 
     def _make_tool(subagent_cfg: SubagentConfig):
         async def _call(question: str, subagent_cfg_param: SubagentConfig = subagent_cfg) -> str:
+            started_at = monotonic()
             dependencies.message_bus.publish(
                 "tool.call.started",
                 {
@@ -320,16 +322,32 @@ def build_subagent_tools(
                     model=subagent_cfg_param.model_name,
                     input=cast(Any, tool_input),
                 )
+                execution = ToolExecutionResult(
+                    tool_name=subagent_cfg_param.tool_name,
+                    status="succeeded",
+                    latency_ms=(monotonic() - started_at) * 1000,
+                    auth_mode=subagent_cfg_param.auth_mode,
+                )
                 dependencies.message_bus.publish(
                     "tool.call.succeeded",
                     {
                         "tool_name": subagent_cfg_param.tool_name,
                         "subagent": subagent_cfg_param.name,
                         "auth_mode": subagent_cfg_param.auth_mode,
+                        "status": execution.status,
+                        "latency_ms": execution.latency_ms,
+                        "attempt_count": execution.attempt_count,
                     },
                 )
                 return response.output_text
             except Exception as exc:
+                execution = ToolExecutionResult(
+                    tool_name=subagent_cfg_param.tool_name,
+                    status="failed",
+                    latency_ms=(monotonic() - started_at) * 1000,
+                    auth_mode=subagent_cfg_param.auth_mode,
+                    error_code=type(exc).__name__,
+                )
                 dependencies.message_bus.publish(
                     "tool.call.failed",
                     {
@@ -337,6 +355,10 @@ def build_subagent_tools(
                         "subagent": subagent_cfg_param.name,
                         "auth_mode": subagent_cfg_param.auth_mode,
                         "error_type": type(exc).__name__,
+                        "status": execution.status,
+                        "latency_ms": execution.latency_ms,
+                        "attempt_count": execution.attempt_count,
+                        "error_code": execution.error_code,
                     },
                 )
                 raise

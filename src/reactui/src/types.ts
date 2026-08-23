@@ -4,6 +4,30 @@ export interface ChatMessage {
   id: string;
   role: Role;
   content: string;
+  status?: "idle" | "streaming" | "blocked" | "error" | "truncated";
+  tools?: string[];
+  sourceCategories?: string[];
+  routePlan?: RoutePlan;
+  guardrailReasons?: string[];
+  unavailableTools?: string[];
+  truncated?: boolean;
+}
+
+export interface RoutePlan {
+  candidates: string[];
+  reason: string;
+  confidence: number;
+  requires_evidence: boolean;
+}
+
+export interface GovernanceMetadata {
+  routePlan?: RoutePlan;
+  tools: string[];
+  sourceCategories: string[];
+  guardrailReasons: string[];
+  unavailableTools: string[];
+  truncated: boolean;
+  status?: string;
 }
 
 export interface StreamHints {

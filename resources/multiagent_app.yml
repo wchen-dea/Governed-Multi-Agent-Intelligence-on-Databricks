@@ -58,6 +58,10 @@ resources:
           value: ${var.subagents_config_path}
         - name: DEFAULT_REQUEST_PERSONA
           value: ${var.default_request_persona}
+        - name: MAX_INPUT_CHARS
+          value: ${var.max_input_chars}
+        - name: MAX_RESPONSE_CHARS
+          value: ${var.max_response_chars}
         - name: MLFLOW_EXPERIMENT_ID
           value: ${var.mlflow_experiment_id}
         - name: MESSAGE_BUS_BACKEND

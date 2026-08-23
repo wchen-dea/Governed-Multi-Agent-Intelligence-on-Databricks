@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 import re
+from typing import Any, Iterable
 
 from backend.domain.subagent_config import SubagentConfig
 
@@ -17,6 +18,15 @@ class GuardrailResult:
 
     blocked: bool
     reasons: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class InputGuardrailResult:
+    """Represent deterministic checks applied before model execution."""
+
+    blocked: bool
+    reasons: tuple[str, ...]
+    character_count: int
 
 
 _LOW_CONFIDENCE_PATTERNS = [
@@ -36,6 +46,60 @@ _UNSAFE_PATTERNS = [
     r"\bapi key\b",
     r"\bpassword\b",
 ]
+
+_INPUT_INJECTION_PATTERNS = [
+    r"ignore (?:all|any|the) (?:previous|prior|above) instructions",
+    r"reveal (?:the )?(?:system|developer) prompt",
+    r"bypass (?:the )?(?:policy|guardrail|authorization)",
+]
+
+
+def _input_text(input_items: Iterable[Any]) -> str:
+    """Extract user-visible text without retaining the original payload."""
+    chunks: list[str] = []
+    for item in input_items:
+        data = item.model_dump() if hasattr(item, "model_dump") else item
+        if not isinstance(data, dict) or data.get("role") != "user":
+            continue
+        content = data.get("content", "")
+        if isinstance(content, str):
+            chunks.append(content)
+        elif isinstance(content, list):
+            chunks.extend(
+                block.get("text", "")
+                for block in content
+                if isinstance(block, dict) and isinstance(block.get("text"), str)
+            )
+    return "\n".join(chunks).strip()
+
+
+def evaluate_input_guardrails(
+    input_items: Iterable[Any],
+    *,
+    max_input_chars: int,
+) -> InputGuardrailResult:
+    """Check request size and common prompt-injection patterns before routing."""
+    text = _input_text(input_items)
+    reasons: list[str] = []
+    if len(text) > max(max_input_chars, 1):
+        reasons.append("input_too_large")
+    if any(re.search(pattern, text, flags=re.IGNORECASE) for pattern in _INPUT_INJECTION_PATTERNS):
+        reasons.append("prompt_injection_detected")
+    return InputGuardrailResult(
+        blocked=bool(reasons),
+        reasons=tuple(sorted(set(reasons))),
+        character_count=len(text),
+    )
+
+
+def truncate_response_text(text: str, *, max_response_chars: int) -> tuple[str, bool]:
+    """Apply a deterministic response budget and report whether truncation occurred."""
+    limit = max(max_response_chars, 1)
+    if len(text) <= limit:
+        return text, False
+    marker = "\n\n[Response truncated to fit the configured response budget.]"
+    available = max(limit - len(marker), 0)
+    return text[:available].rstrip() + marker, True
 
 
 def _has_citation(text: str) -> bool:

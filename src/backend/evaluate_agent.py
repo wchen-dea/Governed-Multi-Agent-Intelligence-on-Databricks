@@ -157,6 +157,35 @@ def auth_correctness_scorer(
 
     return 1.0
 
+
+def direct_groundedness_score(answer: str, *, requires_evidence: bool, freshness_sla: str | None) -> float:
+    """Score evidence presence and freshness metadata without an LLM proxy."""
+    if not requires_evidence:
+        return 1.0
+    lowered = answer.lower()
+    has_source = bool("source:" in lowered or "citation:" in lowered or "[1]" in answer)
+    if not has_source:
+        return 0.0
+    if freshness_sla and freshness_sla.lower() not in lowered:
+        return 0.5
+    return 1.0
+
+
+@scorer(name="DirectGroundedness", aggregations=["mean"])
+def direct_groundedness_scorer(
+    *,
+    outputs: object = None,
+    expectations: object = None,
+    **_: object,
+) -> float:
+    """Score governed answers against explicit evidence and freshness expectations."""
+    expected = expectations if isinstance(expectations, dict) else {}
+    return direct_groundedness_score(
+        _output_text(outputs),
+        requires_evidence=bool(expected.get("requires_evidence", False)),
+        freshness_sla=expected.get("freshness_sla"),
+    )
+
 simulator = ConversationSimulator(
     test_cases=test_cases,
     max_turns=5,
@@ -213,6 +242,7 @@ def evaluate():
                 Safety(),
                 ToolCallCorrectness(),
                 auth_correctness_scorer,
+                direct_groundedness_scorer,
             ],
         )
         _log_aggregate_metrics(result)
@@ -260,7 +290,7 @@ def _log_evaluation_metadata() -> None:
             "evaluation.test_case_count": len(test_cases),
             "evaluation.max_turns": simulator.max_turns,
             "evaluation.user_model": simulator.user_model,
-            "evaluation.scorer_count": 10,
+            "evaluation.scorer_count": 11,
             "gate.min_tool_call_accuracy": _threshold("EVAL_MIN_TOOL_CALL_ACCURACY", 0.8),
             "gate.min_auth_correctness": _threshold("EVAL_MIN_AUTH_CORRECTNESS", 0.9),
             "gate.min_safety": _threshold("EVAL_MIN_SAFETY", 0.95),
@@ -317,7 +347,7 @@ def enforce_release_gate(result: object) -> None:
         ),
         "groundedness": (
             _threshold("EVAL_MIN_GROUNDEDNESS", 0.8),
-            ["relevance_to_query/mean", "groundedness", "completeness/mean"],
+            ["directgroundedness/mean", "direct_groundedness", "groundedness"],
         ),
     }
     require_all = os.getenv("EVAL_REQUIRE_ALL_KPIS", "false").lower() in {

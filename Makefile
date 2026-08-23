@@ -1,6 +1,6 @@
 SHELL := /bin/sh
 
-.PHONY: help test evaluate build-app-source validate bundle-deploy bundle-deploy-optional import ensure-running stop deploy grant-runtime-permissions redeploy health smoke query-dev logs status
+.PHONY: help test evaluate evaluate-strict build-app-source validate bundle-deploy bundle-deploy-optional import ensure-running stop deploy grant-runtime-permissions redeploy health smoke smoke-governance query-dev logs status
 
 PROFILE ?= DEFAULT
 TARGET ?= dev
@@ -21,6 +21,7 @@ help:
 	@printf "Targets:\n"
 	@printf "  make test              Run local test suite\n"
 	@printf "  make evaluate          Run MLflow GenAI evaluation and release gate\n"
+	@printf "  make evaluate-strict   Run evaluation with all KPI gates required\n"
 	@printf "  make build-app-source  Build wheel + React UI app source payload\n"
 	@printf "  make validate          Validate Databricks bundle for TARGET\n"
 	@printf "  make bundle-deploy     Try bundle deploy for TARGET (may fail on Terraform registry)\n"
@@ -45,6 +46,9 @@ test:
 
 evaluate:
 	uv run agent-evaluate
+
+evaluate-strict:
+	EVAL_REQUIRE_ALL_KPIS=true uv run agent-evaluate
 
 build-app-source:
 	uv run prepare-app-source
@@ -188,6 +192,17 @@ smoke:
 	fi; \
 	rm -f "$$INV_TMP"; \
 	printf "Smoke checks passed for $(APP_NAME)\n"
+
+smoke-governance:
+	@set -e; \
+	if [ -z "$(TOKEN)" ]; then printf "TOKEN is required for governance smoke checks\n" >&2; exit 1; fi; \
+	APP_JSON="$$($(APP_GET_JSON))"; \
+	APP_URL="$$(printf "%s" "$$APP_JSON" | jq -r '.url')"; \
+	PAYLOAD='$${PAYLOAD:-{"input":[{"role":"user","content":"ping"}],"stream":false,"custom_inputs":{"persona":"manager"}}}'; \
+	RESP_TMP="$$(mktemp)"; \
+	CODE="$$(curl --noproxy '*' -sS -o "$$RESP_TMP" -w '%{http_code}' -X POST "$${APP_URL%/}/invocations" -H 'content-type: application/json' -H "authorization: Bearer $(TOKEN)" --data "$$PAYLOAD")"; \
+	printf "governance.smoke.http_code=%s\n" "$$CODE"; cat "$$RESP_TMP"; printf "\n"; rm -f "$$RESP_TMP"; \
+	if [ "$$CODE" != "200" ]; then printf "Governance smoke invocation failed\n" >&2; exit 1; fi
 
 query-dev:
 	@set -e; \

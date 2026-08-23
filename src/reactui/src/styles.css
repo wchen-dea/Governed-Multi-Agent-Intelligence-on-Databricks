@@ -22,10 +22,11 @@ body {
 }
 
 .app-shell {
-  max-width: 1000px;
+  max-width: 1180px;
   margin: 0 auto;
   padding: 1.25rem;
   display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
   gap: 1rem;
 }
 
@@ -33,6 +34,23 @@ body {
   margin: 0;
   font-size: clamp(1.4rem, 3.5vw, 2rem);
 }
+
+.app-header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: flex-start; }
+.eyebrow { color: #ffa726; font-size: 0.72rem; letter-spacing: 0.12em; font-weight: 700; }
+.icon-button, .text-button { border: 1px solid rgba(201, 214, 219, 0.35); background: transparent; color: #f9f7f2; cursor: pointer; }
+.icon-button { width: 2.4rem; height: 2.4rem; border-radius: 50%; font-size: 1.2rem; }
+.context-bar { grid-column: 2; grid-row: 2 / span 3; align-self: start; border-left: 1px solid rgba(201, 214, 219, 0.2); padding-left: 1rem; display: grid; gap: 0.8rem; }
+.context-bar label { display: grid; gap: 0.35rem; color: #c9d6db; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.context-bar select { background: #17232f; color: #f9f7f2; border: 1px solid rgba(201, 214, 219, 0.35); border-radius: 7px; padding: 0.5rem; text-transform: capitalize; }
+.status-pill { display: inline-flex; align-items: center; gap: 0.45rem; color: #ffcc80; font-size: 0.85rem; }
+.status-dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: #ffa726; }
+.is-secure .status-dot { background: #4dd0a8; }
+.context-note { color: #90a4ae; font-size: 0.78rem; line-height: 1.4; }
+.text-button { border: 0; color: #ffcc80; text-align: left; padding: 0; }
+.starter-area { grid-column: 1; }
+.starter-tabs { display: flex; gap: 1.1rem; border-bottom: 1px solid rgba(201, 214, 219, 0.2); margin-bottom: 0.7rem; }
+.starter-tabs button { border: 0; background: transparent; color: #90a4ae; padding: 0.5rem 0; cursor: pointer; }
+.starter-tabs button.active { color: #ffcc80; border-bottom: 2px solid #ffa726; }
 
 .app-header p {
   margin: 0.25rem 0 0;
@@ -77,14 +95,27 @@ body {
   padding: 0.65rem 0.75rem;
   max-width: min(88%, 760px);
 }
-
-.bubble pre {
+.rich-text {
   margin: 0;
   white-space: pre-wrap;
   word-break: break-word;
   font-family: "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
   line-height: 1.4;
 }
+.rich-text p { margin: 0 0 0.7rem; white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
+.rich-text p:last-child { margin-bottom: 0; }
+.rich-text h1, .rich-text h2, .rich-text h3 { margin: 0 0 0.55rem; color: #ffcc80; }
+.rich-text table { border-collapse: collapse; width: 100%; margin: 0.4rem 0; font-size: 0.88rem; }
+.rich-text td { border-bottom: 1px solid rgba(201, 214, 219, 0.18); padding: 0.45rem; text-align: left; }
+.citation { color: #ffcc80; font-weight: 700; text-decoration: underline; }
+.governance-panel { margin-top: 0.85rem; border-top: 1px solid rgba(201, 214, 219, 0.18); padding-top: 0.6rem; color: #b7c7cc; font-size: 0.78rem; }
+.governance-panel summary { cursor: pointer; color: #ffcc80; }
+.governance-grid { display: grid; grid-template-columns: 5rem 1fr; gap: 0.35rem 0.75rem; margin-top: 0.65rem; }
+.governance-grid strong { color: #f9f7f2; font-weight: 500; word-break: break-word; }
+.thinking { color: #b7c7cc; display: flex; gap: 0.3rem; align-items: center; min-height: 1.5rem; }
+.thinking span { width: 0.35rem; height: 0.35rem; border-radius: 50%; background: #ffa726; animation: pulse 1s infinite alternate; }
+.thinking span:nth-child(2) { animation-delay: 0.2s; }.thinking span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse { to { opacity: 0.25; transform: translateY(-2px); } }
 
 .bubble-user {
   margin-left: auto;
@@ -97,6 +128,7 @@ body {
 }
 
 .chat-input {
+  grid-column: 1;
   display: grid;
   gap: 0.5rem;
 }
@@ -131,8 +163,12 @@ body {
 
 @media (max-width: 700px) {
   .app-shell {
+    grid-template-columns: 1fr;
     padding: 0.8rem;
   }
+
+  .context-bar { grid-column: 1; grid-row: auto; border-left: 0; border-bottom: 1px solid rgba(201, 214, 219, 0.2); padding: 0 0 0.8rem; grid-template-columns: 1fr auto; align-items: end; }
+  .starter-area, .chat-log, .chat-input { grid-column: 1; }
 
   .chat-log {
     min-height: 56vh;

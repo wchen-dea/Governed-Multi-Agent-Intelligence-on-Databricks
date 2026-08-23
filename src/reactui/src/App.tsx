@@ -1,8 +1,8 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { sendChat, sessionStatusLine } from "./api";
 import { maskToken, parsePersonaCommand, parseTokenCommand } from "./commands";
 import { settings } from "./config";
-import type { ChatMessage } from "./types";
+import type { ChatMessage, GovernanceMetadata } from "./types";
 
 function newId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -32,6 +32,40 @@ const STARTERS = [
   "Look up product details for brand code 'MICH' and list matching article types.",
 ];
 
+function renderMarkdown(text: string): JSX.Element {
+  const blocks = text.split(/\n\s*\n/);
+  return (
+    <div className="rich-text">
+      {blocks.map((block, index) => {
+        const lines = block.split("\n");
+        if (lines.every((line) => line.includes("|") || /^[-| ]+$/.test(line))) {
+          const rows = lines.filter((line) => !/^\s*\|?\s*-+/.test(line));
+          return <table key={index}><tbody>{rows.map((row, rowIndex) => <tr key={rowIndex}>{row.split("|").filter(Boolean).map((cell, cellIndex) => <td key={cellIndex}>{cell.trim()}</td>)}</tr>)}</tbody></table>;
+        }
+        const content = lines.join("\n");
+        const heading = content.match(/^(#{1,3})\s+(.+)$/);
+        if (heading) {
+          const Heading = `h${heading[1].length}` as "h1" | "h2" | "h3";
+          return <Heading key={index}>{heading[2]}</Heading>;
+        }
+        const safeParts = content.split(/(\[[0-9]+\])/g);
+        return <p key={index}>{safeParts.map((part, partIndex) => part.match(/^\[[0-9]+\]$/) ? <a href={`#citation-${part.slice(1, -1)}`} key={partIndex} className="citation">{part}</a> : part)}</p>;
+      })}
+    </div>
+  );
+}
+
+function GovernancePanel({ message }: { message: ChatMessage }): JSX.Element | null {
+  if (message.role !== "assistant" || (!message.tools?.length && !message.sourceCategories?.length && !message.guardrailReasons?.length && !message.truncated)) return null;
+  return <details className="governance-panel"><summary>Run context</summary><div className="governance-grid">
+    <span>Status</span><strong>{message.status ?? "complete"}</strong>
+    {message.tools?.length ? <><span>Tools</span><strong>{message.tools.join(", ")}</strong></> : null}
+    {message.sourceCategories?.length ? <><span>Sources</span><strong>{message.sourceCategories.join(", ")}</strong></> : null}
+    {message.guardrailReasons?.length ? <><span>Guardrails</span><strong>{message.guardrailReasons.join(", ")}</strong></> : null}
+    {message.truncated ? <><span>Budget</span><strong>Response shortened</strong></> : null}
+  </div></details>;
+}
+
 export default function App() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -59,6 +93,8 @@ export default function App() {
   const [token, setToken] = useState<string | null>(null);
   const [persona, setPersona] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [starterGroup, setStarterGroup] = useState("Business");
+  const chatLogRef = useRef<HTMLElement>(null);
   const conversationId = useMemo(() => newId(), []);
 
   async function submitMessage(raw: string): Promise<void> {
@@ -176,7 +212,7 @@ export default function App() {
     setMessages((prev) => [
       ...prev,
       userMessage,
-      { id: placeholderId, role: "assistant", content: "Working on your request..." },
+      { id: placeholderId, role: "assistant", content: "", status: "streaming" },
     ]);
     setInput("");
     setIsSending(true);
@@ -184,18 +220,22 @@ export default function App() {
     const history = messages.filter((m) => m.role === "user" || m.role === "assistant");
 
     try {
+      const update = (metadata: GovernanceMetadata) => setMessages((prev) => prev.map((message) => message.id === placeholderId ? { ...message, tools: metadata.tools, sourceCategories: metadata.sourceCategories, routePlan: metadata.routePlan, guardrailReasons: metadata.guardrailReasons, truncated: metadata.truncated } : message));
       const result = await sendChat({
         history,
         userMessage: text,
         conversationId,
         persona,
         token,
+      }, {
+        onTextDelta: (delta) => setMessages((prev) => prev.map((message) => message.id === placeholderId ? { ...message, content: message.content + delta } : message)),
+        onMetadata: update,
       });
 
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === placeholderId
-            ? { ...msg, content: result.content || sessionStatusLine(persona, Boolean(token)) }
+            ? { ...msg, content: result.content || sessionStatusLine(persona, Boolean(token)), status: result.metadata.status === "blocked" ? "blocked" : result.metadata.truncated ? "truncated" : "idle", tools: result.metadata.tools, sourceCategories: result.metadata.sourceCategories, routePlan: result.metadata.routePlan, guardrailReasons: result.metadata.guardrailReasons, truncated: result.metadata.truncated }
             : msg,
         ),
       );
@@ -206,7 +246,7 @@ export default function App() {
           msg.id === placeholderId
             ? {
                 ...msg,
-                content: `${detail}${sessionStatusLine(persona, Boolean(token))}`,
+                content: `${detail}${sessionStatusLine(persona, Boolean(token))}`, status: "error",
               }
             : msg,
         ),
@@ -214,6 +254,15 @@ export default function App() {
     } finally {
       setIsSending(false);
     }
+  }
+
+  useEffect(() => {
+    const log = chatLogRef.current;
+    if (log) log.scrollTop = log.scrollHeight;
+  }, [messages]);
+
+  function clearConversation(): void {
+    setMessages([]);
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
@@ -224,12 +273,20 @@ export default function App() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <h1>{settings.companyName} React UI</h1>
-        <p>{settings.companyTagline}</p>
+        <div><span className="eyebrow">OPERATIONS CONSOLE</span><h1>{settings.companyName} AI Workspace</h1><p>{settings.companyTagline}</p></div>
+        <button className="icon-button" type="button" onClick={clearConversation} title="Clear conversation" aria-label="Clear conversation">↺</button>
       </header>
 
-      <section className="starters">
-        {STARTERS.map((starter) => (
+      <section className="context-bar" aria-label="Session context">
+        <label>Persona<select value={persona ?? ""} onChange={(event) => { setPersona(event.target.value || null); }}><option value="">Default</option>{settings.allowedPersonas.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+        <span className={`status-pill ${token ? "is-secure" : ""}`}><span className="status-dot" />{token ? "Hybrid OBO" : "App identity"}</span>
+        {token ? <button type="button" className="text-button" onClick={() => setToken(null)}>Clear identity</button> : <span className="context-note">Session-scoped authorization</span>}
+      </section>
+
+      <section className="starter-area">
+        <div className="starter-tabs">{["Business", "Operations", "Commands"].map((group) => <button key={group} type="button" className={starterGroup === group ? "active" : ""} onClick={() => setStarterGroup(group)}>{group}</button>)}</div>
+        <div className="starters">
+        {STARTERS.filter((starter) => starterGroup === "Commands" ? starter.startsWith("/") : starterGroup === "Operations" ? starter.toLowerCase().includes("flink") || starter.toLowerCase().includes("appointments") : !starter.startsWith("/") && !starter.toLowerCase().includes("flink") && !starter.toLowerCase().includes("appointments")).map((starter) => (
           <button
             key={starter}
             type="button"
@@ -241,24 +298,26 @@ export default function App() {
             {starter}
           </button>
         ))}
+        </div>
       </section>
 
-      <main className="chat-log">
+      <main className="chat-log" ref={chatLogRef} aria-live="polite" aria-busy={isSending}>
         {messages.map((message) => (
-          <article key={message.id} className={`bubble bubble-${message.role}`}>
-            <pre>{message.content}</pre>
+          <article key={message.id} className={`bubble bubble-${message.role} status-${message.status ?? "idle"}`}>
+            {message.role === "assistant" && message.status === "streaming" && !message.content ? <div className="thinking"><span /> <span /> <span /> Retrieving context</div> : renderMarkdown(message.content)}
+            <GovernancePanel message={message} />
           </article>
         ))}
       </main>
 
       <form className="chat-input" onSubmit={onSubmit}>
-        <textarea
+        <textarea aria-label="Message" autoFocus
           value={input}
           onChange={(event) => setInput(event.target.value)}
           rows={3}
           placeholder="Ask a question or run /persona, /token commands"
         />
-        <button type="submit" disabled={isSending || !input.trim()}>
+        <button type="submit" disabled={isSending || !input.trim()} title="Send message">
           {isSending ? "Sending..." : "Send"}
         </button>
       </form>
