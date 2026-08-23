@@ -244,6 +244,14 @@ Validate and deploy:
 make redeploy TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT
 ```
 
+Lint Markdown documentation:
+
+```bash
+make lint-markdown
+```
+
+The command uses the pinned `markdownlint-cli2` version through `scripts/lint_markdown.sh` and excludes generated app assets and dependency directories.
+
 If bundle deploy fails due to Terraform provider registry availability, use the operational fallback documented in [docs/operations/operations-runbook.md](docs/operations/operations-runbook.md).
 
 ## Runtime Environment Variables

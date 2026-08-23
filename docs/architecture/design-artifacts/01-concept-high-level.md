@@ -46,7 +46,7 @@ flowchart LR
     AISYS --> Genie[Genie Spaces — Sales / CDI]
     AISYS --> AIS[AI Search MCP — Product Index / Flink Support]
     AISYS --> LB[Lakebase PostgreSQL — ODS]
-    AISYS --> FM[Foundation Models — databricks-claude-sonnet-4]
+    AISYS --> FM[Foundation Models — target-configured]
     AISYS --> AIGW[AI Gateway — optional routing layer]
     AISYS --> Audit[UC Audit Table / Message Bus]
     AISYS --> Identity[Workspace Identity — App + OBO]

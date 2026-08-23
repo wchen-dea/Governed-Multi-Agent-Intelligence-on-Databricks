@@ -31,6 +31,12 @@ Provide one source of truth for evaluation datasets, scorer behavior, KPI thresh
 - Source: prompts requiring `auth_mode=obo` with and without forwarded token context
 - Use for: auth correctness validation
 
+### Evaluation Status (2026-08-23)
+
+The latest Databricks-backed simulator run completed and logged an MLflow evaluation run. The release gate correctly blocked promotion because tool-call accuracy was `0.400`, below the required `0.800`. This is an active quality failure, not a missing-metrics condition.
+
+The run also reported scorer failures for completeness, fluency, and relevance. These failures must be triaged from the individual trace assessments before treating the evaluation as a stable baseline.
+
 ## Scoring Specification
 
 Default scorers:
@@ -45,6 +51,7 @@ Default scorers:
 - UserFrustration
 - Fluency
 - AuthCorrectness (custom)
+- DirectGroundedness (custom; evidence marker and freshness metadata)
 
 Custom scorer implementation:
 
@@ -58,12 +65,16 @@ Custom scorer implementation:
 - `EVAL_MIN_GROUNDEDNESS` default `0.80`
 - `EVAL_REQUIRE_ALL_KPIS` default `false` (set `true` for strict enforcement)
 
+The CI workflow sets `EVAL_REQUIRE_ALL_KPIS=true`; local `make evaluate` follows the process environment and may use the softer default.
+
 ## Gate Policy
 
 Deployment is blocked when:
 
 - Any required KPI is missing while strict mode is enabled.
 - Any observed KPI falls below its configured threshold.
+
+Tool-call accuracy is evaluated over all simulator turns, including turns where the user is acknowledging an answer, asking for clarification, or asking whether a goal is complete. The route planner therefore uses confidence-gated narrowing: confident capability matches narrow tools; weak or ambiguous matches retain policy-approved candidates. The evaluation corpus still needs explicit `no_tool_required` expectations for conversational turns so the model is not rewarded for calling a business tool unnecessarily.
 
 ## Execution Commands
 
@@ -79,6 +90,16 @@ Use `make evaluate` when:
 - After adding/renaming tools or subagents that can affect tool-call correctness.
 - After model or evaluator configuration changes that may affect quality or safety.
 - Before merging pull requests that change agent runtime behavior.
+
+When evaluation fails, preserve the MLflow run ID and classify each failed turn as one of:
+
+- incorrect tool selected
+- required tool omitted
+- tool should not have been called
+- policy or auth decision mismatch
+- scorer invocation failure
+
+Do not lower `EVAL_MIN_TOOL_CALL_ACCURACY` to mask a routing regression.
 
 Use `make test` for fast code-level regressions; use `make evaluate` for end-to-end conversational quality validation with MLflow scoring and release-gate enforcement.
 

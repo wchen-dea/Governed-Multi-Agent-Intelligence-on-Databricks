@@ -77,7 +77,7 @@ resources:
         - name: UC_AUDIT_TABLE
           value: ${var.uc_audit_table}
         - name: LAKEBASE_PG_PASSWORD
-          value: ${var.lakebase_pg_password}
+          value_from: lakebase_pg_password
       # Resources which this app has access to
       resources:
       - name: 'sales_genie_space'
@@ -90,6 +90,11 @@ resources:
           name: 'CDI Metrics Agent'
           space_id: ${var.cdi_genie_space_id}
           permission: 'CAN_RUN'
+      - name: 'lakebase_pg_password'
+        secret:
+          scope: 'multiagent_app'
+          key: 'lakebase_pg_password'
+          permission: 'READ'
       - name: 'lakebase_ods'
         postgres:
           branch: projects/${var.lakebase_project_id}/branches/${var.lakebase_branch_id}

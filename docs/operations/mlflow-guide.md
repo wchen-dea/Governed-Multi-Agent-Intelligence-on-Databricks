@@ -48,6 +48,8 @@ Click any span to see latency, token counts, and full input/output text.
 
 The evaluation pipeline in [evaluate_agent.py](../../src/backend/evaluate_agent.py) runs multi-turn conversations against the deployed agent and scores the results.
 
+The simulator includes both tool-requiring and conversational turns. A failed tool-call KPI must therefore be investigated against individual traces rather than inferred from route-plan events alone. Route-plan events are diagnostic metadata; `ToolCallCorrectness` evaluates the actual model/tool behavior.
+
 ### Running evaluation
 
 ```bash
@@ -63,7 +65,7 @@ uv run agent-evaluate
 1. Creates an MLflow run named `agent-quality-evaluation`
 2. Logs test parameters (case count, max turns, KPI thresholds)
 3. Runs `mlflow.genai.evaluate()` with a `ConversationSimulator` (LLM-as-judge using `databricks-claude-sonnet-5`)
-4. Scores each conversation with 10 built-in scorers + 1 custom scorer:
+4. Scores each conversation with 9 built-in scorers + 2 custom scorers:
 
 | Scorer | What It Measures |
 |--------|-----------------|
@@ -77,6 +79,7 @@ uv run agent-evaluate
 | `KnowledgeRetention` | Does the agent retain context across turns? |
 | `UserFrustration` | Does the user show signs of frustration? |
 | `auth_correctness_scorer` | Custom — validates policy-denied tools aren't invoked |
+| `direct_groundedness_scorer` | Custom — validates evidence markers and freshness metadata |
 
 5. Logs aggregate metrics back to the MLflow run
 6. Enforces release gate (see below)
@@ -101,7 +104,13 @@ https://dbc-baff2b7f-4402.cloud.databricks.com/ml/experiments/3025644123415124
 
 In the Experiments UI:
 - **Runs tab** → select the `agent-quality-evaluation` run → view logged params, KPI metrics, and `gate.release_passed`
-- **Evaluation tab** (inside the run) → per-conversation scorer breakdown table with all 10+ scorers
+- **Evaluation tab** (inside the run) → per-conversation scorer breakdown table with 11 scorers
+
+### Current failure baseline
+
+On 2026-08-23, the evaluation completed with tool-call accuracy `0.400` against the `0.800` release threshold. The run also recorded failed completeness, fluency, and relevance scorer invocations. The gate remained blocked as designed. Use the MLflow run linked in the command output to inspect which turns expected a tool, which expected a direct answer, and which scorer calls failed independently.
+
+The deterministic route planner is validated separately by [test_route_planner.py](../../tests/test_route_planner.py). That test suite proves capability matching for representative intents; it does not prove that the model will call the selected tool or refrain from calling tools on conversational turns. The latest planner implementation uses a `0.60` confidence threshold for hard narrowing.
 - **Traces tab** → each simulated conversation generates a full trace with LLM call spans
 
 #### Option B: Local MLflow UI (offline, no workspace auth needed)

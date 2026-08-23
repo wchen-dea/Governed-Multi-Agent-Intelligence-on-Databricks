@@ -148,24 +148,32 @@ async def _connect_request_stage(
     Returns:
         Connected stage with orchestrator agent and unavailable details.
     """
-    servers, unavailable_health = await HANDLER_DEPS.mcp_connector(
-        stack, prepared.runtime_auth.mcp_servers
-    )
-    unavailable = prepared.runtime_auth.unavailable_auth + unavailable_health
-    question = "\n".join(
-        str(
-            (message.model_dump() if hasattr(message, "model_dump") else message).get(
-                "content", ""
-            )
-        )
-        for message in prepared.messages
-        if isinstance(message.model_dump() if hasattr(message, "model_dump") else message, dict)
-    )
+    question = ""
+    for message in reversed(prepared.messages):
+        data = message.model_dump() if hasattr(message, "model_dump") else message
+        if isinstance(data, dict) and data.get("role") == "user":
+            question = str(data.get("content", ""))
+            break
     route_plan, route_candidates = build_route_plan(
         question,
         prepared.runtime_auth.policy_allowed_subagents,
     )
     candidate_names = {candidate.name for candidate in route_candidates}
+    planned_mcp_servers = [
+        server
+        for server in prepared.runtime_auth.mcp_servers
+        if str(getattr(server, "name", "")).split(":", 1)[-1] in candidate_names
+    ]
+    if (
+        not planned_mcp_servers
+        and prepared.runtime_auth.mcp_servers
+        and route_plan.reason == "ambiguous_fallback"
+    ):
+        planned_mcp_servers = prepared.runtime_auth.mcp_servers
+    servers, unavailable_health = await HANDLER_DEPS.mcp_connector(
+        stack, planned_mcp_servers
+    )
+    unavailable = prepared.runtime_auth.unavailable_auth + unavailable_health
     candidate_tools = [
         tool
         for tool in prepared.runtime_auth.subagent_tools

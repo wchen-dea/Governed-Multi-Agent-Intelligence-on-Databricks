@@ -83,7 +83,7 @@ variables:
     description: SQL warehouse or Lakebase endpoint ID for app resource grant
     default: ""
   lakebase_pg_password:
-    description: Lakebase PG password for SCRAM auth (bypasses OAuth credentials API)
+    description: Deprecated; use the multiagent_app/lakebase_pg_password secret
     default: ""
   target_app_name:
     description: Target Databricks app name granted CAN_USE for the current environment

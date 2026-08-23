@@ -22,17 +22,20 @@ class RequestStage {
     +request: ResponsesAgentRequest
     +runtime_auth: RuntimeAuthContext
     +messages: list
+    +input_guardrail: InputGuardrailResult
 }
 
 class ConnectedStage {
     +runtime_auth: RuntimeAuthContext
     +unavailable: list~str~
     +agent: Agent
+    +route_plan: RoutePlan
 }
 
 class InvokeFinalizedStage {
     +output_items: list~dict~
     +unavailable: list~str~
+    +envelope: ResponseEnvelope
 }
 
 class HandlerDependencies {
@@ -40,6 +43,7 @@ class HandlerDependencies {
     +mcp_connector(stack, mcp_servers)
     +orchestrator_factory(model, subagents, servers, tools, unavailable)
     +guardrails_evaluator(text, subagents)
+    +input_guardrails_evaluator(input, max_input_chars)
     +message_bus: MessageBus
 }
 
@@ -106,6 +110,7 @@ class StreamFinalizedStage {
     +unavailable: list~str~
     +guardrail_blocked: bool
     +guardrail_reasons: tuple~str~
+    +envelope: ResponseEnvelope
 }
 
 class HandlerDependencies {
@@ -113,6 +118,7 @@ class HandlerDependencies {
     +mcp_connector(stack, mcp_servers)
     +orchestrator_factory(model, subagents, servers, tools, unavailable)
     +guardrails_evaluator(text, subagents)
+    +input_guardrails_evaluator(input, max_input_chars)
     +message_bus: MessageBus
 }
 

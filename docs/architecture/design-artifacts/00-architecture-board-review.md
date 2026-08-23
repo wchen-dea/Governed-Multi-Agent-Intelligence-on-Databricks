@@ -58,7 +58,7 @@ flowchart LR
     AISYS --> Genie[Genie Spaces — Sales / CDI]
     AISYS --> AIS[AI Search MCP — Product Index / Flink Support]
     AISYS --> LB[Lakebase PostgreSQL — ODS]
-    AISYS --> FM[Foundation Models — databricks-claude-sonnet-4]
+    AISYS --> FM[Foundation Models — target-configured]
     AISYS --> AIGW[AI Gateway — optional]
     AISYS --> Audit[UC Audit Table / Message Bus]
     AISYS --> Identity[Workspace Identity — App + OBO]
@@ -155,7 +155,7 @@ flowchart LR
     TOOL --> GENIE[Genie MCP — sales_insights / cdi]
     TOOL --> AIS[AI Search MCP — product_index / flink_support]
     TOOL --> LB[Lakebase — lakebase_ods — psycopg2 + OAuth]
-    ORCH --> FM[Foundation Model — databricks-claude-sonnet-4]
+    ORCH --> FM[Foundation Model — target-configured]
     FM -.-> AIGW[AI Gateway — optional]
     ORCH --> BUS[Message Bus]
     BUS --> AUDIT[UC Audit Table]
@@ -303,7 +303,7 @@ flowchart TB
     end
 
     FE --> BE
-    BE --> FM[Foundation Model — databricks-claude-sonnet-4]
+    BE --> FM[Foundation Model — target-configured]
     FM -.-> AIGW[AI Gateway — optional]
     BE --> GENIE[Genie MCP — Sales / CDI Spaces]
     BE --> AIS[AI Search MCP — Product Index / Flink Support]

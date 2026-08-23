@@ -16,7 +16,8 @@ flowchart TB
     OR --> SC[Subagent Config — subagent_config.py]
     OR --> TL[Tool Builders — serving_endpoint / app]
     OR --> MCP[MCP Server Builders — genie / mcp]
-    OR --> LB[Lakebase Tools Builder — psycopg2 + OAuth]
+    OR --> LB[Lakebase Tools Builder — psycopg2 + secret-backed SCRAM or OAuth]
+    OR --> RP[Deterministic Route Planner — capability match or fallback]
 
     SC --> S1[sales_insights_agent — Genie — manager only]
     SC --> S2[product_index_assistant — AI Search MCP — analyst, manager, engineer]
@@ -43,14 +44,17 @@ sequenceDiagram
     RA->>POL: Evaluate policy per subagent
     POL-->>RA: PolicyDecision[] (allow/deny + reason)
     RA-->>H: RuntimeAuthContext (tools, mcp_servers, unavailable)
-    H->>MCP: Connect healthy MCP servers (TTL-cached)
+    H->>MCP: Connect healthy policy-approved MCP servers (TTL-cached)
     MCP-->>H: Connected servers + unavailable_health
-    H->>OR: create_orchestrator_agent(model, subagents, servers, tools)
+    H->>OR: Build RoutePlan and candidate tools
+    OR-->>H: low_confidence_fallback when intent is uncertain
+    H->>OR: create_orchestrator_agent(model, candidates, servers, tools)
     OR->>TS: Runner.run / Runner.run_streamed
     TS-->>OR: Tool results
     OR-->>H: Response items / stream events
-    H->>GR: Evaluate (response_text, used_subagents)
+    H->>GR: Evaluate (response_text, used_subagents, response budget)
     GR-->>H: GuardrailResult (blocked/reasons)
+    H->>MB: response envelope (status, sources, truncation, guardrails)
     H->>MB: request.invoke.succeeded / failed
 ```
 
@@ -79,7 +83,7 @@ flowchart TD
 flowchart TD
     A[Orchestrator System Instructions — cached per subagent config] --> B[Per-subagent system_prompt]
     B --> C[User messages — normalized via to_messages]
-    C --> D[Model Output — databricks-claude-sonnet-4]
+    C --> D[Model Output — target-configured orchestrator model]
 
     P1[Request-time Policy — persona + auth_mode + classification] --> G[Allowed Tool Set]
     G --> C

@@ -28,7 +28,6 @@ targets:
       lakebase_branch_id: "production"
       lakebase_database: "operationaldatastore"
       lakebase_sql_warehouse_id: "ep-falling-cake-d1j29nc5"
-      lakebase_pg_password: "Lkb-M4g3nt-0ds-2026!"
       message_bus_backend: uc_table
       message_bus_topic: agent-lifecycle-events
       uc_audit_warehouse_id: "b20f70f71c2f52e2"
@@ -51,6 +50,11 @@ targets:
               name: CDI Metrics Agent
               space_id: ${var.cdi_genie_space_id}
               permission: 'CAN_RUN'
+          - name: lakebase_pg_password
+            secret:
+              scope: multiagent_app
+              key: lakebase_pg_password
+              permission: READ
           - name: lakebase_ods
             postgres:
               branch: projects/${var.lakebase_project_id}/branches/${var.lakebase_branch_id}

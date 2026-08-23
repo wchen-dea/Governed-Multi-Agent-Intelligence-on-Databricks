@@ -12,7 +12,7 @@ flowchart LR
 
     Dev -. bundle validate .-> QA
     QA -. bundle deploy .-> STG
-    STG -. release gate .-> PRD
+    STG -. release gate — blocked until tool-call KPI passes .-> PRD
 ```
 
 ## 2. Runtime Deployment Map
@@ -25,13 +25,15 @@ flowchart TB
     end
 
     FE --> BE
-    BE --> FM[Foundation Model — databricks-claude-sonnet-4]
+    BE --> FM[Foundation Model — target-configured orchestrator model]
     FM -.-> AIGW[AI Gateway — optional DATABRICKS_OPENAI_BASE_URL]
     BE --> GENIE[Genie MCP — Sales Space / CDI Space]
     BE --> AIS[AI Search MCP — Product Index / Flink Support Index]
-    BE --> LB[Lakebase PostgreSQL — ep-falling-cake-d1j29nc5]
+    BE --> LB[Lakebase PostgreSQL — projects/ore/branches/production]
+    BE --> SEC[Secret scope — multiagent_app/lakebase_pg_password]
     BE --> AUD[UC Audit Table — quickstart_catalog.multi_agent_schema.agent_lifecycle_events]
-    BE --> OBS[MLflow Tracing — experiment 2041388166228723]
+    BE --> OBS[MLflow Tracing — target experiment]
+    SEC --> LB
 ```
 
 ## 3. Subagent Resource Mapping (dev)

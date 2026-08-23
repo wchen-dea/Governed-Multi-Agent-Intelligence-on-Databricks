@@ -1,6 +1,6 @@
 SHELL := /bin/sh
 
-.PHONY: help test evaluate evaluate-strict build-app-source validate bundle-deploy bundle-deploy-optional import ensure-running stop deploy grant-runtime-permissions redeploy health smoke smoke-governance query-dev logs status
+.PHONY: help test lint-markdown evaluate evaluate-strict build-app-source validate bundle-deploy bundle-deploy-optional import ensure-running stop deploy grant-runtime-permissions redeploy health smoke smoke-governance query-dev logs status
 
 PROFILE ?= DEFAULT
 TARGET ?= dev
@@ -20,6 +20,7 @@ help:
 	@printf "Local dev Databricks app workflow\n\n"
 	@printf "Targets:\n"
 	@printf "  make test              Run local test suite\n"
+	@printf "  make lint-markdown     Run pinned Markdown lint checks\n"
 	@printf "  make evaluate          Run MLflow GenAI evaluation and release gate\n"
 	@printf "  make evaluate-strict   Run evaluation with all KPI gates required\n"
 	@printf "  make build-app-source  Build wheel + React UI app source payload\n"
@@ -43,6 +44,9 @@ help:
 
 test:
 	uv run pytest -q
+
+lint-markdown:
+	./scripts/lint_markdown.sh
 
 evaluate:
 	uv run agent-evaluate

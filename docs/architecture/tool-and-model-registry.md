@@ -91,11 +91,13 @@ Typical source pattern for Genie Agents:
 
 - Type: lakebase
 - Runtime name: `lakebase_ods_agent`
-- Project: `ore` (uid: `3ab05603-06dc-4789-a7fb-234d22a71e4b`)
-- Branch: `production` (uid: `br-fragrant-sea-d1h720m5`)
+- Project: `ore` (resource path: `projects/ore`)
+- Branch: `production` (resource path: `projects/ore/branches/production`)
 - Endpoint: `primary` (host: `ep-falling-cake-d1j29nc5.database.us-west-2.cloud.databricks.com`)
 - Database: `operationaldatastore`
+- Database resource: `projects/ore/branches/production/databases/operationaldatastore`
 - Auth mode: app
+- Password source: Databricks secret scope `multiagent_app`, key `lakebase_pg_password`; OAuth credentials API is the runtime fallback.
 - Classification: confidential
 - Owner: data-platform
 - Status: active

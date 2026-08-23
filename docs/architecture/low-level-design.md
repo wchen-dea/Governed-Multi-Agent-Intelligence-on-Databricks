@@ -160,7 +160,7 @@ Supported subagent types:
 - `serving_endpoint` via Databricks Responses API (`endpoint` required)
 - `app` via Databricks Responses API using `apps/<endpoint>` model mapping
 - `mcp` via generic Databricks MCP route (`mcp_url` required)
-- `lakebase` via PostgreSQL wire protocol with OAuth credentials (`project_id`, `branch_id`, `endpoint_id`, `database`, `pg_host` required)
+- `lakebase` via PostgreSQL wire protocol with secret-backed SCRAM or OAuth fallback (`project_id`, `branch_id`, `endpoint_id`, `database`, `pg_host` required)
 
 Supported auth modes:
 

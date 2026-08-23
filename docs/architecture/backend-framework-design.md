@@ -165,7 +165,7 @@ All runtime behavior is driven by environment variables (see `shared/settings.py
 
 | Variable | Purpose |
 |----------|---------|
-| `ORCHESTRATOR_MODEL` | Foundation model for orchestrator (e.g., `databricks-claude-sonnet-4`) |
+| `ORCHESTRATOR_MODEL` | Target-configured foundation model for the orchestrator |
 | `DATABRICKS_OPENAI_BASE_URL` | Optional AI Gateway override URL |
 | `DATABRICKS_OPENAI_TIMEOUT_SECONDS` | Client timeout for gateway-routed calls |
 | `MESSAGE_BUS_BACKEND` | Event bus backend selection |

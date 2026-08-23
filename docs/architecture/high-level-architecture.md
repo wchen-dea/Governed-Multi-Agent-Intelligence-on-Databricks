@@ -13,6 +13,7 @@ This document covers high-level architecture only. Implementation-level details 
 - Dev deployment is live with React UI as the primary client.
 - Hosted runtime uses `uv run start-app`.
 - Deployments may intermittently fail when Terraform provider registry is unreachable; direct app deploy is the operational fallback.
+- Deterministic route-plan unit tests pass, but the latest conversational MLflow gate remains blocked at tool-call accuracy `0.400 < 0.800`.
 
 ## Main Content
 
@@ -25,7 +26,7 @@ It routes user requests across backend capabilities:
 - Serving endpoint agents
 - Optional app-based specialists
 - AI Search MCP routes (RAG)
-- Lakebase PostgreSQL databases (SQL via psycopg2 with OAuth credentials)
+- Lakebase PostgreSQL databases (SQL via psycopg2 with secret-backed SCRAM or OAuth credentials)
 
 Authorization boundary:
 
@@ -42,6 +43,8 @@ Runtime stack:
 - Structured message bus events for request/tool lifecycle observability
 - Optional async message-bus publishing mode to reduce request-path event I/O latency
 - Governed policy and response-guardrail enforcement for sensitive routes
+- Deterministic capability-based route planning with policy-approved fallback
+- Typed response envelopes and normalized tool execution metadata for audit and UI inspection
 
 ### Major Components
 
@@ -91,7 +94,7 @@ flowchart LR
             A2[MCP Product Index Assistant AI Search]
             A3[MCP Flink Support Agent RAG]
             A4[Genie CDI Agent]
-            A5[Lakebase ODS Agent psycopg2 OAuth]
+            A5[Lakebase ODS Agent psycopg2 SCRAM or OAuth]
         end
 
         subgraph Semantic[Business Semantic Layer]
@@ -135,6 +138,8 @@ flowchart LR
     MCP --> BSL
     MCP --> VS
     A5 --> LB
+    APPID --> SECRET[Databricks Secret Scope multiagent_app]
+    SECRET --> LB
     BSL --> ST
     BSL --> MV
     VS --> PT
@@ -163,7 +168,8 @@ flowchart TD
     AID --> O[Orchestrator Agent via Responses API]
     OID --> O
 
-    O --> G[Genie Sales Agent via MCP]
+    O --> PLAN[Deterministic Route Plan]
+    PLAN --> G[Genie Sales Agent via MCP]
     O --> K[MCP AI Search product_index_assistant]
     O --> F[MCP AI Search flink_support_agent RAG]
     O --> CDI[Genie CDI Agent via MCP]
@@ -173,7 +179,7 @@ flowchart TD
     K --> R1[Vector Search dim_product_search_index]
     F --> R3[Vector Search flink_support_search_index]
     CDI --> M2[MCP Genie Space CDI metrics]
-    LB --> PG[Lakebase PostgreSQL OAuth via Credentials API]
+    LB --> PG[Lakebase PostgreSQL via secret-backed SCRAM or OAuth fallback]
 
     M --> R[Response Aggregation and Guardrails]
     R1 --> R
@@ -196,6 +202,30 @@ The orchestrator uses subagent-level auth configuration (`auth_mode`) to decide 
 - `obo`: run tool/MCP calls with user identity derived from forwarded token.
 
 If an `obo` tool is required but no forwarded token is available, the tool is marked unavailable or returns a clear authorization error.
+
+### Lakebase Secret Configuration
+
+The dev app uses the existing Lakebase Autoscaling resources:
+
+- Project: `ore`
+- Branch: `production`
+- Database: `operationaldatastore`
+- Endpoint: `primary`
+
+The Databricks App receives `LAKEBASE_PG_PASSWORD` through the `multiagent_app` secret scope and `lakebase_pg_password` key. The plaintext password is not stored in bundle target files. Runtime code prefers this secret-backed password and retains OAuth credential retrieval as a fallback when the secret is absent.
+
+The app resource grant uses the Autoscaling form:
+
+```yaml
+postgres:
+    branch: projects/ore/branches/production
+    database: projects/ore/branches/production/databases/operationaldatastore
+    permission: CAN_CONNECT_AND_CREATE
+```
+
+### Execution and Frontend Metadata
+
+Before orchestration, the handler applies input guardrails and builds a capability-based route plan. Tool and MCP execution emits lifecycle metadata including status, latency, attempt count, auth mode, and error code. The React UI consumes stream deltas incrementally and displays tools, source categories, guardrail state, auth state, persona, and response-budget status in a collapsible run-context panel.
 
 ### Message Bus Observability
 

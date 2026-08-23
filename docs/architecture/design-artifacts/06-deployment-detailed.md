@@ -14,8 +14,9 @@ flowchart LR
     BE --> OBO[OBO — x-forwarded-access-token]
     BE --> GENIE[Genie MCP — /api/2.0/mcp/genie/]
     BE --> AIS[AI Search MCP — /api/2.0/mcp/ai-search/]
-    BE --> LB[Lakebase — ep-falling-cake-d1j29nc5.database.us-west-2.cloud.databricks.com]
-    BE --> FM[Model Serving — databricks-claude-sonnet-4]
+    BE --> LB[Lakebase — projects/ore/branches/production/databases/operationaldatastore]
+    BE --> SEC[Databricks Secret — multiagent_app/lakebase_pg_password]
+    BE --> FM[Model Serving — target-configured orchestrator model]
     BE --> UC[UC Audit Table — SQL Statement API — warehouse b20f70f71c2f52e2]
 
     SEC[Platform Security] --> Ingress
@@ -29,7 +30,9 @@ flowchart TD
     Commit[Commit to main] --> Lint[Static Checks — ruff / mypy]
     Lint --> Unit[pytest — test_*.py]
     Unit --> Eval[make evaluate — MLflow KPI gate]
-    Eval --> Validate[databricks bundle validate -t dev]
+    Eval --> Decision{All required KPIs pass?}
+    Decision -- No --> Block[Block promotion — current tool-call KPI 0.400 < 0.800]
+    Decision -- Yes --> Validate[databricks bundle validate -t dev]
     Validate --> DeployDev[make deploy — dev target]
     DeployDev --> Smoke[make test-deployed — health + invoke check]
     Smoke --> DeployQA[bundle deploy -t qa]
@@ -63,12 +66,15 @@ flowchart TB
 flowchart LR
     subgraph BundleVars[databricks.yml + targets/dev.yml]
         V1[app_name = multiagent-app-dev]
-        V2[orchestrator_model = databricks-claude-sonnet-4]
+        V2[orchestrator_model = target-configured model]
         V3[openai_base_url = empty — direct to model serving]
         V4[message_bus_backend = uc_table]
         V5[genie_space_id = 01f159f5...]
         V6[cdi_genie_space_id = 01f19b2a...]
-        V7[lakebase_project_id = 3ab05603...]
+        V7[lakebase_project_id = ore]
+        V8[lakebase_branch_id = production]
+        V9[lakebase_database = operationaldatastore]
+        V10[secret key = lakebase_pg_password]
     end
 
     BundleVars --> App[Databricks App Environment Variables]

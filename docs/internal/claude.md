@@ -121,7 +121,7 @@ Constraints: If app exists, bind instead of delete.
   - `serving_endpoint` requires `endpoint`
   - `app` requires `endpoint`
   - `mcp` requires `mcp_url`
-  - `lakebase` requires `project_id`, `branch_id`, `endpoint_id`, `database`, `pg_host`
+  - `lakebase` requires `project_id`, `branch_id`, `endpoint_id`, `database`, `pg_host`; password is supplied by `multiagent_app/lakebase_pg_password` when SCRAM is configured, with OAuth fallback
 
 ### modify-agent
 
