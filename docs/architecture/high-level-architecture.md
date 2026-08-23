@@ -209,7 +209,8 @@ The dev app uses the existing Lakebase Autoscaling resources:
 
 - Project: `ore`
 - Branch: `production`
-- Database: `operationaldatastore`
+- Runtime database: `operationaldatastore`
+- Database resource ID: `db-j7lf-e5xmy0cwq4`
 - Endpoint: `primary`
 
 The Databricks App receives `LAKEBASE_PG_PASSWORD` through the `multiagent_app` secret scope and `lakebase_pg_password` key. The plaintext password is not stored in bundle target files. Runtime code prefers this secret-backed password and retains OAuth credential retrieval as a fallback when the secret is absent.
@@ -219,7 +220,7 @@ The app resource grant uses the Autoscaling form:
 ```yaml
 postgres:
     branch: projects/ore/branches/production
-    database: projects/ore/branches/production/databases/operationaldatastore
+    database: projects/ore/branches/production/databases/db-j7lf-e5xmy0cwq4
     permission: CAN_CONNECT_AND_CREATE
 ```
 

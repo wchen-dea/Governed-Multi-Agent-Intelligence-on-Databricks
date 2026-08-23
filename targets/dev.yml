@@ -22,11 +22,11 @@ targets:
       supply_chain_genie_space_id: ""
       cdi_genie_space_id: "01f19b2ab0f014daa3325ff30142f873"
       knowledge_assistant_endpoint_name: ""
-      ai_search_endpoint_name: "product-search-vs-endpoint"
+      ai_search_endpoint_name: "product_index_ep"
       flink_support_vs_endpoint_name: "flink-support-vs-endpoint"
       lakebase_project_id: "ore"
       lakebase_branch_id: "production"
-      lakebase_database: "operationaldatastore"
+      lakebase_database: "db-j7lf-e5xmy0cwq4"
       lakebase_sql_warehouse_id: "ep-falling-cake-d1j29nc5"
       message_bus_backend: uc_table
       message_bus_topic: agent-lifecycle-events
@@ -50,6 +50,16 @@ targets:
               name: CDI Metrics Agent
               space_id: ${var.cdi_genie_space_id}
               permission: 'CAN_RUN'
+          - name: product_search_index
+            uc_securable:
+              securable_full_name: quickstart_catalog.multi_agent_schema.dim_product_search_index
+              securable_type: TABLE
+              permission: SELECT
+          - name: flink_support_index
+            uc_securable:
+              securable_full_name: quickstart_catalog.multi_agent_schema.flink_support_index
+              securable_type: TABLE
+              permission: SELECT
           - name: lakebase_pg_password
             secret:
               scope: multiagent_app

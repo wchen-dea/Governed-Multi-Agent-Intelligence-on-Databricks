@@ -9,6 +9,10 @@ export function formatToolLabel(toolName: string): string {
 
 export function updateStreamHints(event: Record<string, unknown>, hints: StreamHints): string {
   const eventType = typeof event.type === "string" ? event.type : "";
+  const item = (event.item && typeof event.item === "object" ? event.item : null) as
+    | Record<string, unknown>
+    | null;
+  const itemType = item && typeof item.type === "string" ? item.type : "";
 
   let delta = "";
   if (eventType === "response.output_text.delta") {
@@ -19,10 +23,18 @@ export function updateStreamHints(event: Record<string, unknown>, hints: StreamH
     }
   }
 
-  const item = (event.item && typeof event.item === "object" ? event.item : null) as
-    | Record<string, unknown>
-    | null;
-  const itemType = item && typeof item.type === "string" ? item.type : "";
+  if (!delta && item && item.role === "assistant") {
+    const content = item.content;
+    if (typeof content === "string") {
+      delta = content;
+    } else if (Array.isArray(content)) {
+      delta = content
+        .filter((block): block is Record<string, unknown> => typeof block === "object" && block !== null)
+        .map((block) => typeof block.text === "string" ? block.text : "")
+        .filter(Boolean)
+        .join(" ");
+    }
+  }
 
   if (eventType.includes("mcp") || itemType.includes("mcp")) {
     hints.categories.add("Genie MCP");

@@ -503,7 +503,8 @@ App URL: `https://multiagent-app-dev-4225037891036111.aws.databricksapps.com`
 - Project: `ore` (resource path: `projects/ore`)
 - Branch: `production` (resource path: `projects/ore/branches/production`)
 - Endpoint: `primary` (host: `ep-falling-cake-d1j29nc5.database.us-west-2.cloud.databricks.com`)
-- Database: `operationaldatastore`
+- Runtime database: `operationaldatastore`
+- Database resource ID: `db-j7lf-e5xmy0cwq4`
 - Database resource: `projects/ore/branches/production/databases/operationaldatastore`
 - Secret: scope `multiagent_app`, key `lakebase_pg_password` (injected as `LAKEBASE_PG_PASSWORD`)
 - App SP role: `sp-multiagent-app` (postgres_role: `da6ab9ef-2c0f-4f9b-9950-b618b9f4fede`, membership: `DATABRICKS_SUPERUSER`)
@@ -631,6 +632,16 @@ databricks apps update <app-name> --json '{
 ```
 
 Also update `targets/<target>.yml` with the space ID variable and `resources/multiagent_app.yml` with the resource declaration for future deploys.
+
+### Product AI Search MCP unavailable or HTTP 502
+
+Verify the configured route uses the canonical Vector Search MCP path:
+
+```text
+/api/2.0/mcp/vector-search/<catalog>/<schema>/<index>
+```
+
+For the dev product index, verify the app has `CAN_USE` on `product_index_ep` and `SELECT` on `quickstart_catalog.multi_agent_schema.dim_product_search_index`. The bundle declares the index as a `uc_securable` app resource so parent catalog/schema access is included. The permission script also accepts the legacy `ai-search` path for compatibility, but new configurations should use `vector-search`.
 
 ### Terraform registry unreachable during `bundle deploy`
 

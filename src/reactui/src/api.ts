@@ -91,6 +91,7 @@ export async function sendChat(options: SendChatOptions, callbacks: StreamCallba
     const categories = new Set<string>();
     const tools = new Set<string>();
 
+    let latestMetadata = governanceFromHints({ categories, tools });
     while (true) {
       const { value, done } = await reader.read();
       if (done) {
@@ -124,7 +125,8 @@ export async function sendChat(options: SendChatOptions, callbacks: StreamCallba
           fullText += delta;
           callbacks.onTextDelta?.(delta);
         }
-        callbacks.onMetadata?.(metadataFromEvent(event, governanceFromHints({ categories, tools })));
+        latestMetadata = metadataFromEvent(event, governanceFromHints({ categories, tools }));
+        callbacks.onMetadata?.(latestMetadata);
       }
     }
 
@@ -134,7 +136,7 @@ export async function sendChat(options: SendChatOptions, callbacks: StreamCallba
         content:
           "The backend ended the stream without returning visible content. This often means the response was blocked before it could be shown, for example by an `evidence_required` guardrail." +
           sessionStatusLine(options.persona, Boolean(options.token)),
-        metadata: { ...governanceFromHints({ categories, tools }), status: "blocked" },
+        metadata: { ...latestMetadata, status: latestMetadata.status ?? "blocked" },
       };
     }
 
@@ -144,7 +146,7 @@ export async function sendChat(options: SendChatOptions, callbacks: StreamCallba
     }
     fullText += sessionStatusLine(options.persona, Boolean(options.token));
 
-    return { content: fullText, streamedText: true, metadata: governanceFromHints({ categories, tools }) };
+    return { content: fullText, streamedText: true, metadata: latestMetadata };
   } finally {
     clearTimeout(timeout);
   }

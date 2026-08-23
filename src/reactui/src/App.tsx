@@ -27,6 +27,7 @@ const STARTERS = [
   "Any products matching 'all season 225/65R17 tire'",
   "How do delight scores compare for appointments vs walk-ins?",
   "What is the distribution of sales_receipt_document_type_code to understand the different document types in sales receipts?",
+  "What is the monthly aggregated total tax amount from sales receipts?",
   "Flink streaming job has increasing consumer lag. What are the common causes and how do we fix it?",
   "List today's open appointments and their current order status.",
   "Look up product details for brand code 'MICH' and list matching article types.",
@@ -273,9 +274,17 @@ export default function App() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <div><span className="eyebrow">OPERATIONS CONSOLE</span><h1>{settings.companyName} AI Workspace</h1><p>{settings.companyTagline}</p></div>
+        <div className="brand-lockup"><a className="brand-logo" href="https://www.discounttire.com/" target="_blank" rel="noreferrer"><img src="https://www.discounttire.com/favicon.ico" alt="Discount Tire" /></a><div><span className="eyebrow">DISCOUNT TIRE | OPERATIONS</span><h1>{settings.companyName} AI Workspace</h1><p>{settings.companyTagline}</p></div></div>
         <button className="icon-button" type="button" onClick={clearConversation} title="Clear conversation" aria-label="Clear conversation">↺</button>
       </header>
+
+      <nav className="utility-nav" aria-label="Workspace navigation"><span className="utility-active">AI workspace</span><span>Products</span><span>Store operations</span><span>Support</span></nav>
+
+      <section className="trust-strip" aria-label="Workspace service status">
+        <span><strong>Expert context</strong> Governed business sources</span>
+        <span><strong>Fast answers</strong> Streaming agent responses</span>
+        <span><strong>Protected</strong> Policy-aware access</span>
+      </section>
 
       <section className="context-bar" aria-label="Session context">
         <label>Persona<select value={persona ?? ""} onChange={(event) => { setPersona(event.target.value || null); }}><option value="">Default</option>{settings.allowedPersonas.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>

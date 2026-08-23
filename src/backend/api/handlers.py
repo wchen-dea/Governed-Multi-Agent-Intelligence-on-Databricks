@@ -135,6 +135,23 @@ def _prepare_request_stage(request: ResponsesAgentRequest) -> RequestStage:
     return RequestStage(request=request, runtime_auth=runtime_auth, messages=messages)
 
 
+def _select_route_tools(
+    tools: list[Any],
+    route_candidates: list[SubagentConfig],
+    route_reason: str,
+) -> list[Any]:
+    """Select function tools without leaking them into confident MCP routes."""
+    candidate_names = {candidate.name for candidate in route_candidates}
+    selected = [
+        tool
+        for tool in tools
+        if getattr(tool, "__name__", "").removeprefix("query_") in candidate_names
+    ]
+    if not selected and route_reason in {"ambiguous_fallback", "low_confidence_fallback"}:
+        return tools
+    return selected
+
+
 async def _connect_request_stage(
     stack: AsyncExitStack,
     prepared: RequestStage,
@@ -158,7 +175,6 @@ async def _connect_request_stage(
         question,
         prepared.runtime_auth.policy_allowed_subagents,
     )
-    candidate_names = {candidate.name for candidate in route_candidates}
     planned_mcp_servers = [
         server
         for server in prepared.runtime_auth.mcp_servers
@@ -174,13 +190,11 @@ async def _connect_request_stage(
         stack, planned_mcp_servers
     )
     unavailable = prepared.runtime_auth.unavailable_auth + unavailable_health
-    candidate_tools = [
-        tool
-        for tool in prepared.runtime_auth.subagent_tools
-        if getattr(tool, "__name__", "").removeprefix("query_") in candidate_names
-    ]
-    if not candidate_tools and prepared.runtime_auth.subagent_tools:
-        candidate_tools = prepared.runtime_auth.subagent_tools
+    candidate_tools = _select_route_tools(
+        prepared.runtime_auth.subagent_tools,
+        route_candidates,
+        route_plan.reason,
+    )
     agent = HANDLER_DEPS.orchestrator_factory(
         SETTINGS.orchestrator_model,
         route_candidates,
@@ -829,6 +843,17 @@ async def stream_handler(
             logger.warning(
                 "MCP tool error during stream: %s",
                 "; ".join(str(x) for x in mcp_errors),
+            )
+            yield cast(
+                Any,
+                {
+                    "type": "response.output_text.delta",
+                    "item_id": "item_error",
+                    "delta": (
+                        "I couldn't complete this request because a connected "
+                        "assistant or data source was unavailable. Please try again."
+                    ),
+                },
             )
             return
         raise

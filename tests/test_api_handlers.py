@@ -7,6 +7,7 @@ from backend.api.handlers import (
     _guardrail_block_message,
     _used_subagents_from_payloads,
 )
+from backend.api.handlers import _select_route_tools
 from backend.domain.subagent_config import SubagentConfig
 
 
@@ -141,3 +142,17 @@ def test_invoke_and_stream_success_events_include_unavailable_tool_details_shape
     assert invoke_payload["unavailable_tools"] == len(invoke_payload["unavailable_tool_details"])
     assert isinstance(stream_payload["unavailable_tool_details"], list)
     assert stream_payload["unavailable_tools"] == len(stream_payload["unavailable_tool_details"])
+
+
+def test_confident_mcp_route_does_not_fallback_to_unrelated_function_tool():
+    class LakebaseTool:
+        __name__ = "query_lakebase_ods_agent"
+
+    product = SubagentConfig(
+        name="product_index_assistant",
+        kind="mcp",
+        mcp_url="/api/2.0/mcp/vector-search/catalog/schema/index",
+        description="product catalog",
+    )
+
+    assert _select_route_tools([LakebaseTool()], [product], "capability_match") == []
