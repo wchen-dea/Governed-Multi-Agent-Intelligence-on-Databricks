@@ -19,7 +19,7 @@ Use this skill when the target resource does not exist yet.
 1. Discover current resources:
 
 ```bash
-uv run discover-tools --profile <profile>
+uv run assistant-discover-tools --profile <profile>
 ```
 
 2. Create missing resources in Databricks (UI or CLI/API based on org standard).

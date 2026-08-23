@@ -66,7 +66,7 @@ make redeploy TARGET=<target> APP_NAME=<app-name> PROFILE=<profile>
 
 ```bash
 uv run pytest -q tests/test_guardrails_service.py tests/test_policy_service.py tests/test_orchestrator_service.py
-uv run preflight
+uv run runtime-preflight
 ```
 
 ## Rollback and Fallback

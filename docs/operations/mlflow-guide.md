@@ -57,7 +57,7 @@ The simulator includes both tool-requiring and conversational turns. A failed to
 make evaluate
 
 # CI (runs automatically before deploy)
-uv run agent-evaluate
+uv run assistant-evaluate
 ```
 
 ### What happens during evaluation
@@ -160,9 +160,9 @@ In [.github/workflows/databricks-cicd.yml](../../.github/workflows/databricks-ci
 
 ### Local development
 
-Copy `.env.example` to `.env` and set `MLFLOW_EXPERIMENT_ID` to a valid experiment. Run `uv run quickstart` to auto-create one.
+Copy `.env.example` to `.env` and set `MLFLOW_EXPERIMENT_ID` to a valid experiment. Run `uv run assistant-bootstrap` to auto-create one.
 
-Traces from `uv run start-server` will appear in the configured experiment when `MLFLOW_TRACKING_URI=databricks` and you have valid Databricks auth.
+Traces from `uv run runtime-serve-backend` will appear in the configured experiment when `MLFLOW_TRACKING_URI=databricks` and you have valid Databricks auth.
 
 ### Viewing evaluation runs locally
 

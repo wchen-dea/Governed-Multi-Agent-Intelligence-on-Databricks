@@ -27,7 +27,7 @@ Steps:
   7. Print summary with links to experiment and Lakebase.
 
 Usage:
-    uv run quickstart [OPTIONS]
+    uv run assistant-bootstrap [OPTIONS]
 
 Options:
     --profile NAME    Use specified Databricks profile (non-interactive)

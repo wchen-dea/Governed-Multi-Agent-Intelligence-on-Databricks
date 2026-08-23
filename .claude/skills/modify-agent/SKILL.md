@@ -38,6 +38,6 @@ Adjust request/response shaping:
 
 ```bash
 python -m py_compile backend/**/*.py scripts/*.py frontend/*.py
-uv run preflight
-uv run start-app
+uv run runtime-preflight
+uv run runtime-serve-app
 ```

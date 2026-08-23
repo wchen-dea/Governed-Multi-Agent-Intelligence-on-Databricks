@@ -11,7 +11,7 @@ Usage:
     start-app [OPTIONS]
 
 All options are passed through to the backend server (start-server).
-See 'uv run start-server --help' for available options.
+See 'uv run runtime-serve-backend --help' for available options.
 """
 
 import argparse
@@ -303,7 +303,7 @@ class ProcessManager:
                 print(
                     "ERROR: React UI dist not found. "
                     f"Expected at: {react_dist_path}\n"
-                    "Build UI assets first with: uv run prepare-app-source"
+                    "Build UI assets first with: uv run runtime-build-source"
                 )
                 self.no_ui = True
             else:
@@ -417,7 +417,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Start agent frontend and backend",
         usage="%(prog)s [OPTIONS]\n\nAll options are passed through to start-server. "
-        "Use 'uv run start-server --help' for available options.",
+        "Use 'uv run runtime-serve-backend --help' for available options.",
     )
     parser.add_argument(
         "--no-ui",

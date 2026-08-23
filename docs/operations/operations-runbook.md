@@ -83,7 +83,7 @@ Final pre-release checks:
 
 - Run `databricks bundle validate -t TARGET --profile PROFILE`
 - Run `uv run pytest -q`
-- Run `uv run agent-evaluate`
+- Run `uv run assistant-evaluate`
 - Confirm no placeholder values remain in target config files.
 
 ### Standard Deployment
@@ -91,7 +91,7 @@ Final pre-release checks:
 #### 0) Prepare app-source payload (wheel + React UI)
 
 ```bash
-uv run prepare-app-source
+uv run runtime-build-source
 ```
 
 Notes:
@@ -153,7 +153,7 @@ In some environments, relying on bundle runtime commands may use a reduced sourc
 When this occurs, use the explicit app-source deployment path below to deploy the app-source payload:
 
 ```bash
-uv run prepare-app-source
+uv run runtime-build-source
 databricks apps deploy APP_NAME --profile PROFILE \
   --source-code-path "/Workspace/Users/<user>/.bundle/<bundle-name>/<target>/files/.databricks_app_source" \
   --mode SNAPSHOT
@@ -264,7 +264,7 @@ Hybrid auth verification checklist:
 #### Local startup
 
 ```bash
-uv run start-app
+uv run runtime-serve-app
 ```
 
 Optional worker tuning (local or hosted startup path):
@@ -294,7 +294,7 @@ RABBITMQ_URL=amqp://guest:guest@localhost:5672/
 Then start the app as usual:
 
 ```bash
-uv run start-app
+uv run runtime-serve-app
 ```
 
 #### UC audit table message bus local example
@@ -332,15 +332,15 @@ ORCHESTRATOR_INSTRUCTIONS_CACHE_SIZE=128
 #### Backend-only
 
 ```bash
-uv run start-server --reload
-uv run start-app --no-ui
+uv run runtime-serve-backend --reload
+uv run runtime-serve-app --no-ui
 ```
 
 #### Preflight and evaluation
 
 ```bash
-uv run preflight
-uv run agent-evaluate
+uv run runtime-preflight
+uv run assistant-evaluate
 ```
 
 Release-gate KPI thresholds for evaluation can be tuned with:
@@ -602,7 +602,7 @@ If it recurs, check for import errors or startup crashes in the wheel (e.g., mis
 
 1. Run the grant script:
    ```bash
-   make grant-runtime-permissions TARGET=dev APP_NAME=multiagent-app-dev
+   make grants TARGET=dev APP_NAME=multiagent-app-dev
    ```
 
 2. Or grant manually in a SQL editor:
@@ -672,7 +672,7 @@ The fallback only deploys application source. It does not replace a failed bundl
      "user_api_scopes": ["sql"]
    }'
    # Re-run permission grants
-   make grant-runtime-permissions TARGET=dev APP_NAME=multiagent-app-dev
+   make grants TARGET=dev APP_NAME=multiagent-app-dev
    ```
 4. Note: the Databricks Apps API does not currently expose all `postgres` resource updates through `apps update`; apply the Lakebase resource grant and secret resource through `databricks bundle deploy`. If Terraform registry access is unavailable, restore the network path before applying permissions rather than silently relying on OAuth.
 

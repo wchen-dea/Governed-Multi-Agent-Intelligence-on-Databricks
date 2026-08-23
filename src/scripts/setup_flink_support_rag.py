@@ -5,7 +5,7 @@ Creates (or reuses) a Vector Search endpoint and a direct-access index backed
 by documents in /Volumes/quickstart_catalog/multi_agent_schema/support_kb.
 
 Usage:
-    uv run setup-flink-support-rag [--profile PROFILE] [--endpoint-name NAME]
+    uv run assistant-setup-flink [--profile PROFILE] [--endpoint-name NAME]
 """
 
 import argparse

@@ -11,7 +11,7 @@ This document covers high-level architecture only. Implementation-level details 
 ## Current Status
 
 - Dev deployment is live with React UI as the primary client.
-- Hosted runtime uses `uv run start-app`.
+- Hosted runtime uses `uv run runtime-serve-app`.
 - Deployments may intermittently fail when Terraform provider registry is unreachable; direct app deploy is the operational fallback.
 - Deterministic route-plan unit tests pass, but the latest conversational MLflow gate remains blocked at tool-call accuracy `0.400 < 0.800`.
 

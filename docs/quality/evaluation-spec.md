@@ -80,7 +80,7 @@ Tool-call accuracy is evaluated over all simulator turns, including turns where 
 
 ```bash
 make evaluate
-uv run agent-evaluate
+uv run assistant-evaluate
 ```
 
 Use `make evaluate` when:

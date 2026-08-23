@@ -4,7 +4,7 @@
 Run this before deploying to catch configuration and code errors early.
 
 Usage:
-    uv run preflight
+    uv run runtime-preflight
 """
 
 import json

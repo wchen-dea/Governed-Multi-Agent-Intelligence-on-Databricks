@@ -2,7 +2,7 @@
 """Create a materialized view from vw_cdi_metrics and set up a Genie Agent space for CDI analytics.
 
 Usage:
-    uv run setup-cdi-agent [--profile PROFILE]
+    uv run assistant-setup-cdi [--profile PROFILE]
 """
 
 import argparse

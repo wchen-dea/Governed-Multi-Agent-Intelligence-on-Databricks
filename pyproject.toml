@@ -49,12 +49,17 @@ pythonpath = ["src"]
 
 
 [project.scripts]
-quickstart = "scripts.quickstart:main"
-start-app = "scripts.start_app:main"
-start-server = "backend.api.server:main"
-agent-evaluate = "backend.evaluate_agent:evaluate"
-discover-tools = "scripts.discover_tools:main"
-preflight = "scripts.preflight:main"
-prepare-app-source = "scripts.prepare_app_source:main"
-setup-flink-support-rag = "scripts.setup_flink_support_rag:main"
-setup-cdi-agent = "scripts.setup_cdi_agent:main"
+# Runtime core: commands required to run, validate, and package the application.
+runtime-serve-app = "scripts.start_app:main"
+runtime-serve-backend = "backend.api.server:main"
+runtime-preflight = "scripts.preflight:main"
+runtime-build-source = "scripts.prepare_app_source:main"
+# Assistant and operations: evaluation, discovery, setup, permissions, and diagnostics.
+assistant-bootstrap = "scripts.quickstart:main"
+assistant-evaluate = "backend.evaluate_agent:evaluate"
+assistant-discover-tools = "scripts.discover_tools:main"
+assistant-setup-flink = "scripts.setup_flink_support_rag:main"
+assistant-setup-cdi = "scripts.setup_cdi_agent:main"
+assistant-grant-app-permissions = "scripts.grant_app_runtime_permissions:main"
+assistant-grant-lakebase-memory = "scripts.grant_lakebase_memory_permissions:main"
+assistant-benchmark-stream = "scripts.benchmark_stream_parsing:main"

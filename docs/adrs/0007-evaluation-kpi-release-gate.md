@@ -59,5 +59,5 @@ Custom: `auth_correctness_scorer` — validates that policy-denied tools are not
 
 - Gate logic and scorers: [src/backend/evaluate_agent.py](../../src/backend/evaluate_agent.py) (`enforce_release_gate`, `auth_correctness_scorer`)
 - CI enforcement: [.github/workflows/databricks-cicd.yml](../../.github/workflows/databricks-cicd.yml) (runs `make evaluate` before deploy)
-- Makefile target: `make evaluate` (invokes `uv run agent-evaluate`)
+- Makefile target: `make evaluate` (invokes `uv run assistant-evaluate`)
 - Operational guidance: [docs/operations/operations-runbook.md](../operations/operations-runbook.md)

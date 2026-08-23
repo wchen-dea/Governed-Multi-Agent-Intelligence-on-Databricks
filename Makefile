@@ -1,6 +1,6 @@
 SHELL := /bin/sh
 
-.PHONY: help test lint-markdown evaluate evaluate-strict build-app-source validate bundle-deploy bundle-deploy-optional import ensure-running stop deploy grant-runtime-permissions redeploy health smoke smoke-governance query-dev logs status
+.PHONY: help test lint-markdown runtime-core assistant-tools evaluate evaluate-strict build-app-source validate bundle-deploy bundle-deploy-optional import ensure-running stop deploy grants redeploy health smoke smoke-governance query-dev logs status
 
 PROFILE ?= DEFAULT
 TARGET ?= dev
@@ -21,6 +21,8 @@ help:
 	@printf "Targets:\n"
 	@printf "  make test              Run local test suite\n"
 	@printf "  make lint-markdown     Run pinned Markdown lint checks\n"
+	@printf "  make runtime-core      Show runtime-core command group\n"
+	@printf "  make assistant-tools   Show assistant/operations command group\n"
 	@printf "  make evaluate          Run MLflow GenAI evaluation and release gate\n"
 	@printf "  make evaluate-strict   Run evaluation with all KPI gates required\n"
 	@printf "  make build-app-source  Build wheel + React UI app source payload\n"
@@ -29,7 +31,7 @@ help:
 	@printf "  make import            Upload .databricks_app_source into app workspace path\n"
 	@printf "  make stop              Stop app compute for APP_NAME\n"
 	@printf "  make deploy            Deploy uploaded app source with Databricks Apps\n"
-	@printf "  make grant-runtime-permissions  Grant app SP permissions on Genie Agents/UC/AI Search/serving/warehouse\n"
+	@printf "  make grants             Grant app SP permissions on Genie Agents/UC/AI Search/serving/warehouse\n"
 	@printf "  make redeploy          Full redeploy with auto fallback: validate, try bundle deploy, then import/deploy/permissions/health/smoke\n"
 	@printf "  make health            Verify app deployment/app state is healthy\n"
 	@printf "  make smoke            Smoke-check app URL, React index shell, and /invocations route\n"
@@ -48,14 +50,20 @@ test:
 lint-markdown:
 	./scripts/lint_markdown.sh
 
+runtime-core:
+	./scripts/runtime_core.sh help
+
+assistant-tools:
+	./scripts/assistant_tools.sh help
+
 evaluate:
-	uv run agent-evaluate
+	uv run assistant-evaluate
 
 evaluate-strict:
-	EVAL_REQUIRE_ALL_KPIS=true uv run agent-evaluate
+	EVAL_REQUIRE_ALL_KPIS=true uv run assistant-evaluate
 
 build-app-source:
-	uv run prepare-app-source
+	uv run runtime-build-source
 
 validate:
 	databricks bundle validate -t "$(TARGET)" --profile "$(PROFILE)"
@@ -133,7 +141,7 @@ deploy:
 	printf "Deploying app %s from source path: %s\n" "$(APP_NAME)" "$$APP_SRC"; \
 	databricks apps deploy "$(APP_NAME)" --profile "$(PROFILE)" --source-code-path "$$APP_SRC" --mode SNAPSHOT
 
-grant-runtime-permissions:
+grants:
 	@set -e; \
 	FLAGS=""; \
 	if [ "$(PERMISSIONS_DRY_RUN)" = "true" ]; then FLAGS="$$FLAGS --dry-run"; fi; \
@@ -144,7 +152,7 @@ grant-runtime-permissions:
 		--profile "$(PROFILE)" \
 		$$FLAGS
 
-redeploy: build-app-source validate bundle-deploy-optional import deploy grant-runtime-permissions health smoke
+redeploy: build-app-source validate bundle-deploy-optional import deploy grants health smoke
 
 health:
 	@APP_JSON="$$($(APP_GET_JSON))"; \

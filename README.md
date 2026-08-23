@@ -132,9 +132,9 @@ The app provides:
 If your Databricks CLI profile is already configured, this is the fastest way to run and validate locally:
 
 ```bash
-uv run quickstart
-uv run preflight
-uv run start-app
+uv run assistant-bootstrap
+uv run runtime-preflight
+uv run runtime-serve-app
 ```
 
 What this does:
@@ -234,8 +234,8 @@ Prerequisites:
 Run locally:
 
 ```bash
-uv run quickstart
-uv run start-app
+uv run assistant-bootstrap
+uv run runtime-serve-app
 ```
 
 Validate and deploy:
@@ -318,7 +318,7 @@ MCP connect/probe performance controls:
 Useful operational commands:
 
 - `make redeploy TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT`
-- `make grant-runtime-permissions TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT`
+- `make grants TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT`
 - `make query-dev TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT QUERY='top stores by revenue' QUERY_PERSONA=manager`
 
 ## Current Status

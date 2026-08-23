@@ -17,17 +17,17 @@ Use this skill to set up local development for this project.
 ## Commands
 
 ```bash
-uv run quickstart
+uv run assistant-bootstrap
 ```
 
 Common variants:
 
 ```bash
-uv run quickstart --profile <profile>
-uv run quickstart --host https://<workspace-host>
-uv run quickstart --app-name <existing-app-name>
-uv run quickstart --skip-lakebase
-uv run quickstart --help
+uv run assistant-bootstrap --profile <profile>
+uv run assistant-bootstrap --host https://<workspace-host>
+uv run assistant-bootstrap --app-name <existing-app-name>
+uv run assistant-bootstrap --skip-lakebase
+uv run assistant-bootstrap --help
 ```
 
 ## What This Configures
@@ -41,8 +41,8 @@ uv run quickstart --help
 
 ```bash
 databricks auth profiles
-uv run preflight
-uv run start-app
+uv run runtime-preflight
+uv run runtime-serve-app
 ```
 
 ## Notes

@@ -10,22 +10,22 @@ description: "Run and validate the app locally. Use when: starting backend/front
 Full local app (backend + Chainlit UI):
 
 ```bash
-uv run start-app
+uv run runtime-serve-app
 ```
 
 Backend only:
 
 ```bash
-uv run start-server --reload
-uv run start-server --port 8001
-uv run start-server --workers 4
+uv run runtime-serve-backend --reload
+uv run runtime-serve-backend --port 8001
+uv run runtime-serve-backend --workers 4
 ```
 
 ## Validate Runtime
 
 ```bash
-uv run preflight
-uv run agent-evaluate
+uv run runtime-preflight
+uv run assistant-evaluate
 ```
 
 ## Test API
@@ -49,6 +49,6 @@ curl -X POST http://localhost:8000/invocations \
 ## Troubleshooting
 
 - Port conflict: change `--port` or stop existing process.
-- Auth errors: run `uv run quickstart` and verify profile.
+- Auth errors: run `uv run assistant-bootstrap` and verify profile.
 - Missing deps: run `uv sync`.
 - Experiment errors: confirm `.env` contains valid `MLFLOW_EXPERIMENT_ID` and `MLFLOW_TRACKING_URI`.
