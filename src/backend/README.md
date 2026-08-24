@@ -28,6 +28,7 @@ Primary entrypoint:
   - `policy_service.py`: deterministic request-time policy checks.
   - `guardrails_service.py`: deterministic response-time guardrail checks.
   - `message_bus.py`: structured logging, noop, Kafka, RabbitMQ, UC table backends.
+  - `memory_service.py`: no-op and Lakebase-backed conversation/persona memory backends.
   - `interfaces.py`: service protocols for dependency injection.
 
 Supported subagent types:
@@ -44,6 +45,7 @@ Supported subagent types:
   - `runtime_utils.py`: auth/request helper utilities.
   - `request_utils.py`: request normalization helpers.
   - `logging_config.py`: backend logging configuration.
+  - `lakebase_client.py`: shared OAuth/psycopg2 connection helper for Lakebase Postgres.
 - `src/backend/evaluate_agent.py`: release-gate evaluation runner.
 
 ## Local Run
@@ -99,6 +101,13 @@ Message bus:
 - `KAFKA_BOOTSTRAP_SERVERS`, `KAFKA_CLIENT_ID`
 - `RABBITMQ_URL`
 - `UC_AUDIT_WAREHOUSE_ID`, `UC_AUDIT_CATALOG`, `UC_AUDIT_SCHEMA`, `UC_AUDIT_TABLE`
+
+Conversation memory (disabled by default; persists conversation content when enabled — review data classification before turning it on):
+
+- `MEMORY_BACKEND`: `disabled` (default) or `lakebase`.
+- `MEMORY_PROJECT_ID`, `MEMORY_BRANCH_ID`, `MEMORY_ENDPOINT_ID`, `MEMORY_DATABASE`, `MEMORY_PG_HOST`, `MEMORY_PG_USER`
+- `MEMORY_CONVERSATION_TABLE` (default `agent_memory_conversations`), `MEMORY_PREFERENCE_TABLE` (default `agent_memory_preferences`)
+- `MEMORY_MAX_TURNS` (default `20`), `MEMORY_FAIL_OPEN` (default `true`)
 
 Evaluation gate:
 

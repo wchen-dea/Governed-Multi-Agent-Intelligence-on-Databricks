@@ -118,6 +118,27 @@ variables:
   message_bus_topic:
     description: Message bus topic/exchange name
     default: agent-lifecycle-events
+  memory_backend:
+    description: Conversation memory backend (disabled or lakebase)
+    default: disabled
+  memory_project_id:
+    description: Lakebase project ID for conversation/persona memory persistence
+    default: ""
+  memory_branch_id:
+    description: Lakebase branch ID for conversation/persona memory persistence
+    default: ""
+  memory_endpoint_id:
+    description: Lakebase endpoint ID for conversation/persona memory persistence
+    default: ""
+  memory_database:
+    description: Lakebase database name for conversation/persona memory persistence
+    default: ""
+  memory_pg_host:
+    description: Lakebase Postgres host for conversation/persona memory persistence
+    default: ""
+  memory_pg_user:
+    description: Lakebase Postgres role for conversation/persona memory persistence
+    default: ""
   uc_audit_warehouse_id:
     description: SQL warehouse id used for UC audit table writes
     default: ""

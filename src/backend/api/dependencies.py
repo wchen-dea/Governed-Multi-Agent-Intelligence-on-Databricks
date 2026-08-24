@@ -17,7 +17,8 @@ from backend.services.guardrails_service import (
     evaluate_input_guardrails,
     evaluate_response_guardrails,
 )
-from backend.services.interfaces import AgentTaskBus, MessageBus
+from backend.services.interfaces import AgentTaskBus, ConversationMemory, MessageBus
+from backend.services.memory_service import default_conversation_memory
 from backend.services.message_bus import default_message_bus
 from backend.services.orchestrator_service import (
     OrchestratorDependencies,
@@ -47,6 +48,7 @@ class HandlerDependencies:
     guardrails_evaluator: Callable[[str, list[SubagentConfig]], GuardrailResult]
     input_guardrails_evaluator: Callable[..., InputGuardrailResult]
     message_bus: MessageBus
+    memory: ConversationMemory
 
 
 @dataclass(frozen=True)
@@ -67,6 +69,7 @@ def build_dependency_container() -> AppDependencyContainer:
     """
     settings = get_settings()
     bus = default_message_bus(settings)
+    memory = default_conversation_memory(settings)
     orchestrator_deps = OrchestratorDependencies(message_bus=bus)
     delegation_task_bus = default_agent_task_bus(settings)
 
@@ -98,6 +101,7 @@ def build_dependency_container() -> AppDependencyContainer:
         guardrails_evaluator=evaluate_response_guardrails,
         input_guardrails_evaluator=evaluate_input_guardrails,
         message_bus=bus,
+        memory=memory,
     )
 
     return AppDependencyContainer(

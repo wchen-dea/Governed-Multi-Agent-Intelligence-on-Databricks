@@ -43,6 +43,17 @@ class AppSettings:
     agent_task_event_table: str = "agent_delegation_events"
     agent_task_worker_enabled: bool = False
     agent_task_worker_poll_seconds: float = 1.0
+    memory_backend: str = "disabled"
+    memory_project_id: str = ""
+    memory_branch_id: str = ""
+    memory_endpoint_id: str = ""
+    memory_database: str = ""
+    memory_pg_host: str = ""
+    memory_pg_user: str = ""
+    memory_conversation_table: str = "agent_memory_conversations"
+    memory_preference_table: str = "agent_memory_preferences"
+    memory_max_turns: int = 20
+    memory_fail_open: bool = True
 
 
 @lru_cache(maxsize=1)
@@ -118,4 +129,18 @@ def get_settings() -> AppSettings:
         agent_task_worker_enabled=os.getenv("AGENT_TASK_WORKER_ENABLED", "false").lower()
         in {"1", "true", "yes", "on"},
         agent_task_worker_poll_seconds=_env_float("AGENT_TASK_WORKER_POLL_SECONDS", 1.0),
+        memory_backend=os.getenv("MEMORY_BACKEND", "disabled"),
+        memory_project_id=os.getenv("MEMORY_PROJECT_ID", ""),
+        memory_branch_id=os.getenv("MEMORY_BRANCH_ID", ""),
+        memory_endpoint_id=os.getenv("MEMORY_ENDPOINT_ID", ""),
+        memory_database=os.getenv("MEMORY_DATABASE", ""),
+        memory_pg_host=os.getenv("MEMORY_PG_HOST", ""),
+        memory_pg_user=os.getenv("MEMORY_PG_USER", ""),
+        memory_conversation_table=os.getenv(
+            "MEMORY_CONVERSATION_TABLE", "agent_memory_conversations"
+        ),
+        memory_preference_table=os.getenv("MEMORY_PREFERENCE_TABLE", "agent_memory_preferences"),
+        memory_max_turns=_env_int("MEMORY_MAX_TURNS", 20),
+        memory_fail_open=os.getenv("MEMORY_FAIL_OPEN", "true").lower()
+        in {"1", "true", "yes", "on"},
     )

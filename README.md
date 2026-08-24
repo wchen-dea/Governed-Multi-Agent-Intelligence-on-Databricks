@@ -46,6 +46,7 @@ This project currently uses the following Databricks features:
 - Unity Catalog: governed data access controls, metadata boundaries, and environment isolation.
 - Databricks SQL Warehouse: backend execution path for UC-governed audit table writes.
 - Databricks Apps telemetry export: application telemetry routing to a Unity Catalog table.
+- Lakebase PostgreSQL: optional conversation/persona memory persistence (`MEMORY_BACKEND=lakebase`, disabled by default).
 
 ## Team Onboarding: Project Skills and Capabilities
 

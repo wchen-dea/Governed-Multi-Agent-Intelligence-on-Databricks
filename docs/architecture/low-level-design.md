@@ -202,6 +202,7 @@ If an OBO tool is invoked without a forwarded token, the runtime returns a clear
 - `flink_support_ed`
 - `semantics_catalog`
 - `semantics_schema`
+- `memory_backend`
 - `target_app_name`
 - `mlflow_experiment_id`
 
@@ -266,6 +267,7 @@ Direct non-interactive Databricks Apps invocation tests should use:
 | `src/backend/services/orchestrator_service.py` | Tool/server construction and orchestrator assembly |
 | `src/backend/domain/subagent_config.py` | Typed subagent definitions and validation |
 | `src/backend/api/server.py` | MLflow Agent Server bootstrap |
+| `src/backend/services/memory_service.py` | No-op and Lakebase-backed conversation/persona memory |
 | `src/reactui/src/App.tsx` | Primary chat UI and command flow |
 | `src/scripts/start_app.py` | Local process supervision |
 

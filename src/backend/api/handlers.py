@@ -26,7 +26,7 @@ from backend.services.guardrails_service import truncate_response_text
 from backend.services.model_routing_service import select_model
 from backend.services.route_planner import build_route_plan
 from backend.shared.request_utils import extract_mcp_errors, to_messages
-from backend.shared.runtime_utils import process_agent_stream_events
+from backend.shared.runtime_utils import get_session_id, process_agent_stream_events
 from backend.shared.settings import get_settings
 
 SETTINGS = get_settings()
@@ -137,6 +137,72 @@ def _prepare_request_stage(request: ResponsesAgentRequest) -> RequestStage:
     runtime_auth = HANDLER_DEPS.runtime_auth_builder(request, SUBAGENTS, _client)
     messages = to_messages(request.input)
     return RequestStage(request=request, runtime_auth=runtime_auth, messages=messages)
+
+
+def _request_persona(request: ResponsesAgentRequest) -> str | None:
+    """Return the persona explicitly provided on a request, if any."""
+    custom_inputs = request.custom_inputs
+    if isinstance(custom_inputs, dict):
+        raw = custom_inputs.get("persona")
+        if isinstance(raw, str) and raw.strip():
+            return raw.strip().lower()
+    return None
+
+
+def _apply_remembered_persona(request: ResponsesAgentRequest, conversation_id: str | None) -> None:
+    """Fill in a remembered persona from conversation memory when none was provided."""
+    if not conversation_id or _request_persona(request):
+        return
+    remembered = HANDLER_DEPS.memory.get_persona_preference(conversation_id)
+    if not remembered:
+        return
+    merged = dict(request.custom_inputs) if isinstance(request.custom_inputs, dict) else {}
+    merged["persona"] = remembered
+    request.custom_inputs = merged
+
+
+def _extract_user_question(messages: list[Any]) -> str:
+    """Extract the latest user message text from normalized request messages."""
+    for message in reversed(messages):
+        data = message.model_dump() if hasattr(message, "model_dump") else message
+        if isinstance(data, dict) and data.get("role") == "user":
+            return str(data.get("content", ""))
+    return ""
+
+
+def _extract_last_assistant_text(output_items: list[dict[str, Any]]) -> str:
+    """Extract the last assistant message text from finalized output items."""
+    for item in reversed(output_items):
+        if not isinstance(item, dict) or item.get("role") != "assistant":
+            continue
+        content = item.get("content")
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            texts = [
+                block.get("text", "") if isinstance(block, dict) else str(block)
+                for block in content
+            ]
+            return " ".join(filter(None, texts))
+    return ""
+
+
+def _persist_memory_turns(
+    conversation_id: str | None,
+    persona: str | None,
+    *,
+    question: str,
+    answer: str,
+) -> None:
+    """Persist the latest user/assistant turns and persona preference to memory."""
+    if not conversation_id:
+        return
+    if question:
+        HANDLER_DEPS.memory.save_turn(conversation_id, persona, "user", question)
+    if answer:
+        HANDLER_DEPS.memory.save_turn(conversation_id, persona, "assistant", answer)
+    if persona:
+        HANDLER_DEPS.memory.save_persona_preference(conversation_id, persona)
 
 
 def _select_route_tools(
@@ -727,13 +793,22 @@ async def invoke_handler(request: ResponsesAgentRequest) -> ResponsesAgentRespon
             "subagents_total": len(SUBAGENTS),
         },
     )
+    conversation_id = get_session_id(request)
+    _apply_remembered_persona(request, conversation_id)
     prepared = _prepare_request_stage(request)
+    persona = _request_persona(request)
 
     try:
         async with AsyncExitStack() as stack:
             connected = await _connect_request_stage(stack, prepared)
             result = await _execute_invoke_stage(connected, prepared.messages)
             finalized = _finalize_invoke_stage(result, connected)
+            _persist_memory_turns(
+                conversation_id,
+                persona,
+                question=_extract_user_question(prepared.messages),
+                answer=_extract_last_assistant_text(finalized.output_items),
+            )
             HANDLER_DEPS.message_bus.publish(
                 "request.invoke.succeeded",
                 {
@@ -780,7 +855,10 @@ async def stream_handler(
             "subagents_total": len(SUBAGENTS),
         },
     )
+    conversation_id = get_session_id(request)
+    _apply_remembered_persona(request, conversation_id)
     prepared = _prepare_request_stage(request)
+    persona = _request_persona(request)
 
     try:
         async with AsyncExitStack() as stack:
@@ -816,6 +894,12 @@ async def stream_handler(
                         "delta": finalized.source_suffix,
                     },
                 )
+            _persist_memory_turns(
+                conversation_id,
+                persona,
+                question=_extract_user_question(prepared.messages),
+                answer="".join(executed.streamed_text_parts) + finalized.source_suffix,
+            )
             HANDLER_DEPS.message_bus.publish(
                 "request.stream.succeeded",
                 {
