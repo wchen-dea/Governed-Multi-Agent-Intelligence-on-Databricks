@@ -44,7 +44,7 @@ const STARTERS = [
   "How do delight scores compare for appointments vs walk-ins?",
   "What is the distribution of sales receipt document type to understand the different document types in sales receipts?",
   "Flink streaming job has increasing consumer lag. What are the common causes and how do we fix it?",
-  "List latest day's open appointments and their current order status.",
+  "List latest day's appointments and their current order status.",
   "Look up product details for brand code 'MICH' and list matching article types.",
 ];
 

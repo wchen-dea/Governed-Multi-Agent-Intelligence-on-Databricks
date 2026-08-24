@@ -92,7 +92,7 @@ def test_route_planner_selects_lakebase_for_appointments_and_order_status():
     )
 
     plan, selected = build_route_plan(
-        "List latest day's open appointments and their current order status.",
+        "List latest day's appointments and their current order status.",
         [product, lakebase],
     )
 
