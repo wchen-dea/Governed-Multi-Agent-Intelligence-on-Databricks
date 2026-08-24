@@ -183,14 +183,15 @@ sequenceDiagram
     POL-->>RA: Allowed/denied subagents
     RA-->>BE: RuntimeAuthContext
     BE->>OR: Build Agent with allowed tools + MCP
-    OR->>TL: Execute selected tool
+    OR->>TL: Native Runner function or MCP call no pseudo-tool text
     TL-->>OR: Tool result
     OR-->>BE: Response items
+    BE->>BE: Buffer stream events and finalize source plus guardrails
     BE->>GR: Evaluate guardrails
     GR-->>BE: Pass/block decision
     BE->>MB: request.succeeded
-    BE-->>FE: Stream/invoke response
-    FE-->>U: Render response with source
+    BE-->>FE: response.output_text.delta plus metadata
+    FE-->>U: Render output-text deltas only
 ```
 
 ### Security and Identity Flow
@@ -307,7 +308,8 @@ flowchart TB
     FM -.-> AIGW[AI Gateway — optional]
     BE --> GENIE[Genie MCP — Sales / CDI Spaces]
     BE --> AIS[AI Search MCP — Product Index / Flink Support]
-    BE --> LB[Lakebase PostgreSQL — ODS]
+    BE --> PGCRED[Databricks Postgres Credentials API]
+    PGCRED --> LB[Lakebase PostgreSQL — ODS]
     BE --> AUD[UC Audit Table]
     BE --> OBS[MLflow Tracing]
 ```
@@ -323,8 +325,10 @@ flowchart TD
     Commit[Commit to main] --> Lint[Static Checks — ruff / mypy]
     Lint --> Unit[pytest — test_*.py]
     Unit --> Eval[make evaluate — MLflow KPI gate]
-    Eval --> Validate[databricks bundle validate -t dev]
-    Validate --> DeployDev[make redeploy or make upload-wheel — dev target]
+    Eval --> Decision{Required KPIs pass?}
+    Decision -- No --> Block[Promotion blocked current ToolCallCorrectness 0.400 below 0.800]
+    Decision -- Yes --> Validate[databricks bundle validate -t dev]
+    Validate --> DeployDev[make upload-wheel versioned wheel plus React payload import Apps SNAPSHOT deploy health]
     DeployDev --> Smoke[make health and make smoke]
     Smoke --> DeployQA[bundle deploy -t qa]
     DeployQA --> DeployStg[bundle deploy -t stg]

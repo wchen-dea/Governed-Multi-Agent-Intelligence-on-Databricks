@@ -82,9 +82,10 @@ flowchart LR
     subgraph Platform[Databricks App Platform]
         AS[MLflow Agent Server ResponsesAgent]
         ORCH[Agent Orchestration Service]
+        MR[Deterministic Model Router]
         AUTH[Hybrid Auth Router auth_mode app or obo]
         MCP[MCP Integration Layer]
-        LLM[Databricks-Provided LLM gpt-5.6-luna]
+        LLM[Configured Databricks Model standard reasoning synthesis]
 
         APPID[App Identity Service Principal]
         OBOID[User Identity OBO Token]
@@ -121,6 +122,7 @@ flowchart LR
 
     UI --> AS
     AS --> ORCH
+    ORCH --> MR --> LLM
     ORCH --> AUTH
     AUTH -->|app| APPID
     AUTH -->|obo| OBOID
@@ -130,14 +132,14 @@ flowchart LR
     ORCH --> A4
     ORCH --> A5
 
-    ORCH --> LLM
-
     ORCH --> MCP
     APPID --> MCP
     OBOID --> MCP
     MCP --> BSL
     MCP --> VS
-    A5 --> LB
+    A5 -->|psycopg2 using app OAuth database role| LB
+    APPID --> PGCRED[Databricks Postgres Credentials API]
+    PGCRED --> LB
     BSL --> ST
     BSL --> MV
     VS --> PT
@@ -163,8 +165,9 @@ flowchart TD
     D -->|app| AID[Use App Identity Client]
     D -->|obo + token| OID[Use User OBO Identity Client]
     D -->|obo + no token| ERR[Mark Tool Unavailable or Raise Auth Error]
-    AID --> O[Orchestrator Agent via Responses API]
-    OID --> O
+    AID --> TOOLS[App-auth Tool Clients]
+    OID --> TOOLS
+    TOOLS --> O[Orchestrator Agent via Responses API]
 
     O --> PLAN[Deterministic Route Plan]
     PLAN --> G[Genie Sales Agent via MCP]
@@ -172,6 +175,8 @@ flowchart TD
     O --> F[MCP AI Search flink_support_agent RAG]
     O --> CDI[Genie CDI Agent via MCP]
     O --> LB[Lakebase ODS Agent psycopg2]
+    O -->|native delegate_to_agent| DT[UC Delegation Task and Event Tables]
+    W[Bounded Lifespan Worker] --> DT
 
     G --> M[MCP Genie Space sales]
     K --> R1[Vector Search dim_product_search_index]
@@ -179,13 +184,16 @@ flowchart TD
     CDI --> M2[MCP Genie Space CDI metrics]
     LB --> PG[Lakebase PostgreSQL via OAuth credentials]
 
-    M --> R[Response Aggregation and Guardrails]
-    R1 --> R
-    R3 --> R
-    M2 --> R
-    PG --> R
-    ERR --> R
-    R --> UI
+    M --> BUF[Buffer Stream Events]
+    R1 --> BUF
+    R3 --> BUF
+    M2 --> BUF
+    PG --> BUF
+    ERR --> BUF
+    BUF --> R[Finalize Source and Guardrails]
+    R --> DELTA[response.output_text.delta]
+    DELTA --> UI
+    UI -->|payload-redacted GET /delegations task status| APP
     UI --> U
 
     classDef auth fill:#eef7ff,stroke:#2b6cb0,stroke-width:1px;

@@ -47,14 +47,15 @@ sequenceDiagram
     POL-->>RA: Allowed/denied subagents
     RA-->>BE: RuntimeAuthContext
     BE->>OR: Build Agent with allowed tools + MCP
-    OR->>TL: Execute selected tool
+    OR->>TL: Native function or MCP tool call
     TL-->>OR: Tool result
     OR-->>BE: Response items
+    BE->>BE: Buffer stream events and finalize source
     BE->>GR: Evaluate guardrails
     GR-->>BE: Pass/block decision
     BE->>MB: request.succeeded
-    BE-->>FE: Stream/invoke response
-    FE-->>U: Render response with source
+    BE-->>FE: response.output_text.delta plus metadata
+    FE-->>U: Render output-text deltas only
 ```
 
 ## 3. Data Flow and Lineage

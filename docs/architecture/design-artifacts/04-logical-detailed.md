@@ -137,5 +137,5 @@ flowchart LR
     Eval --> KPI{KPI Thresholds Met?}
     KPI -- Yes --> Bundle[databricks bundle validate]
     Bundle --> Deploy[databricks bundle deploy -t dev]
-    KPI -- No --> Stop[Deployment Blocked — threshold violation]
+    KPI -- No --> Stop[Promotion Blocked current ToolCallCorrectness 0.400 below 0.800]
 ```
