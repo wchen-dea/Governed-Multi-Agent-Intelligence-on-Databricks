@@ -100,6 +100,7 @@ This document covers low-level design and implementation details. See [high-leve
 
 - `src/reactui/src/App.tsx`
   - Main React chat UI flow for requests, command parsing, and response rendering
+  - User-selectable background theme (deep ocean, sky blue, deep sky blue) persisted to `localStorage` and applied via `[data-theme]` on the document root
 
 - `src/reactui/src/api.ts`
   - Sends invocation payloads and manages stream/invoke behavior to backend routes
@@ -187,8 +188,10 @@ If an OBO tool is invoked without a forwarded token, the runtime returns a clear
 
 ### Bundle Layout
 
-- `databricks.yml`: bundle root config, shared variables, includes
+- `databricks.yml`: bundle root config, shared variables, includes, and the `multiagent_wheel` artifact (built via `uv build --wheel`)
 - `resources/multiagent_app.yml`: shared app defaults and baseline resource permissions
+- `resources/semantics_jobs.yml`: semantics-layer Databricks Jobs that build/refresh `dim_product_search_index`, `flink_support_index`, and `fct_cdi_trusted_expert_score_metric_view` from `src/semantics/notebooks/`
+- `resources/evaluation_job.yml`: Databricks Job that runs `backend.evaluate_agent.evaluate()` on workspace compute (`src/evaluation/notebooks/run_evaluation.py`) so the release-gate evaluation reaches MLflow tracking and Lakebase over the private network
 - `targets/*.yml`: target-specific host, state path, variables, and resource overrides
 
 ### Frequently Used Variables
@@ -196,7 +199,11 @@ If an OBO tool is invoked without a forwarded token, the runtime returns a clear
 - `app_name`
 - `genie_space_id`
 - `knowledge_assistant_endpoint_name`
-- `serving_endpoint_name`
+- `product_index_ep`
+- `flink_support_ed`
+- `semantics_catalog`
+- `semantics_schema`
+- `memory_backend`
 - `target_app_name`
 - `mlflow_experiment_id`
 
@@ -261,6 +268,7 @@ Direct non-interactive Databricks Apps invocation tests should use:
 | `src/backend/services/orchestrator_service.py` | Tool/server construction and orchestrator assembly |
 | `src/backend/domain/subagent_config.py` | Typed subagent definitions and validation |
 | `src/backend/api/server.py` | MLflow Agent Server bootstrap |
+| `src/backend/services/memory_service.py` | No-op and Lakebase-backed conversation/persona memory |
 | `src/reactui/src/App.tsx` | Primary chat UI and command flow |
 | `src/scripts/start_app.py` | Local process supervision |
 

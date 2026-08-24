@@ -320,4 +320,22 @@ def load_subagents(config_path: str | Path | None = None) -> list[SubagentConfig
     return parse_subagents(configured_entries)
 
 
+def skipped_subagent_names(config_path: str | Path | None = None) -> list[str]:
+    """Return names of subagent entries skipped for unresolved placeholder identifiers.
+
+    Useful as a preflight check (for example before running quality evaluation)
+    so operators can see which routes will never be exercised because their
+    Genie space id, MCP URL, project id, or endpoint is still a placeholder.
+    """
+    resolved_path = _resolve_subagents_config_path(config_path)
+    raw = json.loads(resolved_path.read_text(encoding="utf-8"))
+    if not isinstance(raw, list):
+        return []
+    return [
+        str(item.get("name", "<unnamed>"))
+        for item in raw
+        if isinstance(item, dict) and not _is_configured_subagent(item)
+    ]
+
+
 SUBAGENTS = load_subagents()

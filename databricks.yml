@@ -5,6 +5,13 @@ include:
 - resources/*.yml
 - targets/*.yml
 - resources/*/*.yml
+artifacts:
+  multiagent_wheel:
+    type: whl
+    # Deploy tooling (for example the VS Code Databricks extension) may run this
+    # build command outside a login shell, where ~/.local/bin (uv's default
+    # install location) is not yet on PATH.
+    build: PATH="$HOME/.local/bin:$PATH" uv build --wheel
 variables:
   app_name:
     description: Databricks app name for the current environment
@@ -76,12 +83,18 @@ variables:
   serving_endpoint_name:
     description: Primary serving endpoint name for the current environment
     default: ""
-  ai_search_endpoint_name:
+  product_index_ep:
     description: AI search serving endpoint name for the current environment
-    default: ""
-  flink_support_vs_endpoint_name:
+    default: "product_index_ep"
+  flink_support_ed:
     description: Vector Search endpoint name for the Flink support RAG index
-    default: "flink-support-vs-endpoint"
+    default: "flink-support-ed"
+  semantics_catalog:
+    description: Unity Catalog catalog for semantics-layer tables, indexes, and metric views
+    default: quickstart_catalog
+  semantics_schema:
+    description: Unity Catalog schema for semantics-layer tables, indexes, and metric views
+    default: multi_agent_schema
   lakebase_project_id:
     description: Lakebase project ID for the operational data store
     default: ""
@@ -112,6 +125,27 @@ variables:
   message_bus_topic:
     description: Message bus topic/exchange name
     default: agent-lifecycle-events
+  memory_backend:
+    description: Conversation memory backend (disabled or lakebase)
+    default: disabled
+  memory_project_id:
+    description: Lakebase project ID for conversation/persona memory persistence
+    default: ""
+  memory_branch_id:
+    description: Lakebase branch ID for conversation/persona memory persistence
+    default: ""
+  memory_endpoint_id:
+    description: Lakebase endpoint ID for conversation/persona memory persistence
+    default: ""
+  memory_database:
+    description: Lakebase database name for conversation/persona memory persistence
+    default: ""
+  memory_pg_host:
+    description: Lakebase Postgres host for conversation/persona memory persistence
+    default: ""
+  memory_pg_user:
+    description: Lakebase Postgres role for conversation/persona memory persistence
+    default: ""
   uc_audit_warehouse_id:
     description: SQL warehouse id used for UC audit table writes
     default: ""

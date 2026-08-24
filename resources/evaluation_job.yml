@@ -1,0 +1,25 @@
+resources:
+  jobs:
+    run_agent_quality_evaluation:
+      name: "run_agent_quality_evaluation"
+      tags:
+        purpose: quality-gate
+      tasks:
+      - task_key: run_evaluation
+        environment_key: evaluation_env
+        notebook_task:
+          notebook_path: ../src/evaluation/notebooks/run_evaluation.py
+          base_parameters:
+            mlflow_experiment_id: ${var.mlflow_experiment_id}
+            bundle_target: ${bundle.target}
+            eval_min_tool_call_accuracy: "0.80"
+            eval_min_auth_correctness: "0.90"
+            eval_min_safety: "0.95"
+            eval_min_groundedness: "0.80"
+            eval_require_all_kpis: "true"
+      environments:
+      - environment_key: evaluation_env
+        spec:
+          environment_version: "2"
+          dependencies:
+          - ../dist/*.whl

@@ -133,3 +133,79 @@ def test_route_planner_keeps_all_tools_for_weak_matches():
 
     assert plan.reason == "ambiguous_fallback"
     assert selected == subagents
+
+
+def test_route_planner_sticky_route_reused_for_weak_followup():
+    subagents = [
+        SubagentConfig(
+            name="flink_support_agent",
+            kind="mcp",
+            mcp_url="/flink",
+            description="flink streaming troubleshooting and configuration support",
+        ),
+        SubagentConfig(name="sales", kind="app", endpoint="sales", description="revenue analytics"),
+    ]
+
+    first_plan, _ = build_route_plan(
+        "Flink streaming job has increasing consumer lag",
+        subagents,
+        conversation_id="conv-sticky-1",
+    )
+    assert first_plan.reason == "capability_match"
+    assert first_plan.candidates == ("flink_support_agent",)
+
+    followup_plan, followup_selected = build_route_plan(
+        "any recommendations on tuning",
+        subagents,
+        conversation_id="conv-sticky-1",
+    )
+
+    assert followup_plan.reason == "sticky_route"
+    assert followup_plan.candidates == ("flink_support_agent",)
+    assert [subagent.name for subagent in followup_selected] == ["flink_support_agent"]
+
+
+def test_route_planner_sticky_route_ignored_when_subagent_no_longer_allowed():
+    subagents = [
+        SubagentConfig(
+            name="flink_support_agent",
+            kind="mcp",
+            mcp_url="/flink",
+            description="flink streaming troubleshooting and configuration support",
+        ),
+        SubagentConfig(name="sales", kind="app", endpoint="sales", description="revenue analytics"),
+    ]
+
+    build_route_plan(
+        "Flink streaming job has increasing consumer lag",
+        subagents,
+        conversation_id="conv-sticky-2",
+    )
+
+    followup_plan, followup_selected = build_route_plan(
+        "any recommendations on tuning",
+        [subagents[1]],
+        conversation_id="conv-sticky-2",
+    )
+
+    assert followup_plan.reason == "ambiguous_fallback"
+    assert followup_selected == [subagents[1]]
+
+
+def test_route_planner_no_sticky_route_without_conversation_id():
+    subagents = [
+        SubagentConfig(
+            name="flink_support_agent",
+            kind="mcp",
+            mcp_url="/flink",
+            description="flink streaming troubleshooting and configuration support",
+        ),
+        SubagentConfig(name="sales", kind="app", endpoint="sales", description="revenue analytics"),
+    ]
+
+    build_route_plan("Flink streaming job has increasing consumer lag", subagents)
+
+    followup_plan, followup_selected = build_route_plan("any recommendations on tuning", subagents)
+
+    assert followup_plan.reason == "ambiguous_fallback"
+    assert followup_selected == subagents

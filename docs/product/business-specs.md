@@ -10,6 +10,14 @@ Align product, engineering, and operations on business goals, value, and measura
 
 Provide a governed enterprise AI assistant that routes requests to the right data and tools, enforces policy by default, and produces auditable responses suitable for business operations.
 
+## Business Value Summary
+
+- **Faster, unified access to enterprise data and workflows**: one conversational entry point routes to sales analytics (Genie), product catalog search (Vector Search), Flink support troubleshooting (RAG), Customer Delight Index metrics (Genie), and live operational data (Lakebase), instead of requiring users to know each system individually.
+- **Governed, auditable AI**: access policy (persona, data classification, identity/auth mode) is enforced before tool execution, unsafe or low-confidence sensitive answers are blocked with explicit reasons, and every routing/policy/tool decision is published as a lifecycle event persisted to Unity Catalog for compliance review.
+- **Quality-gated releases**: deployment is blocked automatically when measured KPIs (tool-call accuracy, authorization correctness, safety, groundedness) fall below thresholds, preventing unvetted releases from reaching users.
+- **Reusable semantics layer**: AI Search indexes and Unity Catalog Metric Views are built as governed, reusable artifacts over gold-layer Delta tables, so other teams/agents can reuse the same curated search index or metric definitions.
+- **Repeatable multi-environment delivery**: deterministic `dev`/`qa`/`stg`/`prod` promotion via Databricks Asset Bundles, with a documented fallback deploy path when Terraform registry access fails.
+
 ## Target Users
 
 - Business users: need quick answers with clear source confidence.

@@ -207,6 +207,7 @@ Use this short checklist when onboarding or updating a Genie Agent backed by bus
 - Define business KPI scope, grain, dimensions, and measures.
 - Apply consistent semantic metadata (for example domain, subject, owner, grain).
 - Recommended blueprint: [Unity-Catalog-Semantic-Metric-Views-Blueprint](https://github.com/wchen-dea/Unity-Catalog-Semantic-Metric-Views-Blueprint)
+- Publish/refresh via the `build_fct_cdi_trusted_expert_score_metric_view` job (`resources/semantics_jobs.yml`, notebook `src/semantics/notebooks/create_fct_cdi_trusted_expert_score_metric_view.py`).
 
 2. Validate with representative Genie prompts
 
@@ -628,7 +629,7 @@ Verify the configured route uses the canonical Vector Search MCP path:
 /api/2.0/mcp/vector-search/<catalog>/<schema>/<index>
 ```
 
-For the dev product index, verify the app has `CAN_USE` on `product_index_ep` and `SELECT` on `quickstart_catalog.multi_agent_schema.dim_product_search_index`. The bundle declares the index as a `uc_securable` app resource so parent catalog/schema access is included. The permission script also accepts the legacy `ai-search` path for compatibility, but new configurations should use `vector-search`.
+For the dev product index, verify the app has `CAN_USE` on `product_index_ep` and `SELECT` on `quickstart_catalog.multi_agent_schema.dim_product_search_index`. The bundle declares the index as a `uc_securable` app resource so parent catalog/schema access is included. The permission script also accepts the legacy `ai-search` path for compatibility, but new configurations should use `vector-search`. To (re)build the index, run the `build_dim_product_search_index` job (see `resources/semantics_jobs.yml`).
 
 ### Terraform registry unreachable during `bundle deploy`
 

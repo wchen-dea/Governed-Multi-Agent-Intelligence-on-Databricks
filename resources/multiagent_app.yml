@@ -96,6 +96,20 @@ resources:
           value: ${var.agent_task_worker_enabled}
         - name: AGENT_TASK_WORKER_POLL_SECONDS
           value: ${var.agent_task_worker_poll_seconds}
+        - name: MEMORY_BACKEND
+          value: ${var.memory_backend}
+        - name: MEMORY_PROJECT_ID
+          value: ${var.memory_project_id}
+        - name: MEMORY_BRANCH_ID
+          value: ${var.memory_branch_id}
+        - name: MEMORY_ENDPOINT_ID
+          value: ${var.memory_endpoint_id}
+        - name: MEMORY_DATABASE
+          value: ${var.memory_database}
+        - name: MEMORY_PG_HOST
+          value: ${var.memory_pg_host}
+        - name: MEMORY_PG_USER
+          value: ${var.memory_pg_user}
       # Resources which this app has access to
       resources:
       - name: 'sales_genie_space'

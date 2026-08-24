@@ -46,6 +46,7 @@ This project currently uses the following Databricks features:
 - Unity Catalog: governed data access controls, metadata boundaries, and environment isolation.
 - Databricks SQL Warehouse: backend execution path for UC-governed audit table writes.
 - Databricks Apps telemetry export: application telemetry routing to a Unity Catalog table.
+- Lakebase PostgreSQL: optional conversation/persona memory persistence (`MEMORY_BACKEND=lakebase`, disabled by default).
 
 ## Team Onboarding: Project Skills and Capabilities
 
@@ -90,6 +91,11 @@ Typical Genie Agent source pattern:
 
 - Unity Catalog Semantic Metric Views are the recommended structured source layer for Genie Agents.
 - Blueprint reference: [Unity-Catalog-Semantic-Metric-Views-Blueprint](https://github.com/wchen-dea/Unity-Catalog-Semantic-Metric-Views-Blueprint)
+
+Semantics layer build automation:
+
+- Notebooks under [src/semantics/notebooks/](src/semantics/notebooks) build/refresh `dim_product_search_index`, `flink_support_index`, and `fct_cdi_trusted_expert_score_metric_view`.
+- Corresponding Databricks Jobs are declared in `resources/semantics_jobs.yml`; see [src/semantics/README.md](src/semantics/README.md).
 
 ## Backend UC Security and Governance Guidelines
 

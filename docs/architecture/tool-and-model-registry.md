@@ -26,6 +26,15 @@ Provide an auditable and maintainable registry for runtime integrations and owne
 	- `src/backend/domain/subagents.stg.json`
 	- `src/backend/domain/subagents.prod.json`
 
+## Semantics Layer Build Automation
+
+- Notebooks: `src/semantics/notebooks/` (see [src/semantics/README.md](../../src/semantics/README.md))
+- Design and ownership boundaries: [Semantics layer design](semantics-layer-design.md) — this project builds AI Search indexes and Metric Views only; Genie Agent spaces and the Lakebase project are owned by other projects.
+- Jobs: `resources/semantics_jobs.yml` (one Databricks Job per notebook, run on demand or scheduled per target)
+- `create_dim_product_search_index.py` curates `dim_product` and builds/refreshes the `dim_product_search_index` Vector Search index.
+- `create_flink_support_index.py` extracts the support KB volume into `flink_support_kb` and builds/refreshes the `flink_support_index` Vector Search index.
+- `create_fct_cdi_trusted_expert_score_metric_view.py` publishes the `fct_cdi_trusted_expert_score_metric_view` Unity Catalog Semantic Metric View from `dt_prod_gold.dwh_dbx.fct_cdi` and its `cdi_daily`/`total_time_score`/`trusted_expert_score` joins.
+
 ## Active Genie Agents (Dev)
 
 Typical source pattern for Genie Agents:
@@ -38,6 +47,7 @@ Typical source pattern for Genie Agents:
 - Type: genie
 - Runtime name: `sales_insights_agent`
 - Space ID source: `src/backend/domain/subagents.dev.json`
+- Genie space created and owned by the Genie/analytics project; this project only registers the space id and routes to it via MCP.
 - Auth mode: app
 - Classification: confidential
 - Owner: sales-analytics
@@ -75,6 +85,7 @@ Typical source pattern for Genie Agents:
 - Runtime name: `cdi_agent`
 - Space ID source: `src/backend/domain/subagents.dev.json`
 - Source: materialized view `quickstart_catalog.multi_agent_schema.fct_cdi_trusted_expert_score_metric_view`
+- Genie space created and owned by the Genie/analytics project; this project only registers the space id and routes to it via MCP.
 - Auth mode: app
 - Classification: confidential
 - Owner: customer-experience
@@ -82,7 +93,8 @@ Typical source pattern for Genie Agents:
 
 ## Other Environments
 
-- QA/STG/PROD currently include additional placeholder and serving-endpoint entries.
+- QA/STG/PROD define the same 5 subagents as dev (`sales_insights_agent`, `product_index_assistant`, `flink_support_agent`, `cdi_agent`, `lakebase_ods_agent`), aligned in shape and `auth_mode`/`requires_evidence` settings.
+- `cdi_agent.space_id` and `lakebase_ods_agent`'s Lakebase connection fields (`project_id`, `branch_id`, `endpoint_id`, `database`, `pg_host`, `pg_user`) remain placeholders in QA/STG/PROD until those resources are provisioned per environment.
 - Entries with placeholder identifiers are skipped at runtime until concrete IDs are configured.
 
 ## Active Model Routes (Dev)

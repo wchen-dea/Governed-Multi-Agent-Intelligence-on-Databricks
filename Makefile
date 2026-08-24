@@ -1,6 +1,6 @@
 SHELL := /bin/sh
 
-.PHONY: help test lint lint-markdown format runtime-core assistant-tools evaluate evaluate-strict build-app-source upload-wheel validate wait-stable bundle-deploy bundle-deploy-optional import ensure-running stop deploy grants redeploy health smoke smoke-governance query-dev logs status
+.PHONY: help test lint lint-markdown format runtime-core assistant-tools evaluate evaluate-strict triage-evaluation build-app-source upload-wheel validate wait-stable bundle-deploy bundle-deploy-optional import ensure-running stop deploy grants redeploy health smoke smoke-governance query-dev logs status
 
 PROFILE ?= DEFAULT
 TARGET ?= dev
@@ -29,6 +29,7 @@ help:
 	@printf "  make assistant-tools   Show assistant/operations command group\n"
 	@printf "  make evaluate          Run MLflow GenAI evaluation and release gate\n"
 	@printf "  make evaluate-strict   Run evaluation with all KPI gates required\n"
+	@printf "  make triage-evaluation Classify a failing evaluation run's tool-call assessments (RUN_ID or EXPERIMENT_ID)\n"
 	@printf "  make build-app-source  Build wheel + React UI app source payload\n"
 	@printf "  make upload-wheel      Build, upload, deploy, and health-check the app payload without Terraform\n"
 	@printf "  make validate          Validate Databricks bundle for TARGET\n"
@@ -73,6 +74,9 @@ evaluate:
 
 evaluate-strict:
 	EVAL_REQUIRE_ALL_KPIS=true uv run assistant-evaluate
+
+triage-evaluation:
+	uv run assistant-triage-evaluation $(if $(RUN_ID),--run-id $(RUN_ID)) $(if $(EXPERIMENT_ID),--experiment-id $(EXPERIMENT_ID))
 
 build-app-source:
 	uv run runtime-build-source

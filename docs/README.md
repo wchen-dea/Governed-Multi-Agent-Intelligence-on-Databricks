@@ -54,6 +54,7 @@ Use this index to navigate project documentation by purpose:
 - [quality/evaluation-spec.md](quality/evaluation-spec.md): datasets, scorers, KPI thresholds, and release-gate behavior.
 - [governance/prompt-policy-controls.md](governance/prompt-policy-controls.md): prompt layering, deterministic policy checks, and guardrail controls.
 - [architecture/tool-and-model-registry.md](architecture/tool-and-model-registry.md): inventory of active models, endpoints, and Genie Agents.
+- [architecture/semantics-layer-design.md](architecture/semantics-layer-design.md): semantics layer scope, ownership boundaries, and AI Search index/Metric View build pipelines.
 - [governance/data-contracts-lineage.md](governance/data-contracts-lineage.md): request and response contracts, sensitivity model, and audit lineage requirements.
 - [governance/business-semantics-metadata.md](governance/business-semantics-metadata.md): canonical business semantics and required AI metadata contract.
 - [governance/security-threat-model.md](governance/security-threat-model.md): trust boundaries, threats, and implemented controls.
