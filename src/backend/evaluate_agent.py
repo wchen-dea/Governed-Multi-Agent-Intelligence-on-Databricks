@@ -44,8 +44,8 @@ from backend.domain.subagent_config import skipped_subagent_names  # noqa: E402
 # https://mlflow.org/docs/latest/genai/eval-monitor/scorers/llm-judge/predefined
 # https://docs.databricks.com/aws/en/mlflow3/genai/eval-monitor/custom-scorers
 #
-# `expected_tool_calls` gives ToolCallCorrectness ground truth (fuzzy-matched
-# by name) instead of relying solely on its ground-truth-free LLM judge mode.
+# `expected_tool_calls` documents intended routing and supplies optional
+# ToolCallCorrectness ground truth; DataToolAttempt remains the reliable tool-use check.
 #
 # Test cases are kept aligned with the loaded subagent config
 # (`src/backend/domain/subagents.<target>.json`) by
@@ -101,6 +101,7 @@ test_cases = [
             "Follow up on specific configuration tuning recommendations.",
             "Expect every claim to carry a bracketed citation like [1] and a "
             "final Source: line, per the assistant's own governed instructions.",
+            "Ask the assistant to state whether the cited guidance is current within the 24h freshness SLA.",
         ],
     },
     {
