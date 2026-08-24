@@ -112,6 +112,24 @@ variables:
   uc_audit_table:
     description: Unity Catalog table name for lifecycle events
     default: agent_lifecycle_events
+  agent_task_backend:
+    description: Delegation task backend (memory or uc_table)
+    default: memory
+  agent_task_warehouse_id:
+    description: SQL warehouse id used by the UC delegation task backend
+    default: ""
+  agent_task_catalog:
+    description: Unity Catalog catalog for delegation task tables
+    default: ""
+  agent_task_schema:
+    description: Unity Catalog schema for delegation task tables
+    default: ""
+  agent_task_worker_enabled:
+    description: Whether the backend starts the durable delegation worker
+    default: "false"
+  agent_task_worker_poll_seconds:
+    description: Idle poll interval in seconds for the durable delegation worker
+    default: "1"
   app_telemetry_logs_table:
     description: Unity Catalog table for Databricks Apps telemetry export
     default: quickstart_catalog.multi_agent_schema.app_logs

@@ -2,6 +2,7 @@
 
 from contextlib import AsyncExitStack
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Any, Awaitable, Callable
 
 from databricks_openai import AsyncDatabricksOpenAI
@@ -15,7 +16,8 @@ from backend.services.orchestrator_service import (
     connect_healthy_mcp_servers,
     create_orchestrator_agent,
 )
-from backend.services.interfaces import MessageBus
+from backend.services.interfaces import AgentTaskBus, MessageBus
+from backend.services.agent_task_bus import default_agent_task_bus
 from backend.services.message_bus import default_message_bus
 from backend.services.guardrails_service import (
     GuardrailResult,
@@ -53,6 +55,7 @@ class AppDependencyContainer:
     orchestrator: OrchestratorDependencies
     runtime_auth: RuntimeAuthDependencies
     handlers: HandlerDependencies
+    delegation_task_bus: AgentTaskBus
 
 
 def build_dependency_container() -> AppDependencyContainer:
@@ -61,8 +64,10 @@ def build_dependency_container() -> AppDependencyContainer:
     Centralizes service wiring and is the single place to override dependencies
     for custom environments or advanced integration testing.
     """
-    bus = default_message_bus(get_settings())
+    settings = get_settings()
+    bus = default_message_bus(settings)
     orchestrator_deps = OrchestratorDependencies(message_bus=bus)
+    delegation_task_bus = default_agent_task_bus(settings)
 
     runtime_auth_deps = RuntimeAuthDependencies(
         subagent_tools_builder=lambda subagents, app_client, obo_client: build_subagent_tools(
@@ -77,6 +82,7 @@ def build_dependency_container() -> AppDependencyContainer:
             deps=orchestrator_deps,
         ),
         message_bus=bus,
+        delegation_task_bus=delegation_task_bus,
     )
 
     handler_deps = HandlerDependencies(
@@ -97,9 +103,16 @@ def build_dependency_container() -> AppDependencyContainer:
         orchestrator=orchestrator_deps,
         runtime_auth=runtime_auth_deps,
         handlers=handler_deps,
+        delegation_task_bus=delegation_task_bus,
     )
+
+
+@lru_cache(maxsize=1)
+def get_app_dependency_container() -> AppDependencyContainer:
+    """Return the shared application dependency container for this process."""
+    return build_dependency_container()
 
 
 def get_handler_dependencies() -> HandlerDependencies:
     """Return handler dependencies from the default composition container."""
-    return build_dependency_container().handlers
+    return get_app_dependency_container().handlers

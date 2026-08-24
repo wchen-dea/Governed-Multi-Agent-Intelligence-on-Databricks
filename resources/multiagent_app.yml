@@ -76,6 +76,18 @@ resources:
           value: ${var.uc_audit_schema}
         - name: UC_AUDIT_TABLE
           value: ${var.uc_audit_table}
+        - name: AGENT_TASK_BACKEND
+          value: ${var.agent_task_backend}
+        - name: AGENT_TASK_WAREHOUSE_ID
+          value: ${var.agent_task_warehouse_id}
+        - name: AGENT_TASK_CATALOG
+          value: ${var.agent_task_catalog}
+        - name: AGENT_TASK_SCHEMA
+          value: ${var.agent_task_schema}
+        - name: AGENT_TASK_WORKER_ENABLED
+          value: ${var.agent_task_worker_enabled}
+        - name: AGENT_TASK_WORKER_POLL_SECONDS
+          value: ${var.agent_task_worker_poll_seconds}
       # Resources which this app has access to
       resources:
       - name: 'sales_genie_space'

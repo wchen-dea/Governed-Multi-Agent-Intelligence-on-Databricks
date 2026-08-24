@@ -31,6 +31,14 @@ class AppSettings:
     default_request_persona: str = "manager"
     max_input_chars: int = 12000
     max_response_chars: int = 20000
+    agent_task_backend: str = "memory"
+    agent_task_warehouse_id: str = ""
+    agent_task_catalog: str = ""
+    agent_task_schema: str = ""
+    agent_task_table: str = "agent_delegation_tasks"
+    agent_task_event_table: str = "agent_delegation_events"
+    agent_task_worker_enabled: bool = False
+    agent_task_worker_poll_seconds: float = 1.0
 
 
 @lru_cache(maxsize=1)
@@ -86,4 +94,13 @@ def get_settings() -> AppSettings:
         default_request_persona=os.getenv("DEFAULT_REQUEST_PERSONA", "manager"),
         max_input_chars=_env_int("MAX_INPUT_CHARS", 12000),
         max_response_chars=_env_int("MAX_RESPONSE_CHARS", 20000),
+        agent_task_backend=os.getenv("AGENT_TASK_BACKEND", "memory"),
+        agent_task_warehouse_id=os.getenv("AGENT_TASK_WAREHOUSE_ID", ""),
+        agent_task_catalog=os.getenv("AGENT_TASK_CATALOG", ""),
+        agent_task_schema=os.getenv("AGENT_TASK_SCHEMA", ""),
+        agent_task_table=os.getenv("AGENT_TASK_TABLE", "agent_delegation_tasks"),
+        agent_task_event_table=os.getenv("AGENT_TASK_EVENT_TABLE", "agent_delegation_events"),
+        agent_task_worker_enabled=os.getenv("AGENT_TASK_WORKER_ENABLED", "false").lower()
+        in {"1", "true", "yes", "on"},
+        agent_task_worker_poll_seconds=_env_float("AGENT_TASK_WORKER_POLL_SECONDS", 1.0),
     )

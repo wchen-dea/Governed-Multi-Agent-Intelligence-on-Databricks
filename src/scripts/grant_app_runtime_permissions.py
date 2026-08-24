@@ -509,7 +509,9 @@ class PermissionManager:
         statements = [
             f"GRANT USE CATALOG ON CATALOG `{catalog}` TO `{principal}`",
             f"GRANT USE SCHEMA ON SCHEMA `{catalog}`.`{schema}` TO `{principal}`",
+            f"GRANT CREATE TABLE ON SCHEMA `{catalog}`.`{schema}` TO `{principal}`",
             f"GRANT SELECT ON ALL TABLES IN SCHEMA `{catalog}`.`{schema}` TO `{principal}`",
+            f"GRANT MODIFY ON ALL TABLES IN SCHEMA `{catalog}`.`{schema}` TO `{principal}`",
         ]
         for stmt in statements:
             ok = self._execute_sql_grant(warehouse_id, stmt)

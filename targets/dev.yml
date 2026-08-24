@@ -34,6 +34,12 @@ targets:
       uc_audit_catalog: "quickstart_catalog"
       uc_audit_schema: "multi_agent_schema"
       uc_audit_table: agent_lifecycle_events
+      agent_task_backend: uc_table
+      agent_task_warehouse_id: "b20f70f71c2f52e2"
+      agent_task_catalog: "quickstart_catalog"
+      agent_task_schema: "multi_agent_schema"
+      agent_task_worker_enabled: "true"
+      agent_task_worker_poll_seconds: "1"
     resources:
       apps:
         multiagent-app:

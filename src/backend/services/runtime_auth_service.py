@@ -24,8 +24,15 @@ from backend.services.interfaces import (
     SubagentToolsBuilder,
     TraceMetadataUpdater,
 )
+from backend.services.agent_handoff_service import build_delegation_tool
+from backend.services.interfaces import AgentTaskBus
 from backend.services.message_bus import NoOpMessageBus
-from backend.services.orchestrator_service import build_lakebase_tools, build_mcp_servers, build_subagent_tools
+from backend.services.orchestrator_service import (
+    build_lakebase_delegation_executors,
+    build_lakebase_tools,
+    build_mcp_servers,
+    build_subagent_tools,
+)
 from backend.services.policy_service import (
     PolicyDecision,
     PolicyContext,
@@ -103,6 +110,7 @@ class RuntimeAuthDependencies:
         [list[SubagentConfig], PolicyContext], tuple[list[SubagentConfig], list[PolicyDecision]]
     ] = filter_subagents_by_policy
     message_bus: MessageBus = NoOpMessageBus()
+    delegation_task_bus: AgentTaskBus | None = None
 
 
 def _build_trace_metadata(
@@ -209,6 +217,16 @@ def build_runtime_auth_context(
 
     subagent_tools = dependencies.subagent_tools_builder(allowed_subagents, app_client, obo_client)
     lakebase_tools = dependencies.lakebase_tools_builder(allowed_subagents, identity_ctx)
+    if dependencies.delegation_task_bus is not None:
+        delegation_tool = build_delegation_tool(
+            task_bus=dependencies.delegation_task_bus,
+            subagents=allowed_subagents,
+            executors=build_lakebase_delegation_executors(allowed_subagents, identity_ctx),
+            message_bus=dependencies.message_bus,
+            correlation_id=dependencies.session_id_provider(request) or "request",
+        )
+        if delegation_tool is not None:
+            subagent_tools.append(delegation_tool)
     mcp_servers, unavailable_auth = dependencies.mcp_servers_builder(allowed_subagents, identity_ctx)
     unavailable = denied_by_policy + unavailable_auth
     dependencies.message_bus.publish(
