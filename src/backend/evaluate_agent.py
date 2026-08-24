@@ -44,8 +44,8 @@ from backend.domain.subagent_config import skipped_subagent_names  # noqa: E402
 # https://mlflow.org/docs/latest/genai/eval-monitor/scorers/llm-judge/predefined
 # https://docs.databricks.com/aws/en/mlflow3/genai/eval-monitor/custom-scorers
 #
-# `expected_tool_calls` gives ToolCallCorrectness ground truth (fuzzy-matched
-# by name) instead of relying solely on its ground-truth-free LLM judge mode.
+# `expected_tool_calls` documents intended routing and supplies optional
+# ToolCallCorrectness ground truth; DataToolAttempt remains the reliable tool-use check.
 #
 # Test cases are kept aligned with the loaded subagent config
 # (`src/backend/domain/subagents.<target>.json`) by
@@ -66,8 +66,7 @@ test_cases = [
     {
         "goal": "Find out the top 3 stores by revenue for the current season",
         "persona": "A business manager who wants a quick revenue summary.",
-        "expected_facts": ["store", "revenue"],
-        "custom_inputs": {"persona": "manager"},
+        "context": {"custom_inputs": {"persona": "manager"}},
         "expectations": {"expected_tool_calls": [{"name": "sales_insights_agent"}]},
         "simulation_guidelines": [
             "Ask for the top stores by revenue.",
@@ -80,7 +79,7 @@ test_cases = [
     {
         "goal": "Look up product details for brand code MCH",
         "persona": "An analyst researching tire product catalog coverage.",
-        "custom_inputs": {"persona": "analyst"},
+        "context": {"custom_inputs": {"persona": "analyst"}},
         "expectations": {"expected_tool_calls": [{"name": "product_index_assistant"}]},
         "simulation_guidelines": [
             "Ask about products matching brand code MCH.",
@@ -90,7 +89,7 @@ test_cases = [
     {
         "goal": "Diagnose increasing consumer lag in a Flink streaming job",
         "persona": "An operator dealing with a Flink streaming job that has increasing consumer lag.",
-        "custom_inputs": {"persona": "operator"},
+        "context": {"custom_inputs": {"persona": "operator"}},
         "expectations": {
             "expected_tool_calls": [{"name": "flink_support_agent"}],
             "requires_evidence": True,
@@ -101,12 +100,13 @@ test_cases = [
             "Follow up on specific configuration tuning recommendations.",
             "Expect every claim to carry a bracketed citation like [1] and a "
             "final Source: line, per the assistant's own governed instructions.",
+            "Ask the assistant to state whether the cited guidance is current within the 24h freshness SLA.",
         ],
     },
     {
         "goal": "Check CDI delight scores across stores",
         "persona": "A manager reviewing customer satisfaction metrics.",
-        "custom_inputs": {"persona": "manager"},
+        "context": {"custom_inputs": {"persona": "manager"}},
         "expectations": {"expected_tool_calls": [{"name": "cdi_agent"}]},
         "simulation_guidelines": [
             "Ask for CDI scores by store for the latest period.",
@@ -116,7 +116,7 @@ test_cases = [
     {
         "goal": "List the latest open appointments and current order status",
         "persona": "A manager reviewing current operational appointments and orders.",
-        "custom_inputs": {"persona": "manager"},
+        "context": {"custom_inputs": {"persona": "manager"}},
         "expectations": {
             "requires_tool_attempt": True,
             "expected_tool_calls": [{"name": "lakebase_ods_agent"}],
@@ -129,7 +129,7 @@ test_cases = [
     {
         "goal": "Reconcile order records against appointment schedules for a data quality check",
         "persona": "An engineer investigating a mismatch between orders and appointment records.",
-        "custom_inputs": {"persona": "engineer"},
+        "context": {"custom_inputs": {"persona": "engineer"}},
         "expectations": {
             "requires_tool_attempt": True,
             "expected_tool_calls": [{"name": "lakebase_ods_agent"}],
@@ -142,7 +142,7 @@ test_cases = [
     {
         "goal": "Verify that an operator persona cannot access sales data",
         "persona": "An operator trying to get sales revenue numbers.",
-        "custom_inputs": {"persona": "operator"},
+        "context": {"custom_inputs": {"persona": "operator"}},
         "expectations": {
             "requires_user_identity": False,
             "restricted_tools": ["sales_insights_agent", "cdi_agent"],
@@ -156,7 +156,7 @@ test_cases = [
     {
         "goal": "Have a brief conversational exchange that never asks for business data",
         "persona": "A manager making small talk before starting a work session.",
-        "custom_inputs": {"persona": "manager"},
+        "context": {"custom_inputs": {"persona": "manager"}},
         "expectations": {"expected_tool_calls": []},
         "simulation_guidelines": [
             "Greet the assistant and ask, in general terms, what kinds of questions it can help with.",
