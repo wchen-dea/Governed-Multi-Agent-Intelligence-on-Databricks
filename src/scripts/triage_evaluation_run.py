@@ -28,7 +28,7 @@ from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=Path(__file__).parent.parent.parent / ".env", override=True)
 
-TOOL_CALL_SCORER_NAMES = ("tool_call_correctness", "data_tool_attempt")
+TOOL_CALL_SCORER_NAMES = ("tool_call_correctness", "datatoolattempt")
 
 _CATEGORY_KEYWORDS = {
     "policy_or_auth_mismatch": (
@@ -36,23 +36,24 @@ _CATEGORY_KEYWORDS = {
         "persona",
         "denied",
         "obo",
-        "auth",
         "permission",
+    ),
+    "required_tool_omitted": (
+        "did not call any tool",
+        "did not call a tool",
+        "without calling",
+        "no tools were called",
+        "should have called",
+        "should have utilized",
+        "should have attempted",
+        "missing tool",
+        "failed to invoke",
     ),
     "tool_should_not_have_been_called": (
         "should not have been called",
-        "unnecessary",
-        "did not need",
-        "not required",
-        "no tool",
-    ),
-    "required_tool_omitted": (
-        "did not call",
-        "should have called",
-        "missing tool",
-        "omitted",
-        "failed to invoke",
-        "no tool call",
+        "was not necessary",
+        "did not need to call",
+        "unnecessary tool call",
     ),
 }
 
@@ -74,6 +75,19 @@ def _classify(rationale: str, has_error: bool) -> str:
         if any(keyword in lowered for keyword in keywords):
             return category
     return "incorrect_tool_selected"
+
+
+def _feedback_passed(value: object) -> bool:
+    """Interpret an assessment feedback value as pass/fail.
+
+    LLM-judge scorers return the string "yes"/"no"; code-based scorers
+    return numeric 1.0/0.0. Both forms show up in the same run.
+    """
+    if isinstance(value, str):
+        return value.strip().lower() in {"yes", "true", "pass", "passed"}
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return bool(value)
 
 
 def triage_run(run_id: str | None, experiment_id: str | None) -> dict[str, list[dict[str, str]]]:
@@ -120,10 +134,8 @@ def triage_run(run_id: str | None, experiment_id: str | None) -> dict[str, list[
             if not any(marker in name for marker in TOOL_CALL_SCORER_NAMES):
                 continue
 
-            feedback = getattr(assessment, "feedback", None)
-            value = getattr(feedback, "value", None) if feedback else None
             has_error = bool(getattr(assessment, "error", None))
-            passed = bool(value) and not has_error
+            passed = _feedback_passed(getattr(assessment, "value", None)) and not has_error
             if passed:
                 continue
 

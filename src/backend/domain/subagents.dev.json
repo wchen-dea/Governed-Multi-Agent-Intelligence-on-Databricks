@@ -32,7 +32,7 @@
     "data_classification": "internal",
     "owner": "platform-support",
     "freshness_sla": "24h",
-    "allowed_personas": ["engineer"],
+    "allowed_personas": ["analyst", "operator", "manager", "engineer"],
     "requires_evidence": false,
     "mcp_url": "/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/flink_support_index",
     "system_prompt": "You are the Flink Support assistant backed by an AI Search index over the support knowledge base. Ground all answers in retrieved documents. For every claim, append a bracketed citation like [1] referencing the source document path. End your answer with a Source: line listing each cited document. If retrieved context is insufficient, say so explicitly instead of guessing.",

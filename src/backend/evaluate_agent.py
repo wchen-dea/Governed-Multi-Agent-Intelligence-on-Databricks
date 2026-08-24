@@ -39,6 +39,22 @@ from backend.domain.subagent_config import skipped_subagent_names  # noqa: E402
 #
 # `expected_tool_calls` gives ToolCallCorrectness ground truth (fuzzy-matched
 # by name) instead of relying solely on its ground-truth-free LLM judge mode.
+#
+# Test cases are kept aligned with the loaded subagent config
+# (`src/backend/domain/subagents.<target>.json`) by
+# `tests/test_evaluation_dataset_sync.py`: each `expected_tool_calls`/
+# `restricted_tools` name must exist, and each case's persona must be in that
+# subagent's `allowed_personas`, or the expectation is policy-denied before
+# routing ever runs. Coverage goals per subagent/persona:
+# - sales_insights_agent (manager), product_index_assistant (analyst),
+#   flink_support_agent (operator), cdi_agent (manager): exercise the model's
+#   sticky, per-conversation routing (`route_planner.build_route_plan`) via a
+#   weak-overlap follow-up turn that should stay routed to the same subagent.
+# - lakebase_ods_agent: exercised by both a manager (appointments/orders) and
+#   an engineer (schema reconciliation) case, since it is the only subagent
+#   allowing the "engineer" persona alongside flink_support_agent.
+# - flink_support_agent additionally asserts `requires_evidence`/
+#   `freshness_sla`, matching its system_prompt's explicit citation mandate.
 test_cases = [
     {
         "goal": "Find out the top 3 stores by revenue for the current season",
@@ -49,6 +65,9 @@ test_cases = [
         "simulation_guidelines": [
             "Ask for the top stores by revenue.",
             "Prefer concise tabular answers.",
+            "Follow up with a vague continuation like 'what about last season' "
+            "that has weak keyword overlap, to verify the same sales tool stays "
+            "in use rather than falling back to an unrelated tool.",
         ],
     },
     {
@@ -65,10 +84,16 @@ test_cases = [
         "goal": "Diagnose increasing consumer lag in a Flink streaming job",
         "persona": "An operator dealing with a Flink streaming job that has increasing consumer lag.",
         "custom_inputs": {"persona": "operator"},
-        "expectations": {"expected_tool_calls": [{"name": "flink_support_agent"}]},
+        "expectations": {
+            "expected_tool_calls": [{"name": "flink_support_agent"}],
+            "requires_evidence": True,
+            "freshness_sla": "24h",
+        },
         "simulation_guidelines": [
             "Ask: Flink streaming job has increasing consumer lag. What are the common causes and how do we fix it?",
             "Follow up on specific configuration tuning recommendations.",
+            "Expect every claim to carry a bracketed citation like [1] and a "
+            "final Source: line, per the assistant's own governed instructions.",
         ],
     },
     {
@@ -92,6 +117,19 @@ test_cases = [
         "simulation_guidelines": [
             "Ask for the latest day's open appointments and their current order status.",
             "Expect the operational data tool to be attempted before an unavailable-data response.",
+        ],
+    },
+    {
+        "goal": "Reconcile order records against appointment schedules for a data quality check",
+        "persona": "An engineer investigating a mismatch between orders and appointment records.",
+        "custom_inputs": {"persona": "engineer"},
+        "expectations": {
+            "requires_tool_attempt": True,
+            "expected_tool_calls": [{"name": "lakebase_ods_agent"}],
+        },
+        "simulation_guidelines": [
+            "Ask to query the operational data store to compare order counts against appointment counts for the latest day.",
+            "Expect the operational data tool to be attempted; the engineer persona is authorized for the operational data store.",
         ],
     },
     {

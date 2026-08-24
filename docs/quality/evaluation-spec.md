@@ -20,6 +20,7 @@ Provide one source of truth for evaluation datasets, scorer behavior, KPI thresh
 
 - Source: `src/backend/evaluate_agent.py` simulator test cases
 - Use for: pre-merge regression checks and release-gate validation
+- Kept in sync with `src/backend/domain/subagents.<target>.json` by `tests/test_evaluation_dataset_sync.py`, which fails if a test case's `expected_tool_calls`/`restricted_tools` name a subagent that doesn't exist, or a persona that isn't in that subagent's `allowed_personas` (an expectation that policy would deny before routing ever runs, guaranteeing a false tool-call-correctness failure unrelated to model/routing quality). Run `make test` after changing either file.
 
 ### Governed and Sensitive Set
 

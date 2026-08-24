@@ -93,7 +93,8 @@ Typical source pattern for Genie Agents:
 
 ## Other Environments
 
-- QA/STG/PROD currently include additional placeholder and serving-endpoint entries.
+- QA/STG/PROD define the same 5 subagents as dev (`sales_insights_agent`, `product_index_assistant`, `flink_support_agent`, `cdi_agent`, `lakebase_ods_agent`), aligned in shape and `auth_mode`/`requires_evidence` settings.
+- `cdi_agent.space_id` and `lakebase_ods_agent`'s Lakebase connection fields (`project_id`, `branch_id`, `endpoint_id`, `database`, `pg_host`, `pg_user`) remain placeholders in QA/STG/PROD until those resources are provisioned per environment.
 - Entries with placeholder identifiers are skipped at runtime until concrete IDs are configured.
 
 ## Active Model Routes (Dev)
