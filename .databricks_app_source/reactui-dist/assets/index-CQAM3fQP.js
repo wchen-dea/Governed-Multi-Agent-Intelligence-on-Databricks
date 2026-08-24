@@ -16,7 +16,7 @@ Error generating stack: `+e.message+`
 | CDI    Metrics | Genie     | Customer Delight Index scores, promoter/detractor analysis    |
 | Product  Index | AI Search | Product catalog lookups by code, brand, or description        |
 | Flink  Support | AI Search | Flink troubleshooting, configuration guidance, best practices |
-| Lakebase   ODS | Lakebase  | Operational data — appointments, orders, invoices, scheduling |
+| Lakebase   ODS | Lakebase  | Operational data — appointments, orders, invoices, etc.       |
 
 ### Persona Selection
 Pick a persona from the starter chips, or run /persona <persona>.
