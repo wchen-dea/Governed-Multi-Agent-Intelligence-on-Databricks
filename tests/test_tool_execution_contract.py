@@ -12,12 +12,12 @@ def test_tool_lifecycle_events_include_normalized_execution_metadata():
         async def create(self, **kwargs):
             return SimpleNamespace(output_text="ok")
 
-    cfg = SubagentConfig(
-        name="docs", kind="serving_endpoint", endpoint="docs", description="docs"
-    )
+    cfg = SubagentConfig(name="docs", kind="serving_endpoint", endpoint="docs", description="docs")
     deps = OrchestratorDependencies(
         function_tool_wrapper=lambda func: func,
-        message_bus=SimpleNamespace(publish=lambda event_type, payload: events.append((event_type, payload))),
+        message_bus=SimpleNamespace(
+            publish=lambda event_type, payload: events.append((event_type, payload))
+        ),
     )
     tools = build_subagent_tools(cfg and [cfg], SimpleNamespace(responses=Responses()), None, deps)
 

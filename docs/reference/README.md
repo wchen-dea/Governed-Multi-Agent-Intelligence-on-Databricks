@@ -2,6 +2,8 @@
 
 This directory contains the reference architecture split into function-specific documents.
 
+These documents are platform-neutral enterprise reference material and target-state thinking. They do not define shipped application behavior, deployment commitments, or current release evidence; use the [product guide](../product/README.md), [architecture guide](../architecture/README.md), and [quality guide](../quality/README.md) for those authorities.
+
 ## Files
 
 1. [00-architecture-diagrams.md](00-architecture-diagrams.md)

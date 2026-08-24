@@ -453,7 +453,7 @@ def setup_databricks_auth(profile_arg: str = None, host_arg: str = None) -> str:
             profile_name = select_profile_interactive(profiles)
             print(f"\nSelected profile: {profile_name}")
         else:
-                # No profiles exist; create a new DEFAULT profile.
+            # No profiles exist; create a new DEFAULT profile.
             profile_name = None
 
             # Validate or authenticate the selected profile.
@@ -488,7 +488,7 @@ def setup_databricks_auth(profile_arg: str = None, host_arg: str = None) -> str:
             print_error("Databricks authentication failed")
             print_troubleshooting_auth()
             sys.exit(1)
-        print_success(f"Successfully authenticated with Databricks")
+        print_success("Successfully authenticated with Databricks")
 
     # Update .env with profile
     update_env_file("DATABRICKS_CONFIG_PROFILE", profile_name)
@@ -577,7 +577,9 @@ def create_mlflow_experiment(profile_name: str, username: str) -> tuple[str, str
     try:
         # Attempt creation with the default experiment name first.
         try:
-            experiment_id = w.experiments.create_experiment(name=experiment_name).experiment_id or ""
+            experiment_id = (
+                w.experiments.create_experiment(name=experiment_name).experiment_id or ""
+            )
             print_success(f"Created experiment '{experiment_name}' with ID: {experiment_id}")
             return experiment_name, experiment_id
         except Exception:
@@ -608,10 +610,7 @@ def check_lakebase_required() -> bool:
         return False
 
     content = databricks_yml.read_text()
-    return (
-        "LAKEBASE_INSTANCE_NAME" in content
-        or "LAKEBASE_AUTOSCALING_ENDPOINT" in content
-    )
+    return "LAKEBASE_INSTANCE_NAME" in content or "LAKEBASE_AUTOSCALING_ENDPOINT" in content
 
 
 def get_env_value(key: str) -> str:
@@ -668,10 +667,7 @@ def validate_lakebase_config(profile_name: str, config: dict) -> bool:
     if config["type"] == "provisioned":
         return validate_lakebase_instance(profile_name, config["instance_name"]) is not None
     elif config["type"] == "autoscaling":
-        return (
-            validate_lakebase_autoscaling_endpoint(profile_name, config["endpoint"])
-            is not None
-        )
+        return validate_lakebase_autoscaling_endpoint(profile_name, config["endpoint"]) is not None
     return False
 
 
@@ -767,9 +763,7 @@ def create_lakebase_instance(profile_name: str, name: str = None) -> dict:
         )
         branch = branch_op.wait()
         branch_name = (
-            branch.name.split("/branches/")[-1]
-            if "/branches/" in branch.name
-            else branch_id
+            branch.name.split("/branches/")[-1] if "/branches/" in branch.name else branch_id
         )
         print_success(f"Created branch: {branch_name}")
 
@@ -782,7 +776,7 @@ def create_lakebase_instance(profile_name: str, name: str = None) -> dict:
             print_error(
                 "Could not determine endpoint name for the created Lakebase instance.\n"
                 "  Please find the endpoint name in the Databricks UI and use:\n"
-                f"  uv run quickstart --lakebase-autoscaling-endpoint <endpoint-name>"
+                "  uv run quickstart --lakebase-autoscaling-endpoint <endpoint-name>"
             )
             sys.exit(1)
 
@@ -1137,9 +1131,7 @@ def setup_lakebase(
         update_env_file("PGDATABASE", "databricks_postgres")
         print_success("PGDATABASE set to 'databricks_postgres'")
 
-        print_success(
-            f"Lakebase autoscaling endpoint saved to .env: {autoscaling_endpoint}"
-        )
+        print_success(f"Lakebase autoscaling endpoint saved to .env: {autoscaling_endpoint}")
         return {
             "type": "autoscaling",
             "endpoint": autoscaling_endpoint,
@@ -1197,9 +1189,7 @@ def setup_lakebase(
         update_env_file("PGDATABASE", "databricks_postgres")
         print_success("PGDATABASE set to 'databricks_postgres'")
 
-        print_success(
-            f"Lakebase autoscaling endpoint saved to .env: {endpoint}"
-        )
+        print_success(f"Lakebase autoscaling endpoint saved to .env: {endpoint}")
         # Merge branch/database from endpoint validation into selection
         selection["branch"] = endpoint_info["branch"]
         selection["database"] = endpoint_info["database"]
@@ -1246,7 +1236,10 @@ def _replace_lakebase_env_vars(content: str, lakebase_config: dict) -> str:
             continue
 
         # Match only the LAKEBASE_ env vars that quickstart manages
-        if re.search(r"- name: LAKEBASE_(INSTANCE_NAME|AUTOSCALING_ENDPOINT|AUTOSCALING_PROJECT|AUTOSCALING_BRANCH)", stripped):
+        if re.search(
+            r"- name: LAKEBASE_(INSTANCE_NAME|AUTOSCALING_ENDPOINT|AUTOSCALING_PROJECT|AUTOSCALING_BRANCH)",
+            stripped,
+        ):
             if insert_idx is None:
                 insert_idx = len(result)
             skip_next_value = True
@@ -1354,7 +1347,11 @@ def _replace_lakebase_resource(content: str, lakebase_config: dict) -> str:
                     neighbor_idx = i + offset
                     if 0 <= neighbor_idx < len(lines):
                         neighbor_bare = lines[neighbor_idx].strip().lstrip("#").strip().lower()
-                        if neighbor_bare in LAKEBASE_COMMENTS or "database" in neighbor_bare or "postgres" in neighbor_bare:
+                        if (
+                            neighbor_bare in LAKEBASE_COMMENTS
+                            or "database" in neighbor_bare
+                            or "postgres" in neighbor_bare
+                        ):
                             is_lakebase_area = True
                             break
 
@@ -1403,7 +1400,11 @@ def _replace_lakebase_resource(content: str, lakebase_config: dict) -> str:
             i += 1
             while i < len(lines):
                 next_stripped = lines[i].strip()
-                if next_stripped and not next_stripped.startswith("-") and not next_stripped.startswith("#"):
+                if (
+                    next_stripped
+                    and not next_stripped.startswith("-")
+                    and not next_stripped.startswith("#")
+                ):
                     i += 1
                 else:
                     break
@@ -1455,7 +1456,11 @@ def _replace_lakebase_resource(content: str, lakebase_config: dict) -> str:
             i += 1
             while i < len(lines):
                 next_stripped = lines[i].strip()
-                if next_stripped and not next_stripped.startswith("-") and not next_stripped.startswith("#"):
+                if (
+                    next_stripped
+                    and not next_stripped.startswith("-")
+                    and not next_stripped.startswith("#")
+                ):
                     i += 1
                 else:
                     break
@@ -1526,7 +1531,11 @@ def _find_last_resource_insert_idx(lines: list[str]) -> int | None:
             insert_idx = idx + 1
             while insert_idx < len(lines):
                 next_stripped = lines[insert_idx].strip()
-                if next_stripped and not next_stripped.startswith("-") and not next_stripped.startswith("#"):
+                if (
+                    next_stripped
+                    and not next_stripped.startswith("-")
+                    and not next_stripped.startswith("#")
+                ):
                     insert_idx += 1
                 else:
                     break
@@ -1550,7 +1559,6 @@ def update_databricks_yml_lakebase(lakebase_config: dict) -> None:
     if updated != content:
         yml_path.write_text(updated)
         print_success("Updated databricks.yml with Lakebase config")
-
 
 
 def get_databricks_yml_experiment_id() -> str:
@@ -1741,23 +1749,15 @@ Examples:
                     if "branch" in lakebase_config:
                         branch_path = lakebase_config["branch"]
                         parts = branch_path.split("/")
-                        if (
-                            len(parts) >= 4
-                            and parts[0] == "projects"
-                            and parts[2] == "branches"
-                        ):
+                        if len(parts) >= 4 and parts[0] == "projects" and parts[2] == "branches":
                             endpoint_path, endpoint_host = _fetch_autoscaling_endpoint_info(
                                 profile_name, parts[1], parts[3]
                             )
                             if endpoint_path:
                                 lakebase_config["endpoint"] = endpoint_path
                                 lakebase_config["host"] = endpoint_host
-                                update_env_file(
-                                    "LAKEBASE_AUTOSCALING_ENDPOINT", endpoint_path
-                                )
-                                print_success(
-                                    f"Lakebase endpoint '{endpoint_path}' saved to .env"
-                                )
+                                update_env_file("LAKEBASE_AUTOSCALING_ENDPOINT", endpoint_path)
+                                print_success(f"Lakebase endpoint '{endpoint_path}' saved to .env")
                                 if endpoint_host:
                                     update_env_file("PGHOST", endpoint_host)
                                     print_success(f"PGHOST set to '{endpoint_host}'")
@@ -1776,25 +1776,19 @@ Examples:
                         update_env_file("LAKEBASE_INSTANCE_NAME", instance_name)
                         update_env_file("LAKEBASE_AUTOSCALING_ENDPOINT", "")
                         # Resolve PGHOST from the provisioned instance
-                        instance_info = validate_lakebase_instance(
-                            profile_name, instance_name
-                        )
+                        instance_info = validate_lakebase_instance(profile_name, instance_name)
                         if instance_info:
                             pg_host = instance_info.get("read_write_dns", "")
                             if pg_host:
                                 update_env_file("PGHOST", pg_host)
                                 print_success(f"PGHOST set to '{pg_host}'")
                         update_env_file("PGDATABASE", "databricks_postgres")
-                        print_success(
-                            f"Using database resource from app: {instance_name}"
-                        )
+                        print_success(f"Using database resource from app: {instance_name}")
 
-            print(f"\nTo bind this bundle to your existing app, run:")
+            print("\nTo bind this bundle to your existing app, run:")
             if bundle_key:
-                print(
-                    f"  databricks bundle deployment bind {bundle_key} {app_name} --auto-approve"
-                )
-            print(f"  databricks bundle deploy")
+                print(f"  databricks bundle deployment bind {bundle_key} {app_name} --auto-approve")
+            print("  databricks bundle deploy")
 
         # Step 5: Get username and create MLflow experiment
         print_step("Getting Databricks username...")
@@ -1852,10 +1846,12 @@ Examples:
         elif lakebase_memory_required:
             # Check for existing config (idempotency)
             existing_lakebase = get_existing_lakebase_config()
-            if existing_lakebase and not args.lakebase_provisioned_name and not (
-                args.lakebase_autoscaling_endpoint
-            ) and not args.lakebase_create_new and validate_lakebase_config(
-                profile_name, existing_lakebase
+            if (
+                existing_lakebase
+                and not args.lakebase_provisioned_name
+                and not (args.lakebase_autoscaling_endpoint)
+                and not args.lakebase_create_new
+                and validate_lakebase_config(profile_name, existing_lakebase)
             ):
                 print_step("Reusing existing Lakebase config from .env")
                 lakebase_config = existing_lakebase
@@ -1907,7 +1903,9 @@ Examples:
             summary += f"\n  {host}/ml/experiments/{experiment_id}"
 
         if lakebase_config:
-            lakebase_purpose = "agent memory" if lakebase_memory_required else "chat UI conversation history"
+            lakebase_purpose = (
+                "agent memory" if lakebase_memory_required else "chat UI conversation history"
+            )
             if lakebase_config["type"] == "provisioned":
                 lakebase_name = lakebase_config["instance_name"]
                 summary += f"\n\n✓ Lakebase for {lakebase_purpose}: {lakebase_name}"
@@ -1921,7 +1919,9 @@ Examples:
                 else:
                     summary += f"\n\n✓ Lakebase for {lakebase_purpose}: autoscaling"
 
-        summary += "\nNext step (backend only): Run 'uv run start-server' to start the agent locally"
+        summary += (
+            "\nNext step (backend only): Run 'uv run start-server' to start the agent locally"
+        )
         summary += "\nRun 'uv run start-app' to start the backend + Chainlit chat UI together."
         summary += "\nRun 'uv run start-app --no-ui' to start the backend only.\n"
         print(summary)

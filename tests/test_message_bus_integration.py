@@ -1,10 +1,14 @@
 from types import SimpleNamespace
 
+from mlflow.types.responses import ResponsesAgentRequest
+
 from backend.api.dependencies import build_dependency_container
 from backend.domain.subagent_config import SubagentConfig
 from backend.services.orchestrator_service import OrchestratorDependencies, build_subagent_tools
-from backend.services.runtime_auth_service import RuntimeAuthDependencies, build_runtime_auth_context
-from mlflow.types.responses import ResponsesAgentRequest
+from backend.services.runtime_auth_service import (
+    RuntimeAuthDependencies,
+    build_runtime_auth_context,
+)
 
 
 class RecordingBus:

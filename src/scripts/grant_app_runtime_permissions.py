@@ -91,7 +91,9 @@ class PermissionManager:
     subagents.
     """
 
-    def __init__(self, cli: DatabricksCli, target: str, app_name: str, dry_run: bool, fail_open: bool):
+    def __init__(
+        self, cli: DatabricksCli, target: str, app_name: str, dry_run: bool, fail_open: bool
+    ):
         """Initialize permission management context.
 
         Args:
@@ -127,7 +129,9 @@ class PermissionManager:
         except Exception as exc:
             raise CliError(f"Could not read variables from {target_file}") from exc
 
-    def _read_subagent_resource_hints(self) -> tuple[list[str], list[str], list[tuple[str, str, str]], list[dict[str, str]]]:
+    def _read_subagent_resource_hints(
+        self,
+    ) -> tuple[list[str], list[str], list[tuple[str, str, str]], list[dict[str, str]]]:
         """Extract resource hints from target subagent configuration.
 
         Returns:
@@ -176,11 +180,13 @@ class PermissionManager:
                 branch_id = item.get("branch_id", "")
                 endpoint_id = item.get("endpoint_id", "")
                 if project_id and branch_id and endpoint_id and not _is_placeholder(project_id):
-                    lakebase_configs.append({
-                        "project_id": project_id,
-                        "branch_id": branch_id,
-                        "endpoint_id": endpoint_id,
-                    })
+                    lakebase_configs.append(
+                        {
+                            "project_id": project_id,
+                            "branch_id": branch_id,
+                            "endpoint_id": endpoint_id,
+                        }
+                    )
 
         return (
             sorted(set(genie_space_ids)),
@@ -231,7 +237,9 @@ class PermissionManager:
             )
         return sp_client_id.strip()
 
-    def _update_permissions(self, object_type: str, object_id: str, level: str, sp_client_id: str) -> bool:
+    def _update_permissions(
+        self, object_type: str, object_id: str, level: str, sp_client_id: str
+    ) -> bool:
         payload = {
             "access_control_list": [
                 {
@@ -303,7 +311,9 @@ class PermissionManager:
         if self._warehouse_id_by_name is not None:
             return self._warehouse_id_by_name
 
-        payload = self.cli.run(["warehouses", "list", "--output", "json"], expect_json=True, check=False)
+        payload = self.cli.run(
+            ["warehouses", "list", "--output", "json"], expect_json=True, check=False
+        )
         mapping: dict[str, str] = {}
         if isinstance(payload, list):
             for item in payload:
@@ -311,7 +321,12 @@ class PermissionManager:
                     continue
                 name = item.get("name")
                 warehouse_id = item.get("id")
-                if isinstance(name, str) and isinstance(warehouse_id, str) and name and warehouse_id:
+                if (
+                    isinstance(name, str)
+                    and isinstance(warehouse_id, str)
+                    and name
+                    and warehouse_id
+                ):
                     mapping[name] = warehouse_id
 
         self._warehouse_id_by_name = mapping
@@ -453,7 +468,6 @@ class PermissionManager:
         principal = sp_client_id
 
         for catalog, schema, table_names in ai_search_securables:
-
             cat_ok = self._grant_uc_privilege("catalog", catalog, "USE_CATALOG", principal)
             print(f"UC GRANT: {'OK' if cat_ok else 'FAILED'} -> USE_CATALOG ON {catalog}")
             if not cat_ok:
@@ -497,7 +511,9 @@ class PermissionManager:
         self._grant_warehouse_can_use(warehouse_id, sp_client_id)
 
         catalog_ok = self.cli.run(["catalogs", "get", catalog], check=False).returncode == 0
-        schema_ok = self.cli.run(["schemas", "get", f"{catalog}.{schema}"], check=False).returncode == 0
+        schema_ok = (
+            self.cli.run(["schemas", "get", f"{catalog}.{schema}"], check=False).returncode == 0
+        )
         if not catalog_ok:
             self._warn_or_fail(f"Catalog not found or inaccessible: {catalog}")
             return
@@ -556,7 +572,9 @@ class PermissionManager:
                 self._warn_or_fail(f"Serving endpoint not found or inaccessible: {endpoint}")
                 continue
 
-            ok = self._update_permissions("serving-endpoints", endpoint_id, "CAN_QUERY", sp_client_id)
+            ok = self._update_permissions(
+                "serving-endpoints", endpoint_id, "CAN_QUERY", sp_client_id
+            )
             print(f"SERVING PERMISSION: {'OK' if ok else 'FAILED'} -> {endpoint} CAN_QUERY")
             if not ok:
                 self._warn_or_fail(f"Failed to grant serving endpoint CAN_QUERY: {endpoint}")
@@ -579,7 +597,9 @@ class PermissionManager:
                 self._warn_or_fail(f"AI Search endpoint not found or inaccessible: {endpoint}")
                 continue
 
-            endpoint_ok = self._update_permissions("vector-search-endpoints", endpoint_id, "CAN_USE", sp_client_id)
+            endpoint_ok = self._update_permissions(
+                "vector-search-endpoints", endpoint_id, "CAN_USE", sp_client_id
+            )
             print(
                 f"AI SEARCH ENDPOINT PERMISSION: {'OK' if endpoint_ok else 'FAILED'} -> "
                 f"{endpoint} CAN_USE"
@@ -599,19 +619,21 @@ class PermissionManager:
         for cfg in lakebase_configs:
             project_id = cfg["project_id"]
             branch_id = cfg["branch_id"]
-            endpoint_id = cfg["endpoint_id"]
             branch_path = f"projects/{project_id}/branches/{branch_id}"
 
             # Check if the SP already has a role on this branch.
             existing_roles = self.cli.run(
                 ["postgres", "list-roles", branch_path, "--output", "json"],
-                expect_json=True, check=False,
+                expect_json=True,
+                check=False,
             )
             already_granted = False
             if isinstance(existing_roles, list):
                 for role in existing_roles:
                     if isinstance(role, dict):
-                        pg_role = (role.get("status") or role.get("spec") or {}).get("postgres_role", "")
+                        pg_role = (role.get("status") or role.get("spec") or {}).get(
+                            "postgres_role", ""
+                        )
                         if pg_role == sp_client_id:
                             already_granted = True
                             break
@@ -622,16 +644,22 @@ class PermissionManager:
 
             role_id = f"sp-{self.app_name}"[:63]
             create_args = [
-                "postgres", "create-role", branch_path,
-                "--role-id", role_id,
-                "--json", json.dumps({
-                    "spec": {
-                        "identity_type": "SERVICE_PRINCIPAL",
-                        "postgres_role": sp_client_id,
-                        "auth_method": "LAKEBASE_OAUTH_V1",
-                        "membership_roles": ["DATABRICKS_SUPERUSER"],
+                "postgres",
+                "create-role",
+                branch_path,
+                "--role-id",
+                role_id,
+                "--json",
+                json.dumps(
+                    {
+                        "spec": {
+                            "identity_type": "SERVICE_PRINCIPAL",
+                            "postgres_role": sp_client_id,
+                            "auth_method": "LAKEBASE_OAUTH_V1",
+                            "membership_roles": ["DATABRICKS_SUPERUSER"],
+                        }
                     }
-                }),
+                ),
             ]
             if self.dry_run:
                 print(f"DRY RUN: databricks {' '.join(create_args)}")
@@ -669,7 +697,9 @@ class PermissionManager:
         print(f"App: {self.app_name}")
         print(f"Service principal client id: {sp_client_id}")
 
-        subagent_genie, subagent_serving, ai_search_indexes, lakebase_configs = self._read_subagent_resource_hints()
+        subagent_genie, subagent_serving, ai_search_indexes, lakebase_configs = (
+            self._read_subagent_resource_hints()
+        )
 
         configured_genie = [
             target_vars.get("genie_space_id"),
@@ -723,7 +753,9 @@ class PermissionManager:
         else:
             print("AI Search UC objects: none")
         if lakebase_configs:
-            print(f"Lakebase projects: {[c['project_id'] + '/' + c['branch_id'] for c in lakebase_configs]}")
+            print(
+                f"Lakebase projects: {[c['project_id'] + '/' + c['branch_id'] for c in lakebase_configs]}"
+            )
         else:
             print("Lakebase projects: none")
         print(f"UC catalog/schema: {uc_catalog}.{uc_schema}")
@@ -760,9 +792,13 @@ class PermissionManager:
 
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments for runtime permission grants."""
-    parser = argparse.ArgumentParser(description="Grant runtime permissions to app service principal.")
+    parser = argparse.ArgumentParser(
+        description="Grant runtime permissions to app service principal."
+    )
     parser.add_argument("--app-name", required=True, help="Databricks app name")
-    parser.add_argument("--target", required=True, choices=list(SUPPORTED_TARGETS), help="Bundle target")
+    parser.add_argument(
+        "--target", required=True, choices=list(SUPPORTED_TARGETS), help="Bundle target"
+    )
     parser.add_argument("--profile", default="DEFAULT", help="Databricks CLI profile")
     parser.add_argument("--dry-run", action="store_true", help="Preview grants without applying")
     parser.add_argument(

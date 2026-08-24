@@ -111,6 +111,10 @@ direction LR
 
 class AppSettings {
     +orchestrator_model: str
+    +model_routing_enabled: bool
+    +model_routing_default_model: str
+    +model_routing_reasoning_model: str
+    +model_routing_quality_model: str
     +openai_base_url: str
     +openai_timeout_seconds: float
     +message_bus_backend: str
@@ -128,6 +132,7 @@ class AppDependencyContainer {
     +orchestrator: OrchestratorDependencies
     +runtime_auth: RuntimeAuthDependencies
     +handlers: HandlerDependencies
+    +delegation_task_bus: AgentTaskBus
 }
 
 class OrchestratorDependencies {
@@ -320,7 +325,44 @@ MessageBusFactory ..> AppSettings
 MessageBusFactory ..> MessageBus : returns strategy
 ```
 
-## 5. Subagent Registry (dev environment)
+## 5. Model Routing and Delegation Control Plane
+
+```mermaid
+classDiagram
+class ModelSelection {
+    +model: str
+    +task_type: str
+    +reason: str
+}
+class ModelRoutingService {
+    +select_model(question, settings) ModelSelection
+}
+class AgentTaskBus {
+    <<protocol>>
+    +submit(task) DelegationTaskRecord
+    +claim(worker_id) list~DelegationTaskRecord~
+    +complete(result, worker_id) DelegationTaskRecord
+    +fail(task_id, worker_id, error_code) DelegationTaskRecord
+    +get(task_id) DelegationTaskRecord
+}
+class UcAgentTaskBus {
+    +agent_delegation_tasks
+    +agent_delegation_events
+}
+class AgentTaskWorker {
+    +run_once() int
+    +run_forever(stop_event) None
+}
+class AgentHandoffService {
+    +delegate_to_agent()
+}
+ModelRoutingService --> ModelSelection
+AgentTaskBus <|.. UcAgentTaskBus
+AgentTaskWorker --> AgentTaskBus
+AgentHandoffService --> AgentTaskBus
+```
+
+## 6. Subagent Registry (dev environment)
 
 ```mermaid
 classDiagram
@@ -388,3 +430,4 @@ SubagentRegistry --> lakebase_ods_agent
 - All diagrams mirror current implementation naming in `src/backend/`.
 - Views are logic-isolated: domain/policy, composition/ports, runtime stages, message bus strategy, subagent registry.
 - Use with `07-request-execution-flow-class-diagram.md` for invoke-vs-stream pipeline emphasis.
+- The durable delegation and model-routing classes above are the control planes that keep agent expansion bounded, observable, and policy-aware.

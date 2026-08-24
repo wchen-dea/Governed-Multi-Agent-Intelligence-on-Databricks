@@ -1,6 +1,6 @@
 SHELL := /bin/sh
 
-.PHONY: help test lint-markdown runtime-core assistant-tools evaluate evaluate-strict build-app-source upload-wheel validate wait-stable bundle-deploy bundle-deploy-optional import ensure-running stop deploy grants redeploy health smoke smoke-governance query-dev logs status
+.PHONY: help test lint lint-markdown format runtime-core assistant-tools evaluate evaluate-strict build-app-source upload-wheel validate wait-stable bundle-deploy bundle-deploy-optional import ensure-running stop deploy grants redeploy health smoke smoke-governance query-dev logs status
 
 PROFILE ?= DEFAULT
 TARGET ?= dev
@@ -22,7 +22,9 @@ help:
 	@printf "Local dev Databricks app workflow\n\n"
 	@printf "Targets:\n"
 	@printf "  make test              Run local test suite\n"
+	@printf "  make lint              Run unified Python, React, and Markdown lint checks\n"
 	@printf "  make lint-markdown     Run pinned Markdown lint checks\n"
+	@printf "  make format            Apply Python and React code formatting\n"
 	@printf "  make runtime-core      Show runtime-core command group\n"
 	@printf "  make assistant-tools   Show assistant/operations command group\n"
 	@printf "  make evaluate          Run MLflow GenAI evaluation and release gate\n"
@@ -51,8 +53,14 @@ help:
 test:
 	uv run pytest -q
 
+lint:
+	./scripts/lint_code.sh
+
 lint-markdown:
 	./scripts/lint_markdown.sh
+
+format:
+	./scripts/format_code.sh
 
 runtime-core:
 	./scripts/runtime_core.sh help

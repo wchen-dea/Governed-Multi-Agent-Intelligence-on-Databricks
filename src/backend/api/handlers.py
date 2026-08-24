@@ -2,9 +2,10 @@
 
 import asyncio
 import logging
+from collections.abc import AsyncGenerator
 from contextlib import AsyncExitStack
 from dataclasses import dataclass
-from typing import Any, AsyncGenerator, cast
+from typing import Any, cast
 
 import mlflow
 from agents import Runner, set_default_openai_api, set_default_openai_client
@@ -19,14 +20,14 @@ from mlflow.types.responses import (
 )
 
 from backend.api.dependencies import get_handler_dependencies
-from backend.domain.subagent_config import SUBAGENTS, SubagentConfig
-from backend.shared.request_utils import extract_mcp_errors, to_messages
-from backend.shared.settings import get_settings
-from backend.shared.runtime_utils import process_agent_stream_events
-from backend.services.guardrails_service import truncate_response_text
 from backend.domain.execution_contracts import ResponseEnvelope
-from backend.services.route_planner import build_route_plan
+from backend.domain.subagent_config import SUBAGENTS, SubagentConfig
+from backend.services.guardrails_service import truncate_response_text
 from backend.services.model_routing_service import select_model
+from backend.services.route_planner import build_route_plan
+from backend.shared.request_utils import extract_mcp_errors, to_messages
+from backend.shared.runtime_utils import process_agent_stream_events
+from backend.shared.settings import get_settings
 
 SETTINGS = get_settings()
 HANDLER_DEPS = get_handler_dependencies()
@@ -129,7 +130,9 @@ def _prepare_request_stage(request: ResponsesAgentRequest) -> RequestStage:
                 "character_count": input_guardrail.character_count,
             },
         )
-        raise UserError("Request blocked by input guardrails: " + ", ".join(input_guardrail.reasons))
+        raise UserError(
+            "Request blocked by input guardrails: " + ", ".join(input_guardrail.reasons)
+        )
 
     runtime_auth = HANDLER_DEPS.runtime_auth_builder(request, SUBAGENTS, _client)
     messages = to_messages(request.input)
@@ -189,9 +192,7 @@ async def _connect_request_stage(
         and route_plan.reason == "ambiguous_fallback"
     ):
         planned_mcp_servers = prepared.runtime_auth.mcp_servers
-    servers, unavailable_health = await HANDLER_DEPS.mcp_connector(
-        stack, planned_mcp_servers
-    )
+    servers, unavailable_health = await HANDLER_DEPS.mcp_connector(stack, planned_mcp_servers)
     unavailable = prepared.runtime_auth.unavailable_auth + unavailable_health
     candidate_tools = _select_route_tools(
         prepared.runtime_auth.subagent_tools,
@@ -303,9 +304,7 @@ def _finalize_invoke_stage(
                 "truncated": truncated,
             },
         )
-        raise UserError(
-            "Response blocked by guardrails: " + ", ".join(guardrail.reasons)
-        )
+        raise UserError("Response blocked by guardrails: " + ", ".join(guardrail.reasons))
     HANDLER_DEPS.message_bus.publish(
         "response.guardrail.passed",
         {
@@ -593,7 +592,7 @@ def _event_has_tool_activity(payloads: list[dict[str, Any]]) -> bool:
     """Return true when stream/output payloads show any tool execution activity."""
     for payload in payloads:
         if _payload_has_tool_activity(payload):
-                return True
+            return True
 
     return False
 
@@ -602,9 +601,7 @@ def _payload_has_tool_activity(payload: dict[str, Any]) -> bool:
     """Return true when a single event/output payload indicates tool activity."""
     event_type = payload.get("type")
     if isinstance(event_type, str) and (
-        event_type.startswith("response.output_item")
-        or "tool" in event_type
-        or "mcp" in event_type
+        event_type.startswith("response.output_item") or "tool" in event_type or "mcp" in event_type
     ):
         item = payload.get("item")
         if isinstance(item, dict):

@@ -1,8 +1,9 @@
 """Apply response guardrails for governed or sensitive outputs."""
 
-from dataclasses import dataclass
 import re
-from typing import Any, Iterable
+from collections.abc import Iterable
+from dataclasses import dataclass
+from typing import Any
 
 from backend.domain.subagent_config import SubagentConfig
 
@@ -151,7 +152,9 @@ def evaluate_response_guardrails(
     if any(re.search(pattern, lowered) for pattern in _UNSAFE_PATTERNS):
         reasons.append("unsafe_output")
 
-    if has_sensitive_data and any(re.search(pattern, lowered) for pattern in _LOW_CONFIDENCE_PATTERNS):
+    if has_sensitive_data and any(
+        re.search(pattern, lowered) for pattern in _LOW_CONFIDENCE_PATTERNS
+    ):
         reasons.append("low_confidence_sensitive")
 
     return GuardrailResult(blocked=bool(reasons), reasons=tuple(sorted(set(reasons))))

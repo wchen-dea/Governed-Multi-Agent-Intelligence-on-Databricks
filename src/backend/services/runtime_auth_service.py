@@ -6,7 +6,6 @@ subagent to either the shared app client or a user-scoped OBO client.
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
 
 import mlflow
 from databricks_openai import AsyncDatabricksOpenAI
@@ -14,7 +13,9 @@ from databricks_openai.agents import McpServer
 from mlflow.types.responses import ResponsesAgentRequest
 
 from backend.domain.subagent_config import SubagentConfig
+from backend.services.agent_handoff_service import build_delegation_tool
 from backend.services.interfaces import (
+    AgentTaskBus,
     IdentityContextProvider,
     LakebaseToolsBuilder,
     McpServersBuilder,
@@ -24,8 +25,6 @@ from backend.services.interfaces import (
     SubagentToolsBuilder,
     TraceMetadataUpdater,
 )
-from backend.services.agent_handoff_service import build_delegation_tool
-from backend.services.interfaces import AgentTaskBus
 from backend.services.message_bus import NoOpMessageBus
 from backend.services.orchestrator_service import (
     build_lakebase_delegation_executors,
@@ -34,8 +33,8 @@ from backend.services.orchestrator_service import (
     build_subagent_tools,
 )
 from backend.services.policy_service import (
-    PolicyDecision,
     PolicyContext,
+    PolicyDecision,
     build_policy_context,
     filter_subagents_by_policy,
 )
@@ -227,7 +226,9 @@ def build_runtime_auth_context(
         )
         if delegation_tool is not None:
             subagent_tools.append(delegation_tool)
-    mcp_servers, unavailable_auth = dependencies.mcp_servers_builder(allowed_subagents, identity_ctx)
+    mcp_servers, unavailable_auth = dependencies.mcp_servers_builder(
+        allowed_subagents, identity_ctx
+    )
     unavailable = denied_by_policy + unavailable_auth
     dependencies.message_bus.publish(
         "auth.context.built",

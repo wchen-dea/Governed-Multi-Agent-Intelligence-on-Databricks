@@ -1,10 +1,10 @@
 """Durable-task-bus abstraction and in-memory implementation for delegations."""
 
 import asyncio
-from dataclasses import replace
-from datetime import datetime, timedelta, timezone
 import json
 import re
+from dataclasses import replace
+from datetime import datetime, timedelta
 from typing import Any
 
 from databricks.sdk import WorkspaceClient
@@ -58,7 +58,9 @@ class InMemoryAgentTaskBus:
                 if len(claimed) >= max(limit, 1):
                     break
                 if record.task.expires_at and record.task.expires_at <= current:
-                    self._records[task_id] = replace(record, status="expired", failure_code="task_expired")
+                    self._records[task_id] = replace(
+                        record, status="expired", failure_code="task_expired"
+                    )
                     continue
                 lease_expired = (
                     record.status in {"claimed", "running"}
@@ -92,7 +94,9 @@ class InMemoryAgentTaskBus:
         async with self._lock:
             record = self._require_owned(result.task_id, worker_id)
             status = "succeeded" if result.status == "succeeded" else result.status
-            updated = replace(record, status=status, result=result, lease_owner=None, lease_expires_at=None)
+            updated = replace(
+                record, status=status, result=result, lease_owner=None, lease_expires_at=None
+            )
             self._records[result.task_id] = updated
             return updated
 
@@ -179,7 +183,9 @@ class UcAgentTaskBus:
             f"({_literal(task.task_id)}, {_literal(task.idempotency_key)}, 'pending', {_literal(task_json)}, "
             f"TIMESTAMP {_literal(now.isoformat())}, TIMESTAMP {_literal(now.isoformat())})"
         )
-        await self._event(task.task_id, "delegation.task.created", {"correlation_id": task.correlation_id})
+        await self._event(
+            task.task_id, "delegation.task.created", {"correlation_id": task.correlation_id}
+        )
         return DelegationTaskRecord(task=task)
 
     async def claim(
@@ -283,7 +289,11 @@ class UcAgentTaskBus:
 
     async def _owned_record(self, task_id: str, worker_id: str) -> DelegationTaskRecord:
         record = await self.get(task_id)
-        if record is None or record.lease_owner != worker_id or record.status not in {"claimed", "running"}:
+        if (
+            record is None
+            or record.lease_owner != worker_id
+            or record.status not in {"claimed", "running"}
+        ):
             raise RuntimeError(f"Worker {worker_id!r} does not own task {task_id!r}")
         return record
 
@@ -377,12 +387,16 @@ def _record_from_row(row: dict[str, Any]) -> DelegationTaskRecord:
         }
     )
     result_data = json.loads(row["result_payload"]) if row.get("result_payload") else None
-    result = DelegationResult(
-        **{
-            **result_data,
-            "completed_at": datetime.fromisoformat(result_data["completed_at"]),
-        }
-    ) if result_data else None
+    result = (
+        DelegationResult(
+            **{
+                **result_data,
+                "completed_at": datetime.fromisoformat(result_data["completed_at"]),
+            }
+        )
+        if result_data
+        else None
+    )
     lease = row.get("lease_expires_at")
     lease_expires_at = datetime.fromisoformat(lease) if isinstance(lease, str) else lease
     return DelegationTaskRecord(
@@ -402,7 +416,10 @@ def _statement_rows(response: Any) -> list[dict[str, Any]]:
     columns = getattr(getattr(manifest, "schema", None), "columns", None)
     if not data_array or not columns:
         return []
-    names = [str(getattr(column, "name", column["name"] if isinstance(column, dict) else "")) for column in columns]
+    names = [
+        str(getattr(column, "name", column["name"] if isinstance(column, dict) else ""))
+        for column in columns
+    ]
     return [dict(zip(names, values, strict=True)) for values in data_array]
 
 

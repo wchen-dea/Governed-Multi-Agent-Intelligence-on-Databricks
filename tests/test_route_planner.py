@@ -4,8 +4,12 @@ from backend.services.route_planner import build_route_plan
 
 def test_route_planner_selects_best_capability_match():
     subagents = [
-        SubagentConfig(name="sales", kind="app", endpoint="sales", description="revenue store analytics"),
-        SubagentConfig(name="docs", kind="app", endpoint="docs", description="product documentation"),
+        SubagentConfig(
+            name="sales", kind="app", endpoint="sales", description="revenue store analytics"
+        ),
+        SubagentConfig(
+            name="docs", kind="app", endpoint="docs", description="product documentation"
+        ),
     ]
 
     plan, selected = build_route_plan("revenue by store", subagents)
@@ -26,9 +30,21 @@ def test_route_planner_falls_back_when_no_capability_matches():
 
 def test_route_planner_prefers_discriminative_product_terms():
     subagents = [
-        SubagentConfig(name="sales", kind="app", endpoint="sales", description="revenue and store analytics"),
-        SubagentConfig(name="product_index", kind="mcp", mcp_url="/product", description="product catalog lookups by brand code and article type"),
-        SubagentConfig(name="lakebase", kind="app", endpoint="lakebase", description="appointments and orders operational data"),
+        SubagentConfig(
+            name="sales", kind="app", endpoint="sales", description="revenue and store analytics"
+        ),
+        SubagentConfig(
+            name="product_index",
+            kind="mcp",
+            mcp_url="/product",
+            description="product catalog lookups by brand code and article type",
+        ),
+        SubagentConfig(
+            name="lakebase",
+            kind="app",
+            endpoint="lakebase",
+            description="appointments and orders operational data",
+        ),
     ]
 
     plan, selected = build_route_plan("products matching brand code MCH", subagents)
@@ -47,7 +63,9 @@ def test_route_planner_uses_system_prompt_capabilities():
             description="product knowledge",
             system_prompt="Verify exact brand_code and product_code matches.",
         ),
-        SubagentConfig(name="lakebase", kind="app", endpoint="lakebase", description="operational data"),
+        SubagentConfig(
+            name="lakebase", kind="app", endpoint="lakebase", description="operational data"
+        ),
     ]
 
     _, selected = build_route_plan("products matching brand code MCH", subagents)
@@ -106,7 +124,9 @@ def test_route_planner_ignores_plural_generic_type_term():
 def test_route_planner_keeps_all_tools_for_weak_matches():
     subagents = [
         SubagentConfig(name="sales", kind="app", endpoint="sales", description="revenue analytics"),
-        SubagentConfig(name="docs", kind="app", endpoint="docs", description="general documentation"),
+        SubagentConfig(
+            name="docs", kind="app", endpoint="docs", description="general documentation"
+        ),
     ]
 
     plan, selected = build_route_plan("please help me", subagents)

@@ -29,6 +29,7 @@ build-backend = "hatchling.build"
 dev = [
     "hatchling>=1.28.0",
     "pytest>=9.0.2",
+    "ruff>=0.11.0",
 ]
 
 setup = [
@@ -46,6 +47,15 @@ packages = ["src/backend", "src/scripts", "src/frontend"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = [".databricks_app_source", "mlruns"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = ["E501"]
 
 
 [project.scripts]

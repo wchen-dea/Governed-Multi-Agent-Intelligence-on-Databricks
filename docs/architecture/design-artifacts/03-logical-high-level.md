@@ -47,14 +47,15 @@ sequenceDiagram
     POL-->>RA: Allowed/denied subagents
     RA-->>BE: RuntimeAuthContext
     BE->>OR: Build Agent with allowed tools + MCP
-    OR->>TL: Execute selected tool
+    OR->>TL: Native function or MCP tool call
     TL-->>OR: Tool result
     OR-->>BE: Response items
+    BE->>BE: Buffer stream events and finalize source
     BE->>GR: Evaluate guardrails
     GR-->>BE: Pass/block decision
     BE->>MB: request.succeeded
-    BE-->>FE: Stream/invoke response
-    FE-->>U: Render response with source
+    BE-->>FE: response.output_text.delta plus metadata
+    FE-->>U: Render output-text deltas only
 ```
 
 ## 3. Data Flow and Lineage
@@ -90,10 +91,14 @@ flowchart LR
     AUTH --> APP[App Identity — WorkspaceClient]
     AUTH --> OBO[User OBO Identity — user WorkspaceClient]
 
-    APP --> TOOL1[App-auth tools — all current subagents]
+    APP --> TOOL1[Current dev app-auth tools]
     OBO --> TOOL2[OBO-auth tools — when auth_mode=obo]
 
     AUTH --> POL[Policy Filter]
     POL --> ALLOW[Allowed subagents by persona]
     POL --> DENY[Denied — persona_not_allowed / obo_identity_required]
 ```
+
+## Current Alignment
+
+The logical runtime adds deterministic model routing before agent construction; dev currently resolves standard, reasoning, and synthesis routes to `databricks-gpt-5-6-luna`. Streams buffer and finalize before the browser renders `response.output_text.delta` only. See [API contracts](../api-contracts.md) for the client-visible contract.

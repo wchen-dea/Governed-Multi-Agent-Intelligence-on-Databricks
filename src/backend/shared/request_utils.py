@@ -1,6 +1,7 @@
 """Normalize request payloads and extract MCP-aware errors."""
 
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 from agents.exceptions import UserError
 from agents.items import TResponseInputItem

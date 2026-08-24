@@ -131,7 +131,10 @@ def test_worker_executes_allowed_task_and_publishes_lifecycle_events():
         assert await worker.run_once() == 1
         record = await task_bus.get(task.task_id)
         assert record is not None and record.status == "succeeded"
-        assert record.result is not None and record.result.output == {"target": "lakebase_ods_agent", "count": 0}
+        assert record.result is not None and record.result.output == {
+            "target": "lakebase_ods_agent",
+            "count": 0,
+        }
         assert audit_bus.events == ["delegation.task.claimed", "delegation.task.completed"]
 
     asyncio.run(run())

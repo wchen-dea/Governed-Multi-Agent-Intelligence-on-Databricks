@@ -272,7 +272,7 @@ def test_load_subagents_skips_placeholder_identifiers(tmp_path):
             "description": "placeholder genie",
         },
         {
-                "name": "sales_insights_agent",
+            "name": "sales_insights_agent",
             "type": "genie",
             "data_classification": "confidential",
             "owner": "sales-analytics",

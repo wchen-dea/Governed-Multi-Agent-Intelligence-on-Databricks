@@ -21,7 +21,9 @@ def _governed_subagents() -> list[SubagentConfig]:
 
 
 def test_guardrails_blocks_missing_evidence_for_governed_answers():
-    result = evaluate_response_guardrails("Here is the answer without source.", _governed_subagents())
+    result = evaluate_response_guardrails(
+        "Here is the answer without source.", _governed_subagents()
+    )
 
     assert result.blocked is True
     assert "evidence_required" in result.reasons

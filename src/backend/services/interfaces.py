@@ -6,8 +6,8 @@ from databricks_openai import AsyncDatabricksOpenAI
 from databricks_openai.agents import McpServer
 from mlflow.types.responses import ResponsesAgentRequest
 
-from backend.domain.subagent_config import SubagentConfig
 from backend.domain.agent_messages import DelegationResult, DelegationTask, DelegationTaskRecord
+from backend.domain.subagent_config import SubagentConfig
 from backend.shared.runtime_utils import RequestIdentityContext
 
 
@@ -88,7 +88,9 @@ class AgentTaskBus(Protocol):
     """Persist and lease durable agent-delegation tasks independently of audit events."""
 
     async def submit(self, task: DelegationTask) -> DelegationTaskRecord: ...
-    async def claim(self, worker_id: str, *, limit: int = 1, lease_seconds: int = 60) -> list[DelegationTaskRecord]: ...
+    async def claim(
+        self, worker_id: str, *, limit: int = 1, lease_seconds: int = 60
+    ) -> list[DelegationTaskRecord]: ...
     async def mark_running(self, task_id: str, worker_id: str) -> DelegationTaskRecord: ...
     async def complete(self, result: DelegationResult, worker_id: str) -> DelegationTaskRecord: ...
     async def fail(self, task_id: str, worker_id: str, error_code: str) -> DelegationTaskRecord: ...

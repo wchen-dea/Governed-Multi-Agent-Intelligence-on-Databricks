@@ -3,10 +3,10 @@
 import atexit
 import json
 import logging
-from datetime import datetime, timezone
+import re
+from datetime import UTC, datetime
 from importlib import import_module
 from queue import Empty, Full, Queue
-import re
 from threading import Event, Thread
 from uuid import uuid4
 
@@ -277,9 +277,7 @@ class UcAuditTableMessageBus:
         workspace_client: WorkspaceClient | None = None,
     ) -> None:
         if not warehouse_id.strip():
-            raise ValueError(
-                "UC_AUDIT_WAREHOUSE_ID must be set when MESSAGE_BUS_BACKEND=uc_table"
-            )
+            raise ValueError("UC_AUDIT_WAREHOUSE_ID must be set when MESSAGE_BUS_BACKEND=uc_table")
         if not catalog.strip() or not schema.strip() or not table.strip():
             raise ValueError(
                 "UC_AUDIT_CATALOG, UC_AUDIT_SCHEMA, and UC_AUDIT_TABLE must all be set "
@@ -368,10 +366,18 @@ class UcAuditTableMessageBus:
                     "CAST(:event_ts AS TIMESTAMP), :event_payload)"
                 ),
                 parameters=[
-                    StatementParameterListItem(name="event_date", type="STRING", value=event["ts"][:10]),
-                    StatementParameterListItem(name="event_id", type="STRING", value=str(event["event_id"])),
-                    StatementParameterListItem(name="event_type", type="STRING", value=str(event["event_type"])),
-                    StatementParameterListItem(name="event_ts", type="STRING", value=str(event["ts"])),
+                    StatementParameterListItem(
+                        name="event_date", type="STRING", value=event["ts"][:10]
+                    ),
+                    StatementParameterListItem(
+                        name="event_id", type="STRING", value=str(event["event_id"])
+                    ),
+                    StatementParameterListItem(
+                        name="event_type", type="STRING", value=str(event["event_type"])
+                    ),
+                    StatementParameterListItem(
+                        name="event_ts", type="STRING", value=str(event["ts"])
+                    ),
                     StatementParameterListItem(
                         name="event_payload",
                         type="STRING",
@@ -402,7 +408,7 @@ def _build_event(event_type: str, payload: dict[str, object]) -> dict[str, objec
     return {
         "event_id": str(uuid4()),
         "event_type": event_type,
-        "ts": datetime.now(timezone.utc).isoformat(),
+        "ts": datetime.now(UTC).isoformat(),
         "payload": payload,
     }
 

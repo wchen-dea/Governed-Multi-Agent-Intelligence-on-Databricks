@@ -6,6 +6,7 @@ Usage:
 """
 
 import argparse
+import importlib
 import sys
 import time
 from pathlib import Path
@@ -57,6 +58,8 @@ def _execute_sql(w: WorkspaceClient, wh_id: str, stmt: str) -> None:
 
 def _ensure_materialized_view(w: WorkspaceClient, wh_id: str) -> None:
     print(f"\n→ Creating materialized view {MV_NAME} from {SOURCE_VIEW} …")
+
+
 def _ensure_materialized_view(w: WorkspaceClient, wh_id: str) -> None:
     """Verify the materialized view exists."""
     print(f"\n→ Verifying materialized view {MV_NAME} exists …")
@@ -77,7 +80,7 @@ def _refresh_materialized_view(w: WorkspaceClient, wh_id: str) -> None:
 def _create_genie_space(w: WorkspaceClient, wh_id: str) -> str | None:
     """Attempt to create a Genie Agent space over the MV."""
     try:
-        from databricks.sdk.service.dashboards import GenieAPI
+        importlib.import_module("databricks.sdk.service.dashboards")
     except ImportError:
         return None
 
@@ -91,7 +94,10 @@ def _create_genie_space(w: WorkspaceClient, wh_id: str) -> str | None:
         return space.space_id
     except Exception as exc:
         print(f"  Could not auto-create Genie space: {exc}", file=sys.stderr)
-        print("  Create one manually in the Databricks UI and update the subagent config.", file=sys.stderr)
+        print(
+            "  Create one manually in the Databricks UI and update the subagent config.",
+            file=sys.stderr,
+        )
         return None
 
 
@@ -118,7 +124,9 @@ def main() -> None:
         print(f"  Update subagents.<target>.json with space_id: {space_id}")
     else:
         print("  Next step: Create a Genie Agent space in the Databricks UI using")
-        print(f"    table {MV_NAME}, then update the cdi_agent space_id in subagents.<target>.json.")
+        print(
+            f"    table {MV_NAME}, then update the cdi_agent space_id in subagents.<target>.json."
+        )
 
 
 if __name__ == "__main__":

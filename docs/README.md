@@ -1,6 +1,27 @@
-# Documentation Index
+# Documentation Guide
 
-This documentation set supports the blueprint project for building multi-agent apps on Databricks.
+This guide separates current implementation authority from operating procedures, governance intent, decision history, and platform-neutral reference material.
+
+## Authority Map
+
+| Need | Authoritative location |
+| --- | --- |
+| Current runtime behavior | [Architecture guide](architecture/README.md) and [runtime technical specifications](architecture/runtime-technical-specs.md) |
+| API and stream behavior | [API contracts](architecture/api-contracts.md) |
+| Active tools, models, and integration routes | [Tool and model registry](architecture/tool-and-model-registry.md) |
+| Deployment and incident procedures | [Operations guide](operations/README.md) |
+| Evaluation and release evidence | [Quality guide](quality/README.md) |
+| Policy intent and security expectations | [Governance guide](governance/README.md) |
+| Historical technical decisions | [ADR index](adrs/README.md) |
+| Enterprise target-state research | [Reference pack](reference/README.md) |
+
+## Read By Role
+
+1. **AI executive:** [Architecture guide](architecture/README.md) -> [Product guide](product/README.md) -> [Quality guide](quality/README.md) -> [Operations guide](operations/README.md)
+2. **AI architect:** [Architecture guide](architecture/README.md) -> [Governance guide](governance/README.md) -> [ADR index](adrs/README.md)
+3. **Application engineer:** [API contracts](architecture/api-contracts.md) -> [Low-level design](architecture/low-level-design.md) -> [Tool and model registry](architecture/tool-and-model-registry.md)
+4. **Platform operator:** [Operations guide](operations/README.md) -> [Architecture deployment artifacts](architecture/design-artifacts/05-deployment-high-level.md)
+5. **Security or governance reviewer:** [Governance guide](governance/README.md) -> [Architecture high-level view](architecture/high-level-architecture.md)
 
 ## Team Onboarding: Skills and Capabilities
 
@@ -23,7 +44,12 @@ Runtime skills playbooks:
 
 Use this index to navigate project documentation by purpose:
 
-- [product/business-specs.md](product/business-specs.md): business goals, requirements, constraints, and success metrics.
+- [product/README.md](product/README.md): business outcomes, scope, and current capability boundary.
+- [architecture/README.md](architecture/README.md): architecture reading paths, authority map, and current control planes.
+- [governance/README.md](governance/README.md): policy, data, semantic, and security ownership.
+- [operations/README.md](operations/README.md): deployment, verification, MLflow, scripts, and incident paths.
+- [quality/README.md](quality/README.md): evaluation, KPI thresholds, and release evidence.
+- [internal/README.md](internal/README.md): contributor and assistant workflow boundaries.
 - [architecture/runtime-technical-specs.md](architecture/runtime-technical-specs.md): centralized technical implementation specification.
 - [quality/evaluation-spec.md](quality/evaluation-spec.md): datasets, scorers, KPI thresholds, and release-gate behavior.
 - [governance/prompt-policy-controls.md](governance/prompt-policy-controls.md): prompt layering, deterministic policy checks, and guardrail controls.
@@ -47,25 +73,26 @@ Use this index to navigate project documentation by purpose:
 
 ## Recommended Read Order
 
-1. [architecture/high-level-architecture.md](architecture/high-level-architecture.md)
-2. [product/business-specs.md](product/business-specs.md)
-3. [architecture/runtime-technical-specs.md](architecture/runtime-technical-specs.md)
-4. [architecture/tool-and-model-registry.md](architecture/tool-and-model-registry.md)
-5. [governance/data-contracts-lineage.md](governance/data-contracts-lineage.md)
-6. [governance/business-semantics-metadata.md](governance/business-semantics-metadata.md)
-7. [governance/prompt-policy-controls.md](governance/prompt-policy-controls.md)
-8. [quality/evaluation-spec.md](quality/evaluation-spec.md)
-9. [governance/security-threat-model.md](governance/security-threat-model.md)
-10. [operations/cost-performance-budget.md](operations/cost-performance-budget.md)
-11. [operations/mlflow-rollout-checklist.md](operations/mlflow-rollout-checklist.md)
-12. [operations/mlflow-rollout-tracker.md](operations/mlflow-rollout-tracker.md)
-13. [architecture/api-contracts.md](architecture/api-contracts.md)
-14. [architecture/low-level-design.md](architecture/low-level-design.md)
-15. [architecture/design-artifacts/README.md](architecture/design-artifacts/README.md)
-16. [operations/operations-runbook.md](operations/operations-runbook.md)
-17. [operations/postmortem-template.md](operations/postmortem-template.md)
-18. [internal/claude.md](internal/claude.md)
-19. [adrs/README.md](adrs/README.md)
+1. [architecture/README.md](architecture/README.md)
+2. [architecture/high-level-architecture.md](architecture/high-level-architecture.md)
+3. [product/business-specs.md](product/business-specs.md)
+4. [architecture/runtime-technical-specs.md](architecture/runtime-technical-specs.md)
+5. [architecture/tool-and-model-registry.md](architecture/tool-and-model-registry.md)
+6. [governance/data-contracts-lineage.md](governance/data-contracts-lineage.md)
+7. [governance/business-semantics-metadata.md](governance/business-semantics-metadata.md)
+8. [governance/prompt-policy-controls.md](governance/prompt-policy-controls.md)
+9. [quality/evaluation-spec.md](quality/evaluation-spec.md)
+10. [governance/security-threat-model.md](governance/security-threat-model.md)
+11. [operations/cost-performance-budget.md](operations/cost-performance-budget.md)
+12. [operations/mlflow-rollout-checklist.md](operations/mlflow-rollout-checklist.md)
+13. [operations/mlflow-rollout-tracker.md](operations/mlflow-rollout-tracker.md)
+14. [architecture/api-contracts.md](architecture/api-contracts.md)
+15. [architecture/low-level-design.md](architecture/low-level-design.md)
+16. [architecture/design-artifacts/README.md](architecture/design-artifacts/README.md)
+17. [operations/operations-runbook.md](operations/operations-runbook.md)
+18. [operations/postmortem-template.md](operations/postmortem-template.md)
+19. [internal/claude.md](internal/claude.md)
+20. [adrs/README.md](adrs/README.md)
 
 ## Quick Config Snippets
 

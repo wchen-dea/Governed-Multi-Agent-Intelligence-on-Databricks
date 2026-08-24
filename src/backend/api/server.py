@@ -1,11 +1,11 @@
 """Server bootstrap for the MLflow AgentServer runtime."""
 
+import asyncio
 import logging
 import os
-import asyncio
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import AsyncIterator
 
 from dotenv import load_dotenv
 from fastapi import HTTPException
@@ -26,7 +26,7 @@ if not os.getenv("MLFLOW_EXPERIMENT_ID", "").strip():
     os.environ.pop("MLFLOW_EXPERIMENT_ID", None)
 
 # Ensure @invoke/@stream handlers are registered.
-import backend.api.handlers  # noqa: F401
+import backend.api.handlers  # noqa: E402, F401
 
 agent_server = AgentServer("ResponsesAgent", enable_chat_proxy=True)
 app = agent_server.app

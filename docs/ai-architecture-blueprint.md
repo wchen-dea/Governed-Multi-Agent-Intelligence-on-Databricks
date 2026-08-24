@@ -24,9 +24,11 @@ this project maps blueprint concepts into concrete assets across backend
 runtime services, agent orchestration logic, API contracts,
 configuration, tests, and deployment definitions.
 
-This document remains the architecture reference, while this project is
-the working realization used to validate, evolve, and operate the
-blueprint in a production-oriented Databricks environment.
+This document is a reusable enterprise target-state blueprint. The project
+is a working Databricks implementation instance used to validate and evolve
+selected blueprint patterns. Current implementation authority is the
+[architecture guide](architecture/README.md), especially the
+[runtime technical specifications](architecture/runtime-technical-specs.md).
 
 ### Blueprint-to-Repository Cross-Reference
 

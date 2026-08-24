@@ -1,26 +1,31 @@
 # Multi-Agent App on Databricks
 
-A production-oriented multi-agent AI application on Databricks for governed tool routing, hybrid authorization, and environment-aware deployment.
-This repository is the blueprint project for designing, building, and deploying multi-agent apps on Databricks.
+**A governed agentic AI platform for operational decisions, not another generic chatbot.**
 
-## Why This Project
+This repository is a production-oriented Databricks blueprint for AI executives and AI architects building systems that can select the right model, invoke the right governed tool, operate on live enterprise data, coordinate bounded agent work, and leave an auditable record of every consequential decision. It turns Databricks AI capabilities into a deployable operating model for business intelligence, operations, support, and data-driven workflows.
 
-Modern AI applications are moving from single-model chatbots to orchestrated systems that can:
+## Executive Summary
 
-- Route requests to specialized agents and tools
-- Ground responses on governed business data
-- Return guardrail-finalized streamed responses for interactive UX
-- Ship safely through multi-environment CI/CD
+The next generation of enterprise AI will be judged by execution, controls, and measurable business outcomes, not conversational fluency alone. This implementation is designed for that standard.
 
-This repository provides an MVP foundation that can easily scale to enterprise use cases.
+| For AI executives | For AI architects |
+| --- | --- |
+| Move from isolated copilots to an accountable AI operating model with governed data access, release gates, and measurable quality. | Separate routing, model selection, authorization, delegation, guardrails, audit, and deployment into independently testable control planes. |
+| Expand AI by business domain without losing policy ownership, identity boundaries, or operational evidence. | Add agents, models, tools, and asynchronous workflows through typed contracts rather than bespoke point-to-point integrations. |
+| Make AI capability investable through explicit controls, evidence, and promotion criteria. | Build on Databricks Apps, MLflow Agent Server, MCP, Unity Catalog, Lakebase, and DAB target overlays. |
 
-Key project strengths:
+## Why This Matters
 
-- Governed multi-agent routing with policy and guardrail enforcement before tool execution.
-- Hybrid authorization support for both app identity and user identity (OBO) execution paths.
-- Production-oriented quality gates using MLflow GenAI evaluation and KPI-based release blocking.
-- Resilient deployment workflow with Terraform-free fallback, health checks, and smoke checks.
-- Strong architecture and governance traceability through ADRs and domain-specific specifications.
+This platform operationalizes the advanced AI patterns enterprises need now:
+
+- **From answers to action:** native function calls orchestrate MCP, Genie, Vector Search, Lakebase, serving endpoints, and app tools.
+- **Governed data intelligence:** Unity Catalog, app/OBO identity, persona policy, classifications, and guardrails are evaluated before tools execute.
+- **Deliberate capability selection:** task-aware routing records the Databricks model selected for standard, reasoning, and synthesis work.
+- **Bounded multi-agent coordination:** typed delegation uses correlation IDs, idempotency, leases, retries, dead-letter states, and Unity Catalog Delta task/event tables.
+- **Production evidence:** lifecycle audit events, MLflow tracing, quality KPIs, release gates, and redacted delegation status replace opaque agent behavior.
+- **Platform-grade delivery:** Databricks Apps, DAB overlays, versioned wheels, lifecycle gates, health checks, and source-only recovery support repeatable releases.
+
+The operating principle is simple: use agents where tools add verified value, preserve enterprise controls where data and identity matter, and promote only what can be measured.
 
 ## Databricks Features Used
 
@@ -250,6 +255,13 @@ Lint Markdown documentation:
 make lint-markdown
 ```
 
+Run the unified code-quality check or apply formatting:
+
+```bash
+make lint
+make format
+```
+
 The command uses the pinned `markdownlint-cli2` version through `scripts/lint_markdown.sh` and excludes generated app assets and dependency directories.
 
 If bundle deploy fails due to Terraform provider registry availability, use the operational fallback documented in [docs/operations/operations-runbook.md](docs/operations/operations-runbook.md).
@@ -312,7 +324,7 @@ MCP connect/probe performance controls:
 
 ## Runtime Status
 
-- Current package version: `0.1.5`.
+- Current package version: `0.1.7`.
 - Lakebase uses an OAuth credential minted from the Databricks Postgres credentials API; the app service principal needs a matching Lakebase OAuth role and `postgres` app resource grant.
 - The orchestrator selects a configured Databricks model by task type and records the selected model, task type, and reason in `routing.plan.selected` lifecycle metadata.
 - The UI renders `response.output_text.delta` events and source/tool badges. It does not render raw function, MCP, or tool-output events.
@@ -350,6 +362,8 @@ Useful operational commands:
 
 - `make redeploy TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT`
 - `make upload-wheel TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT`
+- `make lint`
+- `make format`
 - `make grants TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT`
 - `make query-dev TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT QUERY='top stores by revenue' QUERY_PERSONA=manager`
 

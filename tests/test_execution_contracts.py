@@ -16,13 +16,19 @@ def test_response_envelope_is_typed_and_serializable():
 
 
 def test_direct_groundedness_requires_freshness_metadata():
-    assert direct_groundedness_score(
-        "Revenue is 100. Source: sales (freshness 15m).",
-        requires_evidence=True,
-        freshness_sla="15m",
-    ) == 1.0
-    assert direct_groundedness_score(
-        "Revenue is 100. Source: sales.",
-        requires_evidence=True,
-        freshness_sla="15m",
-    ) == 0.5
+    assert (
+        direct_groundedness_score(
+            "Revenue is 100. Source: sales (freshness 15m).",
+            requires_evidence=True,
+            freshness_sla="15m",
+        )
+        == 1.0
+    )
+    assert (
+        direct_groundedness_score(
+            "Revenue is 100. Source: sales.",
+            requires_evidence=True,
+            freshness_sla="15m",
+        )
+        == 0.5
+    )

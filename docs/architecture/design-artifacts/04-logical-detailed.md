@@ -12,6 +12,9 @@ flowchart TB
     D --> PO[Policy Service]
     D --> GR[Guardrails Service]
     D --> MB[Message Bus]
+    D --> MR[Model Routing Service]
+    D --> DT[Agent Delegation Policy and Task Bus]
+    DT --> DW[Bounded Delegation Worker]
 
     OR --> SC[Subagent Config — subagent_config.py]
     OR --> TL[Tool Builders — serving_endpoint / app]
@@ -83,7 +86,7 @@ flowchart TD
 flowchart TD
     A[Orchestrator System Instructions — cached per subagent config] --> B[Per-subagent system_prompt]
     B --> C[User messages — normalized via to_messages]
-    C --> D[Model Output — target-configured orchestrator model]
+    C --> D[Model Router then configured Databricks model]
 
     P1[Request-time Policy — persona + auth_mode + classification] --> G[Allowed Tool Set]
     G --> C
@@ -92,6 +95,10 @@ flowchart TD
     P2 --> E[Allowed Response — pass]
     P2 --> F[Blocked Response — UserError / guardrail delta]
 ```
+
+## Current Alignment
+
+Native `delegate_to_agent` handoffs are bounded app-auth tasks. Dev persists them in UC task/event tables, while the backend lifespan owns lease-based worker execution and redacted status lookup. Promotion remains blocked: `ToolCallCorrectness = 0.400 < 0.800`.
 
 ## 5. Session and State Model
 
@@ -137,5 +144,5 @@ flowchart LR
     Eval --> KPI{KPI Thresholds Met?}
     KPI -- Yes --> Bundle[databricks bundle validate]
     Bundle --> Deploy[databricks bundle deploy -t dev]
-    KPI -- No --> Stop[Deployment Blocked — threshold violation]
+    KPI -- No --> Stop[Promotion Blocked current ToolCallCorrectness 0.400 below 0.800]
 ```

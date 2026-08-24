@@ -33,7 +33,6 @@ import os
 import re
 import subprocess
 import sys
-from typing import Optional
 
 from dotenv import load_dotenv
 
@@ -123,9 +122,7 @@ def _grant_permissions(client, grantee: str, memory_type: str):
     for schema, tables in schema_tables.items():
         print(f"Granting schema privileges on '{schema}'...")
         try:
-            client.grant_schema(
-                grantee=grantee, schemas=[schema], privileges=schema_privileges
-            )
+            client.grant_schema(grantee=grantee, schemas=[schema], privileges=schema_privileges)
         except Exception as e:
             print(f"  Warning: schema grant failed (may not exist yet): {e}")
 
@@ -161,12 +158,12 @@ def _grant_permissions(client, grantee: str, memory_type: str):
 
     print(
         "\nPermission grants complete. If some grants failed because tables don't "
-            "exist yet, that is expected on a fresh branch; they will be created on first "
+        "exist yet, that is expected on a fresh branch; they will be created on first "
         "agent usage. Re-run this script after the first run to grant remaining permissions."
     )
 
 
-def _parse_project_branch_from_endpoint(endpoint: str) -> tuple[Optional[str], Optional[str]]:
+def _parse_project_branch_from_endpoint(endpoint: str) -> tuple[str | None, str | None]:
     """Extract project and branch from an autoscaling endpoint path.
 
     Args:
@@ -181,7 +178,7 @@ def _parse_project_branch_from_endpoint(endpoint: str) -> tuple[Optional[str], O
     return match.group(1), match.group(2)
 
 
-def _resolve_sp_client_id(sp_client_id: Optional[str], app_name: Optional[str], profile: str) -> str:
+def _resolve_sp_client_id(sp_client_id: str | None, app_name: str | None, profile: str) -> str:
     """Resolve app service principal client ID from explicit value or app name.
 
     Args:
@@ -211,7 +208,9 @@ def _resolve_sp_client_id(sp_client_id: Optional[str], app_name: Optional[str], 
     result = subprocess.run(cmd, capture_output=True, text=True, check=False)
     if result.returncode != 0:
         stderr = (result.stderr or "").strip()
-        raise RuntimeError(f"Failed to resolve app service principal from app '{app_name}': {stderr}")
+        raise RuntimeError(
+            f"Failed to resolve app service principal from app '{app_name}': {stderr}"
+        )
 
     try:
         payload = json.loads(result.stdout)
@@ -220,18 +219,16 @@ def _resolve_sp_client_id(sp_client_id: Optional[str], app_name: Optional[str], 
 
     resolved = payload.get("service_principal_client_id")
     if not resolved:
-        raise RuntimeError(
-            f"App '{app_name}' did not return service_principal_client_id."
-        )
+        raise RuntimeError(f"App '{app_name}' did not return service_principal_client_id.")
     return resolved
 
 
 def _resolve_target(
-    instance_name: Optional[str],
-    autoscaling_endpoint: Optional[str],
-    project: Optional[str],
-    branch: Optional[str],
-) -> tuple[Optional[str], Optional[str], Optional[str], str]:
+    instance_name: str | None,
+    autoscaling_endpoint: str | None,
+    project: str | None,
+    branch: str | None,
+) -> tuple[str | None, str | None, str | None, str]:
     """Resolve exactly one Lakebase target.
 
     Args:
@@ -266,7 +263,14 @@ def _resolve_target(
     return instance_name, project, branch, mode
 
 
-def _print_plan(grantee: str, memory_type: str, mode: str, instance_name: Optional[str], project: Optional[str], branch: Optional[str]) -> None:
+def _print_plan(
+    grantee: str,
+    memory_type: str,
+    mode: str,
+    instance_name: str | None,
+    project: str | None,
+    branch: str | None,
+) -> None:
     """Print a human-readable summary of planned grants.
 
     Args:
@@ -286,7 +290,9 @@ def _print_plan(grantee: str, memory_type: str, mode: str, instance_name: Option
     else:
         print(f"Lakebase target: autoscaling project '{project}', branch '{branch}'")
     print("Schemas: shared + memory-type specific")
-    print("Privileges: schema USAGE/CREATE, table SELECT/INSERT/UPDATE/DELETE, sequence USAGE/SELECT/UPDATE")
+    print(
+        "Privileges: schema USAGE/CREATE, table SELECT/INSERT/UPDATE/DELETE, sequence USAGE/SELECT/UPDATE"
+    )
 
 
 def main():

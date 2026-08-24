@@ -30,6 +30,7 @@ class ConnectedStage {
     +unavailable: list~str~
     +agent: Agent
     +route_plan: RoutePlan
+    +route_plan: RoutePlan
 }
 
 class InvokeFinalizedStage {
@@ -151,6 +152,7 @@ StreamPipeline ..> AsyncExitStack : MCP lifecycle
 
 - Shared stages (`_prepare_request_stage`, `_connect_request_stage`) enforce a common pipeline contract for invoke and stream.
 - Stream path buffers all events in one pass, tracks `used_subagents` and `has_tool_activity`, then applies guardrails post-execution.
+- Buffered events become user-visible answer text only after finalization; the UI renders `response.output_text.delta` and keeps other events as metadata.
 - Guardrail block behavior diverges by mode:
   - invoke: raises `UserError` — caller sees authorization error
   - stream: emits `response.output_text.delta` with block message and terminates

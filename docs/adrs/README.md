@@ -2,6 +2,8 @@
 
 Architecture Decision Records (ADRs) capture durable technical decisions for this project.
 
+ADRs explain accepted rationale at the time of the decision. They are not the mutable runtime inventory; use the [architecture guide](../architecture/README.md) and [runtime technical specifications](../architecture/runtime-technical-specs.md) for current implementation facts.
+
 ## ADR Conventions
 
 - Filename format: `NNNN-short-kebab-case-title.md`

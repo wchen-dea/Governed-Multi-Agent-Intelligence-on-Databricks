@@ -1,9 +1,10 @@
 from types import SimpleNamespace
 
+from mlflow.types.responses import ResponsesAgentRequest
+
 from backend.domain.subagent_config import SubagentConfig
 from backend.services.policy_service import build_policy_context, filter_subagents_by_policy
 from backend.shared.settings import get_settings
-from mlflow.types.responses import ResponsesAgentRequest
 
 
 def _subagents() -> list[SubagentConfig]:

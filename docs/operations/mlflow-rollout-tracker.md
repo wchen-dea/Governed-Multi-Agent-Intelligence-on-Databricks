@@ -1,6 +1,8 @@
-# MLflow Execution Tracker
+# MLflow Execution Tracker Template
 
 Use this tracker with the implementation checklist to manage execution status, ownership, dates, and risks.
+
+This is a planning template, not a current runtime status record. Use the [MLflow guide](mlflow-guide.md), [evaluation specification](../quality/evaluation-spec.md), and deployment evidence for current implementation state.
 
 Related plan: [MLflow Implementation Checklist](mlflow-rollout-checklist.md)
 

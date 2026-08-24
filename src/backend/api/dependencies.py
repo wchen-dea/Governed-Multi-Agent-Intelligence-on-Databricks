@@ -1,29 +1,30 @@
 """Application dependency composition for backend API handlers."""
 
+from collections.abc import Awaitable, Callable
 from contextlib import AsyncExitStack
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Any, Awaitable, Callable
+from typing import Any
 
 from databricks_openai import AsyncDatabricksOpenAI
 from mlflow.types.responses import ResponsesAgentRequest
 
 from backend.domain.subagent_config import SubagentConfig
+from backend.services.agent_task_bus import default_agent_task_bus
+from backend.services.guardrails_service import (
+    GuardrailResult,
+    InputGuardrailResult,
+    evaluate_input_guardrails,
+    evaluate_response_guardrails,
+)
+from backend.services.interfaces import AgentTaskBus, MessageBus
+from backend.services.message_bus import default_message_bus
 from backend.services.orchestrator_service import (
     OrchestratorDependencies,
     build_mcp_servers,
     build_subagent_tools,
     connect_healthy_mcp_servers,
     create_orchestrator_agent,
-)
-from backend.services.interfaces import AgentTaskBus, MessageBus
-from backend.services.agent_task_bus import default_agent_task_bus
-from backend.services.message_bus import default_message_bus
-from backend.services.guardrails_service import (
-    GuardrailResult,
-    InputGuardrailResult,
-    evaluate_input_guardrails,
-    evaluate_response_guardrails,
 )
 from backend.services.runtime_auth_service import (
     RuntimeAuthContext,

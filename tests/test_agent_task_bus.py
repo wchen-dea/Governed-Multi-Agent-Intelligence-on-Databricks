@@ -52,9 +52,17 @@ def test_uc_agent_task_bus_creates_tables_and_submits_task():
     record = asyncio.run(bus.submit(_task()))
 
     assert record.status == "pending"
-    assert any("CREATE TABLE IF NOT EXISTS main.agent_ops.agent_delegation_tasks" in statement for statement in statement_execution.statements)
-    assert any("INSERT INTO main.agent_ops.agent_delegation_tasks" in statement for statement in statement_execution.statements)
-    assert any("delegation.task.created" in statement for statement in statement_execution.statements)
+    assert any(
+        "CREATE TABLE IF NOT EXISTS main.agent_ops.agent_delegation_tasks" in statement
+        for statement in statement_execution.statements
+    )
+    assert any(
+        "INSERT INTO main.agent_ops.agent_delegation_tasks" in statement
+        for statement in statement_execution.statements
+    )
+    assert any(
+        "delegation.task.created" in statement for statement in statement_execution.statements
+    )
 
 
 def test_default_agent_task_bus_uses_memory_by_default_and_validates_uc_config():

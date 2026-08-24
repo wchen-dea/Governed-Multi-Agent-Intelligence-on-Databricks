@@ -27,9 +27,13 @@ Primary implementation:
 Dev keeps all task classes on the verified balanced model. Promote a task route to another Databricks model only after a successful live invocation and evaluation run for that route.
 
 Set `MODEL_ROUTING_ENABLED=false` to retain `ORCHESTRATOR_MODEL` for every task. Configure individual routes through `MODEL_ROUTING_DEFAULT_MODEL`, `MODEL_ROUTING_REASONING_MODEL`, and `MODEL_ROUTING_QUALITY_MODEL`.
+
+With routing enabled, dev currently resolves standard, reasoning, and synthesis tasks to `databricks-gpt-5-6-luna`. Model-route metadata is not proof of tool-call correctness.
 - src/reactui/src/App.tsx
 - src/reactui/src/api.ts
 - src/scripts/react_ui_server.py
+
+This document is the canonical implementation-fact index for architecture behavior; [API contracts](api-contracts.md), [tool and model registry](tool-and-model-registry.md), and [low-level design](low-level-design.md) remain authoritative for their named concerns.
 
 ## 2. Tool Routing Specification
 
@@ -178,7 +182,7 @@ Primary implementation:
 ## 11. Evaluation Readiness
 
 - Deterministic route-plan tests pass for sales, product, Flink, CDI, and Lakebase intents.
-- The latest Databricks-backed conversational evaluation remains blocked at tool-call accuracy `0.400 < 0.800`.
+- The latest Databricks-backed conversational evaluation remains blocked: `ToolCallCorrectness = 0.400 < 0.800`.
 - Route-plan events must not be interpreted as proof of correct model tool calls; actual tool-call traces remain the release-gate authority.
 - The evaluation corpus requires explicit cases for tool-required, tool-optional, and no-tool conversational turns.
 
@@ -194,8 +198,9 @@ Primary implementation:
 
 ## Related Documents
 
-- high-level-architecture.md
-- low-level-design.md
-- ../product/business-specs.md
-- ../operations/operations-runbook.md
-- adrs/README.md
+- [Architecture guide](README.md)
+- [High-level architecture](high-level-architecture.md)
+- [Low-level design](low-level-design.md)
+- [Business specifications](../product/business-specs.md)
+- [Operations runbook](../operations/operations-runbook.md)
+- [Architecture decision records](../adrs/README.md)

@@ -107,7 +107,9 @@ CI pipeline enforcement:
 
 - `.github/workflows/databricks-cicd.yml`
 
-## Model Matrix and Environment Recommendations
+## Proposed Model Experiment Matrix
+
+The following profiles are an experiment and promotion plan, not active target configuration. Current dev model routing resolves standard, reasoning, and synthesis to `databricks-gpt-5-6-luna` unless target environment variables explicitly override it.
 
 The project supports model selection at three layers:
 
@@ -123,7 +125,7 @@ The project supports model selection at three layers:
 | Quality-first | `databricks-claude-sonnet-5` | Keep current routes and enforce strict guardrails/evidence on governed paths | `databricks:/databricks-claude-sonnet-5` | High | Very high | Medium-high | High-stakes release validation and executive-facing workflows |
 | Cost-first | Smaller served instruction model endpoint in workspace | Keep Genie and AI Search routes unchanged; optimize only orchestration cost first | Smaller model for fast loops plus nightly Sonnet baseline | Low | Medium | Fast | High-volume internal traffic and rapid iteration |
 
-### Environment-Specific Recommendation
+### Proposed Environment-Specific Recommendation
 
 - `dev`:
 	- Profile: Cost-first for inner loop, plus Balanced once per day.
@@ -163,7 +165,8 @@ For each release candidate, capture:
 
 ## Related Documents
 
-- ../architecture/runtime-technical-specs.md
-- ../product/business-specs.md
-- ../operations/operations-runbook.md
-- ../adrs/0007-evaluation-kpi-release-gate.md
+- [Quality guide](README.md)
+- [Runtime technical specifications](../architecture/runtime-technical-specs.md)
+- [Business specifications](../product/business-specs.md)
+- [Operations runbook](../operations/operations-runbook.md)
+- [Evaluation KPI release-gate ADR](../adrs/0007-evaluation-kpi-release-gate.md)

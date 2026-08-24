@@ -36,7 +36,7 @@ Optional headers:
 
 ## Stream Contract
 
-- Stream events are normalized for stable output item identifiers and buffered until response guardrails and source metadata are finalized.
+- The MLflow stream handler normalizes stable item identifiers, buffers execution events, then finalizes source metadata and guardrails before user-visible output.
 - Tool output items are retained as metadata events; they are not visible assistant content.
 - The React client renders only `response.output_text.delta` as answer text and uses other events for governance hints.
 
@@ -77,6 +77,6 @@ The public Responses API output structure remains backward-compatible; governanc
 
 ## Related Documents
 
-- runtime-technical-specs.md
-- ../governance/prompt-policy-controls.md
-- ../operations/operations-runbook.md
+- [Runtime technical specifications](runtime-technical-specs.md)
+- [Prompt and policy controls](../governance/prompt-policy-controls.md)
+- [Operations runbook](../operations/operations-runbook.md)

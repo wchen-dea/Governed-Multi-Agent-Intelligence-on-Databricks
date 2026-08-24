@@ -6,14 +6,14 @@ Describe the system shape, major boundaries, and end-to-end request flow.
 
 ## Scope
 
-This document covers high-level architecture only. Implementation-level details are in `docs/architecture/low-level-design.md`, and operational procedures are in `docs/operations/operations-runbook.md`.
+This document covers high-level architecture only. See [low-level design](low-level-design.md) for implementation details and the [operations runbook](../operations/operations-runbook.md) for procedures.
 
 ## Current Status
 
 - Dev deployment is live with React UI as the primary client.
 - Hosted runtime uses `uv run runtime-serve-app`.
-- Deployments may intermittently fail when Terraform provider registry is unreachable; direct app deploy is the operational fallback.
-- Deterministic route-plan unit tests pass, but the latest conversational MLflow gate remains blocked at tool-call accuracy `0.400 < 0.800`.
+- Deployments may intermittently fail when Terraform provider registry is unreachable; versioned-wheel `make upload-wheel` is the source-only operational fallback and does not apply bundle resources or grants.
+- Deterministic route-plan unit tests pass, but promotion remains blocked: `ToolCallCorrectness = 0.400 < 0.800`.
 
 ## Main Content
 
@@ -82,9 +82,10 @@ flowchart LR
     subgraph Platform[Databricks App Platform]
         AS[MLflow Agent Server ResponsesAgent]
         ORCH[Agent Orchestration Service]
+        MR[Deterministic Model Router]
         AUTH[Hybrid Auth Router auth_mode app or obo]
         MCP[MCP Integration Layer]
-        LLM[Databricks-Provided LLM gpt-5.6-luna]
+        LLM[Configured Databricks Model standard reasoning synthesis]
 
         APPID[App Identity Service Principal]
         OBOID[User Identity OBO Token]
@@ -121,6 +122,7 @@ flowchart LR
 
     UI --> AS
     AS --> ORCH
+    ORCH --> MR --> LLM
     ORCH --> AUTH
     AUTH -->|app| APPID
     AUTH -->|obo| OBOID
@@ -130,14 +132,14 @@ flowchart LR
     ORCH --> A4
     ORCH --> A5
 
-    ORCH --> LLM
-
     ORCH --> MCP
     APPID --> MCP
     OBOID --> MCP
     MCP --> BSL
     MCP --> VS
-    A5 --> LB
+    A5 -->|psycopg2 using app OAuth database role| LB
+    APPID --> PGCRED[Databricks Postgres Credentials API]
+    PGCRED --> LB
     BSL --> ST
     BSL --> MV
     VS --> PT
@@ -163,8 +165,9 @@ flowchart TD
     D -->|app| AID[Use App Identity Client]
     D -->|obo + token| OID[Use User OBO Identity Client]
     D -->|obo + no token| ERR[Mark Tool Unavailable or Raise Auth Error]
-    AID --> O[Orchestrator Agent via Responses API]
-    OID --> O
+    AID --> TOOLS[App-auth Tool Clients]
+    OID --> TOOLS
+    TOOLS --> O[Orchestrator Agent via Responses API]
 
     O --> PLAN[Deterministic Route Plan]
     PLAN --> G[Genie Sales Agent via MCP]
@@ -172,6 +175,8 @@ flowchart TD
     O --> F[MCP AI Search flink_support_agent RAG]
     O --> CDI[Genie CDI Agent via MCP]
     O --> LB[Lakebase ODS Agent psycopg2]
+    O -->|native delegate_to_agent| DT[UC Delegation Task and Event Tables]
+    W[Bounded Lifespan Worker] --> DT
 
     G --> M[MCP Genie Space sales]
     K --> R1[Vector Search dim_product_search_index]
@@ -179,13 +184,16 @@ flowchart TD
     CDI --> M2[MCP Genie Space CDI metrics]
     LB --> PG[Lakebase PostgreSQL via OAuth credentials]
 
-    M --> R[Response Aggregation and Guardrails]
-    R1 --> R
-    R3 --> R
-    M2 --> R
-    PG --> R
-    ERR --> R
-    R --> UI
+    M --> BUF[Buffer Stream Events]
+    R1 --> BUF
+    R3 --> BUF
+    M2 --> BUF
+    PG --> BUF
+    ERR --> BUF
+    BUF --> R[Finalize Source and Guardrails]
+    R --> DELTA[response.output_text.delta]
+    DELTA --> UI
+    UI -->|payload-redacted GET /delegations task status| APP
     UI --> U
 
     classDef auth fill:#eef7ff,stroke:#2b6cb0,stroke-width:1px;
@@ -200,6 +208,12 @@ The orchestrator uses subagent-level auth configuration (`auth_mode`) to decide 
 - `obo`: run tool/MCP calls with user identity derived from forwarded token.
 
 If an `obo` tool is required but no forwarded token is available, the tool is marked unavailable or returns a clear authorization error.
+
+### Model and Delegation Control Plan
+
+The deterministic model router classifies requests as standard, reasoning, or synthesis before agent assembly. Dev currently resolves every class to `databricks-gpt-5-6-luna`; routing metadata is not proof of tool-call correctness.
+
+Approved app-auth handoffs use `delegate_to_agent`, persist bounded work in Unity Catalog task/event tables, and run through a lifespan-managed worker. `GET /delegations/{task_id}` returns payload-redacted status.
 
 ### Lakebase OAuth Configuration
 
@@ -260,9 +274,10 @@ Optional runtime mode:
 
 ## Related Docs
 
-- `docs/product/business-specs.md`: business goals and requirements
-- `docs/architecture/runtime-technical-specs.md`: centralized technical domain map
-- `docs/architecture/low-level-design.md`: low-level implementation details
-- `docs/architecture/design-artifacts/README.md`: centralized full design diagram set across concept, logical, and deployment phases
-- `docs/architecture/design-artifacts/07-request-execution-flow-class-diagram.md`: simplified invoke/stream staged request execution class diagram
-- `docs/operations/operations-runbook.md`: operations and incident handling
+- [Architecture guide](README.md): authority map and role-based reading paths
+- [Business specifications](../product/business-specs.md): business goals and requirements
+- [Runtime technical specifications](runtime-technical-specs.md): centralized technical domain map
+- [Low-level design](low-level-design.md): implementation details
+- [Design artifacts](design-artifacts/README.md): concept, logical, deployment, and runtime diagrams
+- [Request execution pipeline](design-artifacts/07-request-execution-flow-class-diagram.md): invoke/stream staged execution
+- [Operations runbook](../operations/operations-runbook.md): deployment and incident handling

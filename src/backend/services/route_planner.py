@@ -5,7 +5,6 @@ import re
 from backend.domain.execution_contracts import RoutePlan
 from backend.domain.subagent_config import SubagentConfig
 
-
 MIN_ROUTE_CONFIDENCE = 0.60
 
 
@@ -15,9 +14,30 @@ def build_route_plan(
 ) -> tuple[RoutePlan, list[SubagentConfig]]:
     """Select capability-matching subagents, or retain all on ambiguity."""
     stop_words = {
-        "a", "an", "and", "are", "ask", "about", "by", "for", "from", "how",
-        "in", "is", "it", "of", "on", "or", "the", "to", "what", "with", "you",
-        "matching", "asking", "type",
+        "a",
+        "an",
+        "and",
+        "are",
+        "ask",
+        "about",
+        "by",
+        "for",
+        "from",
+        "how",
+        "in",
+        "is",
+        "it",
+        "of",
+        "on",
+        "or",
+        "the",
+        "to",
+        "what",
+        "with",
+        "you",
+        "matching",
+        "asking",
+        "type",
     }
     terms = {
         normalized
@@ -39,8 +59,7 @@ def build_route_plan(
         capabilities.append(weights)
 
     document_frequency = {
-            term: sum(term in capability for capability in capabilities)
-        for term in terms
+        term: sum(term in capability for capability in capabilities) for term in terms
     }
     scored: list[tuple[float, SubagentConfig]] = []
     for index, subagent in enumerate(subagents):
