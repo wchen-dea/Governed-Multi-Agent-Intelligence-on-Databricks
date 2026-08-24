@@ -1,8 +1,8 @@
 """Runtime settings for backend services."""
 
+import os
 from dataclasses import dataclass
 from functools import lru_cache
-import os
 
 
 @dataclass(frozen=True)
@@ -48,6 +48,7 @@ class AppSettings:
 @lru_cache(maxsize=1)
 def get_settings() -> AppSettings:
     """Load backend runtime settings from environment variables."""
+
     def _env_int(name: str, default: int) -> int:
         raw = os.getenv(name)
         if raw is None:
@@ -71,7 +72,8 @@ def get_settings() -> AppSettings:
         model_routing_enabled=os.getenv("MODEL_ROUTING_ENABLED", "true").lower()
         in {"1", "true", "yes", "on"},
         model_routing_default_model=os.getenv(
-            "MODEL_ROUTING_DEFAULT_MODEL", os.getenv("ORCHESTRATOR_MODEL", "databricks-gpt-5-6-luna")
+            "MODEL_ROUTING_DEFAULT_MODEL",
+            os.getenv("ORCHESTRATOR_MODEL", "databricks-gpt-5-6-luna"),
         ),
         model_routing_reasoning_model=os.getenv(
             "MODEL_ROUTING_REASONING_MODEL", "databricks-gpt-5-6-luna"
@@ -91,9 +93,7 @@ def get_settings() -> AppSettings:
         message_bus_topic=os.getenv("MESSAGE_BUS_TOPIC", "agent-lifecycle-events"),
         message_bus_kafka_bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS", ""),
         message_bus_kafka_client_id=os.getenv("KAFKA_CLIENT_ID", "multiagent-app"),
-        message_bus_rabbitmq_url=os.getenv(
-            "RABBITMQ_URL", "amqp://guest:guest@localhost:5672/"
-        ),
+        message_bus_rabbitmq_url=os.getenv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/"),
         message_bus_fail_open=os.getenv("MESSAGE_BUS_FAIL_OPEN", "true").lower()
         in {"1", "true", "yes", "on"},
         message_bus_uc_warehouse_id=os.getenv("UC_AUDIT_WAREHOUSE_ID", ""),

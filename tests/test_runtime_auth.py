@@ -1,12 +1,13 @@
 from types import SimpleNamespace
 
+from mlflow.types.responses import ResponsesAgentRequest
+
 from backend.domain.subagent_config import SubagentConfig
+from backend.services.agent_task_bus import InMemoryAgentTaskBus
 from backend.services.runtime_auth_service import (
     RuntimeAuthDependencies,
     build_runtime_auth_context,
 )
-from backend.services.agent_task_bus import InMemoryAgentTaskBus
-from mlflow.types.responses import ResponsesAgentRequest
 
 
 def _sample_subagents() -> list[SubagentConfig]:
@@ -41,6 +42,7 @@ def test_build_runtime_auth_context_without_user_identity():
         user_workspace_client=None,
         app_workspace_client=object(),
     )
+
     def fake_build_subagent_tools(s, app, obo):
         assert s == subagents
         assert app is app_client
@@ -207,7 +209,9 @@ def test_build_runtime_auth_context_applies_policy_filter_denials():
     )
 
     assert ctx.subagent_tools == ["tool-managed"]
-    assert ctx.unavailable_auth == ["sales_insights_agent denied by policy (persona 'manager' is not allowed)"]
+    assert ctx.unavailable_auth == [
+        "sales_insights_agent denied by policy (persona 'manager' is not allowed)"
+    ]
 
 
 def test_runtime_auth_exposes_native_handoff_for_approved_lakebase_target():

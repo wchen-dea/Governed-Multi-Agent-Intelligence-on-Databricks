@@ -190,7 +190,9 @@ class ProcessManager:
                     elif self.backend_ready and self.frontend_ready:
                         print("\n" + "=" * 50)
                         print("✓ Both frontend and backend are ready!")
-                        print(f"✓ Open the chat UI at http://localhost:{self.frontend_port or 3000}")
+                        print(
+                            f"✓ Open the chat UI at http://localhost:{self.frontend_port or 3000}"
+                        )
                         print("=" * 50 + "\n")
 
             process.wait()
@@ -308,9 +310,7 @@ class ProcessManager:
                 self.no_ui = True
             else:
                 # Route browser-origin invocations through the React UI proxy server.
-                os.environ["FRONTEND_BACKEND_PROXY"] = (
-                    f"http://localhost:{self.port}/invocations"
-                )
+                os.environ["FRONTEND_BACKEND_PROXY"] = f"http://localhost:{self.port}/invocations"
                 os.environ["REACT_UI_DIST_DIR"] = str(react_dist_path)
 
         # Open process log files with line-buffered writes.

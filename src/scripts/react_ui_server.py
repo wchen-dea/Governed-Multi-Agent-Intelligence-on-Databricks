@@ -4,16 +4,16 @@
 from __future__ import annotations
 
 import argparse
-from contextlib import asynccontextmanager
 import os
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import AsyncGenerator
 
 import httpx
+import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-import uvicorn
 
 DEFAULT_DIST_DIR = Path(__file__).resolve().parents[1] / "reactui" / "dist"
 REACT_UI_DIST_DIR = Path(os.environ.get("REACT_UI_DIST_DIR", str(DEFAULT_DIST_DIR))).resolve()
@@ -21,6 +21,7 @@ BACKEND_PROXY_URL = os.environ.get("FRONTEND_BACKEND_PROXY", "http://localhost:8
 
 REQUEST_HEADER_SKIP = {"host", "content-length", "connection", "accept-encoding"}
 RESPONSE_HEADER_ALLOW = {"content-type", "cache-control", "x-request-id", "date"}
+
 
 def _validate_dist() -> None:
     if not REACT_UI_DIST_DIR.exists():
@@ -128,7 +129,9 @@ def spa_fallback(path: str) -> FileResponse:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run React UI static server with /invocations proxy")
+    parser = argparse.ArgumentParser(
+        description="Run React UI static server with /invocations proxy"
+    )
     parser.add_argument("--port", type=int, default=int(os.environ.get("CHAT_APP_PORT", "3000")))
     parser.add_argument(
         "--workers",
@@ -139,7 +142,9 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.workers > 1:
-        uvicorn.run("scripts.react_ui_server:app", host="0.0.0.0", port=args.port, workers=args.workers)
+        uvicorn.run(
+            "scripts.react_ui_server:app", host="0.0.0.0", port=args.port, workers=args.workers
+        )
         return
 
     uvicorn.run(app, host="0.0.0.0", port=args.port)

@@ -234,9 +234,7 @@ def test_connect_healthy_mcp_servers_returns_detailed_unavailable_reason():
     healthy, unavailable = asyncio.run(_run())
 
     assert len(healthy) == 1
-    assert unavailable == [
-        "Genie:sales_insights_agent unavailable: RuntimeError: 401 unauthorized"
-    ]
+    assert unavailable == ["Genie:sales_insights_agent unavailable: RuntimeError: 401 unauthorized"]
 
 
 def test_create_orchestrator_agent_includes_unavailable_details():
@@ -249,4 +247,7 @@ def test_create_orchestrator_agent_includes_unavailable_details():
     )
 
     assert "Unavailable tool/runtime details:" in agent.instructions
-    assert "Genie:sales_insights_agent unavailable: RuntimeError: 401 unauthorized" in agent.instructions
+    assert (
+        "Genie:sales_insights_agent unavailable: RuntimeError: 401 unauthorized"
+        in agent.instructions
+    )

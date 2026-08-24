@@ -1,10 +1,10 @@
 """Provide orchestration helpers for tools, MCP connectivity, and agent assembly."""
 
 import asyncio
-from dataclasses import dataclass
 import logging
-from contextlib import AsyncExitStack
 import os
+from contextlib import AsyncExitStack
+from dataclasses import dataclass
 from threading import Lock
 from time import monotonic
 from typing import Any, cast
@@ -15,17 +15,16 @@ from agents.exceptions import UserError
 from databricks_openai import AsyncDatabricksOpenAI
 from databricks_openai.agents import McpServer
 
+from backend.domain.execution_contracts import ToolExecutionResult
 from backend.domain.subagent_config import SubagentConfig
 from backend.services.interfaces import (
     FunctionToolWrapper,
-    LakebaseToolsBuilder,
     McpServerFactory,
     MessageBus,
     TraceMetadataUpdater,
 )
 from backend.services.message_bus import NoOpMessageBus
 from backend.shared.runtime_utils import RequestIdentityContext, build_mcp_url
-from backend.domain.execution_contracts import ToolExecutionResult
 
 logger = logging.getLogger(__name__)
 
@@ -33,9 +32,7 @@ MCP_CONNECT_TIMEOUT_SECONDS = float(os.getenv("MCP_CONNECT_TIMEOUT_SECONDS", "10
 MCP_LIST_TOOLS_TIMEOUT_SECONDS = float(os.getenv("MCP_LIST_TOOLS_TIMEOUT_SECONDS", "10"))
 MCP_HEALTH_TTL_SECONDS = float(os.getenv("MCP_HEALTH_TTL_SECONDS", "30"))
 MCP_HEALTH_FAILURE_TTL_SECONDS = float(os.getenv("MCP_HEALTH_FAILURE_TTL_SECONDS", "10"))
-ORCHESTRATOR_INSTRUCTIONS_CACHE_SIZE = int(
-    os.getenv("ORCHESTRATOR_INSTRUCTIONS_CACHE_SIZE", "128")
-)
+ORCHESTRATOR_INSTRUCTIONS_CACHE_SIZE = int(os.getenv("ORCHESTRATOR_INSTRUCTIONS_CACHE_SIZE", "128"))
 
 
 @dataclass(frozen=True)
@@ -162,8 +159,7 @@ def _build_base_orchestrator_instructions(subagents: list[SubagentConfig]) -> st
         )
 
     return (
-        "You are an assistant. No routing tools are configured. "
-        "Answer based on your own knowledge."
+        "You are an assistant. No routing tools are configured. Answer based on your own knowledge."
     )
 
 
@@ -413,8 +409,7 @@ def _get_lakebase_token(ws_client, cfg: SubagentConfig) -> str:
     host = ws_client.config.host.rstrip("/")
     headers = ws_client.config.authenticate()
     endpoint_path = (
-        f"projects/{cfg.project_id}/branches/{cfg.branch_id}"
-        f"/endpoints/{cfg.endpoint_id}"
+        f"projects/{cfg.project_id}/branches/{cfg.branch_id}/endpoints/{cfg.endpoint_id}"
     )
     try:
         resp = httpx.post(
@@ -440,9 +435,7 @@ def _get_lakebase_token(ws_client, cfg: SubagentConfig) -> str:
         ) from cred_exc
 
 
-def _execute_lakebase_query(
-    ws_client, cfg: SubagentConfig, sql_query: str
-) -> str:
+def _execute_lakebase_query(ws_client, cfg: SubagentConfig, sql_query: str) -> str:
     """Execute a SQL query against Lakebase via psycopg2 with OAuth credentials."""
     import psycopg2
 
@@ -461,7 +454,10 @@ def _execute_lakebase_query(
     except psycopg2.OperationalError as conn_exc:
         logger.error(
             "Lakebase psycopg2 connection failed: host=%s user=%s db=%s error=%s",
-            cfg.pg_host, cfg.pg_user, cfg.database, str(conn_exc)[:300],
+            cfg.pg_host,
+            cfg.pg_user,
+            cfg.database,
+            str(conn_exc)[:300],
         )
         raise
     try:
@@ -486,7 +482,9 @@ def build_lakebase_delegation_executors(
         if not subagent.is_lakebase or subagent.is_obo:
             continue
 
-        async def execute(payload: dict[str, Any], cfg: SubagentConfig = subagent) -> dict[str, Any]:
+        async def execute(
+            payload: dict[str, Any], cfg: SubagentConfig = subagent
+        ) -> dict[str, Any]:
             sql_query = payload.get("sql_query")
             if not isinstance(sql_query, str) or not sql_query.strip():
                 raise ValueError("delegation_requires_sql_query")
@@ -599,9 +597,9 @@ def build_lakebase_tools(
             _call.__doc__ = cfg.description
             return _call
 
-        tools.append(dependencies.function_tool_wrapper(
-            _make_lakebase_tool(subagent, workspace_client)
-        ))
+        tools.append(
+            dependencies.function_tool_wrapper(_make_lakebase_tool(subagent, workspace_client))
+        )
 
     return tools
 

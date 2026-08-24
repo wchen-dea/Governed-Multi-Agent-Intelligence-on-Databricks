@@ -49,7 +49,9 @@ The original `uv run` entry points in `pyproject.toml` remain as compatibility c
 | Command | Purpose |
 | --- | --- |
 | `make test` | Run the full Python test suite. |
-| `make lint-markdown` | Validate authored Markdown. |
+| `make lint` | Run Ruff Python checks, React Prettier verification, and Markdown lint. |
+| `make format` | Apply Ruff Python formatting and React Prettier formatting. |
+| `make lint-markdown` | Validate authored Markdown only. |
 | `make evaluate` | Run MLflow evaluation and enforce configured KPI gates. |
 | `make redeploy TARGET=<target> APP_NAME=<app> PROFILE=<profile>` | Full validation, bundle attempt, source deploy, grants, health, and smoke workflow. |
 | `make upload-wheel TARGET=<target> APP_NAME=<app> PROFILE=<profile>` | Versioned source-only app deployment fallback; does not apply bundle resources or grants. |

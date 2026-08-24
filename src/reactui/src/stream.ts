@@ -7,11 +7,14 @@ export function formatToolLabel(toolName: string): string {
   return toolName.split("_").join(" ");
 }
 
-export function updateStreamHints(event: Record<string, unknown>, hints: StreamHints): string {
+export function updateStreamHints(
+  event: Record<string, unknown>,
+  hints: StreamHints,
+): string {
   const eventType = typeof event.type === "string" ? event.type : "";
-  const item = (event.item && typeof event.item === "object" ? event.item : null) as
-    | Record<string, unknown>
-    | null;
+  const item = (
+    event.item && typeof event.item === "object" ? event.item : null
+  ) as Record<string, unknown> | null;
   const itemType = item && typeof item.type === "string" ? item.type : "";
 
   let delta = "";
@@ -27,7 +30,10 @@ export function updateStreamHints(event: Record<string, unknown>, hints: StreamH
     hints.categories.add("Genie MCP");
   }
 
-  if (eventType.startsWith("response.output_item") && itemType === "tool_call_output_item") {
+  if (
+    eventType.startsWith("response.output_item") &&
+    itemType === "tool_call_output_item"
+  ) {
     hints.categories.add("Tool Execution");
   }
 
@@ -51,7 +57,10 @@ export function updateStreamHints(event: Record<string, unknown>, hints: StreamH
   return delta;
 }
 
-export function sourceBadgeLine(categories: Set<string>, tools: Set<string>): string {
+export function sourceBadgeLine(
+  categories: Set<string>,
+  tools: Set<string>,
+): string {
   if (categories.size === 0 && tools.size === 0) {
     return "";
   }

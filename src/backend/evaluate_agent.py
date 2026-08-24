@@ -28,7 +28,7 @@ load_dotenv(dotenv_path=".env", override=True)
 configure_logging(get_settings())
 
 # Import handlers so @invoke-registered functions are discoverable.
-import backend.api.handlers  # noqa: F401
+import backend.api.handlers  # noqa: E402, F401
 
 # Evaluation dataset.
 # Scorer documentation:
@@ -143,7 +143,8 @@ def auth_correctness_scorer(
     has_auth_error_text = (
         "requires user authorization" in response_text
         or "forwarded token" in response_text
-        or "obo" in response_text and "token" in response_text
+        or "obo" in response_text
+        and "token" in response_text
     )
 
     if requires_user_identity:
@@ -168,7 +169,9 @@ def auth_correctness_scorer(
     return 1.0
 
 
-def direct_groundedness_score(answer: str, *, requires_evidence: bool, freshness_sla: str | None) -> float:
+def direct_groundedness_score(
+    answer: str, *, requires_evidence: bool, freshness_sla: str | None
+) -> float:
     """Score evidence presence and freshness metadata without an LLM proxy."""
     if not requires_evidence:
         return 1.0
@@ -217,6 +220,7 @@ def direct_groundedness_scorer(
         requires_evidence=bool(expected.get("requires_evidence", False)),
         freshness_sla=expected.get("freshness_sla"),
     )
+
 
 simulator = ConversationSimulator(
     test_cases=test_cases,

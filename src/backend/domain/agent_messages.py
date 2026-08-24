@@ -1,10 +1,9 @@
 """Typed contracts for bounded agent-to-agent delegation."""
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Literal
 from uuid import uuid4
-
 
 DelegationTaskStatus = Literal[
     "pending",
@@ -21,7 +20,7 @@ DelegationResultStatus = Literal["succeeded", "failed", "rejected", "expired"]
 
 def utc_now() -> datetime:
     """Return a timezone-aware timestamp for delegation state transitions."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 @dataclass(frozen=True)

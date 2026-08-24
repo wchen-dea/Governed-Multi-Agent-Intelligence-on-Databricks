@@ -252,9 +252,9 @@ def main() -> None:
     _ensure_index(w, args.endpoint_name)
 
     mcp_url = f"/api/2.0/mcp/ai-search/{CATALOG}/{SCHEMA}/flink_support_search_index"
-    print(f"\n✓ Setup complete.")
+    print("\n✓ Setup complete.")
     print(f"  MCP URL: {mcp_url}")
-    print(f"  Add this MCP URL to your subagents.<target>.json configuration.")
+    print("  Add this MCP URL to your subagents.<target>.json configuration.")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,9 @@
 import { settings } from "./config";
-import { governanceFromHints, sourceBadgeLine, updateStreamHints } from "./stream";
+import {
+  governanceFromHints,
+  sourceBadgeLine,
+  updateStreamHints,
+} from "./stream";
 import type { ChatMessage } from "./types";
 import type { GovernanceMetadata } from "./types";
 
@@ -22,24 +26,39 @@ export interface StreamCallbacks {
   onMetadata?: (metadata: GovernanceMetadata) => void;
 }
 
-function metadataFromEvent(event: Record<string, unknown>, fallback: GovernanceMetadata): GovernanceMetadata {
-  const envelope = (event.response_envelope ?? event.governance) as Record<string, unknown> | undefined;
+function metadataFromEvent(
+  event: Record<string, unknown>,
+  fallback: GovernanceMetadata,
+): GovernanceMetadata {
+  const envelope = (event.response_envelope ?? event.governance) as
+    Record<string, unknown> | undefined;
   if (!envelope || typeof envelope !== "object") return fallback;
   return {
     ...fallback,
-    guardrailReasons: Array.isArray(envelope.guardrail_reasons) ? envelope.guardrail_reasons.filter((item): item is string => typeof item === "string") : fallback.guardrailReasons,
+    guardrailReasons: Array.isArray(envelope.guardrail_reasons)
+      ? envelope.guardrail_reasons.filter(
+          (item): item is string => typeof item === "string",
+        )
+      : fallback.guardrailReasons,
     truncated: envelope.truncated === true,
-    status: typeof envelope.status === "string" ? envelope.status : fallback.status,
+    status:
+      typeof envelope.status === "string" ? envelope.status : fallback.status,
   };
 }
 
-export function sessionStatusLine(persona: string | null, hasToken: boolean): string {
+export function sessionStatusLine(
+  persona: string | null,
+  hasToken: boolean,
+): string {
   const personaLabel = persona ?? "not set";
   const authMode = hasToken ? "hybrid (app + OBO token)" : "app-only";
   return `\n\n---\nSession: persona=\`${personaLabel}\` | auth=\`${authMode}\``;
 }
 
-export async function sendChat(options: SendChatOptions, callbacks: StreamCallbacks = {}): Promise<SendChatResult> {
+export async function sendChat(
+  options: SendChatOptions,
+  callbacks: StreamCallbacks = {},
+): Promise<SendChatResult> {
   const payloadInput = [
     ...options.history.map((m) => ({ role: m.role, content: m.content })),
     { role: "user", content: options.userMessage },
@@ -55,7 +74,10 @@ export async function sendChat(options: SendChatOptions, callbacks: StreamCallba
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), settings.timeoutSeconds * 1000);
+  const timeout = setTimeout(
+    () => controller.abort(),
+    settings.timeoutSeconds * 1000,
+  );
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -137,7 +159,10 @@ export async function sendChat(options: SendChatOptions, callbacks: StreamCallba
           fullText += delta;
           callbacks.onTextDelta?.(delta);
         }
-        latestMetadata = metadataFromEvent(event, governanceFromHints({ categories, tools }));
+        latestMetadata = metadataFromEvent(
+          event,
+          governanceFromHints({ categories, tools }),
+        );
         callbacks.onMetadata?.(latestMetadata);
       }
     }
@@ -148,7 +173,10 @@ export async function sendChat(options: SendChatOptions, callbacks: StreamCallba
         content:
           "The backend ended the stream without returning visible content. This often means the response was blocked before it could be shown, for example by an `evidence_required` guardrail." +
           sessionStatusLine(options.persona, Boolean(options.token)),
-        metadata: { ...latestMetadata, status: latestMetadata.status ?? "blocked" },
+        metadata: {
+          ...latestMetadata,
+          status: latestMetadata.status ?? "blocked",
+        },
       };
     }
 

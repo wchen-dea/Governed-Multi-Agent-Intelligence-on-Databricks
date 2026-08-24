@@ -1,13 +1,13 @@
 from backend.api.handlers import (
     _append_source_to_output_items,
     _event_has_tool_activity,
-    _guardrail_scope_subagents,
-    _governed_source_suffix_with_fallback,
     _governed_source_suffix,
+    _governed_source_suffix_with_fallback,
     _guardrail_block_message,
+    _guardrail_scope_subagents,
+    _select_route_tools,
     _used_subagents_from_payloads,
 )
-from backend.api.handlers import _select_route_tools
 from backend.domain.subagent_config import SubagentConfig
 
 

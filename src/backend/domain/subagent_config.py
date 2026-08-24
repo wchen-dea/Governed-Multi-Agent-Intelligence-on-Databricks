@@ -3,9 +3,10 @@
 import json
 import logging
 import os
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Literal
+from typing import Any, Literal
 
 SubagentKind = Literal["genie", "serving_endpoint", "app", "mcp", "lakebase"]
 ALLOWED_SUBAGENT_KINDS = {"genie", "serving_endpoint", "app", "mcp", "lakebase"}

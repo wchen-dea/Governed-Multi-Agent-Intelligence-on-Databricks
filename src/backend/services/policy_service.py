@@ -11,8 +11,8 @@ from typing import Literal
 from mlflow.types.responses import ResponsesAgentRequest
 
 from backend.domain.subagent_config import SubagentConfig
-from backend.shared.settings import get_settings
 from backend.shared.runtime_utils import RequestIdentityContext
+from backend.shared.settings import get_settings
 
 
 @dataclass(frozen=True)
@@ -180,8 +180,7 @@ def filter_subagents_by_policy(
                     allowed=False,
                     reason_code="obo_identity_required",
                     reason=(
-                        f"{subagent.name} policy deny (OBO identity is required for "
-                        "auth_mode=obo)"
+                        f"{subagent.name} policy deny (OBO identity is required for auth_mode=obo)"
                     ),
                 )
             )
@@ -221,7 +220,7 @@ def filter_subagents_by_policy(
                 reason=(
                     f"{subagent.name} policy allow (auth_mode={subagent.auth_mode}, "
                     f"classification={subagent.data_classification})"
-                )
+                ),
             )
         )
 

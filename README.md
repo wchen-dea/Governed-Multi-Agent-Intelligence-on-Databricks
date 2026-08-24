@@ -255,6 +255,13 @@ Lint Markdown documentation:
 make lint-markdown
 ```
 
+Run the unified code-quality check or apply formatting:
+
+```bash
+make lint
+make format
+```
+
 The command uses the pinned `markdownlint-cli2` version through `scripts/lint_markdown.sh` and excludes generated app assets and dependency directories.
 
 If bundle deploy fails due to Terraform provider registry availability, use the operational fallback documented in [docs/operations/operations-runbook.md](docs/operations/operations-runbook.md).
@@ -355,6 +362,8 @@ Useful operational commands:
 
 - `make redeploy TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT`
 - `make upload-wheel TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT`
+- `make lint`
+- `make format`
 - `make grants TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT`
 - `make query-dev TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT QUERY='top stores by revenue' QUERY_PERSONA=manager`
 

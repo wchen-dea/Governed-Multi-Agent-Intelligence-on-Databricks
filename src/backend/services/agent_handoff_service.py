@@ -10,7 +10,6 @@ from backend.domain.subagent_config import SubagentConfig
 from backend.services.agent_task_worker import AgentTaskWorker
 from backend.services.interfaces import AgentTaskBus, MessageBus
 
-
 DelegationExecutor = Callable[[dict[str, Any]], Awaitable[dict[str, Any]]]
 
 

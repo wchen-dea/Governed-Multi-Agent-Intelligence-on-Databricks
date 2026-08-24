@@ -16,13 +16,37 @@ class ModelSelection:
 
 
 _REASONING_TERMS = {
-    "appointment", "appointments", "order", "orders", "invoice", "invoices",
-    "sql", "query", "schema", "flink", "streaming", "lag", "debug",
-    "troubleshoot", "configuration", "root", "cause",
+    "appointment",
+    "appointments",
+    "order",
+    "orders",
+    "invoice",
+    "invoices",
+    "sql",
+    "query",
+    "schema",
+    "flink",
+    "streaming",
+    "lag",
+    "debug",
+    "troubleshoot",
+    "configuration",
+    "root",
+    "cause",
 }
 _SYNTHESIS_TERMS = {
-    "summarize", "summary", "compare", "comparison", "strategy", "executive",
-    "recommend", "recommendation", "plan", "proposal", "analyze", "analysis",
+    "summarize",
+    "summary",
+    "compare",
+    "comparison",
+    "strategy",
+    "executive",
+    "recommend",
+    "recommendation",
+    "plan",
+    "proposal",
+    "analyze",
+    "analysis",
 }
 
 
@@ -32,7 +56,13 @@ def select_model(question: str, settings: AppSettings) -> ModelSelection:
     if not settings.model_routing_enabled:
         return ModelSelection(settings.orchestrator_model, "default", "model_routing_disabled")
     if terms & _REASONING_TERMS:
-        return ModelSelection(settings.model_routing_reasoning_model, "reasoning", "matched_operational_or_support_terms")
+        return ModelSelection(
+            settings.model_routing_reasoning_model,
+            "reasoning",
+            "matched_operational_or_support_terms",
+        )
     if terms & _SYNTHESIS_TERMS:
-        return ModelSelection(settings.model_routing_quality_model, "synthesis", "matched_analysis_or_synthesis_terms")
+        return ModelSelection(
+            settings.model_routing_quality_model, "synthesis", "matched_analysis_or_synthesis_terms"
+        )
     return ModelSelection(settings.model_routing_default_model, "standard", "default_task_route")

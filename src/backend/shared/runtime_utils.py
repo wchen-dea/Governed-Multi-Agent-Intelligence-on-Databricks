@@ -4,9 +4,9 @@ These helpers centralize request-scoped Databricks client construction,
 forwarded-token handling, and stream event normalization used by the backend.
 """
 
-from dataclasses import dataclass
 import logging
-from typing import AsyncGenerator, AsyncIterator, Optional
+from collections.abc import AsyncGenerator, AsyncIterator
+from dataclasses import dataclass
 
 from agents.result import StreamEvent
 from databricks.sdk import WorkspaceClient
@@ -39,7 +39,7 @@ def get_session_id(request: ResponsesAgentRequest) -> str | None:
     return None
 
 
-def get_databricks_host(workspace_client: WorkspaceClient | None = None) -> Optional[str]:
+def get_databricks_host(workspace_client: WorkspaceClient | None = None) -> str | None:
     """Resolve the Databricks workspace host from client configuration."""
     workspace_client = workspace_client or WorkspaceClient()
     try:
