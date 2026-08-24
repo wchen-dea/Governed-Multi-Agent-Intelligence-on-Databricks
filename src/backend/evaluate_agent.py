@@ -27,6 +27,13 @@ from backend.shared.settings import get_settings
 load_dotenv(dotenv_path=".env", override=True)
 configure_logging(get_settings())
 
+# Evaluation scorers read each conversation turn's trace immediately after it
+# is produced. Async trace logging (MLflow default) races that read, making
+# real tool calls look like they never happened. Synchronous logging trades a
+# small amount of per-call latency (acceptable during evaluation, unlike
+# production traffic) for trustworthy tool_call_accuracy measurements.
+os.environ["MLFLOW_ENABLE_ASYNC_TRACE_LOGGING"] = "false"
+
 # Import handlers so @invoke-registered functions are discoverable.
 import backend.api.handlers  # noqa: E402, F401
 from backend.domain.subagent_config import skipped_subagent_names  # noqa: E402
