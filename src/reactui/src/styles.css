@@ -1,13 +1,25 @@
 :root {
   font-family: "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
   color: #20262b;
-  background: #06344a;
+  background: var(--page-bg, #06344a);
+  --page-bg: #06344a;
   --red: #c8102e;
   --red-dark: #981126;
   --ink: #20262b;
   --muted: #65717a;
   --line: #d9dde0;
   --surface: #ffffff;
+}
+
+/* User-selectable homepage background themes, applied via [data-theme] on <html> */
+[data-theme="deep-ocean"] {
+  --page-bg: #06344a;
+}
+[data-theme="sky-blue"] {
+  --page-bg: #4a90d9;
+}
+[data-theme="deep-sky-blue"] {
+  --page-bg: #0072b1;
 }
 
 * {
@@ -18,7 +30,7 @@ body {
   margin: 0;
   min-height: 100vh;
   color: var(--ink);
-  background: #06344a;
+  background: var(--page-bg, #06344a);
 }
 
 #root {

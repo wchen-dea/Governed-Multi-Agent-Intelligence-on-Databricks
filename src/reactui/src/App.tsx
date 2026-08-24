@@ -21,6 +21,20 @@ function statusLines(token: string | null, persona: string | null): string {
   return `${tokenLine}\n${personaLine}`;
 }
 
+const THEME_STORAGE_KEY = "chat-ui-theme";
+
+const THEMES = [
+  { value: "deep-ocean", label: "Deep ocean" },
+  { value: "sky-blue", label: "Sky blue" },
+  { value: "deep-sky-blue", label: "Deep sky blue" },
+] as const;
+
+type ThemeValue = (typeof THEMES)[number]["value"];
+
+function isThemeValue(value: string | null): value is ThemeValue {
+  return THEMES.some((theme) => theme.value === value);
+}
+
 const STARTERS = [
   "/persona manager",
   "/persona analyst",
@@ -166,8 +180,18 @@ export default function App() {
   const [persona, setPersona] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [starterGroup, setStarterGroup] = useState("Business");
+  const [theme, setTheme] = useState<ThemeValue>(() => {
+    if (typeof window === "undefined") return "deep-ocean";
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+    return isThemeValue(stored) ? stored : "deep-ocean";
+  });
   const chatLogRef = useRef<HTMLElement>(null);
   const conversationId = useMemo(() => newId(), []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
 
   async function submitMessage(raw: string): Promise<void> {
     const text = raw.trim();
@@ -464,6 +488,22 @@ export default function App() {
             {settings.allowedPersonas.map((item) => (
               <option key={item} value={item}>
                 {item}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Background
+          <select
+            value={theme}
+            onChange={(event) => {
+              const next = event.target.value;
+              if (isThemeValue(next)) setTheme(next);
+            }}
+          >
+            {THEMES.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
               </option>
             ))}
           </select>
