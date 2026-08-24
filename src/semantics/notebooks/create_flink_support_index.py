@@ -6,7 +6,7 @@
 # MAGIC `flink_support_kb` source table, and creates/refreshes the `flink_support_index`
 # MAGIC Vector Search index used by the `flink_support_agent` MCP tool.
 # MAGIC
-# MAGIC Run as a Databricks Job (see `resources/jobs.yml`). Safe to re-run.
+# MAGIC Run as a Databricks Job (see `resources/semantics_jobs.yml`). Safe to re-run.
 
 # COMMAND ----------
 

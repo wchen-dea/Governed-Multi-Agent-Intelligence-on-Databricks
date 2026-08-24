@@ -16,6 +16,7 @@ This folder provides the primary TypeScript and React frontend used by the app r
 - Session status footer and source/tool hint footer.
 - Incremental text rendering with accessible live-region updates while a response streams.
 - Visible persona selector and App identity versus Hybrid OBO status.
+- User-selectable homepage background theme (deep ocean, sky blue, deep sky blue), persisted in `localStorage`.
 - Collapsible per-response run context showing tools, sources, guardrail state, and truncation.
 - Safe rendering for supported headings, tables, and citation markers; model HTML is not executed.
 - Explicit streaming states for blocked, unavailable, error, and truncated responses.

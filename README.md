@@ -91,6 +91,11 @@ Typical Genie Agent source pattern:
 - Unity Catalog Semantic Metric Views are the recommended structured source layer for Genie Agents.
 - Blueprint reference: [Unity-Catalog-Semantic-Metric-Views-Blueprint](https://github.com/wchen-dea/Unity-Catalog-Semantic-Metric-Views-Blueprint)
 
+Semantics layer build automation:
+
+- Notebooks under [src/semantics/notebooks/](src/semantics/notebooks) build/refresh `dim_product_search_index`, `flink_support_index`, and `fct_cdi_trusted_expert_score_metric_view`.
+- Corresponding Databricks Jobs are declared in `resources/semantics_jobs.yml`; see [src/semantics/README.md](src/semantics/README.md).
+
 ## Backend UC Security and Governance Guidelines
 
 Project guidelines and best practices for Unity Catalog-governed backend execution:

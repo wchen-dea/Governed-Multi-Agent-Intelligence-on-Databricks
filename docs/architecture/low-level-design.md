@@ -100,6 +100,7 @@ This document covers low-level design and implementation details. See [high-leve
 
 - `src/reactui/src/App.tsx`
   - Main React chat UI flow for requests, command parsing, and response rendering
+  - User-selectable background theme (deep ocean, sky blue, deep sky blue) persisted to `localStorage` and applied via `[data-theme]` on the document root
 
 - `src/reactui/src/api.ts`
   - Sends invocation payloads and manages stream/invoke behavior to backend routes
@@ -189,6 +190,7 @@ If an OBO tool is invoked without a forwarded token, the runtime returns a clear
 
 - `databricks.yml`: bundle root config, shared variables, includes
 - `resources/multiagent_app.yml`: shared app defaults and baseline resource permissions
+- `resources/semantics_jobs.yml`: semantics-layer Databricks Jobs that build/refresh `dim_product_search_index`, `flink_support_index`, and `fct_cdi_trusted_expert_score_metric_view` from `src/semantics/notebooks/`
 - `targets/*.yml`: target-specific host, state path, variables, and resource overrides
 
 ### Frequently Used Variables
@@ -196,7 +198,10 @@ If an OBO tool is invoked without a forwarded token, the runtime returns a clear
 - `app_name`
 - `genie_space_id`
 - `knowledge_assistant_endpoint_name`
+- `product_index_ep`
 - `flink_support_ed`
+- `semantics_catalog`
+- `semantics_schema`
 - `target_app_name`
 - `mlflow_experiment_id`
 

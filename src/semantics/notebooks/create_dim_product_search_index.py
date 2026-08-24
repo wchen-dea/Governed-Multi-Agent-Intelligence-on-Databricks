@@ -6,7 +6,7 @@
 # MAGIC table and creates/refreshes the `dim_product_search_index` Vector Search index
 # MAGIC used by the `product_index_assistant` MCP tool.
 # MAGIC
-# MAGIC Run as a Databricks Job (see `resources/jobs.yml`). Safe to re-run.
+# MAGIC Run as a Databricks Job (see `resources/semantics_jobs.yml`). Safe to re-run.
 
 # COMMAND ----------
 

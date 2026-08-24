@@ -26,6 +26,14 @@ Provide an auditable and maintainable registry for runtime integrations and owne
 	- `src/backend/domain/subagents.stg.json`
 	- `src/backend/domain/subagents.prod.json`
 
+## Semantics Layer Build Automation
+
+- Notebooks: `src/semantics/notebooks/` (see [src/semantics/README.md](../../src/semantics/README.md))
+- Jobs: `resources/semantics_jobs.yml` (one Databricks Job per notebook, run on demand or scheduled per target)
+- `create_dim_product_search_index.py` curates `dim_product` and builds/refreshes the `dim_product_search_index` Vector Search index.
+- `create_flink_support_index.py` extracts the support KB volume into `flink_support_kb` and builds/refreshes the `flink_support_index` Vector Search index.
+- `create_fct_cdi_trusted_expert_score_metric_view.py` publishes the `fct_cdi_trusted_expert_score_metric_view` Unity Catalog Semantic Metric View from `dt_prod_gold.dwh_dbx.fct_cdi` and its `cdi_daily`/`total_time_score`/`trusted_expert_score` joins.
+
 ## Active Genie Agents (Dev)
 
 Typical source pattern for Genie Agents:
