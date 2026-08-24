@@ -308,12 +308,17 @@ if asyncio.iscoroutinefunction(invoke_fn):
         req = ResponsesAgentRequest(input=input, custom_inputs=custom_inputs)
         loop = asyncio.get_event_loop()
         response = loop.run_until_complete(invoke_fn(req))
+        # Force the trace (including autologged tool-call spans) to commit
+        # before the simulator/scorers read it; async export otherwise races
+        # scoring and makes real tool calls look like they never happened.
+        mlflow.flush_trace_async_logging()
         return response.model_dump()
 else:
 
     def predict_fn(input: list[dict], custom_inputs: dict | None = None, **kwargs) -> dict:
         req = ResponsesAgentRequest(input=input, custom_inputs=custom_inputs)
         response = invoke_fn(req)
+        mlflow.flush_trace_async_logging()
         return response.model_dump()
 
 
@@ -329,35 +334,47 @@ def evaluate():
         if mlflow.active_run() is None
         else nullcontext()
     )
-    with run_context:
-        _log_evaluation_metadata()
-        mlflow.log_param("preflight.skipped_subagents", ", ".join(skipped) or "none")
-        result = mlflow.genai.evaluate(
-            data=simulator,
-            predict_fn=predict_fn,
-            scorers=[
-                Completeness(),
-                ConversationCompleteness(),
-                ConversationalSafety(),
-                KnowledgeRetention(),
-                UserFrustration(),
-                Fluency(),
-                RelevanceToQuery(),
-                Safety(),
-                ToolCallCorrectness(),
-                auth_correctness_scorer,
-                direct_groundedness_scorer,
-                data_tool_attempt_scorer,
-            ],
-        )
-        _log_aggregate_metrics(result)
-        try:
-            enforce_release_gate(result)
-        except Exception:
-            mlflow.log_metric("gate.release_passed", 0.0)
-            raise
-        mlflow.log_metric("gate.release_passed", 1.0)
-        return result
+    try:
+        with run_context:
+            return _run_evaluation(skipped)
+    finally:
+        # Force pending async metric/trace writes to commit before the process
+        # may be torn down (for example a Databricks job ending immediately
+        # after a release-gate RuntimeError), otherwise the run can be left
+        # stuck RUNNING with no logged metrics despite a real computed result.
+        mlflow.flush_async_logging()
+        mlflow.flush_trace_async_logging()
+
+
+def _run_evaluation(skipped: list[str]):
+    _log_evaluation_metadata()
+    mlflow.log_param("preflight.skipped_subagents", ", ".join(skipped) or "none")
+    result = mlflow.genai.evaluate(
+        data=simulator,
+        predict_fn=predict_fn,
+        scorers=[
+            Completeness(),
+            ConversationCompleteness(),
+            ConversationalSafety(),
+            KnowledgeRetention(),
+            UserFrustration(),
+            Fluency(),
+            RelevanceToQuery(),
+            Safety(),
+            ToolCallCorrectness(),
+            auth_correctness_scorer,
+            direct_groundedness_scorer,
+            data_tool_attempt_scorer,
+        ],
+    )
+    _log_aggregate_metrics(result)
+    try:
+        enforce_release_gate(result)
+    except Exception:
+        mlflow.log_metric("gate.release_passed", 0.0)
+        raise
+    mlflow.log_metric("gate.release_passed", 1.0)
+    return result
 
 
 def _threshold(name: str, default: float) -> float:
