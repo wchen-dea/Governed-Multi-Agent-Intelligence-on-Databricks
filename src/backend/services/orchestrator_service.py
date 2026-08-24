@@ -140,7 +140,20 @@ def _build_base_orchestrator_instructions(subagents: list[SubagentConfig]) -> st
             "You are an orchestrator agent. Route the user's request to the most "
             "appropriate tool:\n"
             + "\n".join(tool_lines)
-            + "\nIf unsure, ask the user for clarification."
+            + "\nFor requests about business, product, operational, scheduling, appointment, "
+            "order, invoice, or support data, you MUST call the matching configured tool "
+            "before answering. Do not claim that data is unavailable, inaccessible, missing, "
+            "or that you cannot fulfill the request unless a tool call was attempted and "
+            "returned an error or insufficient data."
+            + "\nCall a given tool at most once per user request, except Lakebase may use "
+            "one schema-discovery query followed by one data query. For appointment or order "
+            "requests, if schema discovery is needed, use its result to issue the data query; "
+            "do not stop after returning schema metadata. If a Lakebase tool result starts with "
+            "LAKEBASE_QUERY_FAILED, do not retry it. Explain its category (authorization, "
+            "authentication, connectivity, or execution) concisely."
+            + "\nUse native tool calling only. Never write pseudo-tool syntax such as "
+            "`to=query_*`, `code:`, or a tool-call JSON payload in assistant text."
+            + "\nIf no configured tool covers the request, ask the user for clarification."
             + "\nFor any answer grounded in a tool marked evidence=true, include evidence in the final answer."
             + "\nUse either inline citations like `[1]` or end with a `Source:` line naming the tool and freshness SLA."
             + "\nDo not give a governed final answer without that evidence line."
@@ -391,13 +404,7 @@ def _format_lakebase_results(columns: list[str], rows: list[tuple]) -> str:
 
 
 def _get_lakebase_token(ws_client, cfg: SubagentConfig) -> str:
-    """Get a PostgreSQL password or OAuth token for Lakebase connection."""
-    import os
-
-    # Use explicit PG password env var if set (bypasses credentials API scope requirement)
-    pg_password = os.environ.get("LAKEBASE_PG_PASSWORD")
-    if pg_password:
-        return pg_password
+    """Get an OAuth token for the configured Lakebase endpoint."""
 
     import httpx
 
@@ -467,6 +474,28 @@ def _execute_lakebase_query(
         conn.close()
 
 
+def _lakebase_failure_result(exc: Exception) -> tuple[str, str]:
+    """Convert Lakebase failures into safe tool output and an audit category."""
+    detail = str(exc).lower()
+    if "not authorized" in detail or "permission denied" in detail:
+        category = "authorization"
+        guidance = "The app identity is not authorized for the configured Lakebase database."
+    elif "authentication" in detail or "jwt" in detail or "credentials" in detail:
+        category = "authentication"
+        guidance = "The Lakebase authentication credential was rejected."
+    elif "connection to server" in detail or "timeout" in detail:
+        category = "connectivity"
+        guidance = "The Lakebase PostgreSQL endpoint could not be reached."
+    else:
+        category = "execution"
+        guidance = "The Lakebase query could not be completed."
+    return (
+        "LAKEBASE_QUERY_FAILED "
+        f"category={category}. {guidance} Do not claim the query returned no data.",
+        category,
+    )
+
+
 def build_lakebase_tools(
     subagents: list[SubagentConfig],
     identity_ctx: RequestIdentityContext,
@@ -520,6 +549,7 @@ def build_lakebase_tools(
                     )
                     return result
                 except Exception as exc:
+                    result, failure_category = _lakebase_failure_result(exc)
                     dependencies.message_bus.publish(
                         "tool.call.failed",
                         {
@@ -527,9 +557,15 @@ def build_lakebase_tools(
                             "subagent": cfg_param.name,
                             "auth_mode": cfg_param.auth_mode,
                             "error_type": type(exc).__name__,
+                            "failure_category": failure_category,
                         },
                     )
-                    raise
+                    logger.warning(
+                        "Lakebase query failed: category=%s type=%s",
+                        failure_category,
+                        type(exc).__name__,
+                    )
+                    return result
 
             _call.__name__ = cfg.tool_name
             _call.__doc__ = cfg.description

@@ -4,11 +4,21 @@ from types import SimpleNamespace
 from backend.domain.subagent_config import SubagentConfig
 from backend.services.orchestrator_service import (
     OrchestratorDependencies,
+    _lakebase_failure_result,
     build_mcp_servers,
     build_subagent_tools,
     connect_healthy_mcp_servers,
     create_orchestrator_agent,
 )
+
+
+def test_lakebase_failure_result_classifies_authorization_without_details():
+    result, category = _lakebase_failure_result(RuntimeError("OAuth: User is not authorized"))
+
+    assert category == "authorization"
+    assert "not authorized" in result.lower()
+    assert "OAuth:" not in result
+    assert "query returned no data" in result.lower()
 
 
 def test_build_subagent_tools_uses_injected_wrapper_and_trace_updater():
@@ -164,6 +174,30 @@ def test_create_orchestrator_agent_includes_subagent_system_prompt():
     agent = create_orchestrator_agent("test-model", subagents, [], [])
 
     assert "System prompt: Ground responses in index records." in agent.instructions
+
+
+def test_create_orchestrator_agent_requires_data_tool_attempt_before_refusal():
+    subagents = [
+        SubagentConfig(
+            name="lakebase_ods_agent",
+            kind="lakebase",
+            auth_mode="app",
+            project_id="ore",
+            branch_id="production",
+            database="operationaldatastore",
+            pg_host="lakebase.example.com",
+            endpoint_id="primary",
+            description="appointments, orders, invoices, and scheduling operational data",
+        )
+    ]
+
+    agent = create_orchestrator_agent("test-model", subagents, [], [])
+
+    assert "MUST call the matching configured tool" in agent.instructions
+    assert "unless a tool call was attempted" in agent.instructions
+    assert "one schema-discovery query followed by one data query" in agent.instructions
+    assert "do not stop after returning schema metadata" in agent.instructions
+    assert "LAKEBASE_QUERY_FAILED" in agent.instructions
 
 
 def test_connect_healthy_mcp_servers_returns_detailed_unavailable_reason():

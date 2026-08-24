@@ -18,8 +18,6 @@ env:
   value: "3000"
 - name: CHAT_PROXY_TIMEOUT_SECONDS
   value: "300"
-- name: SUBAGENTS_CONFIG_PATH
-  value: "/app/python/source_code/.venv/lib/python3.11/site-packages/backend/domain/subagents.dev.json"
 - name: DEFAULT_REQUEST_PERSONA
   value: manager
 - name: MESSAGE_BUS_BACKEND

@@ -55,6 +55,33 @@ def test_route_planner_uses_system_prompt_capabilities():
     assert [subagent.name for subagent in selected] == ["product_index"]
 
 
+def test_route_planner_selects_lakebase_for_appointments_and_order_status():
+    lakebase = SubagentConfig(
+        name="lakebase_ods_agent",
+        kind="lakebase",
+        project_id="ore",
+        branch_id="production",
+        database="operationaldatastore",
+        pg_host="lakebase.example.com",
+        endpoint_id="primary",
+        description="appointments, orders, invoices, and scheduling operational data",
+    )
+    product = SubagentConfig(
+        name="product_index",
+        kind="mcp",
+        mcp_url="/product",
+        description="product catalog lookups",
+    )
+
+    plan, selected = build_route_plan(
+        "List latest day's open appointments and their current order status.",
+        [product, lakebase],
+    )
+
+    assert plan.reason == "capability_match"
+    assert [subagent.name for subagent in selected] == ["lakebase_ods_agent"]
+
+
 def test_route_planner_ignores_plural_generic_type_term():
     product = SubagentConfig(
         name="product_index",

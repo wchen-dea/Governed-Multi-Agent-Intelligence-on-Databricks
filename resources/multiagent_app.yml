@@ -76,8 +76,6 @@ resources:
           value: ${var.uc_audit_schema}
         - name: UC_AUDIT_TABLE
           value: ${var.uc_audit_table}
-        - name: LAKEBASE_PG_PASSWORD
-          value_from: lakebase_pg_password
       # Resources which this app has access to
       resources:
       - name: 'sales_genie_space'

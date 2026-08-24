@@ -11,7 +11,7 @@ targets:
       mlflow_experiment_id: "3025644123415124"
       openai_base_url: ""
       openai_timeout_seconds: "0"
-      subagents_config_path: "/app/python/source_code/.venv/lib/python3.11/site-packages/backend/domain/subagents.dev.json"
+      subagents_config_path: ""
       default_request_persona: "manager"
       app_telemetry_logs_table: "quickstart_catalog.multi_agent_schema.app_logs"
       app_telemetry_metrics_table: "quickstart_catalog.multi_agent_schema.app_metrics"

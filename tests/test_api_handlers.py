@@ -156,3 +156,23 @@ def test_confident_mcp_route_does_not_fallback_to_unrelated_function_tool():
     )
 
     assert _select_route_tools([LakebaseTool()], [product], "capability_match") == []
+
+
+def test_confident_lakebase_route_selects_wrapped_tool_name():
+    class LakebaseTool:
+        name = "query_lakebase_ods_agent"
+
+    lakebase = SubagentConfig(
+        name="lakebase_ods_agent",
+        kind="lakebase",
+        project_id="ore",
+        branch_id="production",
+        database="operationaldatastore",
+        pg_host="lakebase.example.com",
+        endpoint_id="primary",
+        description="appointments and order status",
+    )
+
+    tool = LakebaseTool()
+
+    assert _select_route_tools([tool], [lakebase], "capability_match") == [tool]

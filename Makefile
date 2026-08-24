@@ -1,12 +1,14 @@
 SHELL := /bin/sh
 
-.PHONY: help test lint-markdown runtime-core assistant-tools evaluate evaluate-strict build-app-source validate bundle-deploy bundle-deploy-optional import ensure-running stop deploy grants redeploy health smoke smoke-governance query-dev logs status
+.PHONY: help test lint-markdown runtime-core assistant-tools evaluate evaluate-strict build-app-source upload-wheel validate wait-stable bundle-deploy bundle-deploy-optional import ensure-running stop deploy grants redeploy health smoke smoke-governance query-dev logs status
 
 PROFILE ?= DEFAULT
 TARGET ?= dev
 APP_NAME ?= multiagent-app-$(TARGET)
 APP_START_MAX_ATTEMPTS ?= 30
 APP_START_POLL_SECONDS ?= 2
+APP_STABLE_MAX_ATTEMPTS ?= 60
+APP_STABLE_POLL_SECONDS ?= 2
 APP_DEPLOY_MAX_ATTEMPTS ?= 60
 APP_DEPLOY_POLL_SECONDS ?= 2
 PERMISSIONS_FAIL_OPEN ?= true
@@ -26,7 +28,9 @@ help:
 	@printf "  make evaluate          Run MLflow GenAI evaluation and release gate\n"
 	@printf "  make evaluate-strict   Run evaluation with all KPI gates required\n"
 	@printf "  make build-app-source  Build wheel + React UI app source payload\n"
+	@printf "  make upload-wheel      Build, upload, deploy, and health-check the app payload without Terraform\n"
 	@printf "  make validate          Validate Databricks bundle for TARGET\n"
+	@printf "  make wait-stable       Wait for App compute to be ACTIVE or STOPPED\n"
 	@printf "  make bundle-deploy     Try bundle deploy for TARGET (may fail on Terraform registry)\n"
 	@printf "  make import            Upload .databricks_app_source into app workspace path\n"
 	@printf "  make stop              Stop app compute for APP_NAME\n"
@@ -65,14 +69,33 @@ evaluate-strict:
 build-app-source:
 	uv run runtime-build-source
 
+upload-wheel: ensure-running import deploy health
+
 validate:
 	databricks bundle validate -t "$(TARGET)" --profile "$(PROFILE)"
 
-bundle-deploy:
+wait-stable:
+	@printf "Waiting for app %s compute to become stable...\n" "$(APP_NAME)"; \
+	ATTEMPT=0; \
+	while [ $$ATTEMPT -lt "$(APP_STABLE_MAX_ATTEMPTS)" ]; do \
+		APP_JSON="$$($(APP_GET_JSON))"; \
+		COMPUTE_STATE="$$(printf "%s" "$$APP_JSON" | jq -r '.compute_status.state // "UNKNOWN"')"; \
+		APP_STATE="$$(printf "%s" "$$APP_JSON" | jq -r '.app_status.state // "UNKNOWN"')"; \
+		printf "  stable-check attempt=%s/%s app=%s compute=%s\n" "$$((ATTEMPT + 1))" "$(APP_STABLE_MAX_ATTEMPTS)" "$$APP_STATE" "$$COMPUTE_STATE"; \
+		case "$$COMPUTE_STATE" in \
+			ACTIVE|STOPPED) exit 0 ;; \
+		esac; \
+		ATTEMPT=$$((ATTEMPT + 1)); \
+		sleep "$(APP_STABLE_POLL_SECONDS)"; \
+	done; \
+	printf "App $(APP_NAME) compute did not stabilize before update.\n" >&2; \
+	exit 1
+
+bundle-deploy: wait-stable
 	@databricks bundle deploy -t "$(TARGET)" --profile "$(PROFILE)" || \
 		(printf "bundle deploy failed; use make redeploy for the Terraform-free fallback path\n" && exit 1)
 
-bundle-deploy-optional:
+bundle-deploy-optional: wait-stable
 	@databricks bundle deploy -t "$(TARGET)" --profile "$(PROFILE)" || \
 		printf "bundle deploy failed; continuing with Terraform-free fallback path (import -> deploy -> permissions -> health -> smoke)\n"
 
@@ -83,6 +106,7 @@ import: build-app-source
 		printf "Could not resolve default_source_code_path for $(APP_NAME)\n" >&2; \
 		exit 1; \
 	fi; \
+	databricks workspace delete "$$APP_SRC/wheels" --recursive --profile "$(PROFILE)" >/dev/null 2>&1 || true; \
 	databricks workspace import-dir .databricks_app_source "$$APP_SRC" --overwrite --profile "$(PROFILE)"
 
 ensure-running:
@@ -113,7 +137,7 @@ stop:
 		exit 1; \
 	fi
 
-deploy:
+deploy: wait-stable
 	@APP_JSON="$$($(APP_GET_JSON))"; \
 	APP_SRC="$$(printf "%s" "$$APP_JSON" | jq -r '.default_source_code_path')"; \
 	APP_STATE="$$(printf "%s" "$$APP_JSON" | jq -r '.app_status.state // "UNKNOWN"')"; \
@@ -122,10 +146,6 @@ deploy:
 	if [ -z "$$APP_SRC" ] || [ "$$APP_SRC" = "null" ]; then \
 		printf "Could not resolve default_source_code_path for $(APP_NAME)\n" >&2; \
 		exit 1; \
-	fi; \
-	if [ "$$APP_STATE" != "RUNNING" ]; then \
-		printf "App %s is in state=%s; continuing deploy without RUNNING precondition.\n" "$(APP_NAME)" "$$APP_STATE"; \
-		databricks apps start "$(APP_NAME)" --profile "$(PROFILE)" >/dev/null 2>&1 || true; \
 	fi; \
 	while [ "$$DEPLOY_STATE" = "IN_PROGRESS" ] && [ $$ATTEMPT -lt "$(APP_DEPLOY_MAX_ATTEMPTS)" ]; do \
 		printf "Waiting for active deployment lock to clear: attempt=%s/%s state=%s\n" "$$((ATTEMPT + 1))" "$(APP_DEPLOY_MAX_ATTEMPTS)" "$$DEPLOY_STATE"; \

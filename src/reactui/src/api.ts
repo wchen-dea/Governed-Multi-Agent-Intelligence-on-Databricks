@@ -75,7 +75,9 @@ export async function sendChat(options: SendChatOptions, callbacks: StreamCallba
     if (!response.ok) {
       const details = (await response.text()).trim();
       const suffix = details ? ` Details: ${details.slice(0, 300)}` : "";
-      throw new Error(`Backend returned HTTP ${response.status}.${suffix}`);
+      throw new Error(
+        `The backend is unavailable (HTTP ${response.status}). Please retry in a moment.${suffix}`,
+      );
     }
 
     if (!response.body) {
@@ -90,6 +92,7 @@ export async function sendChat(options: SendChatOptions, callbacks: StreamCallba
     let streamedText = false;
     const categories = new Set<string>();
     const tools = new Set<string>();
+    const seenEvents = new Set<string>();
 
     let latestMetadata = governanceFromHints({ categories, tools });
     while (true) {
@@ -119,8 +122,17 @@ export async function sendChat(options: SendChatOptions, callbacks: StreamCallba
           continue;
         }
 
+        const eventKey = JSON.stringify(event);
+        if (seenEvents.has(eventKey)) {
+          continue;
+        }
+        seenEvents.add(eventKey);
+
         const delta = updateStreamHints(event, { categories, tools });
         if (delta) {
+          if (fullText.endsWith(delta)) {
+            continue;
+          }
           streamedText = true;
           fullText += delta;
           callbacks.onTextDelta?.(delta);

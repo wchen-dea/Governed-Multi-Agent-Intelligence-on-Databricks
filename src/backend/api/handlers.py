@@ -145,7 +145,8 @@ def _select_route_tools(
     selected = [
         tool
         for tool in tools
-        if getattr(tool, "__name__", "").removeprefix("query_") in candidate_names
+        if str(getattr(tool, "name", getattr(tool, "__name__", ""))).removeprefix("query_")
+        in candidate_names
     ]
     if not selected and route_reason in {"ambiguous_fallback", "low_confidence_fallback"}:
         return tools
@@ -175,6 +176,7 @@ async def _connect_request_stage(
         question,
         prepared.runtime_auth.policy_allowed_subagents,
     )
+    candidate_names = {candidate.name for candidate in route_candidates}
     planned_mcp_servers = [
         server
         for server in prepared.runtime_auth.mcp_servers
@@ -856,4 +858,16 @@ async def stream_handler(
                 },
             )
             return
-        raise
+        logger.exception("Unhandled stream execution failure")
+        yield cast(
+            Any,
+            {
+                "type": "response.output_text.delta",
+                "item_id": "item_error",
+                "delta": (
+                    "I couldn't complete this request because the backend "
+                    "or a connected data source failed. Please try again."
+                ),
+            },
+        )
+        return

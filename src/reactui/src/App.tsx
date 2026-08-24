@@ -24,12 +24,11 @@ const STARTERS = [
   "/persona analyst",
   "/persona operator",
   "/persona engineer",
-  "Any products matching 'all season 225/65R17 tire'",
-  "How do delight scores compare for appointments vs walk-ins?",
-  "What is the distribution of sales_receipt_document_type_code to understand the different document types in sales receipts?",
   "What is the monthly aggregated total tax amount from sales receipts?",
+  "How do delight scores compare for appointments vs walk-ins?",
+  "What is the distribution of sales receipt document type to understand the different document types in sales receipts?",
   "Flink streaming job has increasing consumer lag. What are the common causes and how do we fix it?",
-  "List today's open appointments and their current order status.",
+  "List latest day's open appointments and their current order status.",
   "Look up product details for brand code 'MICH' and list matching article types.",
 ];
 
@@ -295,9 +294,9 @@ export default function App() {
       <section className="starter-area">
         <div className="starter-tabs">{["Business", "Operations", "Commands"].map((group) => <button key={group} type="button" className={starterGroup === group ? "active" : ""} onClick={() => setStarterGroup(group)}>{group}</button>)}</div>
         <div className="starters">
-        {STARTERS.filter((starter) => starterGroup === "Commands" ? starter.startsWith("/") : starterGroup === "Operations" ? starter.toLowerCase().includes("flink") || starter.toLowerCase().includes("appointments") : !starter.startsWith("/") && !starter.toLowerCase().includes("flink") && !starter.toLowerCase().includes("appointments")).map((starter) => (
+        {STARTERS.filter((starter) => starterGroup === "Commands" ? starter.startsWith("/") : starterGroup === "Operations" ? starter.toLowerCase().includes("flink") || starter.toLowerCase().includes("appointments") : !starter.startsWith("/") && !starter.toLowerCase().includes("flink") && !starter.toLowerCase().includes("appointments")).map((starter, index) => (
           <button
-            key={starter}
+            key={`${starterGroup}-${index}-${starter}`}
             type="button"
             onClick={() => {
               void submitMessage(starter);

@@ -23,19 +23,6 @@ export function updateStreamHints(event: Record<string, unknown>, hints: StreamH
     }
   }
 
-  if (!delta && item && item.role === "assistant") {
-    const content = item.content;
-    if (typeof content === "string") {
-      delta = content;
-    } else if (Array.isArray(content)) {
-      delta = content
-        .filter((block): block is Record<string, unknown> => typeof block === "object" && block !== null)
-        .map((block) => typeof block.text === "string" ? block.text : "")
-        .filter(Boolean)
-        .join(" ");
-    }
-  }
-
   if (eventType.includes("mcp") || itemType.includes("mcp")) {
     hints.categories.add("Genie MCP");
   }
