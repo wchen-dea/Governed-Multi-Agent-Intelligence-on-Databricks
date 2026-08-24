@@ -1,0 +1,46 @@
+resources:
+  jobs:
+    build_dim_product_search_index:
+      name: build_dim_product_search_index
+      tags:
+        layer: semantics
+      tasks:
+      - task_key: build_index
+        notebook_task:
+          notebook_path: ../src/semantics/notebooks/create_dim_product_search_index.py
+          base_parameters:
+            catalog: ${var.semantics_catalog}
+            schema: ${var.semantics_schema}
+            endpoint_name: ${var.product_index_ep}
+    build_flink_support_index:
+      name: build_flink_support_index
+      tags:
+        layer: semantics
+      tasks:
+      - task_key: build_index
+        environment_key: flink_support_env
+        notebook_task:
+          notebook_path: ../src/semantics/notebooks/create_flink_support_index.py
+          base_parameters:
+            catalog: ${var.semantics_catalog}
+            schema: ${var.semantics_schema}
+            endpoint_name: ${var.flink_support_ed}
+      environments:
+      - environment_key: flink_support_env
+        spec:
+          client: "1"
+          dependencies:
+          - python-docx
+          - pypdf
+          - openpyxl
+    build_fct_cdi_trusted_expert_score_metric_view:
+      name: build_fct_cdi_trusted_expert_score_metric_view
+      tags:
+        layer: semantics
+      tasks:
+      - task_key: build_metric_view
+        notebook_task:
+          notebook_path: ../src/semantics/notebooks/create_fct_cdi_trusted_expert_score_metric_view.py
+          base_parameters:
+            catalog: ${var.semantics_catalog}
+            schema: ${var.semantics_schema}

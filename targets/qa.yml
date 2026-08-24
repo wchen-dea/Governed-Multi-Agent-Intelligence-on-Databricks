@@ -29,7 +29,7 @@ targets:
       # Example: existing serving endpoint name in QA workspace
       serving_endpoint_name: "<QA-SERVING-ENDPOINT>"
       # Example: existing AI search serving endpoint name in QA workspace
-      ai_search_endpoint_name: "<QA-AI-SEARCH-ENDPOINT>"
+      product_index_ep: "<QA-AI-SEARCH-ENDPOINT>"
       # Example: app name that this app can call, e.g. "analytics-assistant-qa"
       target_app_name: "<QA-TARGET-APP-NAME>"
       # Example: Unity Catalog table for Databricks Apps telemetry logs
@@ -84,7 +84,7 @@ targets:
               permission: CAN_RUN
           - name: ai_search_endpoint
             serving_endpoint:
-              name: ${var.ai_search_endpoint_name}
+              name: ${var.product_index_ep}
               permission: CAN_QUERY
           - name: knowledge_assistant_product_ep
             serving_endpoint:

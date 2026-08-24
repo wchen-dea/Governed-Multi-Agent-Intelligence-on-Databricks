@@ -76,12 +76,18 @@ variables:
   serving_endpoint_name:
     description: Primary serving endpoint name for the current environment
     default: ""
-  ai_search_endpoint_name:
+  product_index_ep:
     description: AI search serving endpoint name for the current environment
-    default: ""
-  flink_support_vs_endpoint_name:
+    default: "product_index_ep"
+  flink_support_ed:
     description: Vector Search endpoint name for the Flink support RAG index
-    default: "flink-support-vs-endpoint"
+    default: "flink-support-ed"
+  semantics_catalog:
+    description: Unity Catalog catalog for semantics-layer tables, indexes, and metric views
+    default: quickstart_catalog
+  semantics_schema:
+    description: Unity Catalog schema for semantics-layer tables, indexes, and metric views
+    default: multi_agent_schema
   lakebase_project_id:
     description: Lakebase project ID for the operational data store
     default: ""

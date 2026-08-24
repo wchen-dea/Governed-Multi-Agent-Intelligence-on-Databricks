@@ -196,7 +196,7 @@ If an OBO tool is invoked without a forwarded token, the runtime returns a clear
 - `app_name`
 - `genie_space_id`
 - `knowledge_assistant_endpoint_name`
-- `serving_endpoint_name`
+- `flink_support_ed`
 - `target_app_name`
 - `mlflow_experiment_id`
 
