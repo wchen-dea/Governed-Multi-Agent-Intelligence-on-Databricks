@@ -6,22 +6,23 @@ This document captures high-level logical architecture and end-to-end runtime fl
 
 ```mermaid
 flowchart LR
-    User[User] --> FE[Frontend Chat UI]
-    FE --> API[Backend API Handlers]
-    API --> ORCH[Orchestrator Service Responses API]
-    ORCH --> POL[Policy and Guardrails]
-    ORCH --> TOOL[Tool and MCP Adapter Layer]
-    TOOL --> GENIE[Genie Spaces Sales CDI]
-    TOOL --> VS[Vector Search AI Search Indexes]
-    TOOL --> SEP[Serving Endpoints]
-    TOOL --> LB[Lakebase PostgreSQL ODS psycopg2]
-    VS --> KB[Support KB Volume]
-    VS --> PT[Product Data]
-    GENIE --> ST[Sales Tables]
-    GENIE --> MV[CDI Materialized View]
-    LB --> OD[Appointment and Order Data]
+    User[User] --> FE[React Chat UI — Vite/TS]
+    FE --> API[Backend API — MLflow Agent Server]
+    API --> ORCH[Orchestrator — OpenAI Agents SDK Runner]
+    ORCH --> POL[Policy Service + Guardrails Service]
+    ORCH --> TOOL[Tool + MCP Adapter Layer]
+    TOOL --> GENIE[Genie MCP — sales_insights_agent / cdi_agent]
+    TOOL --> AIS[AI Search MCP — product_index_assistant / flink_support_agent]
+    TOOL --> LB[Lakebase — lakebase_ods_agent — psycopg2 + OAuth credentials]
+    GENIE --> ST[Sales Tables — quickstart_catalog]
+    GENIE --> MV[CDI Materialized Views]
+    AIS --> PI[dim_product_search_index]
+    AIS --> FS[flink_support_index]
+    LB --> OD[Operational Data Store — appointments, orders, invoices]
+    ORCH --> FM[Foundation Model — target-configured]
+    FM -.-> AIGW[AI Gateway — optional base_url override]
     ORCH --> BUS[Message Bus]
-    BUS --> AUDIT[Audit Storage]
+    BUS --> AUDIT[UC Audit Table — quickstart_catalog.multi_agent_schema.agent_lifecycle_events]
 ```
 
 ## 2. End-to-End Request Flow
@@ -29,59 +30,70 @@ flowchart LR
 ```mermaid
 sequenceDiagram
     participant U as User
-    participant FE as Frontend
+    participant FE as React Frontend
     participant BE as Backend Handler
-    participant OR as Orchestrator
+    participant RA as Runtime Auth Service
+    participant POL as Policy Service
+    participant OR as Orchestrator Agent
     participant TL as Tool Layer
+    participant GR as Guardrails Service
+    participant MB as Message Bus
 
-    U->>FE: Send prompt
+    U->>FE: Send prompt with persona
     FE->>BE: POST /invocations
-    BE->>OR: Build runtime context
-    OR->>OR: Policy checks
-    OR->>TL: Call selected tool
+    BE->>MB: request.started
+    BE->>RA: Build identity + policy context
+    RA->>POL: Filter subagents by persona + auth
+    POL-->>RA: Allowed/denied subagents
+    RA-->>BE: RuntimeAuthContext
+    BE->>OR: Build Agent with allowed tools + MCP
+    OR->>TL: Execute selected tool
     TL-->>OR: Tool result
-    OR->>OR: Guardrail checks
-    OR-->>BE: Final response
-    BE-->>FE: Stream response
-    FE-->>U: Render response
+    OR-->>BE: Response items
+    BE->>GR: Evaluate guardrails
+    GR-->>BE: Pass/block decision
+    BE->>MB: request.succeeded
+    BE-->>FE: Stream/invoke response
+    FE-->>U: Render response with source
 ```
 
 ## 3. Data Flow and Lineage
 
 ```mermaid
 flowchart TD
-    I[User Input] --> N[Normalized Request]
-    N --> P[Policy Decision]
-    P --> T[Tool Invocation]
+    I[User Input + Persona] --> N[Normalized Messages — to_messages]
+    N --> P[Policy Decision per subagent]
+    P --> T[Tool Invocation — Genie / AI Search / Lakebase]
+    P --> RP[Route Plan + Response Envelope]
     T --> R[Retrieved Data]
-    R --> G[Generated Response]
-    G --> O[Output to User]
+    R --> G[LLM Response Generation]
+    G --> SRC[Source Suffix — governed attribution]
+    SRC --> GR[Guardrail Check]
+    GR --> O[Output to User]
 
-    N --> E1[Request Event]
-    P --> E2[Policy Event]
-    T --> E3[Tool Event]
-    G --> E4[Guardrail Event]
-    O --> E5[Response Event]
-    E1 --> L[Lineage and Audit Store]
+    N --> E1[request.invoke.started]
+    P --> E2[runtime_auth.policy.denied]
+    GR --> E3[response.guardrail.passed/blocked]
+    O --> E4[request.invoke.succeeded]
+    E1 --> L[UC Audit Table]
     E2 --> L
     E3 --> L
     E4 --> L
-    E5 --> L
 ```
 
 ## 4. Security and Identity Flow
 
 ```mermaid
 flowchart LR
-    UI[UI Session] --> HDR[Forwarded Token Header Optional]
+    UI[React UI Session] --> HDR[x-forwarded-access-token — optional]
     HDR --> AUTH[Runtime Auth Builder]
-    AUTH --> APP[App Identity Path]
-    AUTH --> OBO[User OBO Path]
+    AUTH --> APP[App Identity — WorkspaceClient]
+    AUTH --> OBO[User OBO Identity — user WorkspaceClient]
 
-    APP --> TOOL1[App-Auth Tool Calls]
-    OBO --> TOOL2[User-Auth Tool Calls]
+    APP --> TOOL1[App-auth tools — all current subagents]
+    OBO --> TOOL2[OBO-auth tools — when auth_mode=obo]
 
-    AUTH --> POL[Policy Decision]
-    POL --> ALLOW[Allowed Tools]
-    POL --> DENY[Denied Tools]
+    AUTH --> POL[Policy Filter]
+    POL --> ALLOW[Allowed subagents by persona]
+    POL --> DENY[Denied — persona_not_allowed / obo_identity_required]
 ```

@@ -25,7 +25,7 @@ RESPONSE_HEADER_ALLOW = {"content-type", "cache-control", "x-request-id", "date"
 def _validate_dist() -> None:
     if not REACT_UI_DIST_DIR.exists():
         raise RuntimeError(
-            f"React UI dist not found at {REACT_UI_DIST_DIR}. Run `uv run prepare-app-source` first."
+            f"React UI dist not found at {REACT_UI_DIST_DIR}. Run `uv run runtime-build-source` first."
         )
 
 

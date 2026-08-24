@@ -6,7 +6,7 @@ Define implementation details, code structure, runtime behavior, and configurati
 
 ## Scope
 
-This document covers low-level design and implementation details. High-level architecture is in `docs/architecture/system-architecture.md`, and operations guidance is in `docs/operations/runbook.md`.
+This document covers low-level design and implementation details. High-level architecture is in `docs/architecture/high-level-architecture.md`, and operations guidance is in `docs/operations/operations-runbook.md`.
 
 ## Current Status
 
@@ -160,7 +160,7 @@ Supported subagent types:
 - `serving_endpoint` via Databricks Responses API (`endpoint` required)
 - `app` via Databricks Responses API using `apps/<endpoint>` model mapping
 - `mcp` via generic Databricks MCP route (`mcp_url` required)
-- `lakebase` via PostgreSQL wire protocol with OAuth credentials (`project_id`, `branch_id`, `endpoint_id`, `database`, `pg_host` required)
+- `lakebase` via PostgreSQL wire protocol and OAuth credentials (`project_id`, `branch_id`, `endpoint_id`, `database`, `pg_host` required)
 
 Supported auth modes:
 
@@ -245,7 +245,7 @@ Direct non-interactive Databricks Apps invocation tests should use:
 ## Operational Constraints in Design
 
 - MCP health checks run in parallel with timeout controls and short TTL caching for healthy/unhealthy outcomes.
-- Fallback deployment path exists for Terraform registry outages (`bundle sync` + `apps deploy`).
+- `make upload-wheel` provides the lifecycle-gated source deployment path for Terraform registry outages; it does not apply bundle-managed resources or grants.
 - Genie-backed queries require SQL warehouse and Unity Catalog grants for both user and app service principal.
 
 ## Key Files Quick Map
@@ -262,8 +262,8 @@ Direct non-interactive Databricks Apps invocation tests should use:
 ## Related Docs
 
 - `docs/product/business-specs.md`: business goals and requirements
-- `docs/architecture/technical-specs.md`: centralized technical domain map
-- `docs/architecture/system-architecture.md`: high-level architecture and request flow
+- `docs/architecture/runtime-technical-specs.md`: centralized technical domain map
+- `docs/architecture/high-level-architecture.md`: high-level architecture and request flow
 - `docs/architecture/design-artifacts/README.md`: centralized full design diagram set across concept, logical, and deployment phases
 - `docs/architecture/design-artifacts/08-backend-class-diagram-as-is.md`: concrete as-is backend class diagram
-- `docs/operations/runbook.md`: operations and incident handling
+- `docs/operations/operations-runbook.md`: operations and incident handling

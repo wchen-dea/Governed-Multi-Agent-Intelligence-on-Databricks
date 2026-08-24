@@ -6,46 +6,58 @@ Accepted
 
 ## Context
 
-Pre-deployment evaluation existed but was not an enforced quality gate. This allowed potential regressions in correctness, safety, and governance-sensitive behavior to ship.
+Pre-deployment evaluation existed but was not an enforced quality gate. This allowed potential regressions in tool-call accuracy, authorization correctness, safety, and groundedness to ship without detection.
 
 ## Decision
 
-Make evaluation a release gate and fail deployment when key aggregate KPIs are below configured thresholds.
+Make evaluation an enforced release gate via `enforce_release_gate()` in `evaluate_agent.py`. Deployment is blocked when key aggregate KPIs fall below configured thresholds.
 
-Target KPI dimensions:
+### KPI thresholds
 
-- Tool-call accuracy
-- Authorization correctness
-- Safety
-- Groundedness/relevance
+| KPI | Env Var | Default | Metric Candidates Searched |
+|-----|---------|---------|---------------------------|
+| Tool-call accuracy | `EVAL_MIN_TOOL_CALL_ACCURACY` | 0.80 | `toolcallcorrectness/mean`, `tool_call_correctness`, `tool_call_accuracy` |
+| Authorization correctness | `EVAL_MIN_AUTH_CORRECTNESS` | 0.90 | `authcorrectness/mean`, `auth_correctness`, `authorization_correctness`, `auth/mean` |
+| Safety | `EVAL_MIN_SAFETY` | 0.95 | `safety/mean`, `safety` |
+| Groundedness | `EVAL_MIN_GROUNDEDNESS` | 0.80 | `relevance_to_query/mean`, `groundedness`, `completeness/mean` |
 
-Controls:
+### Controls
 
-- Thresholds provided via environment variables.
-- Optional strict mode requiring all KPI metrics to be present.
-- Pipeline executes tests and evaluation before deploy.
+- `EVAL_REQUIRE_ALL_KPIS` (default `false`) — when true, missing KPI metrics also fail the gate.
+- Multiple metric name candidates per KPI allow compatibility with different MLflow scorer output formats.
+- Gate runs after `pytest` passes in CI and before `bundle deploy`.
+
+### Scorers used
+
+MLflow built-in: `Completeness`, `ConversationCompleteness`, `ConversationalSafety`, `KnowledgeRetention`, `UserFrustration`, `Fluency`, `RelevanceToQuery`, `Safety`, `ToolCallCorrectness`.
+
+Custom: `auth_correctness_scorer` — validates that policy-denied tools are not invoked and OBO paths correctly block without token.
 
 ## Alternatives Considered
 
 - Informational-only evaluation without deploy blocking.
 - Manual reviewer sign-off in place of automated threshold checks.
-- Gate only on one KPI (for example, safety) instead of a balanced score set.
+- Gate only on one KPI (e.g., safety) instead of a balanced score set.
+- Hard-coded thresholds instead of environment-configurable.
 
 ## Consequences
 
 ### Positive
 
 - Converts evaluation from observability into enforceable release quality.
-- Reduces production regressions in tool routing and safety behavior.
+- Reduces production regressions in tool routing, safety, and authorization behavior.
 - Makes deployment outcomes more consistent across environments.
+- Custom auth scorer catches privilege escalation regressions that generic scorers miss.
 
 ### Trade-offs
 
-- Requires periodic threshold tuning to avoid over-blocking.
+- Requires periodic threshold tuning to avoid over-blocking during development.
 - Can fail when expected metrics are absent if strict mode is enabled.
+- Evaluation dataset must be maintained alongside implementation changes.
 
 ## Implementation Notes
 
-- Gate logic and custom auth scorer: [src/backend/evaluate_agent.py](../../src/backend/evaluate_agent.py)
-- Pipeline enforcement: [.github/workflows/databricks-cicd.yml](../../.github/workflows/databricks-cicd.yml)
-- Operational guidance: [docs/operations/runbook.md](../operations/runbook.md)
+- Gate logic and scorers: [src/backend/evaluate_agent.py](../../src/backend/evaluate_agent.py) (`enforce_release_gate`, `auth_correctness_scorer`)
+- CI enforcement: [.github/workflows/databricks-cicd.yml](../../.github/workflows/databricks-cicd.yml) (runs `make evaluate` before deploy)
+- Makefile target: `make evaluate` (invokes `uv run assistant-evaluate`)
+- Operational guidance: [docs/operations/operations-runbook.md](../operations/operations-runbook.md)

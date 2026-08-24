@@ -33,7 +33,7 @@ This skill does not cover:
 - `src/backend/services/orchestrator_service.py`
 - `src/backend/services/policy_service.py`
 - `src/backend/services/runtime_auth.py`
-- `docs/architecture/model-and-tool-registry.md`
+- `docs/architecture/tool-and-model-registry.md`
 
 ## Workflow
 
@@ -77,7 +77,7 @@ make redeploy TARGET=<target> APP_NAME=<app-name> PROFILE=<profile>
 
 ```bash
 uv run pytest -q tests/test_subagent_config.py tests/test_orchestrator_service.py tests/test_policy_service.py tests/test_runtime_auth.py
-uv run preflight
+uv run runtime-preflight
 databricks apps get <app-name> --output json --profile <profile>
 ```
 

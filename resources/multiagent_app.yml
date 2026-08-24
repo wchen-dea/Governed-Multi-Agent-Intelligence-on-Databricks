@@ -58,6 +58,10 @@ resources:
           value: ${var.subagents_config_path}
         - name: DEFAULT_REQUEST_PERSONA
           value: ${var.default_request_persona}
+        - name: MAX_INPUT_CHARS
+          value: ${var.max_input_chars}
+        - name: MAX_RESPONSE_CHARS
+          value: ${var.max_response_chars}
         - name: MLFLOW_EXPERIMENT_ID
           value: ${var.mlflow_experiment_id}
         - name: MESSAGE_BUS_BACKEND
@@ -72,8 +76,6 @@ resources:
           value: ${var.uc_audit_schema}
         - name: UC_AUDIT_TABLE
           value: ${var.uc_audit_table}
-        - name: LAKEBASE_PG_PASSWORD
-          value: ${var.lakebase_pg_password}
       # Resources which this app has access to
       resources:
       - name: 'sales_genie_space'
@@ -86,7 +88,23 @@ resources:
           name: 'CDI Metrics Agent'
           space_id: ${var.cdi_genie_space_id}
           permission: 'CAN_RUN'
+      - name: 'product_search_index'
+        uc_securable:
+          securable_full_name: 'quickstart_catalog.multi_agent_schema.dim_product_search_index'
+          securable_type: 'TABLE'
+          permission: 'SELECT'
+      - name: 'flink_support_index'
+        uc_securable:
+          securable_full_name: 'quickstart_catalog.multi_agent_schema.flink_support_index'
+          securable_type: 'TABLE'
+          permission: 'SELECT'
+      - name: 'lakebase_pg_password'
+        secret:
+          scope: 'multiagent_app'
+          key: 'lakebase_pg_password'
+          permission: 'READ'
       - name: 'lakebase_ods'
         postgres:
-          id: ${var.lakebase_sql_warehouse_id}
-          permission: 'CAN_USE'
+          branch: projects/${var.lakebase_project_id}/branches/${var.lakebase_branch_id}
+          database: projects/${var.lakebase_project_id}/branches/${var.lakebase_branch_id}/databases/${var.lakebase_database}
+          permission: 'CAN_CONNECT_AND_CREATE'

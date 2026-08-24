@@ -1,54 +1,50 @@
-# AI System Design Artifacts (Centralized)
+# AI System Design Artifacts
 
-This folder centralizes the full system-design artifact set for the AI platform across concept, logical, and deployment phases.
+Centralized system-design artifact set for the multi-agent orchestrator across concept, logical, and deployment phases.
 
 ## Scope
 
-The artifact set is organized by phase and depth:
+Artifacts are organized by phase and depth:
 
-- Concept phase: business and system framing
-- Logical phase: software architecture and runtime behavior
-- Deployment phase: runtime topology and operations
+- **Concept** — business framing, personas, trust boundaries
+- **Logical** — runtime architecture, pipeline stages, policy/guardrail flows
+- **Deployment** — environment topology, CI/CD, observability
 
-For each phase, artifacts are split into:
-
-- High level: executive and architecture-overview view
-- Detailed: engineering implementation and operations view
+Each phase is split into high-level (architecture overview) and detailed (engineering implementation) views.
 
 ## Artifact Inventory
 
-1. [00-architecture-board-review.md](00-architecture-board-review.md)
-2. [01-concept-high-level.md](01-concept-high-level.md)
-3. [02-concept-detailed.md](02-concept-detailed.md)
-4. [03-logical-high-level.md](03-logical-high-level.md)
-5. [04-logical-detailed.md](04-logical-detailed.md)
-6. [05-deployment-high-level.md](05-deployment-high-level.md)
-7. [06-deployment-detailed.md](06-deployment-detailed.md)
-8. [07-request-execution-flow-class-diagram.md](07-request-execution-flow-class-diagram.md)
-9. [08-backend-class-diagram-as-is.md](08-backend-class-diagram-as-is.md)
+| # | File | Focus |
+|---|------|-------|
+| 00 | [00-architecture-board-review.md](00-architecture-board-review.md) | Single-page review pack embedding all diagrams |
+| 01 | [01-concept-high-level.md](01-concept-high-level.md) | Business capabilities, actors, system context |
+| 02 | [02-concept-detailed.md](02-concept-detailed.md) | Scope map, persona-agent matrix, trust boundaries |
+| 03 | [03-logical-high-level.md](03-logical-high-level.md) | Container diagram, request flow, identity flow |
+| 04 | [04-logical-detailed.md](04-logical-detailed.md) | Components, policy rules, failure/recovery, evaluation gate |
+| 05 | [05-deployment-high-level.md](05-deployment-high-level.md) | Environment topology, runtime map, resource mapping |
+| 06 | [06-deployment-detailed.md](06-deployment-detailed.md) | Network topology, CI/CD pipeline, observability, HA |
+| 07 | [07-request-execution-flow-class-diagram.md](07-request-execution-flow-class-diagram.md) | UML class diagrams for invoke/stream pipeline stages |
+| 08 | [08-backend-class-diagram-as-is.md](08-backend-class-diagram-as-is.md) | Domain model, DI composition, message bus strategy, subagent registry |
 
 ## Coverage Matrix
 
 | Phase | High Level | Detailed |
-| --- | --- | --- |
-| Concept | System context, actor map, value flow, capability map | scope map, trust boundary and risk sketch |
-| Logical | container map, request flow, data lineage, auth flow | component map, orchestration sequence, policy and prompt layering, failure and recovery, session state, evaluation gate |
-| Deployment | environment topology, runtime deployment map | network topology, CI/CD and promotion, observability, HA and DR |
+|-------|-----------|----------|
+| Concept | Business capabilities, actor/persona map, system context, value flow | Scope map, persona-agent access matrix, trust boundaries + risks |
+| Logical | Container diagram, end-to-end request flow, data lineage, identity flow | Backend components, policy decision tree, prompt layering, failure/recovery, evaluation gate |
+| Deployment | Environment topology, runtime deployment map, subagent resource mapping | Network/security topology, CI/CD pipeline, observability architecture, HA/recovery |
 
-## How to Use
+## Current Implementation Facts
 
-1. Start with concept high-level for business and platform framing.
-2. Move to logical high-level and detailed for architecture and runtime behavior.
-3. Use deployment high-level and detailed for release planning and operations.
+- **5 subagents**: sales_insights (Genie), cdi (Genie), product_index (AI Search MCP), flink_support (AI Search MCP), lakebase_ods (Lakebase)
+- **4 personas**: manager (all), analyst (product + lakebase), operator (flink), engineer (product + flink + lakebase)
+- **Foundation model**: target-configured through `ORCHESTRATOR_MODEL`
+- **AI Gateway**: opt-in via DATABRICKS_OPENAI_BASE_URL
+- **Message bus**: uc_table (dev) with structured_logging fallback
+- **Workspace**: dbc-baff2b7f-4402.cloud.databricks.com (dev)
 
 ## Ownership and Update Policy
 
 - Primary owner: platform engineering
-- Review partners: product, security/governance, operations
-- Update triggers:
-  - new integration, model, or tool route
-  - auth or policy changes
-  - deployment topology or CI/CD changes
-  - observability or incident-response changes
-
-Update these artifacts in the same change where behavior changes.
+- Update triggers: new subagent, persona change, auth/policy change, deployment topology change
+- Update these artifacts in the same PR where behavior changes.

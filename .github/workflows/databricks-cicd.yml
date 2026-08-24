@@ -60,7 +60,7 @@ jobs:
           EVAL_MIN_SAFETY: "${{ vars.EVAL_MIN_SAFETY || '0.95' }}"
           EVAL_MIN_GROUNDEDNESS: "${{ vars.EVAL_MIN_GROUNDEDNESS || '0.80' }}"
           EVAL_REQUIRE_ALL_KPIS: "${{ vars.EVAL_REQUIRE_ALL_KPIS || 'true' }}"
-        run: uv run agent-evaluate
+        run: uv run assistant-evaluate
 
       - name: Build app-source payload
         run: make build-app-source
@@ -162,7 +162,7 @@ jobs:
           EVAL_MIN_SAFETY: "${{ vars.EVAL_MIN_SAFETY || '0.95' }}"
           EVAL_MIN_GROUNDEDNESS: "${{ vars.EVAL_MIN_GROUNDEDNESS || '0.80' }}"
           EVAL_REQUIRE_ALL_KPIS: "${{ vars.EVAL_REQUIRE_ALL_KPIS || 'true' }}"
-        run: uv run agent-evaluate
+        run: uv run assistant-evaluate
 
       - name: Full redeploy
         run: |

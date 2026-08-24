@@ -37,6 +37,12 @@ variables:
   default_request_persona:
     description: Optional default persona used when request does not provide custom_inputs.persona
     default: ""
+  max_input_chars:
+    description: Maximum user input characters accepted before routing
+    default: "12000"
+  max_response_chars:
+    description: Maximum response characters before deterministic truncation
+    default: "20000"
   genie_space_id:
     description: Genie Agent space ID for the current environment
     default: ""
@@ -77,7 +83,7 @@ variables:
     description: SQL warehouse or Lakebase endpoint ID for app resource grant
     default: ""
   lakebase_pg_password:
-    description: Lakebase PG password for SCRAM auth (bypasses OAuth credentials API)
+    description: Deprecated; use the multiagent_app/lakebase_pg_password secret
     default: ""
   target_app_name:
     description: Target Databricks app name granted CAN_USE for the current environment

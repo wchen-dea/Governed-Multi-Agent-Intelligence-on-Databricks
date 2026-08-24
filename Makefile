@@ -1,12 +1,14 @@
 SHELL := /bin/sh
 
-.PHONY: help test evaluate build-app-source validate bundle-deploy bundle-deploy-optional import ensure-running stop deploy grant-runtime-permissions redeploy health smoke query-dev logs status
+.PHONY: help test lint-markdown runtime-core assistant-tools evaluate evaluate-strict build-app-source upload-wheel validate wait-stable bundle-deploy bundle-deploy-optional import ensure-running stop deploy grants redeploy health smoke smoke-governance query-dev logs status
 
 PROFILE ?= DEFAULT
 TARGET ?= dev
 APP_NAME ?= multiagent-app-$(TARGET)
 APP_START_MAX_ATTEMPTS ?= 30
 APP_START_POLL_SECONDS ?= 2
+APP_STABLE_MAX_ATTEMPTS ?= 60
+APP_STABLE_POLL_SECONDS ?= 2
 APP_DEPLOY_MAX_ATTEMPTS ?= 60
 APP_DEPLOY_POLL_SECONDS ?= 2
 PERMISSIONS_FAIL_OPEN ?= true
@@ -20,14 +22,20 @@ help:
 	@printf "Local dev Databricks app workflow\n\n"
 	@printf "Targets:\n"
 	@printf "  make test              Run local test suite\n"
+	@printf "  make lint-markdown     Run pinned Markdown lint checks\n"
+	@printf "  make runtime-core      Show runtime-core command group\n"
+	@printf "  make assistant-tools   Show assistant/operations command group\n"
 	@printf "  make evaluate          Run MLflow GenAI evaluation and release gate\n"
+	@printf "  make evaluate-strict   Run evaluation with all KPI gates required\n"
 	@printf "  make build-app-source  Build wheel + React UI app source payload\n"
+	@printf "  make upload-wheel      Build, upload, deploy, and health-check the app payload without Terraform\n"
 	@printf "  make validate          Validate Databricks bundle for TARGET\n"
+	@printf "  make wait-stable       Wait for App compute to be ACTIVE or STOPPED\n"
 	@printf "  make bundle-deploy     Try bundle deploy for TARGET (may fail on Terraform registry)\n"
 	@printf "  make import            Upload .databricks_app_source into app workspace path\n"
 	@printf "  make stop              Stop app compute for APP_NAME\n"
 	@printf "  make deploy            Deploy uploaded app source with Databricks Apps\n"
-	@printf "  make grant-runtime-permissions  Grant app SP permissions on Genie Agents/UC/AI Search/serving/warehouse\n"
+	@printf "  make grants             Grant app SP permissions on Genie Agents/UC/AI Search/serving/warehouse\n"
 	@printf "  make redeploy          Full redeploy with auto fallback: validate, try bundle deploy, then import/deploy/permissions/health/smoke\n"
 	@printf "  make health            Verify app deployment/app state is healthy\n"
 	@printf "  make smoke            Smoke-check app URL, React index shell, and /invocations route\n"
@@ -43,20 +51,51 @@ help:
 test:
 	uv run pytest -q
 
+lint-markdown:
+	./scripts/lint_markdown.sh
+
+runtime-core:
+	./scripts/runtime_core.sh help
+
+assistant-tools:
+	./scripts/assistant_tools.sh help
+
 evaluate:
-	uv run agent-evaluate
+	uv run assistant-evaluate
+
+evaluate-strict:
+	EVAL_REQUIRE_ALL_KPIS=true uv run assistant-evaluate
 
 build-app-source:
-	uv run prepare-app-source
+	uv run runtime-build-source
+
+upload-wheel: ensure-running import deploy health
 
 validate:
 	databricks bundle validate -t "$(TARGET)" --profile "$(PROFILE)"
 
-bundle-deploy:
+wait-stable:
+	@printf "Waiting for app %s compute to become stable...\n" "$(APP_NAME)"; \
+	ATTEMPT=0; \
+	while [ $$ATTEMPT -lt "$(APP_STABLE_MAX_ATTEMPTS)" ]; do \
+		APP_JSON="$$($(APP_GET_JSON))"; \
+		COMPUTE_STATE="$$(printf "%s" "$$APP_JSON" | jq -r '.compute_status.state // "UNKNOWN"')"; \
+		APP_STATE="$$(printf "%s" "$$APP_JSON" | jq -r '.app_status.state // "UNKNOWN"')"; \
+		printf "  stable-check attempt=%s/%s app=%s compute=%s\n" "$$((ATTEMPT + 1))" "$(APP_STABLE_MAX_ATTEMPTS)" "$$APP_STATE" "$$COMPUTE_STATE"; \
+		case "$$COMPUTE_STATE" in \
+			ACTIVE|STOPPED) exit 0 ;; \
+		esac; \
+		ATTEMPT=$$((ATTEMPT + 1)); \
+		sleep "$(APP_STABLE_POLL_SECONDS)"; \
+	done; \
+	printf "App $(APP_NAME) compute did not stabilize before update.\n" >&2; \
+	exit 1
+
+bundle-deploy: wait-stable
 	@databricks bundle deploy -t "$(TARGET)" --profile "$(PROFILE)" || \
 		(printf "bundle deploy failed; use make redeploy for the Terraform-free fallback path\n" && exit 1)
 
-bundle-deploy-optional:
+bundle-deploy-optional: wait-stable
 	@databricks bundle deploy -t "$(TARGET)" --profile "$(PROFILE)" || \
 		printf "bundle deploy failed; continuing with Terraform-free fallback path (import -> deploy -> permissions -> health -> smoke)\n"
 
@@ -67,6 +106,7 @@ import: build-app-source
 		printf "Could not resolve default_source_code_path for $(APP_NAME)\n" >&2; \
 		exit 1; \
 	fi; \
+	databricks workspace delete "$$APP_SRC/wheels" --recursive --profile "$(PROFILE)" >/dev/null 2>&1 || true; \
 	databricks workspace import-dir .databricks_app_source "$$APP_SRC" --overwrite --profile "$(PROFILE)"
 
 ensure-running:
@@ -97,7 +137,7 @@ stop:
 		exit 1; \
 	fi
 
-deploy:
+deploy: wait-stable
 	@APP_JSON="$$($(APP_GET_JSON))"; \
 	APP_SRC="$$(printf "%s" "$$APP_JSON" | jq -r '.default_source_code_path')"; \
 	APP_STATE="$$(printf "%s" "$$APP_JSON" | jq -r '.app_status.state // "UNKNOWN"')"; \
@@ -106,10 +146,6 @@ deploy:
 	if [ -z "$$APP_SRC" ] || [ "$$APP_SRC" = "null" ]; then \
 		printf "Could not resolve default_source_code_path for $(APP_NAME)\n" >&2; \
 		exit 1; \
-	fi; \
-	if [ "$$APP_STATE" != "RUNNING" ]; then \
-		printf "App %s is in state=%s; continuing deploy without RUNNING precondition.\n" "$(APP_NAME)" "$$APP_STATE"; \
-		databricks apps start "$(APP_NAME)" --profile "$(PROFILE)" >/dev/null 2>&1 || true; \
 	fi; \
 	while [ "$$DEPLOY_STATE" = "IN_PROGRESS" ] && [ $$ATTEMPT -lt "$(APP_DEPLOY_MAX_ATTEMPTS)" ]; do \
 		printf "Waiting for active deployment lock to clear: attempt=%s/%s state=%s\n" "$$((ATTEMPT + 1))" "$(APP_DEPLOY_MAX_ATTEMPTS)" "$$DEPLOY_STATE"; \
@@ -125,7 +161,7 @@ deploy:
 	printf "Deploying app %s from source path: %s\n" "$(APP_NAME)" "$$APP_SRC"; \
 	databricks apps deploy "$(APP_NAME)" --profile "$(PROFILE)" --source-code-path "$$APP_SRC" --mode SNAPSHOT
 
-grant-runtime-permissions:
+grants:
 	@set -e; \
 	FLAGS=""; \
 	if [ "$(PERMISSIONS_DRY_RUN)" = "true" ]; then FLAGS="$$FLAGS --dry-run"; fi; \
@@ -136,7 +172,7 @@ grant-runtime-permissions:
 		--profile "$(PROFILE)" \
 		$$FLAGS
 
-redeploy: build-app-source validate bundle-deploy-optional import deploy grant-runtime-permissions health smoke
+redeploy: build-app-source validate bundle-deploy-optional import deploy grants health smoke
 
 health:
 	@APP_JSON="$$($(APP_GET_JSON))"; \
@@ -188,6 +224,17 @@ smoke:
 	fi; \
 	rm -f "$$INV_TMP"; \
 	printf "Smoke checks passed for $(APP_NAME)\n"
+
+smoke-governance:
+	@set -e; \
+	if [ -z "$(TOKEN)" ]; then printf "TOKEN is required for governance smoke checks\n" >&2; exit 1; fi; \
+	APP_JSON="$$($(APP_GET_JSON))"; \
+	APP_URL="$$(printf "%s" "$$APP_JSON" | jq -r '.url')"; \
+	PAYLOAD='$${PAYLOAD:-{"input":[{"role":"user","content":"ping"}],"stream":false,"custom_inputs":{"persona":"manager"}}}'; \
+	RESP_TMP="$$(mktemp)"; \
+	CODE="$$(curl --noproxy '*' -sS -o "$$RESP_TMP" -w '%{http_code}' -X POST "$${APP_URL%/}/invocations" -H 'content-type: application/json' -H "authorization: Bearer $(TOKEN)" --data "$$PAYLOAD")"; \
+	printf "governance.smoke.http_code=%s\n" "$$CODE"; cat "$$RESP_TMP"; printf "\n"; rm -f "$$RESP_TMP"; \
+	if [ "$$CODE" != "200" ]; then printf "Governance smoke invocation failed\n" >&2; exit 1; fi
 
 query-dev:
 	@set -e; \

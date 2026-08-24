@@ -24,7 +24,11 @@ Primary implementation:
 - Supported subagent kinds include genie, serving_endpoint, app, mcp, and lakebase.
 - Non-Genie function tools are generated dynamically from subagent metadata.
 - Genie integrations use MCP server registration with parallel runtime health checks and short TTL health caching.
-- Lakebase integrations use PostgreSQL wire protocol with OAuth credentials generated at invocation time.
+- Lakebase integrations use PostgreSQL wire protocol with an OAuth credential generated at invocation time by the Databricks Postgres credentials API.
+- Native function and MCP calls are required; pseudo-tool text is not valid tool execution.
+- A Lakebase request may use one schema-discovery query followed by one data query. A `LAKEBASE_QUERY_FAILED` result is not retried.
+- Capability-based route planning produces a typed `RoutePlan`; ambiguous requests fall back to the policy-approved subagent set.
+- Route confidence is based on the winning capability score relative to the runner-up. Plans below the implementation threshold of `0.60` use `low_confidence_fallback` and do not hard-restrict the model to a heuristic candidate.
 
 Primary implementation:
 
@@ -41,6 +45,7 @@ Primary implementation:
 - auth_mode app uses app identity.
 - auth_mode obo uses forwarded user identity via x-forwarded-access-token.
 - Missing required OBO identity produces explicit authorization failure behavior.
+- Lakebase uses the app identity's OAuth database role. The configured `pg_user` must match that role.
 
 Primary implementation:
 
@@ -70,6 +75,8 @@ Primary implementation:
 - Evidence and citation requirements are enforced for governed responses.
 - Unsafe output and low-confidence sensitive output checks are enforced.
 - Guardrail decisions emit pass and block lifecycle events.
+- Input guardrails run before runtime authorization and emit `request.guardrail.blocked` with stable reason codes.
+- Response budgets are configured with `MAX_INPUT_CHARS` and `MAX_RESPONSE_CHARS`.
 
 Primary implementation:
 
@@ -83,6 +90,7 @@ Primary implementation:
 - Message bus backend is environment-configurable.
 - Optional async queue-backed message-bus publishing is available to reduce request-path event I/O overhead.
 - UC-governed persistence is implemented through a uc_table backend.
+- Tool success/failure events include normalized status, latency, attempt count, auth mode, and error code.
 
 Supported backends:
 
@@ -125,13 +133,21 @@ Primary implementation:
 - targets/qa.yml
 - targets/stg.yml
 - targets/prod.yml
-- docs/operations/runbook.md
+- docs/operations/operations-runbook.md
 
 ## 9. Validation Specification
 
 - Unit and integration tests cover subagent config, runtime auth, policy, message bus, and guardrails.
 - Compile checks and preflight runtime checks are used for end-to-end local validation.
 - Bundle validation is used to verify deploy-time configuration integrity.
+- App resource validation includes Lakebase Autoscaling `branch`, `database`, and `CAN_CONNECT_AND_CREATE` fields.
+
+## 10. Evaluation Readiness
+
+- Deterministic route-plan tests pass for sales, product, Flink, CDI, and Lakebase intents.
+- The latest Databricks-backed conversational evaluation remains blocked at tool-call accuracy `0.400 < 0.800`.
+- Route-plan events must not be interpreted as proof of correct model tool calls; actual tool-call traces remain the release-gate authority.
+- The evaluation corpus requires explicit cases for tool-required, tool-optional, and no-tool conversational turns.
 
 Primary implementation:
 
@@ -145,8 +161,8 @@ Primary implementation:
 
 ## Related Documents
 
-- system-architecture.md
-- system-design.md
+- high-level-architecture.md
+- low-level-design.md
 - ../product/business-specs.md
-- ../operations/runbook.md
+- ../operations/operations-runbook.md
 - adrs/README.md

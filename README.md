@@ -9,7 +9,7 @@ Modern AI applications are moving from single-model chatbots to orchestrated sys
 
 - Route requests to specialized agents and tools
 - Ground responses on governed business data
-- Stream responses in real time for interactive UX
+- Return guardrail-finalized streamed responses for interactive UX
 - Ship safely through multi-environment CI/CD
 
 This repository provides an MVP foundation that can easily scale to enterprise use cases.
@@ -78,8 +78,8 @@ Current dev target examples:
 
 - Genie Agent: `sales_insights_agent` (space id configured in `subagents.dev.json`)
 - Genie Agent: `cdi_agent` — Customer Delight Indicator analytics backed by materialized view `quickstart_catalog.multi_agent_schema.fct_cdi_trusted_expert_score_metric_view`
-- AI Search MCP index: `product_index_assistant` using `/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/dim_product_search_index`
-- AI Search MCP index: `flink_support_agent` using `/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/flink_support_search_index` (RAG over support KB volume)
+- Vector Search MCP index: `product_index_assistant` using `/api/2.0/mcp/vector-search/quickstart_catalog/multi_agent_schema/dim_product_search_index`
+- AI Search MCP index: `flink_support_agent` using `/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/flink_support_index` (RAG over support KB volume)
 
 Typical Genie Agent source pattern:
 
@@ -111,7 +111,7 @@ This project uses a modern AI app stack on Databricks:
 - Governed data access: Unity Catalog permissions and SQL warehouse controls.
 - Hybrid authorization model: per-tool app identity and user identity (OBO) routing.
 - Deployment-as-code: Databricks Declarative Automation Bundles with target overlays.
-- Streaming-first UX: React + TypeScript frontend with incremental token streaming.
+- Streamed UX: React + TypeScript frontend renders finalized text deltas and run context.
 
 ## Functionality Perspective
 
@@ -119,7 +119,7 @@ The app provides:
 
 - Unified endpoint: A single app endpoint for multi-tool, multi-agent interaction.
 - Dynamic routing: Requests are routed to Genie Agents, serving endpoints, or app-based specialists.
-- Real-time responses: Streaming responses for conversational latency.
+- Guardrailed streaming: buffered response events are finalized before visible text is emitted.
 - Configurable specialist set: Subagents can be added and validated through typed configuration.
 - Auth-aware tool routing: each subagent declares `auth_mode` (`app` or `obo`).
 - Governed routing policy: persona, tool-targeting, identity, and data-classification checks run before tool execution.
@@ -132,9 +132,9 @@ The app provides:
 If your Databricks CLI profile is already configured, this is the fastest way to run and validate locally:
 
 ```bash
-uv run quickstart
-uv run preflight
-uv run start-app
+uv run assistant-bootstrap
+uv run runtime-preflight
+uv run runtime-serve-app
 ```
 
 What this does:
@@ -207,7 +207,7 @@ High-level request path:
 5. Tools query Genie Agent MCP routes, AI Search MCP indexes, or serving endpoints.
 6. Unified response is returned to the client.
 
-For architecture diagrams, see [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md).
+For architecture diagrams, see [docs/architecture/high-level-architecture.md](docs/architecture/high-level-architecture.md).
 
 ## Project Layout
 
@@ -234,8 +234,8 @@ Prerequisites:
 Run locally:
 
 ```bash
-uv run quickstart
-uv run start-app
+uv run assistant-bootstrap
+uv run runtime-serve-app
 ```
 
 Validate and deploy:
@@ -244,7 +244,23 @@ Validate and deploy:
 make redeploy TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT
 ```
 
-If bundle deploy fails due to Terraform provider registry availability, use the operational fallback documented in [docs/operations/runbook.md](docs/operations/runbook.md).
+Lint Markdown documentation:
+
+```bash
+make lint-markdown
+```
+
+The command uses the pinned `markdownlint-cli2` version through `scripts/lint_markdown.sh` and excludes generated app assets and dependency directories.
+
+If bundle deploy fails due to Terraform provider registry availability, use the operational fallback documented in [docs/operations/operations-runbook.md](docs/operations/operations-runbook.md).
+
+For a source-only deployment that does not contact Terraform Registry, run:
+
+```bash
+make upload-wheel TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT
+```
+
+This builds versioned wheel and React payloads, clears prior generated remote wheels, uploads the payload, deploys it through the Databricks Apps API, and checks health. It does not apply bundle-managed resource grants.
 
 ## Runtime Environment Variables
 
@@ -282,35 +298,44 @@ MCP connect/probe performance controls:
 - `MCP_HEALTH_FAILURE_TTL_SECONDS`: cached unhealthy MCP status TTL in seconds (default `10`).
 - `ORCHESTRATOR_INSTRUCTIONS_CACHE_SIZE`: max in-memory cached static instruction variants (default `128`).
 
+## Runtime Status
+
+- Current package version: `0.1.2`.
+- Lakebase uses an OAuth credential minted from the Databricks Postgres credentials API; the app service principal needs a matching Lakebase OAuth role and `postgres` app resource grant.
+- The UI renders `response.output_text.delta` events and source/tool badges. It does not render raw function, MCP, or tool-output events.
+- Local source deploys are lifecycle-gated, but bundle-managed resource changes still require a successful bundle apply.
+- The current Databricks-backed evaluation release gate remains blocked at tool-call accuracy `0.400 < 0.800`.
+
 ## Documentation
 
 - [CONTRIBUTING.md](CONTRIBUTING.md): contributor workflow and project docstring standard.
 - [COPYRIGHT](COPYRIGHT): project copyright notice and usage restrictions.
 - [docs/product/business-specs.md](docs/product/business-specs.md): business requirements, constraints, and success metrics.
-- [docs/architecture/technical-specs.md](docs/architecture/technical-specs.md): centralized technical implementation map and cross-space contracts.
+- [docs/architecture/runtime-technical-specs.md](docs/architecture/runtime-technical-specs.md): centralized technical implementation map and cross-space contracts.
 - [docs/quality/evaluation-spec.md](docs/quality/evaluation-spec.md): datasets, scorers, KPI thresholds, and release-gate rules.
 - [Model Matrix and Environment Recommendations](docs/quality/evaluation-spec.md#model-matrix-and-environment-recommendations): environment-specific model profile guidance for dev, qa, stg, and prod release planning.
-- [docs/governance/prompt-and-policy-spec.md](docs/governance/prompt-and-policy-spec.md): prompt layering and deterministic policy/guardrail behavior.
-- [docs/architecture/model-and-tool-registry.md](docs/architecture/model-and-tool-registry.md): registry of active tools, endpoints, and Genie Agents.
-- [docs/governance/data-contract-and-lineage-spec.md](docs/governance/data-contract-and-lineage-spec.md): data contracts, classification, and lineage requirements.
-- [docs/governance/business-semantics-and-ai-metadata-spec.md](docs/governance/business-semantics-and-ai-metadata-spec.md): reliable business semantics and required AI metadata contract.
-- [docs/governance/security-and-threat-model.md](docs/governance/security-and-threat-model.md): trust boundaries, threats, and controls.
-- [docs/operations/cost-and-performance-budget.md](docs/operations/cost-and-performance-budget.md): latency/cost budget framework and operating signals.
-- [docs/operations/mlflow-implementation-checklist.md](docs/operations/mlflow-implementation-checklist.md): one-page MLflow rollout checklist with owners, tasks, and acceptance criteria.
-- [docs/operations/mlflow-execution-tracker.md](docs/operations/mlflow-execution-tracker.md): live execution tracker template for status, ownership, due dates, dependencies, and evidence.
-- [docs/architecture/api-contract-spec.md](docs/architecture/api-contract-spec.md): invoke/stream API contract and error semantics.
+- [docs/governance/prompt-policy-controls.md](docs/governance/prompt-policy-controls.md): prompt layering and deterministic policy/guardrail behavior.
+- [docs/architecture/tool-and-model-registry.md](docs/architecture/tool-and-model-registry.md): registry of active tools, endpoints, and Genie Agents.
+- [docs/governance/data-contracts-lineage.md](docs/governance/data-contracts-lineage.md): data contracts, classification, and lineage requirements.
+- [docs/governance/business-semantics-metadata.md](docs/governance/business-semantics-metadata.md): reliable business semantics and required AI metadata contract.
+- [docs/governance/security-threat-model.md](docs/governance/security-threat-model.md): trust boundaries, threats, and controls.
+- [docs/operations/cost-performance-budget.md](docs/operations/cost-performance-budget.md): latency/cost budget framework and operating signals.
+- [docs/operations/mlflow-rollout-checklist.md](docs/operations/mlflow-rollout-checklist.md): one-page MLflow rollout checklist with owners, tasks, and acceptance criteria.
+- [docs/operations/mlflow-rollout-tracker.md](docs/operations/mlflow-rollout-tracker.md): live execution tracker template for status, ownership, due dates, dependencies, and evidence.
+- [docs/architecture/api-contracts.md](docs/architecture/api-contracts.md): invoke/stream API contract and error semantics.
 - [docs/operations/postmortem-template.md](docs/operations/postmortem-template.md): incident and regression postmortem template.
-- [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md): high-level architecture and request flow
-- [docs/architecture/system-design.md](docs/architecture/system-design.md): low-level module design and runtime behavior
+- [docs/architecture/high-level-architecture.md](docs/architecture/high-level-architecture.md): high-level architecture and request flow
+- [docs/architecture/low-level-design.md](docs/architecture/low-level-design.md): low-level module design and runtime behavior
 - [docs/architecture/design-artifacts/README.md](docs/architecture/design-artifacts/README.md): centralized concept, logical, and deployment design diagrams
-- [docs/operations/runbook.md](docs/operations/runbook.md): deployment, operations, incident handling, rollback
+- [docs/operations/operations-runbook.md](docs/operations/operations-runbook.md): deployment, operations, incident handling, rollback
 
 ## Makefile Helpers
 
 Useful operational commands:
 
 - `make redeploy TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT`
-- `make grant-runtime-permissions TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT`
+- `make upload-wheel TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT`
+- `make grants TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT`
 - `make query-dev TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT QUERY='top stores by revenue' QUERY_PERSONA=manager`
 
 ## Current Status

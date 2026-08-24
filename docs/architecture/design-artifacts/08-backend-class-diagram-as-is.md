@@ -1,7 +1,6 @@
 # Backend Class Diagrams
 
-This class diagrams with several logic-isolated views.
-Each view reflects current implementation naming and relationships in the backend.
+Multi-view UML class diagrams reflecting current implementation naming and relationships.
 
 ## 1. Domain and Policy Model
 
@@ -10,71 +9,96 @@ classDiagram
 direction LR
 
 class SubagentConfig {
-  +name: str
-  +kind: SubagentKind
-  +description: str
-  +system_prompt: str?
-  +endpoint: str?
-  +space_id: str?
-  +mcp_url: str?
-  +project_id: str?
-  +branch_id: str?
-  +database: str?
-  +pg_host: str?
-  +pg_user: str?
-  +endpoint_id: str?
-  +auth_mode: SubagentAuthMode
-  +data_classification: DataClassification
-  +owner: str?
-  +freshness_sla: str?
-  +allowed_personas: tuple[str]
-  +requires_evidence: bool
-  +is_genie: bool
-  +is_mcp: bool
-  +is_lakebase: bool
-  +is_obo: bool
-  +tool_name: str
-  +model_name: str
-  +from_dict(value) SubagentConfig
+    +name: str
+    +kind: SubagentKind
+    +description: str
+    +system_prompt: str?
+    +endpoint: str?
+    +space_id: str?
+    +mcp_url: str?
+    +project_id: str?
+    +branch_id: str?
+    +database: str?
+    +pg_host: str?
+    +pg_user: str?
+    +endpoint_id: str?
+    +auth_mode: SubagentAuthMode
+    +data_classification: DataClassification
+    +owner: str?
+    +freshness_sla: str?
+    +allowed_personas: tuple~str~
+    +requires_evidence: bool
+    +is_genie: bool
+    +is_mcp: bool
+    +is_lakebase: bool
+    +is_obo: bool
+    +tool_name: str
+    +model_name: str
+    +from_dict(value) SubagentConfig
+}
+
+class SubagentKind {
+    <<enumeration>>
+    genie
+    serving_endpoint
+    app
+    mcp
+    lakebase
+}
+
+class SubagentAuthMode {
+    <<enumeration>>
+    app
+    obo
+}
+
+class DataClassification {
+    <<enumeration>>
+    public
+    internal
+    confidential
+    restricted
 }
 
 class PolicyContext {
-  +persona: str?
-  +has_user_identity: bool
-  +requested_tool: str?
-  +request_confidence: float?
+    +persona: str?
+    +has_user_identity: bool
+    +requested_tool: str?
+    +request_confidence: float?
 }
 
 class PolicyDecision {
-  +subagent_name: str
-  +tool_name: str
-  +allowed: bool
-  +reason_code: str
-  +reason: str
+    +subagent_name: str
+    +tool_name: str
+    +allowed: bool
+    +reason_code: str
+    +reason: str
 }
 
 class GuardrailResult {
-  +blocked: bool
-  +reasons: tuple[str]
+    +blocked: bool
+    +reasons: tuple~str~
 }
 
 class RequestIdentityContext {
-  +app_workspace_client: WorkspaceClient
-  +user_workspace_client: WorkspaceClient?
-  +forwarded_access_token: str?
-  +has_user_identity: bool
+    +app_workspace_client: WorkspaceClient
+    +user_workspace_client: WorkspaceClient?
+    +forwarded_access_token: str?
+    +has_user_identity: bool
 }
 
 class RuntimeAuthContext {
-  +subagent_tools: list
-  +mcp_servers: list[McpServer]
-  +unavailable_auth: list[str]
-  +policy_allowed_subagents: list[SubagentConfig]
+    +subagent_tools: list
+    +mcp_servers: list~McpServer~
+    +unavailable_auth: list~str~
+    +policy_allowed_subagents: list~SubagentConfig~
 }
-RuntimeAuthContext --> SubagentConfig : policy_allowed_subagents
 
+SubagentConfig --> SubagentKind
+SubagentConfig --> SubagentAuthMode
+SubagentConfig --> DataClassification
+RuntimeAuthContext --> SubagentConfig : policy_allowed_subagents
 PolicyDecision --> SubagentConfig
-PolicyContext --> RequestIdentityContext
 PolicyDecision --> PolicyContext
 GuardrailResult --> SubagentConfig : driven by used subagents
 ```
@@ -86,90 +110,79 @@ classDiagram
 direction LR
 
 class AppSettings {
-  +orchestrator_model: str
-  +message_bus_backend: str
-  +message_bus_topic: str
-  +message_bus_fail_open: bool
-  +default_request_persona: str
+    +orchestrator_model: str
+    +openai_base_url: str
+    +openai_timeout_seconds: float
+    +message_bus_backend: str
+    +message_bus_topic: str
+    +message_bus_fail_open: bool
+    +default_request_persona: str
+    +subagents_config_path: str
+    +uc_audit_warehouse_id: str
+    +uc_audit_catalog: str
+    +uc_audit_schema: str
+    +uc_audit_table: str
 }
 
 class AppDependencyContainer {
-  +orchestrator: OrchestratorDependencies
-  +runtime_auth: RuntimeAuthDependencies
-  +handlers: HandlerDependencies
+    +orchestrator: OrchestratorDependencies
+    +runtime_auth: RuntimeAuthDependencies
+    +handlers: HandlerDependencies
 }
 
 class OrchestratorDependencies {
-  +trace_metadata_updater
-  +function_tool_wrapper
-  +mcp_server_factory
-  +message_bus
+    +trace_metadata_updater: TraceMetadataUpdater
+    +function_tool_wrapper: FunctionToolWrapper
+    +mcp_server_factory: McpServerFactory
+    +message_bus: MessageBus
 }
 
 class RuntimeAuthDependencies {
-  +identity_context_provider
-  +session_id_provider
-  +trace_metadata_updater
-  +obo_client_factory
-  +subagent_tools_builder
-  +mcp_servers_builder
-  +lakebase_tools_builder
-  +policy_context_builder
-  +subagent_policy_filter
-  +message_bus
+    +identity_context_provider: IdentityContextProvider
+    +session_id_provider: SessionIdProvider
+    +trace_metadata_updater: TraceMetadataUpdater
+    +obo_client_factory: OboClientFactory
+    +subagent_tools_builder: SubagentToolsBuilder
+    +mcp_servers_builder: McpServersBuilder
+    +lakebase_tools_builder: LakebaseToolsBuilder
+    +policy_context_builder
+    +subagent_policy_filter
+    +message_bus: MessageBus
 }
 
 class HandlerDependencies {
-  +runtime_auth_builder
-  +mcp_connector
-  +orchestrator_factory
-  +guardrails_evaluator
-  +message_bus
-}
-
-class RuntimeAuthContext {
-  +subagent_tools: list
-  +mcp_servers: list[McpServer]
-  +unavailable_auth: list[str]
-  +policy_allowed_subagents: list[SubagentConfig]
-}
-
-class GuardrailResult {
-  +blocked: bool
-  +reasons: tuple[str]
+    +runtime_auth_builder
+    +mcp_connector
+    +orchestrator_factory
+    +guardrails_evaluator
+    +message_bus: MessageBus
 }
 
 class MessageBus {
-  <<protocol>>
-  +publish(event_type, payload) None
+    <<protocol>>
+    +publish(event_type, payload) None
 }
 
 class IdentityContextProvider {
-  <<protocol>>
-}
-class SessionIdProvider {
-  <<protocol>>
-}
-class TraceMetadataUpdater {
-  <<protocol>>
+    <<protocol>>
 }
 class OboClientFactory {
-  <<protocol>>
+    <<protocol>>
 }
 class SubagentToolsBuilder {
-  <<protocol>>
+    <<protocol>>
 }
 class McpServersBuilder {
-  <<protocol>>
+    <<protocol>>
 }
 class LakebaseToolsBuilder {
-  <<protocol>>
+    <<protocol>>
 }
 class FunctionToolWrapper {
-  <<protocol>>
+    <<protocol>>
 }
 class McpServerFactory {
-  <<protocol>>
+    <<protocol>>
 }
 
 AppDependencyContainer o-- OrchestratorDependencies
@@ -182,16 +195,12 @@ OrchestratorDependencies ..> FunctionToolWrapper
 OrchestratorDependencies ..> McpServerFactory
 
 RuntimeAuthDependencies ..> IdentityContextProvider
-RuntimeAuthDependencies ..> SessionIdProvider
-RuntimeAuthDependencies ..> TraceMetadataUpdater
 RuntimeAuthDependencies ..> OboClientFactory
 RuntimeAuthDependencies ..> SubagentToolsBuilder
 RuntimeAuthDependencies ..> McpServersBuilder
 RuntimeAuthDependencies ..> LakebaseToolsBuilder
 RuntimeAuthDependencies ..> MessageBus
 
-HandlerDependencies ..> RuntimeAuthContext
-HandlerDependencies ..> GuardrailResult
 HandlerDependencies ..> MessageBus
 ```
 
@@ -202,56 +211,49 @@ classDiagram
 direction LR
 
 class RequestStage {
-  +request: ResponsesAgentRequest
-  +runtime_auth
-  +messages: list
+    +request: ResponsesAgentRequest
+    +runtime_auth: RuntimeAuthContext
+    +messages: list
 }
 
 class ConnectedStage {
-  +runtime_auth
-  +unavailable: list[str]
-  +agent
+    +runtime_auth: RuntimeAuthContext
+    +unavailable: list~str~
+    +agent: Agent
 }
 
 class InvokeFinalizedStage {
-  +output_items: list[dict]
-  +unavailable: list[str]
+    +output_items: list~dict~
+    +unavailable: list~str~
 }
 
 class StreamExecutedStage {
-  +event_count: int
-  +buffered_events: list
-  +streamed_text_parts: list[str]
-  +used_subagents: list[SubagentConfig]
-  +has_tool_activity: bool
+    +event_count: int
+    +buffered_events: list
+    +streamed_text_parts: list~str~
+    +used_subagents: list~SubagentConfig~
+    +has_tool_activity: bool
 }
 
 class StreamFinalizedStage {
-  +event_count: int
-  +buffered_events: list
-  +source_suffix: str
-  +unavailable: list[str]
-  +guardrail_blocked: bool
-  +guardrail_reasons: tuple[str]
+    +event_count: int
+    +buffered_events: list
+    +source_suffix: str
+    +unavailable: list~str~
+    +guardrail_blocked: bool
+    +guardrail_reasons: tuple~str~
 }
 
 class ResponsesAgentRequest
 class ResponsesAgentResponse
 class ResponsesAgentStreamEvent
-class RuntimeAuthContext {
-  +subagent_tools: list
-  +mcp_servers: list[McpServer]
-  +unavailable_auth: list[str]
-  +policy_allowed_subagents: list[SubagentConfig]
-}
 
 RequestStage --> ResponsesAgentRequest
 RequestStage --> RuntimeAuthContext
-ConnectedStage --> RuntimeAuthContext
 
-ConnectedStage --> InvokeFinalizedStage : invoke finalize
-ConnectedStage --> StreamExecutedStage : stream execute
-StreamExecutedStage --> StreamFinalizedStage : stream finalize
+ConnectedStage --> InvokeFinalizedStage : invoke path
+ConnectedStage --> StreamExecutedStage : stream path
+StreamExecutedStage --> StreamFinalizedStage : finalize
 
 InvokeFinalizedStage --> ResponsesAgentResponse
 StreamFinalizedStage --> ResponsesAgentStreamEvent
@@ -264,25 +266,45 @@ classDiagram
 direction LR
 
 class MessageBus {
-  <<protocol>>
-  +publish(event_type, payload) None
+    <<protocol>>
+    +publish(event_type, payload) None
 }
 
-class NoOpMessageBus
-class StructuredLoggingMessageBus
-class AsyncMessageBus
-class KafkaMessageBus
-class RabbitMQMessageBus
-class UcAuditTableMessageBus
-
-class AppSettings {
-  +message_bus_backend: str
-  +message_bus_topic: str
-  +message_bus_fail_open: bool
+class NoOpMessageBus {
+    +publish(event_type, payload) None
+}
+class StructuredLoggingMessageBus {
+    +publish(event_type, payload) None
+}
+class AsyncMessageBus {
+    -_inner: MessageBus
+    -_queue: asyncio.Queue
+    +publish(event_type, payload) None
+}
+class KafkaMessageBus {
+    -_producer: confluent_kafka.Producer
+    -_topic: str
+    +publish(event_type, payload) None
+}
+class RabbitMQMessageBus {
+    -_connection: pika.BlockingConnection
+    -_exchange: str
+    +publish(event_type, payload) None
+}
+class UcAuditTableMessageBus {
+    -_warehouse_id: str
+    -_full_table_name: str
+    +publish(event_type, payload) None
 }
 
 class MessageBusFactory {
-  +default_message_bus(settings) MessageBus
+    +default_message_bus(settings) MessageBus
+}
+
+class AppSettings {
+    +message_bus_backend: str
+    +message_bus_topic: str
+    +message_bus_fail_open: bool
 }
 
 MessageBus <|.. NoOpMessageBus
@@ -292,12 +314,77 @@ MessageBus <|.. KafkaMessageBus
 MessageBus <|.. RabbitMQMessageBus
 MessageBus <|.. UcAuditTableMessageBus
 
+AsyncMessageBus o-- MessageBus : wraps inner
+
 MessageBusFactory ..> AppSettings
 MessageBusFactory ..> MessageBus : returns strategy
 ```
 
+## 5. Subagent Registry (dev environment)
+
+```mermaid
+classDiagram
+direction TB
+
+class SubagentRegistry {
+    +SUBAGENTS: list~SubagentConfig~
+    +load_subagents() list~SubagentConfig~
+}
+
+class sales_insights_agent {
+    kind = genie
+    auth_mode = app
+    classification = confidential
+    personas = manager
+    space_id = 01f159f5...
+    freshness_sla = 15m
+}
+
+class product_index_assistant {
+    kind = mcp
+    auth_mode = app
+    classification = internal
+    personas = analyst, manager, engineer
+    mcp_url = /api/2.0/mcp/vector-search/.../dim_product_search_index
+    freshness_sla = 24h
+}
+
+class flink_support_agent {
+    kind = mcp
+    auth_mode = app
+    classification = internal
+    personas = operator, manager, engineer
+    mcp_url = /api/2.0/mcp/ai-search/.../flink_support_index
+    freshness_sla = 24h
+}
+
+class cdi_agent {
+    kind = genie
+    auth_mode = app
+    classification = confidential
+    personas = manager
+    space_id = 01f19b2a...
+    freshness_sla = 4h
+}
+
+class lakebase_ods_agent {
+    kind = lakebase
+    auth_mode = app
+    classification = confidential
+    personas = analyst, manager, engineer
+    database = operationaldatastore
+    freshness_sla = 1h
+}
+
+SubagentRegistry --> sales_insights_agent
+SubagentRegistry --> product_index_assistant
+SubagentRegistry --> flink_support_agent
+SubagentRegistry --> cdi_agent
+SubagentRegistry --> lakebase_ods_agent
+```
+
 ## Notes
 
-- These are as-is structural views and mirror current implementation naming.
-- The logic-relative: domain/policy, composition/ports, runtime stages, and message bus strategy.
-- Use this artifact with `07-request-execution-flow-class-diagram.md` for invoke-vs-stream execution emphasis.
+- All diagrams mirror current implementation naming in `src/backend/`.
+- Views are logic-isolated: domain/policy, composition/ports, runtime stages, message bus strategy, subagent registry.
+- Use with `07-request-execution-flow-class-diagram.md` for invoke-vs-stream pipeline emphasis.

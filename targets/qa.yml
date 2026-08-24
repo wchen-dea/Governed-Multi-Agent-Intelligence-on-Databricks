@@ -11,7 +11,7 @@ targets:
       app_name: multiagent-app-qa
       openai_base_url: ""
       openai_timeout_seconds: "0"
-      subagents_config_path: "/app/python/source_code/.venv/lib/python3.11/site-packages/backend/domain/subagents.qa.json"
+      subagents_config_path: ""
       # MLflow owner: experiment used for traces and eval in QA.
       # Example: "1234567890123456" (numeric experiment id as string)
       mlflow_experiment_id: "<QA-MLFLOW-EXPERIMENT-ID>"

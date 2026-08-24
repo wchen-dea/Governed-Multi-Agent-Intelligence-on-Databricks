@@ -32,13 +32,13 @@ blueprint in a production-oriented Databricks environment.
 
 | Blueprint Section | Primary Repo Mapping |
 | --- | --- |
-| 2. Target Layered Architecture | `src/backend/`, `reactui/src/`, `docs/architecture/system-architecture.md` |
+| 2. Target Layered Architecture | `src/backend/`, `reactui/src/`, `docs/architecture/high-level-architecture.md` |
 | 3. Core Architecture Components | `src/backend/domain/`, `src/backend/services/`, `src/backend/shared/` |
 | 4. Reference Workflow: Operational Investigation and Incident Decision | `src/backend/services/`, `tests/test_orchestrator_service.py`, `tests/test_api_handlers.py` |
-| 6. Context Engineering and Relevance Scoring Design | `docs/governance/business-semantics-and-ai-metadata-spec.md`, `docs/governance/data-contract-and-lineage-spec.md` |
-| 7. Governance, Security, and Observability Model | `docs/governance/security-and-threat-model.md`, `tests/test_guardrails_service.py`, `tests/test_runtime_auth.py`, `tests/test_policy_service.py` |
-| 8. Skill Catalog and Reusable Capability Model | `src/backend/README.md`, `scripts/discover_tools.py`, `docs/architecture/model-and-tool-registry.md` |
-| 9. Implementation Roadmap | `docs/operations/runbook.md`, `docs/operations/mlflow-implementation-checklist.md`, `targets/` |
+| 6. Context Engineering and Relevance Scoring Design | `docs/governance/business-semantics-metadata.md`, `docs/governance/data-contracts-lineage.md` |
+| 7. Governance, Security, and Observability Model | `docs/governance/security-threat-model.md`, `tests/test_guardrails_service.py`, `tests/test_runtime_auth.py`, `tests/test_policy_service.py` |
+| 8. Skill Catalog and Reusable Capability Model | `src/backend/README.md`, `scripts/discover_tools.py`, `docs/architecture/tool-and-model-registry.md` |
+| 9. Implementation Roadmap | `docs/operations/operations-runbook.md`, `docs/operations/mlflow-rollout-checklist.md`, `targets/` |
 | 10. Additional Architecture Controls | `docs/adrs/`, `tests/test_message_bus_backends.py`, `tests/test_message_bus_integration.py` |
 
 This table is intentionally concise and highlights the most direct

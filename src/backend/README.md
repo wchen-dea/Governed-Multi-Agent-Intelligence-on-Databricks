@@ -51,7 +51,7 @@ Supported subagent types:
 Start backend only:
 
 ```bash
-uv run start-server --reload
+uv run runtime-serve-backend --reload
 ```
 
 Backend health and root probes:
@@ -67,7 +67,7 @@ Invoke endpoint:
 
 Use this workflow when iterating on orchestration logic:
 
-1. Start backend: `uv run start-server --reload`
+1. Start backend: `uv run runtime-serve-backend --reload`
 2. Modify handlers/services under `src/backend/api/` and `src/backend/services/`
 3. Run targeted tests: `uv run pytest -q`
 
@@ -119,7 +119,7 @@ uv run pytest -q
 Run evaluation gate:
 
 ```bash
-uv run agent-evaluate
+uv run assistant-evaluate
 ```
 
 ## For Operators
@@ -127,7 +127,7 @@ uv run agent-evaluate
 Use this checklist before and after deployment:
 
 1. Validate config and tests: `uv run pytest -q`
-2. Run quality gate: `uv run agent-evaluate`
+2. Run quality gate: `uv run assistant-evaluate`
 3. Confirm backend health endpoint and invocation path
 4. Review message-bus and guardrail/policy events in logs or UC sink
 
@@ -156,5 +156,5 @@ Operational focus areas:
 
 ## Setup Scripts
 
-- `uv run setup-flink-support-rag`: create Vector Search index from support KB volume for Flink RAG agent.
-- `uv run setup-cdi-agent`: verify CDI materialized view exists and create Genie space.
+- `uv run assistant-setup-flink`: create Vector Search index from support KB volume for Flink RAG agent.
+- `uv run assistant-setup-cdi`: verify CDI materialized view exists and create Genie space.

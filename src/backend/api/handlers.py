@@ -1,5 +1,6 @@
 """Orchestrate multi-agent request routing handlers."""
 
+import asyncio
 import logging
 from contextlib import AsyncExitStack
 from dataclasses import dataclass
@@ -22,6 +23,9 @@ from backend.domain.subagent_config import SUBAGENTS, SubagentConfig
 from backend.shared.request_utils import extract_mcp_errors, to_messages
 from backend.shared.settings import get_settings
 from backend.shared.runtime_utils import process_agent_stream_events
+from backend.services.guardrails_service import truncate_response_text
+from backend.domain.execution_contracts import ResponseEnvelope
+from backend.services.route_planner import build_route_plan
 
 SETTINGS = get_settings()
 HANDLER_DEPS = get_handler_dependencies()
@@ -75,6 +79,7 @@ class InvokeFinalizedStage:
 
     output_items: list[dict[str, Any]]
     unavailable: list[str]
+    envelope: ResponseEnvelope
 
 
 @dataclass(frozen=True)
@@ -98,6 +103,7 @@ class StreamFinalizedStage:
     unavailable: list[str]
     guardrail_blocked: bool
     guardrail_reasons: tuple[str, ...]
+    envelope: ResponseEnvelope
 
 
 def _prepare_request_stage(request: ResponsesAgentRequest) -> RequestStage:
@@ -109,9 +115,42 @@ def _prepare_request_stage(request: ResponsesAgentRequest) -> RequestStage:
     Returns:
         Prepared request stage with runtime auth context and messages.
     """
+    input_guardrail = HANDLER_DEPS.input_guardrails_evaluator(
+        request.input,
+        max_input_chars=SETTINGS.max_input_chars,
+    )
+    if input_guardrail.blocked:
+        HANDLER_DEPS.message_bus.publish(
+            "request.guardrail.blocked",
+            {
+                "phase": "input",
+                "reasons": list(input_guardrail.reasons),
+                "character_count": input_guardrail.character_count,
+            },
+        )
+        raise UserError("Request blocked by input guardrails: " + ", ".join(input_guardrail.reasons))
+
     runtime_auth = HANDLER_DEPS.runtime_auth_builder(request, SUBAGENTS, _client)
     messages = to_messages(request.input)
     return RequestStage(request=request, runtime_auth=runtime_auth, messages=messages)
+
+
+def _select_route_tools(
+    tools: list[Any],
+    route_candidates: list[SubagentConfig],
+    route_reason: str,
+) -> list[Any]:
+    """Select function tools without leaking them into confident MCP routes."""
+    candidate_names = {candidate.name for candidate in route_candidates}
+    selected = [
+        tool
+        for tool in tools
+        if str(getattr(tool, "name", getattr(tool, "__name__", ""))).removeprefix("query_")
+        in candidate_names
+    ]
+    if not selected and route_reason in {"ambiguous_fallback", "low_confidence_fallback"}:
+        return tools
+    return selected
 
 
 async def _connect_request_stage(
@@ -127,16 +166,52 @@ async def _connect_request_stage(
     Returns:
         Connected stage with orchestrator agent and unavailable details.
     """
+    question = ""
+    for message in reversed(prepared.messages):
+        data = message.model_dump() if hasattr(message, "model_dump") else message
+        if isinstance(data, dict) and data.get("role") == "user":
+            question = str(data.get("content", ""))
+            break
+    route_plan, route_candidates = build_route_plan(
+        question,
+        prepared.runtime_auth.policy_allowed_subagents,
+    )
+    candidate_names = {candidate.name for candidate in route_candidates}
+    planned_mcp_servers = [
+        server
+        for server in prepared.runtime_auth.mcp_servers
+        if str(getattr(server, "name", "")).split(":", 1)[-1] in candidate_names
+    ]
+    if (
+        not planned_mcp_servers
+        and prepared.runtime_auth.mcp_servers
+        and route_plan.reason == "ambiguous_fallback"
+    ):
+        planned_mcp_servers = prepared.runtime_auth.mcp_servers
     servers, unavailable_health = await HANDLER_DEPS.mcp_connector(
-        stack, prepared.runtime_auth.mcp_servers
+        stack, planned_mcp_servers
     )
     unavailable = prepared.runtime_auth.unavailable_auth + unavailable_health
+    candidate_tools = _select_route_tools(
+        prepared.runtime_auth.subagent_tools,
+        route_candidates,
+        route_plan.reason,
+    )
     agent = HANDLER_DEPS.orchestrator_factory(
         SETTINGS.orchestrator_model,
-        SUBAGENTS,
+        route_candidates,
         servers,
-        prepared.runtime_auth.subagent_tools,
+        candidate_tools,
         unavailable,
+    )
+    HANDLER_DEPS.message_bus.publish(
+        "routing.plan.selected",
+        {
+            "candidates": list(route_plan.candidates),
+            "reason": route_plan.reason,
+            "confidence": route_plan.confidence,
+            "requires_evidence": route_plan.requires_evidence,
+        },
     )
     return ConnectedStage(
         runtime_auth=prepared.runtime_auth,
@@ -145,20 +220,32 @@ async def _connect_request_stage(
     )
 
 
+_TRANSIENT_RETRIES = 2
+_RETRY_BACKOFF_SECONDS = 1.0
+
+
+def _is_transient(exc: BaseException) -> bool:
+    """Return True for connection errors worth retrying."""
+    name = type(exc).__name__
+    return "APIConnectionError" in name or "ConnectionError" in name
+
+
 async def _execute_invoke_stage(
     connected: ConnectedStage,
     messages: list[Any],
 ) -> Any:
-    """Run the orchestrator agent for invoke.
-
-    Args:
-        connected: Connected invoke stage containing orchestrator agent.
-        messages: Normalized request messages.
-
-    Returns:
-        Runner result containing output items.
-    """
-    return await Runner.run(connected.agent, messages)
+    """Run the orchestrator agent for invoke with retry on transient errors."""
+    last_exc: BaseException | None = None
+    for attempt in range(_TRANSIENT_RETRIES + 1):
+        try:
+            return await Runner.run(connected.agent, messages)
+        except Exception as exc:
+            if not _is_transient(exc) or attempt >= _TRANSIENT_RETRIES:
+                raise
+            last_exc = exc
+            logger.warning("Transient error on invoke attempt %d, retrying: %s", attempt + 1, exc)
+            await asyncio.sleep(_RETRY_BACKOFF_SECONDS * (attempt + 1))
+    raise last_exc  # unreachable but satisfies type checker
 
 
 def _finalize_invoke_stage(
@@ -190,6 +277,15 @@ def _finalize_invoke_stage(
     if source_suffix and source_suffix not in response_text:
         response_text += source_suffix
         output_items = _append_source_to_output_items(output_items, source_suffix)
+    response_text, truncated = truncate_response_text(
+        response_text,
+        max_response_chars=SETTINGS.max_response_chars,
+    )
+    if truncated:
+        output_items = _truncate_output_items(
+            output_items,
+            max_response_chars=SETTINGS.max_response_chars,
+        )
     guardrail = HANDLER_DEPS.guardrails_evaluator(
         response_text,
         guardrail_subagents,
@@ -199,6 +295,7 @@ def _finalize_invoke_stage(
             "response.guardrail.blocked",
             {
                 "reasons": list(guardrail.reasons),
+                "truncated": truncated,
             },
         )
         raise UserError(
@@ -208,11 +305,19 @@ def _finalize_invoke_stage(
         "response.guardrail.passed",
         {
             "reasons": list(guardrail.reasons),
+            "truncated": truncated,
         },
     )
     return InvokeFinalizedStage(
         output_items=output_items,
         unavailable=connected.unavailable,
+        envelope=ResponseEnvelope(
+            status="truncated" if truncated else "succeeded",
+            answer_chars=len(response_text),
+            truncated=truncated,
+            guardrail_reasons=guardrail.reasons,
+            source_metadata=(source_suffix,) if source_suffix else (),
+        ),
     )
 
 
@@ -220,16 +325,25 @@ async def _execute_stream_stage(
     connected: ConnectedStage,
     messages: list[Any],
 ) -> StreamExecutedStage:
-    """Run streamed orchestration and precompute finalization inputs.
+    """Run streamed orchestration with retry on transient errors."""
+    last_exc: BaseException | None = None
+    for attempt in range(_TRANSIENT_RETRIES + 1):
+        try:
+            return await _execute_stream_stage_inner(connected, messages)
+        except Exception as exc:
+            if not _is_transient(exc) or attempt >= _TRANSIENT_RETRIES:
+                raise
+            last_exc = exc
+            logger.warning("Transient error on stream attempt %d, retrying: %s", attempt + 1, exc)
+            await asyncio.sleep(_RETRY_BACKOFF_SECONDS * (attempt + 1))
+    raise last_exc  # unreachable
 
-    Args:
-        connected: Connected stage containing orchestrator agent.
-        messages: Normalized request messages.
 
-    Returns:
-        Buffered stream execution stage with precomputed source and guardrail
-        inputs.
-    """
+async def _execute_stream_stage_inner(
+    connected: ConnectedStage,
+    messages: list[Any],
+) -> StreamExecutedStage:
+    """Run streamed orchestration and precompute finalization inputs."""
     result = Runner.run_streamed(connected.agent, input=messages)
     event_count = 0
     buffered_events: list[Any] = []
@@ -302,6 +416,11 @@ def _finalize_stream_stage(
         streamed_text_parts.append(source_suffix)
         stream_text = "\n".join(streamed_text_parts)
 
+    stream_text, truncated = truncate_response_text(
+        stream_text,
+        max_response_chars=SETTINGS.max_response_chars,
+    )
+
     guardrail = HANDLER_DEPS.guardrails_evaluator(
         stream_text,
         guardrail_subagents,
@@ -312,6 +431,7 @@ def _finalize_stream_stage(
             {
                 "reasons": list(guardrail.reasons),
                 "mode": "stream",
+                "truncated": truncated,
             },
         )
     else:
@@ -320,6 +440,7 @@ def _finalize_stream_stage(
             {
                 "reasons": list(guardrail.reasons),
                 "mode": "stream",
+                "truncated": truncated,
             },
         )
 
@@ -330,6 +451,13 @@ def _finalize_stream_stage(
         unavailable=connected.unavailable,
         guardrail_blocked=guardrail.blocked,
         guardrail_reasons=guardrail.reasons,
+        envelope=ResponseEnvelope(
+            status="blocked" if guardrail.blocked else ("truncated" if truncated else "succeeded"),
+            answer_chars=len(stream_text),
+            truncated=truncated,
+            guardrail_reasons=guardrail.reasons,
+            source_metadata=(source_suffix,) if source_suffix else (),
+        ),
     )
 
 
@@ -561,6 +689,34 @@ def _append_source_to_output_items(
     return output_items
 
 
+def _truncate_output_items(
+    output_items: list[dict[str, Any]],
+    *,
+    max_response_chars: int,
+) -> list[dict[str, Any]]:
+    """Apply the response budget to the returned assistant content."""
+    updated = [dict(item) for item in output_items]
+    for item in reversed(updated):
+        if item.get("role") != "assistant":
+            continue
+        content = item.get("content")
+        if isinstance(content, str):
+            item["content"], _ = truncate_response_text(
+                content,
+                max_response_chars=max_response_chars,
+            )
+            return updated
+        if isinstance(content, list):
+            for block in reversed(content):
+                if isinstance(block, dict) and isinstance(block.get("text"), str):
+                    block["text"], _ = truncate_response_text(
+                        block["text"],
+                        max_response_chars=max_response_chars,
+                    )
+                    return updated
+    return output_items
+
+
 @invoke()
 async def invoke_handler(request: ResponsesAgentRequest) -> ResponsesAgentResponse:
     HANDLER_DEPS.message_bus.publish(
@@ -582,6 +738,7 @@ async def invoke_handler(request: ResponsesAgentRequest) -> ResponsesAgentRespon
                     "output_items": len(result.new_items),
                     "unavailable_tools": len(finalized.unavailable),
                     "unavailable_tool_details": finalized.unavailable,
+                    "response_envelope": finalized.envelope.__dict__,
                 },
             )
             return ResponsesAgentResponse(output=cast(Any, finalized.output_items))
@@ -663,6 +820,7 @@ async def stream_handler(
                     "events_streamed": finalized.event_count,
                     "unavailable_tools": len(finalized.unavailable),
                     "unavailable_tool_details": finalized.unavailable,
+                    "response_envelope": finalized.envelope.__dict__,
                 },
             )
     except UserError as e:
@@ -688,5 +846,28 @@ async def stream_handler(
                 "MCP tool error during stream: %s",
                 "; ".join(str(x) for x in mcp_errors),
             )
+            yield cast(
+                Any,
+                {
+                    "type": "response.output_text.delta",
+                    "item_id": "item_error",
+                    "delta": (
+                        "I couldn't complete this request because a connected "
+                        "assistant or data source was unavailable. Please try again."
+                    ),
+                },
+            )
             return
-        raise
+        logger.exception("Unhandled stream execution failure")
+        yield cast(
+            Any,
+            {
+                "type": "response.output_text.delta",
+                "item_id": "item_error",
+                "delta": (
+                    "I couldn't complete this request because the backend "
+                    "or a connected data source failed. Please try again."
+                ),
+            },
+        )
+        return

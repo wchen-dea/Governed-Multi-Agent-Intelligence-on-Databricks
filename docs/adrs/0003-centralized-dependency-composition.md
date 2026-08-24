@@ -6,38 +6,64 @@ Accepted
 
 ## Context
 
-As services gained protocol-based dependencies (runtime auth, orchestration, message bus), ad hoc wiring in multiple files increased coupling and made environment-specific overrides harder.
+As services gained protocol-based dependencies (runtime auth, orchestration, message bus, policy, guardrails), ad hoc wiring in multiple files increased coupling and made environment-specific overrides harder to reason about.
 
 ## Decision
 
-Use `src/backend/api/dependencies.py` as the composition root.
+Use `src/backend/api/dependencies.py` as the single composition root. This module builds three nested dependency containers and exposes a single entrypoint for handler consumption:
 
-This module builds:
+```
+AppDependencyContainer
+├── OrchestratorDependencies
+│   ├── trace_metadata_updater: TraceMetadataUpdater
+│   ├── function_tool_wrapper: FunctionToolWrapper
+│   ├── mcp_server_factory: McpServerFactory
+│   └── message_bus: MessageBus
+├── RuntimeAuthDependencies
+│   ├── identity_context_provider: IdentityContextProvider
+│   ├── session_id_provider: SessionIdProvider
+│   ├── trace_metadata_updater: TraceMetadataUpdater
+│   ├── obo_client_factory: OboClientFactory
+│   ├── subagent_tools_builder: SubagentToolsBuilder
+│   ├── mcp_servers_builder: McpServersBuilder
+│   ├── lakebase_tools_builder: LakebaseToolsBuilder
+│   ├── policy_context_builder
+│   ├── subagent_policy_filter
+│   └── message_bus: MessageBus
+└── HandlerDependencies
+    ├── runtime_auth_builder
+    ├── mcp_connector
+    ├── orchestrator_factory
+    ├── guardrails_evaluator
+    └── message_bus: MessageBus
+```
 
-- orchestrator dependencies
-- runtime auth dependencies
-- handler dependencies
-
-and exposes a single handler dependency entrypoint for runtime use.
+Handlers receive only `HandlerDependencies` — a flat, frozen dataclass of composed callables.
 
 ## Alternatives Considered
 
 - Wire dependencies inline inside request handlers.
 - Use implicit module globals for service singletons.
+- Use a DI framework (e.g., dependency-injector, inject).
 
 ## Consequences
 
 ### Positive
 
-- Single, explicit place to wire application dependencies
-- Cleaner service modules focused on behavior
-- Better integration testing and future overrides
+- Single, explicit place to wire all application dependencies.
+- Cleaner service modules focused on behavior rather than construction.
+- Better integration testing — dependency containers can be overridden at test boundaries.
+- Protocol-based contracts (in `interfaces.py`) decouple implementations from consumers.
 
 ### Trade-offs
 
-- Composition root can grow if not kept organized
-- Requires careful typing at boundaries
+- Composition root can grow if not kept organized.
+- Requires careful typing at boundaries (callables, protocols).
+- Module-level construction means composition happens at import time.
 
 ## Implementation Notes
 
-Dependency composition remains constructor-like and avoids hidden global mutation.
+- Composition root: [src/backend/api/dependencies.py](../../src/backend/api/dependencies.py) (`build_dependency_container`, `get_handler_dependencies`)
+- Protocol contracts: [src/backend/services/interfaces.py](../../src/backend/services/interfaces.py)
+- Handler consumption: [src/backend/api/handlers.py](../../src/backend/api/handlers.py) (`HANDLER_DEPS = get_handler_dependencies()`)
+- All containers use frozen dataclasses — no runtime mutation after construction.

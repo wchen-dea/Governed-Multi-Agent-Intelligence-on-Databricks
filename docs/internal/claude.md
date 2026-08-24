@@ -81,24 +81,24 @@ Constraints: If app exists, bind instead of delete.
 
 ### quickstart
 
-- Command: `uv run quickstart`
+- Command: `uv run assistant-bootstrap`
 - Use when: first setup, auth/profile setup, missing `.env`, missing `MLFLOW_EXPERIMENT_ID`
 - Verify:
   - `databricks auth profiles`
-  - `uv run preflight`
-  - `uv run start-app`
+  - `uv run runtime-preflight`
+  - `uv run runtime-serve-app`
 
 ### run-locally
 
 - Commands:
-  - `uv run start-app`
-  - `uv run start-server --reload`
-  - `uv run preflight`
+  - `uv run runtime-serve-app`
+  - `uv run runtime-serve-backend --reload`
+  - `uv run runtime-preflight`
 - API smoke test: `http://localhost:8000/invocations`
 
 ### discover-tools
 
-- Command: `uv run discover-tools --profile <profile>`
+- Command: `uv run assistant-discover-tools --profile <profile>`
 - Capture:
   - Genie `space_id`
   - serving endpoint names
@@ -121,7 +121,7 @@ Constraints: If app exists, bind instead of delete.
   - `serving_endpoint` requires `endpoint`
   - `app` requires `endpoint`
   - `mcp` requires `mcp_url`
-  - `lakebase` requires `project_id`, `branch_id`, `endpoint_id`, `database`, `pg_host`
+  - `lakebase` requires `project_id`, `branch_id`, `endpoint_id`, `database`, `pg_host`, and an app identity with a matching Lakebase OAuth role
 
 ### modify-agent
 
@@ -135,14 +135,14 @@ Constraints: If app exists, bind instead of delete.
   - `src/backend/shared/runtime_utils.py`
 - Validate:
   - `python -m py_compile src/backend/*.py src/scripts/*.py src/frontend/*.py`
-  - `uv run preflight`
+  - `uv run runtime-preflight`
 
 ### deploy
 
 - Standard flow:
   - `make redeploy TARGET=<target> APP_NAME=<app-name> PROFILE=<profile>`
 - Targets: `dev`, `qa`, `stg`, `prod`
-- Fallback: `bundle sync` plus `apps deploy` if Terraform registry is unavailable
+- Source-only fallback: `make upload-wheel TARGET=<target> APP_NAME=<app-name> PROFILE=<profile>` if Terraform Registry is unavailable; successful bundle apply is still required for resource-grant changes
 
 ## Operating Guidelines
 
@@ -165,6 +165,6 @@ Constraints: If app exists, bind instead of delete.
 
 ## Related Docs
 
-- `docs/architecture/system-architecture.md`
-- `docs/architecture/system-design.md`
-- `docs/operations/runbook.md`
+- `docs/architecture/high-level-architecture.md`
+- `docs/architecture/low-level-design.md`
+- `docs/operations/operations-runbook.md`

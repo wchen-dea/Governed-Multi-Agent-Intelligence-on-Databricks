@@ -8,10 +8,10 @@ targets:
       state_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}/state
     variables:
       app_name: multiagent-app-dev
-      mlflow_experiment_id: "2041388166228723"
+      mlflow_experiment_id: "3025644123415124"
       openai_base_url: ""
       openai_timeout_seconds: "0"
-      subagents_config_path: "/app/python/source_code/.venv/lib/python3.11/site-packages/backend/domain/subagents.dev.json"
+      subagents_config_path: ""
       default_request_persona: "manager"
       app_telemetry_logs_table: "quickstart_catalog.multi_agent_schema.app_logs"
       app_telemetry_metrics_table: "quickstart_catalog.multi_agent_schema.app_metrics"
@@ -22,13 +22,12 @@ targets:
       supply_chain_genie_space_id: ""
       cdi_genie_space_id: "01f19b2ab0f014daa3325ff30142f873"
       knowledge_assistant_endpoint_name: ""
-      ai_search_endpoint_name: "product-search-vs-endpoint"
+      ai_search_endpoint_name: "product_index_ep"
       flink_support_vs_endpoint_name: "flink-support-vs-endpoint"
-      lakebase_project_id: "3ab05603-06dc-4789-a7fb-234d22a71e4b"
-      lakebase_branch_id: "br-fragrant-sea-d1h720m5"
-      lakebase_database: "operationaldatastore"
+      lakebase_project_id: "ore"
+      lakebase_branch_id: "production"
+      lakebase_database: "db-j7lf-e5xmy0cwq4"
       lakebase_sql_warehouse_id: "ep-falling-cake-d1j29nc5"
-      lakebase_pg_password: "Lkb-M4g3nt-0ds-2026!"
       message_bus_backend: uc_table
       message_bus_topic: agent-lifecycle-events
       uc_audit_warehouse_id: "b20f70f71c2f52e2"
@@ -51,7 +50,23 @@ targets:
               name: CDI Metrics Agent
               space_id: ${var.cdi_genie_space_id}
               permission: 'CAN_RUN'
+          - name: product_search_index
+            uc_securable:
+              securable_full_name: quickstart_catalog.multi_agent_schema.dim_product_search_index
+              securable_type: TABLE
+              permission: SELECT
+          - name: flink_support_index
+            uc_securable:
+              securable_full_name: quickstart_catalog.multi_agent_schema.flink_support_index
+              securable_type: TABLE
+              permission: SELECT
+          - name: lakebase_pg_password
+            secret:
+              scope: multiagent_app
+              key: lakebase_pg_password
+              permission: READ
           - name: lakebase_ods
             postgres:
-              id: ${var.lakebase_sql_warehouse_id}
-              permission: 'CAN_USE'
+              branch: projects/${var.lakebase_project_id}/branches/${var.lakebase_branch_id}
+              database: projects/${var.lakebase_project_id}/branches/${var.lakebase_branch_id}/databases/${var.lakebase_database}
+              permission: 'CAN_CONNECT_AND_CREATE'

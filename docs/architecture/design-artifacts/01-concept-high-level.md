@@ -6,10 +6,10 @@ This document captures high-level concept diagrams used to align stakeholders be
 
 ```mermaid
 flowchart LR
-    A[Conversational Access] --> B[Governed Routing]
-    B --> C[Safe Response Generation]
-    C --> D[Auditable Outcomes]
-    D --> E[Reliable Multi-Environment Delivery]
+    A[Conversational Access] --> B[Persona-Governed Routing]
+    B --> C[Tool-Backed Response Generation]
+    C --> D[Evidence-Attributed Outcomes]
+    D --> E[Auditable Multi-Environment Delivery]
 ```
 
 ## 2. Stakeholder and Actor Map
@@ -17,47 +17,49 @@ flowchart LR
 ```mermaid
 flowchart TB
     subgraph Business
-        U1[Business User]
-        U2[Analyst]
-        U3[Executive]
+        U1[Manager — full agent access]
+        U2[Analyst — Product Index + Lakebase ODS]
+        U3[Operator — Flink Support only]
+        U4[Engineer — Product Index + Flink Support + Lakebase ODS]
     end
 
     subgraph Platform
         O1[Platform Engineer]
-        O2[Operator]
-        O3[Security and Governance]
+        O2[Security and Governance]
     end
 
-    U1 --> SYS[AI System]
+    U1 --> SYS[Multi-Agent Orchestrator]
     U2 --> SYS
     U3 --> SYS
+    U4 --> SYS
 
     O1 --> SYS
     O2 --> SYS
-    O3 --> SYS
 ```
 
 ## 3. System Context Diagram
 
 ```mermaid
 flowchart LR
-    User[User Channels] --> UI[Chat UI]
-    UI --> AISYS[AI Orchestrator System]
-    AISYS --> Genie[Genie Spaces Sales CDI]
-    AISYS --> VS[Vector Search AI Search Indexes]
-    AISYS --> LB[Lakebase PostgreSQL ODS]
-    AISYS --> Models[Foundation Model APIs]
-    AISYS --> Audit[Audit and Observability Sinks]
-    AISYS --> Identity[Identity and Authorization Services]
+    User[Enterprise Users] --> UI[React Chat UI]
+    UI --> AISYS[AI Orchestrator — Databricks App]
+    AISYS --> Genie[Genie Spaces — Sales / CDI]
+    AISYS --> AIS[AI Search MCP — Product Index / Flink Support]
+    AISYS --> LB[Lakebase PostgreSQL — ODS]
+    AISYS --> FM[Foundation Models — target-configured]
+    AISYS --> AIGW[AI Gateway — optional routing layer]
+    AISYS --> Audit[UC Audit Table / Message Bus]
+    AISYS --> Identity[Workspace Identity — App + OBO]
 ```
 
 ## 4. Business Value and Decision Flow
 
 ```mermaid
 flowchart TD
-    Q[Business Question] --> Ctx[Context and Intent Understanding]
-    Ctx --> Route[Tool and Agent Route Decision]
-    Route --> Ans[Answer with Evidence]
-    Ans --> Action[Business Action]
-    Action --> Outcome[Measured Outcome and Feedback]
+    Q[Business Question] --> P[Persona Resolution]
+    P --> Route[Policy-Filtered Tool Selection]
+    Route --> Tool[Tool Execution — Genie / AI Search / Lakebase]
+    Tool --> Ans[Response with Source Attribution]
+    Ans --> Guard[Guardrail Validation]
+    Guard --> Action[Delivered Answer]
 ```

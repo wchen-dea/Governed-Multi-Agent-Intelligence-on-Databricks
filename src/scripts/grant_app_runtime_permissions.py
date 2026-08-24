@@ -193,7 +193,7 @@ class PermissionManager:
         """Parse an AI Search MCP URL into `(catalog, schema, index)`.
 
         Args:
-            mcp_url: MCP route expected in `/api/2.0/mcp/ai-search/...` format.
+            mcp_url: MCP route expected in `/api/2.0/mcp/vector-search/...` format.
 
         Returns:
             Parsed `(catalog, schema, index)` when valid and non-placeholder,
@@ -201,10 +201,15 @@ class PermissionManager:
         """
         parts = [part for part in mcp_url.strip().split("/") if part]
         # Expected format:
-        # /api/2.0/mcp/ai-search/<catalog>/<schema>/<index>
+        # /api/2.0/mcp/{vector-search|ai-search}/<catalog>/<schema>/<index>
         if len(parts) != 7:
             return None
-        if parts[0] != "api" or parts[1] != "2.0" or parts[2] != "mcp" or parts[3] != "ai-search":
+        if (
+            parts[0] != "api"
+            or parts[1] != "2.0"
+            or parts[2] != "mcp"
+            or parts[3] not in {"vector-search", "ai-search"}
+        ):
             return None
 
         catalog, schema, index_name = parts[4], parts[5], parts[6]

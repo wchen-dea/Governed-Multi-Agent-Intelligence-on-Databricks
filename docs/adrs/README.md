@@ -21,3 +21,4 @@ Architecture Decision Records (ADRs) capture durable technical decisions for thi
 | [0006](0006-unity-catalog-audit-table-for-lifecycle-events.md) | Persist lifecycle events to UC-governed audit table | Accepted |
 | [0007](0007-evaluation-kpi-release-gate.md) | Block release when evaluation KPIs are below thresholds | Accepted |
 | [0008](0008-custom-orchestrator-vs-databricks-supervisor-agent.md) | Keep custom orchestrator as primary runtime over Databricks Supervisor Agent | Accepted |
+| [0009](0009-unity-ai-gateway-for-llm-traffic.md) | Route orchestrator LLM traffic through Unity AI Gateway | Accepted |

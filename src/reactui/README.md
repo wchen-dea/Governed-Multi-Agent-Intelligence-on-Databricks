@@ -14,6 +14,11 @@ This folder provides the primary TypeScript and React frontend used by the app r
 - Forwarded token header support (`x-forwarded-access-token` by default).
 - For direct non-interactive Databricks Apps invocation tests, use `Authorization: Bearer <token>`.
 - Session status footer and source/tool hint footer.
+- Incremental text rendering with accessible live-region updates while a response streams.
+- Visible persona selector and App identity versus Hybrid OBO status.
+- Collapsible per-response run context showing tools, sources, guardrail state, and truncation.
+- Safe rendering for supported headings, tables, and citation markers; model HTML is not executed.
+- Explicit streaming states for blocked, unavailable, error, and truncated responses.
 
 ## Run Locally
 
@@ -41,6 +46,16 @@ npm run dev
 ```bash
 npm run build
 ```
+
+## Browser Tests
+
+The Playwright suite uses mocked SSE responses so UI behavior can be validated without a Databricks deployment.
+
+```bash
+npm run test:e2e
+```
+
+Coverage includes desktop and mobile layouts, incremental streaming, governance context, blocked responses, and OBO session state.
 
 ## Notes
 

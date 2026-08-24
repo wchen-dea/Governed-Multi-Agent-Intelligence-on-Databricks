@@ -68,7 +68,7 @@ For any prompt or policy change:
 
 ## Related Documents
 
-- business-semantics-and-ai-metadata-spec.md
-- ../architecture/technical-specs.md
+- business-semantics-metadata.md
+- ../architecture/runtime-technical-specs.md
 - ../quality/evaluation-spec.md
 - ../adrs/0005-governed-routing-policy-and-response-guardrails.md

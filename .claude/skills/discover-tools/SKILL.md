@@ -10,15 +10,15 @@ Run discovery before editing subagent/tool config.
 ## Command
 
 ```bash
-uv run discover-tools
+uv run assistant-discover-tools
 ```
 
 Useful options:
 
 ```bash
-uv run discover-tools --profile <profile>
-uv run discover-tools --catalog <catalog> --schema <schema>
-uv run discover-tools --format json --output tools.json
+uv run assistant-discover-tools --profile <profile>
+uv run assistant-discover-tools --catalog <catalog> --schema <schema>
+uv run assistant-discover-tools --format json --output tools.json
 ```
 
 ## Typical Outputs to Capture

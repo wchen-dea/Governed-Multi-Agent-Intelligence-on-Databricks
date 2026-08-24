@@ -1561,7 +1561,7 @@ wheels = [
 
 [[package]]
 name = "multiagent-app-on-databricks"
-version = "0.1.0"
+version = "0.1.2"
 source = { editable = "." }
 dependencies = [
     { name = "chainlit" },

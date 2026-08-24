@@ -1,0 +1,38 @@
+[
+  {
+    "name": "analyst_with_obo_identity",
+    "persona": "analyst",
+    "has_user_identity": true,
+    "confidence": 0.9,
+    "requested_tool": "query_sales_confidential",
+    "expected_allowed": ["sales_confidential"],
+    "expected_denied_reasons": []
+  },
+  {
+    "name": "analyst_without_obo_identity",
+    "persona": "analyst",
+    "has_user_identity": false,
+    "confidence": 0.9,
+    "requested_tool": "query_sales_confidential",
+    "expected_allowed": [],
+    "expected_denied_reasons": ["obo_identity_required"]
+  },
+  {
+    "name": "manager_denied_analyst_data",
+    "persona": "manager",
+    "has_user_identity": true,
+    "confidence": 0.9,
+    "requested_tool": "query_sales_confidential",
+    "expected_allowed": [],
+    "expected_denied_reasons": ["persona_not_allowed"]
+  },
+  {
+    "name": "low_confidence_sensitive_request",
+    "persona": "analyst",
+    "has_user_identity": true,
+    "confidence": 0.6,
+    "requested_tool": "query_sales_confidential",
+    "expected_allowed": [],
+    "expected_denied_reasons": ["low_confidence_sensitive"]
+  }
+]

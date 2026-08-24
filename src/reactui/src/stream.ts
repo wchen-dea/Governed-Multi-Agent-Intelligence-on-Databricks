@@ -1,4 +1,4 @@
-import type { StreamHints } from "./types";
+import type { GovernanceMetadata, StreamHints } from "./types";
 
 export function formatToolLabel(toolName: string): string {
   if (toolName.startsWith("query_")) {
@@ -9,6 +9,10 @@ export function formatToolLabel(toolName: string): string {
 
 export function updateStreamHints(event: Record<string, unknown>, hints: StreamHints): string {
   const eventType = typeof event.type === "string" ? event.type : "";
+  const item = (event.item && typeof event.item === "object" ? event.item : null) as
+    | Record<string, unknown>
+    | null;
+  const itemType = item && typeof item.type === "string" ? item.type : "";
 
   let delta = "";
   if (eventType === "response.output_text.delta") {
@@ -18,11 +22,6 @@ export function updateStreamHints(event: Record<string, unknown>, hints: StreamH
       delta = String(event.delta);
     }
   }
-
-  const item = (event.item && typeof event.item === "object" ? event.item : null) as
-    | Record<string, unknown>
-    | null;
-  const itemType = item && typeof item.type === "string" ? item.type : "";
 
   if (eventType.includes("mcp") || itemType.includes("mcp")) {
     hints.categories.add("Genie MCP");
@@ -68,4 +67,14 @@ export function sourceBadgeLine(categories: Set<string>, tools: Set<string>): st
     parts.push(`Tools: ${labels.join(" | ")}`);
   }
   return `\n\n---\n${parts.join("\n")}`;
+}
+
+export function governanceFromHints(hints: StreamHints): GovernanceMetadata {
+  return {
+    tools: Array.from(hints.tools),
+    sourceCategories: Array.from(hints.categories),
+    guardrailReasons: [],
+    unavailableTools: [],
+    truncated: false,
+  };
 }
