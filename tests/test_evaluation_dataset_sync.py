@@ -11,10 +11,12 @@ from backend.domain.subagent_config import SUBAGENTS
 from backend.evaluate_agent import test_cases
 
 _SUBAGENTS_BY_NAME = {subagent.name: subagent for subagent in SUBAGENTS}
+_SIMULATOR_KEYS = {"context", "goal", "simulation_guidelines", "persona", "expectations"}
 
 
 def _persona(test_case: dict) -> str | None:
-    custom_inputs = test_case.get("custom_inputs") or {}
+    context = test_case.get("context") or {}
+    custom_inputs = context.get("custom_inputs") or {}
     return custom_inputs.get("persona")
 
 
@@ -67,8 +69,11 @@ def test_cases_have_unique_goals_and_required_fields():
     assert len(goals) == len(set(goals)), "evaluation test-case goals must be unique"
 
     for test_case in test_cases:
+        assert set(test_case) <= _SIMULATOR_KEYS
         assert isinstance(test_case.get("persona"), str) and test_case["persona"].strip()
-        custom_inputs = test_case.get("custom_inputs")
+        context = test_case.get("context")
+        assert isinstance(context, dict)
+        custom_inputs = context.get("custom_inputs")
         assert isinstance(custom_inputs, dict)
         assert isinstance(custom_inputs.get("persona"), str)
         expectations = test_case.get("expectations")
