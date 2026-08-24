@@ -47,6 +47,7 @@ Typical source pattern for Genie Agents:
 - Type: genie
 - Runtime name: `sales_insights_agent`
 - Space ID source: `src/backend/domain/subagents.dev.json`
+- Genie space created and owned by the Genie/analytics project; this project only registers the space id and routes to it via MCP.
 - Auth mode: app
 - Classification: confidential
 - Owner: sales-analytics
@@ -84,6 +85,7 @@ Typical source pattern for Genie Agents:
 - Runtime name: `cdi_agent`
 - Space ID source: `src/backend/domain/subagents.dev.json`
 - Source: materialized view `quickstart_catalog.multi_agent_schema.fct_cdi_trusted_expert_score_metric_view`
+- Genie space created and owned by the Genie/analytics project; this project only registers the space id and routes to it via MCP.
 - Auth mode: app
 - Classification: confidential
 - Owner: customer-experience

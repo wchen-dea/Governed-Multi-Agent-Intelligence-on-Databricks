@@ -85,6 +85,7 @@ Consequence: this repository's semantics-layer responsibility is limited to **AI
 
 - Created and maintained by the Genie/analytics project, using the Metric Views this project publishes (or other governed sources) as their structured semantic source.
 - This project's only touchpoints: `space_id` registration in `src/backend/domain/subagents.<target>.json`, `CAN_RUN` permission grants in `resources/multiagent_app.yml`/`targets/*.yml`, and MCP-based query routing in the orchestrator.
+- Current Genie Agents, all created and owned by the Genie/analytics project: `sales_insights_agent` and `cdi_agent`. Neither space, nor its underlying semantic model, is created by this repository.
 - Recommended blueprint for the owning project: [Unity-Catalog-Semantic-Metric-Views-Blueprint](https://github.com/wchen-dea/Unity-Catalog-Semantic-Metric-Views-Blueprint).
 
 ### 4. Lakebase Operational Data Store (external dependency)

@@ -167,7 +167,7 @@ export default function App() {
         "| CDI    Metrics | Genie     | Customer Delight Index scores, promoter/detractor analysis    |\n" +
         "| Product  Index | AI Search | Product catalog lookups by code, brand, or description        |\n" +
         "| Flink  Support | AI Search | Flink troubleshooting, configuration guidance, best practices |\n" +
-        "| Lakebase   ODS | Lakebase  | Operational data — appointments, orders, invoices, scheduling |\n\n" +
+        "| Lakebase   ODS | Lakebase  | Operational data — appointments, orders, invoices, etc.       |\n\n" +
         "### Persona Selection\n" +
         "Pick a persona from the starter chips, or run /persona <persona>.\n" +
         `Accepted personas: ${settings.allowedPersonas.join(", ")}\n\n` +
