@@ -28,7 +28,7 @@ resources:
       environments:
       - environment_key: flink_support_env
         spec:
-          client: "1"
+          environment_version: "2"
           dependencies:
           - python-docx
           - pypdf

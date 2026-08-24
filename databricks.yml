@@ -5,6 +5,13 @@ include:
 - resources/*.yml
 - targets/*.yml
 - resources/*/*.yml
+artifacts:
+  multiagent_wheel:
+    type: whl
+    # Deploy tooling (for example the VS Code Databricks extension) may run this
+    # build command outside a login shell, where ~/.local/bin (uv's default
+    # install location) is not yet on PATH.
+    build: PATH="$HOME/.local/bin:$PATH" uv build --wheel
 variables:
   app_name:
     description: Databricks app name for the current environment

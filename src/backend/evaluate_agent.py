@@ -29,18 +29,23 @@ configure_logging(get_settings())
 
 # Import handlers so @invoke-registered functions are discoverable.
 import backend.api.handlers  # noqa: E402, F401
+from backend.domain.subagent_config import skipped_subagent_names  # noqa: E402
 
 # Evaluation dataset.
 # Scorer documentation:
 # https://docs.databricks.com/aws/en/mlflow3/genai/eval-monitor/concepts/scorers
 # https://mlflow.org/docs/latest/genai/eval-monitor/scorers/llm-judge/predefined
 # https://docs.databricks.com/aws/en/mlflow3/genai/eval-monitor/custom-scorers
+#
+# `expected_tool_calls` gives ToolCallCorrectness ground truth (fuzzy-matched
+# by name) instead of relying solely on its ground-truth-free LLM judge mode.
 test_cases = [
     {
         "goal": "Find out the top 3 stores by revenue for the current season",
         "persona": "A business manager who wants a quick revenue summary.",
         "expected_facts": ["store", "revenue"],
         "custom_inputs": {"persona": "manager"},
+        "expectations": {"expected_tool_calls": [{"name": "sales_insights_agent"}]},
         "simulation_guidelines": [
             "Ask for the top stores by revenue.",
             "Prefer concise tabular answers.",
@@ -50,6 +55,7 @@ test_cases = [
         "goal": "Look up product details for brand code MCH",
         "persona": "An analyst researching tire product catalog coverage.",
         "custom_inputs": {"persona": "analyst"},
+        "expectations": {"expected_tool_calls": [{"name": "product_index_assistant"}]},
         "simulation_guidelines": [
             "Ask about products matching brand code MCH.",
             "Follow up by asking about article types for those products.",
@@ -59,6 +65,7 @@ test_cases = [
         "goal": "Diagnose increasing consumer lag in a Flink streaming job",
         "persona": "An operator dealing with a Flink streaming job that has increasing consumer lag.",
         "custom_inputs": {"persona": "operator"},
+        "expectations": {"expected_tool_calls": [{"name": "flink_support_agent"}]},
         "simulation_guidelines": [
             "Ask: Flink streaming job has increasing consumer lag. What are the common causes and how do we fix it?",
             "Follow up on specific configuration tuning recommendations.",
@@ -68,6 +75,7 @@ test_cases = [
         "goal": "Check CDI delight scores across stores",
         "persona": "A manager reviewing customer satisfaction metrics.",
         "custom_inputs": {"persona": "manager"},
+        "expectations": {"expected_tool_calls": [{"name": "cdi_agent"}]},
         "simulation_guidelines": [
             "Ask for CDI scores by store for the latest period.",
             "Follow up on promoter vs detractor counts.",
@@ -77,7 +85,10 @@ test_cases = [
         "goal": "List the latest open appointments and current order status",
         "persona": "A manager reviewing current operational appointments and orders.",
         "custom_inputs": {"persona": "manager"},
-        "expectations": {"requires_tool_attempt": True},
+        "expectations": {
+            "requires_tool_attempt": True,
+            "expected_tool_calls": [{"name": "lakebase_ods_agent"}],
+        },
         "simulation_guidelines": [
             "Ask for the latest day's open appointments and their current order status.",
             "Expect the operational data tool to be attempted before an unavailable-data response.",
@@ -91,9 +102,21 @@ test_cases = [
             "requires_user_identity": False,
             "restricted_tools": ["sales_insights_agent", "cdi_agent"],
             "restricted_keywords": ["revenue", "$", "sales"],
+            "expected_tool_calls": [],
         },
         "simulation_guidelines": [
             "Ask about top stores by revenue — expect the tool to be unavailable.",
+        ],
+    },
+    {
+        "goal": "Have a brief conversational exchange that never asks for business data",
+        "persona": "A manager making small talk before starting a work session.",
+        "custom_inputs": {"persona": "manager"},
+        "expectations": {"expected_tool_calls": []},
+        "simulation_guidelines": [
+            "Greet the assistant and ask, in general terms, what kinds of questions it can help with.",
+            "Do not ask for any specific store, product, Flink, CDI, or appointment data.",
+            "Thank the assistant and end the conversation.",
         ],
     },
 ]
@@ -257,6 +280,12 @@ else:
 
 
 def evaluate():
+    skipped = skipped_subagent_names()
+    if skipped:
+        print(
+            f"WARNING: {len(skipped)} subagent(s) skipped due to placeholder identifiers "
+            f"and unavailable for routing in this run: {', '.join(skipped)}",
+        )
     run_context = (
         mlflow.start_run(run_name="agent-quality-evaluation")
         if mlflow.active_run() is None
@@ -264,6 +293,7 @@ def evaluate():
     )
     with run_context:
         _log_evaluation_metadata()
+        mlflow.log_param("preflight.skipped_subagents", ", ".join(skipped) or "none")
         result = mlflow.genai.evaluate(
             data=simulator,
             predict_fn=predict_fn,

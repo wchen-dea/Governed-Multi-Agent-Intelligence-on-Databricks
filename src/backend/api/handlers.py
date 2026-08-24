@@ -64,6 +64,7 @@ class RequestStage:
     request: ResponsesAgentRequest
     runtime_auth: Any
     messages: list[Any]
+    conversation_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -136,7 +137,12 @@ def _prepare_request_stage(request: ResponsesAgentRequest) -> RequestStage:
 
     runtime_auth = HANDLER_DEPS.runtime_auth_builder(request, SUBAGENTS, _client)
     messages = to_messages(request.input)
-    return RequestStage(request=request, runtime_auth=runtime_auth, messages=messages)
+    return RequestStage(
+        request=request,
+        runtime_auth=runtime_auth,
+        messages=messages,
+        conversation_id=get_session_id(request),
+    )
 
 
 def _request_persona(request: ResponsesAgentRequest) -> str | None:
@@ -245,6 +251,7 @@ async def _connect_request_stage(
     route_plan, route_candidates = build_route_plan(
         question,
         prepared.runtime_auth.policy_allowed_subagents,
+        conversation_id=prepared.conversation_id,
     )
     candidate_names = {candidate.name for candidate in route_candidates}
     planned_mcp_servers = [
