@@ -19,6 +19,11 @@ src/backend/
 │   ├── runtime_auth_service.py   # Request-scoped auth context (app + OBO)
 │   ├── policy_service.py         # Deterministic request-time policy checks
 │   ├── guardrails_service.py     # Deterministic response-time guardrails
+│   ├── model_routing_service.py  # Deterministic task-type model selection
+│   ├── agent_task_bus.py         # In-memory and UC-backed delegation task stores
+│   ├── agent_task_worker.py      # Bounded durable delegation worker
+│   ├── agent_handoff_service.py  # Native delegate_to_agent tool
+│   ├── agent_delegation_policy_service.py # Delegation policy
 │   ├── message_bus.py            # Lifecycle event backends (Noop, Logging, Kafka, RabbitMQ, UC)
 │   └── interfaces.py             # Protocol-based contracts for DI
 ├── domain/               ← Typed models and config
@@ -61,12 +66,13 @@ Request → Prepare → Connect → Execute → Finalize → Response
 
 - Connect MCP servers with parallel health checks (TTL-cached)
 - Build orchestrator `Agent` instance with instructions, tools, MCP servers, and unavailable-tool warnings
+- Select the configured Databricks model deterministically by task type before agent construction
 - Publish `request.*.started` lifecycle event
 
 ### Stage 3: Execute
 
-- **Invoke**: `Runner.run()` — single-shot execution returning output items
-- **Stream**: `Runner.run_streamed()` — buffer events, track used subagents, detect tool activity
+- **Invoke**: native `Runner.run()` function/MCP calls return output items
+- **Stream**: native `Runner.run_streamed()` calls buffer events, track used subagents, and release user-visible text only after finalization
 
 ### Stage 4: Finalize
 
@@ -139,6 +145,8 @@ runtime_auth.context.built / runtime_auth.policy.denied
 
 Supported backends: `noop`, `structured_logging`, `kafka`, `rabbitmq`, `uc_table` (Unity Catalog Delta table via SQL Statement API).
 
+Delegation task state is separate from the fail-open lifecycle bus: `AgentTaskBus` persists bounded app-auth handoffs with correlation IDs, idempotency, leases, retries, and dead-letter states. Dev uses Unity Catalog Delta task/event tables and a lifespan-managed worker.
+
 ## Auth Model
 
 Hybrid app + on-behalf-of-user (OBO):
@@ -166,6 +174,8 @@ All runtime behavior is driven by environment variables (see `shared/settings.py
 | Variable | Purpose |
 |----------|---------|
 | `ORCHESTRATOR_MODEL` | Target-configured foundation model for the orchestrator |
+| `MODEL_ROUTING_*` | Deterministic standard, reasoning, and synthesis model routes; dev currently resolves all three to `databricks-gpt-5-6-luna` |
+| `AGENT_TASK_*` | UC delegation task store and bounded worker configuration |
 | `DATABRICKS_OPENAI_BASE_URL` | Optional AI Gateway override URL |
 | `DATABRICKS_OPENAI_TIMEOUT_SECONDS` | Client timeout for gateway-routed calls |
 | `MESSAGE_BUS_BACKEND` | Event bus backend selection |
@@ -182,3 +192,4 @@ Per-environment values are managed via Databricks Asset Bundle variables in `tar
 - [ADR 0004: Lifecycle message bus](../adrs/0004-lifecycle-message-bus.md)
 - [ADR 0005: Governed routing policy and response guardrails](../adrs/0005-governed-routing-policy-and-response-guardrails.md)
 - [ADR 0009: Unity AI Gateway for LLM traffic](../adrs/0009-unity-ai-gateway-for-llm-traffic.md)
+- [ADR 0007: Evaluation KPI release gate](../adrs/0007-evaluation-kpi-release-gate.md)

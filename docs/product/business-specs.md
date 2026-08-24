@@ -25,6 +25,15 @@ Provide a governed enterprise AI assistant that routes requests to the right dat
 4. Lifecycle auditability and compliance reporting.
 5. Safe, repeatable multi-environment releases.
 
+## Current Capability Boundary
+
+| Capability | Current state | Authority |
+| --- | --- | --- |
+| Sales, product, Flink, CDI, and Lakebase requests | Implemented through governed native tool/MCP routes | [Tool and model registry](../architecture/tool-and-model-registry.md) |
+| Bounded agent delegation | Implemented for approved app-auth tasks with UC durable state | [Runtime technical specifications](../architecture/runtime-technical-specs.md) |
+| General asynchronous mailbox workflows | Target capability; not implemented | [Architecture guide](../architecture/README.md) |
+| Release promotion | Blocked by `ToolCallCorrectness = 0.400 < 0.800` | [Evaluation specification](../quality/evaluation-spec.md) |
+
 ## Business Requirements
 
 ### BR-1: Governed Access
@@ -78,8 +87,9 @@ Out of scope:
 
 ## Related Documents
 
-- ../architecture/runtime-technical-specs.md
-- ../architecture/high-level-architecture.md
-- ../architecture/low-level-design.md
-- ../operations/operations-runbook.md
-- ../adrs/README.md
+- [Architecture guide](../architecture/README.md)
+- [Runtime technical specifications](../architecture/runtime-technical-specs.md)
+- [High-level architecture](../architecture/high-level-architecture.md)
+- [Low-level design](../architecture/low-level-design.md)
+- [Operations runbook](../operations/operations-runbook.md)
+- [Architecture decision records](../adrs/README.md)

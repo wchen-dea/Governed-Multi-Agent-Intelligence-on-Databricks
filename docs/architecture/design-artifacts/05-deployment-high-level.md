@@ -25,13 +25,16 @@ flowchart TB
     end
 
     FE --> BE
-    BE --> FM[Foundation Model — target-configured orchestrator model]
+    BE --> MR[Deterministic Model Router dev gpt-5-6-luna]
+    MR --> FM[Configured Databricks Foundation Model]
     FM -.-> AIGW[AI Gateway — optional DATABRICKS_OPENAI_BASE_URL]
     BE --> GENIE[Genie MCP — Sales Space / CDI Space]
     BE --> AIS[AI Search MCP — Product Index / Flink Support Index]
     BE --> LB[Lakebase PostgreSQL — projects/ore/branches/production]
     BE --> OAuth[Postgres Credentials API — OAuth database token]
     BE --> AUD[UC Audit Table — quickstart_catalog.multi_agent_schema.agent_lifecycle_events]
+    BE --> TASKS[UC Delegation Task and Event Tables]
+    BE --> WORKER[Bounded Lifespan Worker]
     BE --> OBS[MLflow Tracing — target experiment]
     OAuth --> LB
 ```
@@ -60,3 +63,7 @@ flowchart TB
     BE --> S4
     BE --> S5
 ```
+
+## Current Alignment
+
+When Terraform Registry is unavailable, source recovery uses versioned-wheel `make upload-wheel`; it imports and SNAPSHOT-deploys app source but does not apply bundle-managed resources or grants.

@@ -85,6 +85,18 @@ Typical source pattern for Genie Agents:
 - QA/STG/PROD currently include additional placeholder and serving-endpoint entries.
 - Entries with placeholder identifiers are skipped at runtime until concrete IDs are configured.
 
+## Active Model Routes (Dev)
+
+Model selection is deterministic and recorded with `routing.plan.selected`; it chooses a configured route before agent construction and is not proof that a downstream tool call succeeded.
+
+| Task type | Configured model | Examples |
+| --- | --- | --- |
+| standard | `databricks-gpt-5-6-luna` | product lookups and ordinary conversation |
+| reasoning | `databricks-gpt-5-6-luna` | appointments, orders, SQL, Flink, and troubleshooting |
+| synthesis | `databricks-gpt-5-6-luna` | analysis, comparisons, summaries, and recommendations |
+
+Promotion remains blocked until [ToolCallCorrectness](../quality/evaluation-spec.md) reaches `0.800`; the current measured value is `0.400`.
+
 ## Active Lakebase Agents (Dev)
 
 ### lakebase_ods_agent
@@ -111,6 +123,7 @@ Typical source pattern for Genie Agents:
 
 ## Related Documents
 
-- runtime-technical-specs.md
-- ../product/business-specs.md
-- high-level-architecture.md
+- [Architecture guide](README.md)
+- [Runtime technical specifications](runtime-technical-specs.md)
+- [Business specifications](../product/business-specs.md)
+- [High-level architecture](high-level-architecture.md)

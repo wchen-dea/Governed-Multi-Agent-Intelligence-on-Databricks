@@ -16,7 +16,10 @@ flowchart LR
     BE --> AIS[AI Search MCP — /api/2.0/mcp/ai-search/]
     BE --> LB[Lakebase — projects/ore/branches/production/databases/operationaldatastore]
     BE --> OAuth[Postgres Credentials API — OAuth database token]
-    BE --> FM[Model Serving — target-configured orchestrator model]
+    BE --> TASKS[UC Delegation Task and Event Tables]
+    BE --> STATUS[GET delegations task status payload-redacted]
+    BE --> MR[Deterministic Model Router dev gpt-5-6-luna]
+    MR --> FM[Configured Databricks Model Serving]
     BE --> UC[UC Audit Table — SQL Statement API — warehouse b20f70f71c2f52e2]
 
     SEC[Platform Security] --> Ingress
@@ -100,3 +103,7 @@ flowchart LR
     A2 -. degrade gracefully .-> A1
     A3 -. fallback .-> A1
 ```
+
+## Current Alignment
+
+The backend lifespan owns the bounded delegation worker. UC delegation state is fail-closed, uses leases and dead-letter states, and requires explicit warehouse/schema/table permissions. The current promotion gate is blocked: `ToolCallCorrectness = 0.400 < 0.800`.

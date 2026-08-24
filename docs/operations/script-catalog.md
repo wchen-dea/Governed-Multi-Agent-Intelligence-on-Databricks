@@ -43,3 +43,15 @@ make assistant-tools
 ## Compatibility
 
 The original `uv run` entry points in `pyproject.toml` remain as compatibility commands. The grouped dispatchers accept only the canonical names above and forward all arguments to the existing command implementations.
+
+## Release Commands
+
+| Command | Purpose |
+| --- | --- |
+| `make test` | Run the full Python test suite. |
+| `make lint-markdown` | Validate authored Markdown. |
+| `make evaluate` | Run MLflow evaluation and enforce configured KPI gates. |
+| `make redeploy TARGET=<target> APP_NAME=<app> PROFILE=<profile>` | Full validation, bundle attempt, source deploy, grants, health, and smoke workflow. |
+| `make upload-wheel TARGET=<target> APP_NAME=<app> PROFILE=<profile>` | Versioned source-only app deployment fallback; does not apply bundle resources or grants. |
+
+See the [operations guide](README.md) and [operations runbook](operations-runbook.md) for command prerequisites and recovery boundaries.

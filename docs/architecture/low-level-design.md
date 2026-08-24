@@ -6,7 +6,7 @@ Define implementation details, code structure, runtime behavior, and configurati
 
 ## Scope
 
-This document covers low-level design and implementation details. High-level architecture is in `docs/architecture/high-level-architecture.md`, and operations guidance is in `docs/operations/operations-runbook.md`.
+This document covers low-level design and implementation details. See [high-level architecture](high-level-architecture.md) for system boundaries and the [operations runbook](../operations/operations-runbook.md) for procedures.
 
 ## Current Status
 
@@ -105,7 +105,13 @@ This document covers low-level design and implementation details. High-level arc
   - Sends invocation payloads and manages stream/invoke behavior to backend routes
 
 - `src/reactui/src/stream.ts`
-  - Parses streaming events, text deltas, and source/tool provenance hints
+  - Parses stream metadata and renders only finalized `response.output_text.delta` answer text
+
+- `src/backend/services/model_routing_service.py`
+  - Selects configured Databricks model routes before orchestrator construction
+
+- `src/backend/services/agent_task_bus.py`, `agent_task_worker.py`, `agent_handoff_service.py`
+  - Persist, lease, execute, and inspect bounded UC-backed app-auth delegation tasks
 
 - `src/reactui/src/config.ts`
   - Loads typed runtime settings from frontend environment variables
@@ -128,7 +134,6 @@ This document covers low-level design and implementation details. High-level arc
 ### Design Patterns
 
 - Orchestrator pattern: a central orchestrator routes user intent to specialist tools and subagents.
-- Strategy pattern: routing behavior varies by subagent type (`genie`, `serving_endpoint`, `app`) behind a unified interface.
 - Strategy pattern: routing behavior varies by subagent type (`genie`, `serving_endpoint`, `app`, `mcp`) behind a unified interface.
 - Policy/strategy blend: runtime auth selection varies by subagent `auth_mode` (`app`, `obo`) under a unified tool interface.
 - Configuration object pattern: typed subagent configuration with centralized validation reduces runtime misconfiguration.
@@ -141,7 +146,7 @@ This document covers low-level design and implementation details. High-level arc
 
 ## Request Lifecycle
 
-Reference diagram: `docs/architecture/design-artifacts/07-request-execution-flow-class-diagram.md`
+Reference diagram: [request execution pipeline](design-artifacts/07-request-execution-flow-class-diagram.md)
 
 1. UI sends request to the Databricks App endpoint.
 2. MLflow Agent Server receives and dispatches to invoke/stream handler.
@@ -149,8 +154,8 @@ Reference diagram: `docs/architecture/design-artifacts/07-request-execution-flow
 4. Handler opens async context and health-checks MCP servers.
 5. Orchestrator agent is created with available tools.
 6. Runner executes model/tool loop while tool lifecycle bus events are emitted.
-7. Response guardrails evaluate output against governed constraints before returning content.
-8. Response items/events are normalized and returned to client.
+7. Stream execution buffers events; source metadata and guardrails finalize before user-visible text is released.
+8. The UI renders `response.output_text.delta` only; tool events remain metadata.
 
 ## Tool Routing Model
 
@@ -261,9 +266,10 @@ Direct non-interactive Databricks Apps invocation tests should use:
 
 ## Related Docs
 
-- `docs/product/business-specs.md`: business goals and requirements
-- `docs/architecture/runtime-technical-specs.md`: centralized technical domain map
-- `docs/architecture/high-level-architecture.md`: high-level architecture and request flow
-- `docs/architecture/design-artifacts/README.md`: centralized full design diagram set across concept, logical, and deployment phases
-- `docs/architecture/design-artifacts/08-backend-class-diagram-as-is.md`: concrete as-is backend class diagram
-- `docs/operations/operations-runbook.md`: operations and incident handling
+- [Architecture guide](README.md): authority map and role-based reading paths
+- [Business specifications](../product/business-specs.md): business goals and requirements
+- [Runtime technical specifications](runtime-technical-specs.md): centralized technical domain map
+- [High-level architecture](high-level-architecture.md): system boundaries and request flow
+- [Design artifacts](design-artifacts/README.md): concept, logical, deployment, and runtime diagrams
+- [Backend class diagrams](design-artifacts/08-backend-class-diagram-as-is.md): current service composition
+- [Operations runbook](../operations/operations-runbook.md): deployment and incident handling

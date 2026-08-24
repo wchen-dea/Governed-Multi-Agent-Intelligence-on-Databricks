@@ -7,8 +7,9 @@ This document captures high-level concept diagrams used to align stakeholders be
 ```mermaid
 flowchart LR
     A[Conversational Access] --> B[Persona-Governed Routing]
-    B --> C[Tool-Backed Response Generation]
-    C --> D[Evidence-Attributed Outcomes]
+    B --> C[Native Tool-Backed Response Generation]
+    C --> H[Bounded Durable Delegated Handoff]
+    H --> D[Evidence-Attributed Outcomes]
     D --> E[Auditable Multi-Environment Delivery]
 ```
 
@@ -45,10 +46,11 @@ flowchart LR
     UI --> AISYS[AI Orchestrator — Databricks App]
     AISYS --> Genie[Genie Spaces — Sales / CDI]
     AISYS --> AIS[AI Search MCP — Product Index / Flink Support]
-    AISYS --> LB[Lakebase PostgreSQL — ODS]
-    AISYS --> FM[Foundation Models — target-configured]
+    AISYS --> LB[Lakebase PostgreSQL ODS OAuth-only]
+    AISYS --> FM[Deterministic Model Router dev gpt-5-6-luna]
     AISYS --> AIGW[AI Gateway — optional routing layer]
     AISYS --> Audit[UC Audit Table / Message Bus]
+    AISYS --> Tasks[UC Delegation Task and Event Tables]
     AISYS --> Identity[Workspace Identity — App + OBO]
 ```
 
@@ -63,3 +65,7 @@ flowchart TD
     Ans --> Guard[Guardrail Validation]
     Guard --> Action[Delivered Answer]
 ```
+
+## Current Alignment
+
+Concept views describe business intent only. Current implementation uses native function/MCP calls, payload-redacted delegation status, and buffered stream finalization before the UI renders answer deltas. See [runtime technical specifications](../runtime-technical-specs.md) for executable facts.

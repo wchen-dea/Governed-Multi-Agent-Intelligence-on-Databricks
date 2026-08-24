@@ -12,11 +12,12 @@ flowchart LR
         S3[Lifecycle event bus — UC audit table]
         S4[Evaluation KPI release gate]
         S5[AI Gateway opt-in routing]
+        S6[Bounded durable delegation for approved app-auth handoffs]
     end
 
     subgraph OutScope[Out of Scope]
         O1[Custom BI dashboarding]
-        O2[Long-running agent mailbox workflows]
+        O2[Unbounded or manual agent mailbox workflows]
         O3[Cross-tenant orchestration]
         O4[Custom model fine-tuning]
     end
@@ -74,6 +75,7 @@ flowchart TB
 
     subgraph Zone4[Control Zone]
         AUDIT[UC Audit Table]
+        TASKS[UC Delegation Task and Event Tables]
         SEC[Security Monitoring]
     end
 
@@ -84,6 +86,7 @@ flowchart TB
     FM -.-> AIGW
     ORCH --> POL
     ORCH --> AUDIT
+    ORCH --> TASKS
     POL --> AUDIT
     AUDIT --> SEC
 
@@ -92,3 +95,7 @@ flowchart TB
     R3[Risk: untraceable output] -.mitigate.-> AUDIT
     R4[Risk: PII in LLM traffic] -.mitigate.-> AIGW
 ```
+
+## Current Alignment
+
+Delegation is deliberately bounded: app-auth-only approved handoffs persist typed state in Unity Catalog task/event tables, run through a lifespan-managed worker, and expose no task SQL through status responses. It is not a general mailbox or autonomous peer-to-peer chat system.

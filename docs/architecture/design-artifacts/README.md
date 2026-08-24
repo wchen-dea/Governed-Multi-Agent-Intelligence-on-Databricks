@@ -16,7 +16,7 @@ Each phase is split into high-level (architecture overview) and detailed (engine
 
 | # | File | Focus |
 |---|------|-------|
-| 00 | [00-architecture-board-review.md](00-architecture-board-review.md) | Single-page review pack embedding all diagrams |
+| 00 | [00-architecture-board-review.md](00-architecture-board-review.md) | Review index, implementation status, and canonical links |
 | 01 | [01-concept-high-level.md](01-concept-high-level.md) | Business capabilities, actors, system context |
 | 02 | [02-concept-detailed.md](02-concept-detailed.md) | Scope map, persona-agent matrix, trust boundaries |
 | 03 | [03-logical-high-level.md](03-logical-high-level.md) | Container diagram, request flow, identity flow |
@@ -38,10 +38,15 @@ Each phase is split into high-level (architecture overview) and detailed (engine
 
 - **5 subagents**: sales_insights (Genie), cdi (Genie), product_index (AI Search MCP), flink_support (AI Search MCP), lakebase_ods (Lakebase)
 - **4 personas**: manager (all), analyst (product + lakebase), operator (flink), engineer (product + flink + lakebase)
-- **Foundation model**: target-configured through `ORCHESTRATOR_MODEL`
+- **Model router**: deterministic standard, reasoning, and synthesis selection; dev resolves all routes to `databricks-gpt-5-6-luna`
 - **AI Gateway**: opt-in via DATABRICKS_OPENAI_BASE_URL
 - **Message bus**: uc_table (dev) with structured_logging fallback
+- **Delegation**: bounded app-auth UC task/event store, lifespan worker, and payload-redacted status endpoint
+- **Streaming**: events buffer and finalize before the UI renders `response.output_text.delta` only
+- **Release gate**: `ToolCallCorrectness = 0.400 < 0.800`; promotion blocked
 - **Workspace**: dbc-baff2b7f-4402.cloud.databricks.com (dev)
+
+Canonical narrative references: [runtime technical specifications](../runtime-technical-specs.md), [API contracts](../api-contracts.md), [tool and model registry](../tool-and-model-registry.md), and [low-level design](../low-level-design.md).
 
 ## Ownership and Update Policy
 
