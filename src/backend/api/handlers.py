@@ -26,6 +26,7 @@ from backend.shared.runtime_utils import process_agent_stream_events
 from backend.services.guardrails_service import truncate_response_text
 from backend.domain.execution_contracts import ResponseEnvelope
 from backend.services.route_planner import build_route_plan
+from backend.services.model_routing_service import select_model
 
 SETTINGS = get_settings()
 HANDLER_DEPS = get_handler_dependencies()
@@ -197,8 +198,9 @@ async def _connect_request_stage(
         route_candidates,
         route_plan.reason,
     )
+    model_selection = select_model(question, SETTINGS)
     agent = HANDLER_DEPS.orchestrator_factory(
-        SETTINGS.orchestrator_model,
+        model_selection.model,
         route_candidates,
         servers,
         candidate_tools,
@@ -211,6 +213,9 @@ async def _connect_request_stage(
             "reason": route_plan.reason,
             "confidence": route_plan.confidence,
             "requires_evidence": route_plan.requires_evidence,
+            "model": model_selection.model,
+            "model_task_type": model_selection.task_type,
+            "model_reason": model_selection.reason,
         },
     )
     return ConnectedStage(

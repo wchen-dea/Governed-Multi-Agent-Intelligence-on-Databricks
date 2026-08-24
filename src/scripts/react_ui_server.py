@@ -93,6 +93,22 @@ async def proxy_invocations(request: Request) -> StreamingResponse:
     )
 
 
+@app.get("/delegations/{task_id}")
+async def proxy_delegation_status(task_id: str, request: Request):
+    """Proxy durable delegation status requests to the backend AgentServer."""
+    headers = {
+        key: value
+        for key, value in request.headers.items()
+        if key.lower() not in REQUEST_HEADER_SKIP
+    }
+    backend_url = BACKEND_PROXY_URL.rsplit("/", 1)[0] + f"/delegations/{task_id}"
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.get(backend_url, headers=headers)
+    if not response.is_success:
+        raise HTTPException(status_code=response.status_code, detail=response.text)
+    return response.json()
+
+
 assets_dir = REACT_UI_DIST_DIR / "assets"
 if assets_dir.exists():
     app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")

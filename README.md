@@ -284,11 +284,23 @@ This builds versioned wheel and React payloads, clears prior generated remote wh
 - `UC_AUDIT_TABLE`: Unity Catalog audit table name (default `agent_lifecycle_events`).
 - `DATABRICKS_OPENAI_BASE_URL`: optional Databricks OpenAI base URL override (for example Unity AI Gateway URL).
 - `DATABRICKS_OPENAI_TIMEOUT_SECONDS`: optional timeout in seconds for Databricks OpenAI calls (`0` keeps SDK defaults).
+- `MODEL_ROUTING_ENABLED`: enable deterministic task-type model selection (default `true`).
+- `MODEL_ROUTING_DEFAULT_MODEL`: model used for standard lookups and conversational requests.
+- `MODEL_ROUTING_REASONING_MODEL`: model used for operational, SQL, support, and troubleshooting requests.
+- `MODEL_ROUTING_QUALITY_MODEL`: model used for analysis, comparison, and recommendation requests.
 - `EVAL_MIN_TOOL_CALL_ACCURACY`: release-gate threshold for tool call correctness (default `0.80`).
 - `EVAL_MIN_AUTH_CORRECTNESS`: release-gate threshold for authorization correctness (default `0.90`).
 - `EVAL_MIN_SAFETY`: release-gate threshold for safety KPI (default `0.95`).
 - `EVAL_MIN_GROUNDEDNESS`: release-gate threshold for groundedness KPI (default `0.80`).
 - `EVAL_REQUIRE_ALL_KPIS`: when `true`, fail release gate if any KPI metric is missing.
+- `AGENT_TASK_BACKEND`: delegation task backend; `memory` by default and `uc_table` for durable Delta-backed tasks.
+- `AGENT_TASK_WAREHOUSE_ID`: SQL warehouse used by the UC task backend.
+- `AGENT_TASK_CATALOG`: Unity Catalog catalog for durable delegation tables.
+- `AGENT_TASK_SCHEMA`: Unity Catalog schema for durable delegation tables.
+- `AGENT_TASK_TABLE`: task table name (default `agent_delegation_tasks`).
+- `AGENT_TASK_EVENT_TABLE`: task event table name (default `agent_delegation_events`).
+- `AGENT_TASK_WORKER_ENABLED`: starts the backend delegation worker when `true`.
+- `AGENT_TASK_WORKER_POLL_SECONDS`: idle polling interval for the delegation worker (default `1.0`).
 
 MCP connect/probe performance controls:
 
@@ -300,10 +312,13 @@ MCP connect/probe performance controls:
 
 ## Runtime Status
 
-- Current package version: `0.1.2`.
+- Current package version: `0.1.5`.
 - Lakebase uses an OAuth credential minted from the Databricks Postgres credentials API; the app service principal needs a matching Lakebase OAuth role and `postgres` app resource grant.
+- The orchestrator selects a configured Databricks model by task type and records the selected model, task type, and reason in `routing.plan.selected` lifecycle metadata.
 - The UI renders `response.output_text.delta` events and source/tool badges. It does not render raw function, MCP, or tool-output events.
 - Local source deploys are lifecycle-gated, but bundle-managed resource changes still require a successful bundle apply.
+- Dev uses the UC-backed delegation task store with `agent_delegation_tasks` and `agent_delegation_events`; the backend lifespan starts a bounded worker and exposes payload-redacted status at `GET /delegations/{task_id}`.
+- The app deployment and durable-task round trip are verified. Direct authenticated endpoint probes still encounter the known platform `502` before backend responses are available.
 - The current Databricks-backed evaluation release gate remains blocked at tool-call accuracy `0.400 < 0.800`.
 
 ## Documentation

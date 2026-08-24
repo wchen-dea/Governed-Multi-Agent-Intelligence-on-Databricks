@@ -22,6 +22,18 @@ variables:
   openai_timeout_seconds:
     description: Optional timeout in seconds for Databricks OpenAI calls; 0 keeps SDK defaults
     default: "0"
+  model_routing_enabled:
+    description: Whether the orchestrator selects a configured model by request task type
+    default: "true"
+  model_routing_default_model:
+    description: Databricks model for standard lookups and conversational requests
+    default: databricks-gpt-5-6-luna
+  model_routing_reasoning_model:
+    description: Databricks model for operational, SQL, support, and troubleshooting tasks
+    default: databricks-claude-sonnet-5
+  model_routing_quality_model:
+    description: Databricks model for analysis, comparison, and recommendation tasks
+    default: databricks-claude-sonnet-5
   api_proxy:
     description: API proxy URL for the chat app
     default: http://localhost:8000/invocations
@@ -112,6 +124,24 @@ variables:
   uc_audit_table:
     description: Unity Catalog table name for lifecycle events
     default: agent_lifecycle_events
+  agent_task_backend:
+    description: Delegation task backend (memory or uc_table)
+    default: memory
+  agent_task_warehouse_id:
+    description: SQL warehouse id used by the UC delegation task backend
+    default: ""
+  agent_task_catalog:
+    description: Unity Catalog catalog for delegation task tables
+    default: ""
+  agent_task_schema:
+    description: Unity Catalog schema for delegation task tables
+    default: ""
+  agent_task_worker_enabled:
+    description: Whether the backend starts the durable delegation worker
+    default: "false"
+  agent_task_worker_poll_seconds:
+    description: Idle poll interval in seconds for the durable delegation worker
+    default: "1"
   app_telemetry_logs_table:
     description: Unity Catalog table for Databricks Apps telemetry export
     default: quickstart_catalog.multi_agent_schema.app_logs

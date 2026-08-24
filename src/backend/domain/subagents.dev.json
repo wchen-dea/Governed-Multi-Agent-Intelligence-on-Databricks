@@ -60,6 +60,8 @@
     "freshness_sla": "1h",
     "allowed_personas": ["analyst", "manager", "engineer"],
     "requires_evidence": false,
+    "accepts_delegations_from": ["orchestrator"],
+    "allowed_task_intents": ["appointment_summary"],
     "project_id": "ore",
     "branch_id": "production",
     "endpoint_id": "primary",

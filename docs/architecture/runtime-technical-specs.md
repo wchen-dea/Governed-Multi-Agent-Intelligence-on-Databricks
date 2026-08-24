@@ -7,6 +7,7 @@ This document summarizes the technical specifications currently implemented in t
 - Layered backend architecture is implemented with API, services, domain, and shared layers.
 - Request handling supports both invoke and stream flows through MLflow Agent Server handlers.
 - Orchestrator agent is assembled at runtime with available tools and healthy MCP servers.
+- A deterministic model router selects a configured Databricks model before agent assembly and records the decision in routing lifecycle metadata.
 - Frontend runtime is React UI first, with a legacy Chainlit path retained for compatibility.
 
 Primary implementation:
@@ -14,6 +15,18 @@ Primary implementation:
 - src/backend/api/handlers.py
 - src/backend/api/dependencies.py
 - src/backend/services/orchestrator_service.py
+
+### Task-Type Model Routes
+
+| Task type | Default dev model | Examples |
+| --- | --- | --- |
+| standard | `databricks-gpt-5-6-luna` | product lookups and ordinary conversational requests |
+| reasoning | `databricks-gpt-5-6-luna` | appointments, orders, SQL, Flink, streaming, debugging, and troubleshooting |
+| synthesis | `databricks-gpt-5-6-luna` | analysis, comparison, executive summaries, recommendations, and plans |
+
+Dev keeps all task classes on the verified balanced model. Promote a task route to another Databricks model only after a successful live invocation and evaluation run for that route.
+
+Set `MODEL_ROUTING_ENABLED=false` to retain `ORCHESTRATOR_MODEL` for every task. Configure individual routes through `MODEL_ROUTING_DEFAULT_MODEL`, `MODEL_ROUTING_REASONING_MODEL`, and `MODEL_ROUTING_QUALITY_MODEL`.
 - src/reactui/src/App.tsx
 - src/reactui/src/api.ts
 - src/scripts/react_ui_server.py
@@ -117,7 +130,27 @@ Primary implementation:
 - src/backend/evaluate_agent.py
 - .github/workflows/databricks-cicd.yml
 
-## 8. Deployment and Environment Specification
+## 8. Agent Delegation Specification
+
+- Agent-to-agent delegation uses typed tasks with correlation IDs, idempotency keys, bounded retries, leases, expiry, and dead-letter states.
+- The default `AGENT_TASK_BACKEND=memory` is suitable for synchronous, single-process handoffs only; dev is configured for `uc_table`.
+- `AGENT_TASK_BACKEND=uc_table` persists tasks and state transitions in separate Unity Catalog Delta task and event tables through the SQL Statement API.
+- The UC backend is fail-closed. It requires `AGENT_TASK_WAREHOUSE_ID`, `AGENT_TASK_CATALOG`, and `AGENT_TASK_SCHEMA`; missing configuration or failed writes stop delegation rather than dropping work.
+- Delegation is deny-by-default, app-auth-only, and restricted by each target agent's allowed source, intent, and depth configuration.
+- The first enabled dev handoff is `orchestrator -> lakebase_ods_agent` with intent `appointment_summary`.
+- Dev provisions `quickstart_catalog.multi_agent_schema.agent_delegation_tasks` and `agent_delegation_events`, with exact-table `SELECT, MODIFY` access for the app identity.
+- When `AGENT_TASK_WORKER_ENABLED=true`, the backend lifespan starts a bounded background worker that leases durable tasks at `AGENT_TASK_WORKER_POLL_SECONDS` intervals and stops it cleanly at shutdown.
+- `GET /delegations/{task_id}` exposes a payload-redacted task status view through the backend and React proxy.
+
+Primary implementation:
+
+- src/backend/domain/agent_messages.py
+- src/backend/services/agent_task_bus.py
+- src/backend/services/agent_task_worker.py
+- src/backend/services/agent_handoff_service.py
+- src/backend/services/agent_delegation_policy_service.py
+
+## 9. Deployment and Environment Specification
 
 - Deployment is target-based with dev, qa, stg, and prod overlays.
 - Shared resource configuration is centralized and target overrides are explicit.
@@ -135,14 +168,14 @@ Primary implementation:
 - targets/prod.yml
 - docs/operations/operations-runbook.md
 
-## 9. Validation Specification
+## 10. Validation Specification
 
 - Unit and integration tests cover subagent config, runtime auth, policy, message bus, and guardrails.
 - Compile checks and preflight runtime checks are used for end-to-end local validation.
 - Bundle validation is used to verify deploy-time configuration integrity.
 - App resource validation includes Lakebase Autoscaling `branch`, `database`, and `CAN_CONNECT_AND_CREATE` fields.
 
-## 10. Evaluation Readiness
+## 11. Evaluation Readiness
 
 - Deterministic route-plan tests pass for sales, product, Flink, CDI, and Lakebase intents.
 - The latest Databricks-backed conversational evaluation remains blocked at tool-call accuracy `0.400 < 0.800`.

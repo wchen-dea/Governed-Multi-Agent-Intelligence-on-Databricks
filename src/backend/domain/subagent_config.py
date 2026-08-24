@@ -20,6 +20,11 @@ REQUIRED_METADATA_KEYS = {
     "allowed_personas",
     "requires_evidence",
 }
+DELEGATION_LIST_FIELDS = (
+    "can_delegate_to",
+    "accepts_delegations_from",
+    "allowed_task_intents",
+)
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +52,10 @@ class SubagentConfig:
     freshness_sla: str | None = None
     allowed_personas: tuple[str, ...] = ()
     requires_evidence: bool = False
+    can_delegate_to: tuple[str, ...] = ()
+    accepts_delegations_from: tuple[str, ...] = ()
+    allowed_task_intents: tuple[str, ...] = ()
+    max_delegation_depth: int = 0
 
     def __post_init__(self) -> None:
         if not self.name:
@@ -89,6 +98,12 @@ class SubagentConfig:
             raise ValueError(f"Non-genie subagent {self.name!r} must define endpoint")
         if any(not persona.strip() for persona in self.allowed_personas):
             raise ValueError(f"Subagent {self.name!r} has invalid allowed_personas entry")
+        for field_name in DELEGATION_LIST_FIELDS:
+            values = getattr(self, field_name)
+            if any(not value.strip() for value in values):
+                raise ValueError(f"Subagent {self.name!r} has invalid {field_name} entry")
+        if self.max_delegation_depth < 0:
+            raise ValueError(f"Subagent {self.name!r} max_delegation_depth must not be negative")
 
     @property
     def is_genie(self) -> bool:
@@ -147,6 +162,17 @@ class SubagentConfig:
                 f"Subagent {value.get('name', '<unknown>')!r} must define freshness_sla"
             )
         try:
+            delegation_values: dict[str, tuple[str, ...]] = {}
+            for field_name in DELEGATION_LIST_FIELDS:
+                raw_values = value.get(field_name, [])
+                if not isinstance(raw_values, list) or not all(
+                    isinstance(item, str) for item in raw_values
+                ):
+                    raise ValueError(
+                        f"Subagent {value.get('name', '<unknown>')!r} "
+                        f"{field_name} must be a list of strings"
+                    )
+                delegation_values[field_name] = tuple(raw_values)
             return cls(
                 name=value["name"],
                 kind=kind,
@@ -167,6 +193,10 @@ class SubagentConfig:
                 freshness_sla=freshness_sla,
                 allowed_personas=tuple(allowed_personas_raw),
                 requires_evidence=bool(value["requires_evidence"]),
+                can_delegate_to=delegation_values["can_delegate_to"],
+                accepts_delegations_from=delegation_values["accepts_delegations_from"],
+                allowed_task_intents=delegation_values["allowed_task_intents"],
+                max_delegation_depth=int(value.get("max_delegation_depth", 0)),
             )
         except KeyError as exc:
             raise ValueError(f"Subagent config missing required key: {exc}") from exc

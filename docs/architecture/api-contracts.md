@@ -56,6 +56,14 @@ The internal response envelope contains:
 
 The public Responses API output structure remains backward-compatible; governance metadata is carried through lifecycle events and stream metadata.
 
+## Delegation Status Contract
+
+- `GET /delegations/{task_id}` returns a user-safe task lifecycle view for accepted agent handoffs.
+- The response includes task ID, correlation ID, source/target agents, intent, state, retry count, and terminal failure code when available.
+- The endpoint never returns the delegated SQL, task payload, credentials, or tool output.
+- The React proxy exposes the same path to browser clients.
+- A missing task returns HTTP `404`. Access requires the same Databricks Apps authentication boundary as other backend routes.
+
 ## Error Semantics
 
 - Authorization or policy failures produce explicit user-facing errors

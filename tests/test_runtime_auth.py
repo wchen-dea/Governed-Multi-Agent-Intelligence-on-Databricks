@@ -5,6 +5,7 @@ from backend.services.runtime_auth_service import (
     RuntimeAuthDependencies,
     build_runtime_auth_context,
 )
+from backend.services.agent_task_bus import InMemoryAgentTaskBus
 from mlflow.types.responses import ResponsesAgentRequest
 
 
@@ -207,3 +208,57 @@ def test_build_runtime_auth_context_applies_policy_filter_denials():
 
     assert ctx.subagent_tools == ["tool-managed"]
     assert ctx.unavailable_auth == ["sales_insights_agent denied by policy (persona 'manager' is not allowed)"]
+
+
+def test_runtime_auth_exposes_native_handoff_for_approved_lakebase_target():
+    lakebase = SubagentConfig(
+        name="lakebase_ods_agent",
+        kind="lakebase",
+        auth_mode="app",
+        project_id="ore",
+        branch_id="production",
+        database="operationaldatastore",
+        pg_host="lakebase.example.com",
+        endpoint_id="primary",
+        description="appointments",
+        accepts_delegations_from=("orchestrator",),
+        allowed_task_intents=("appointment_summary",),
+    )
+    identity_ctx = SimpleNamespace(
+        has_user_identity=False,
+        user_workspace_client=None,
+        app_workspace_client=object(),
+    )
+    allowed_decision = SimpleNamespace(
+        subagent_name=lakebase.name,
+        tool_name=lakebase.tool_name,
+        allowed=True,
+        reason_code="allowed",
+        reason="allowed",
+    )
+    deps = RuntimeAuthDependencies(
+        identity_context_provider=lambda: identity_ctx,
+        session_id_provider=lambda request: "delegation-test",
+        trace_metadata_updater=lambda metadata: None,
+        policy_context_builder=lambda request, identity: SimpleNamespace(
+            persona="manager",
+            has_user_identity=False,
+            requested_tool=None,
+            request_confidence=None,
+        ),
+        subagent_policy_filter=lambda subagents, context: ([lakebase], [allowed_decision]),
+        subagent_tools_builder=lambda subagents, app_client, obo_client: [],
+        lakebase_tools_builder=lambda subagents, context: ["lakebase-tool"],
+        mcp_servers_builder=lambda subagents, context: ([], []),
+        delegation_task_bus=InMemoryAgentTaskBus(),
+    )
+
+    ctx = build_runtime_auth_context(
+        request=ResponsesAgentRequest(input=[]),
+        subagents=[lakebase],
+        app_client=object(),
+        deps=deps,
+    )
+
+    assert "lakebase-tool" in ctx.subagent_tools
+    assert any(getattr(tool, "name", "") == "delegate_to_agent" for tool in ctx.subagent_tools)

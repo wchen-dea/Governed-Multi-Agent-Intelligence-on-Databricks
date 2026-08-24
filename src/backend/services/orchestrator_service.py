@@ -153,6 +153,8 @@ def _build_base_orchestrator_instructions(subagents: list[SubagentConfig]) -> st
             "authentication, connectivity, or execution) concisely."
             + "\nUse native tool calling only. Never write pseudo-tool syntax such as "
             "`to=query_*`, `code:`, or a tool-call JSON payload in assistant text."
+            + "\nFor an approved cross-agent handoff, use the native delegate_to_agent tool. "
+            "Never simulate delegation in assistant text."
             + "\nIf no configured tool covers the request, ask the user for clarification."
             + "\nFor any answer grounded in a tool marked evidence=true, include evidence in the final answer."
             + "\nUse either inline citations like `[1]` or end with a `Source:` line naming the tool and freshness SLA."
@@ -472,6 +474,32 @@ def _execute_lakebase_query(
             return f"Statement executed successfully. Rows affected: {cur.rowcount}"
     finally:
         conn.close()
+
+
+def build_lakebase_delegation_executors(
+    subagents: list[SubagentConfig],
+    identity_ctx: RequestIdentityContext,
+) -> dict[str, Any]:
+    """Build app-auth executors for explicitly delegated Lakebase tasks."""
+    executors: dict[str, Any] = {}
+    for subagent in subagents:
+        if not subagent.is_lakebase or subagent.is_obo:
+            continue
+
+        async def execute(payload: dict[str, Any], cfg: SubagentConfig = subagent) -> dict[str, Any]:
+            sql_query = payload.get("sql_query")
+            if not isinstance(sql_query, str) or not sql_query.strip():
+                raise ValueError("delegation_requires_sql_query")
+            result = await asyncio.to_thread(
+                _execute_lakebase_query,
+                identity_ctx.app_workspace_client,
+                cfg,
+                sql_query,
+            )
+            return {"result": result}
+
+        executors[subagent.name] = execute
+    return executors
 
 
 def _lakebase_failure_result(exc: Exception) -> tuple[str, str]:
