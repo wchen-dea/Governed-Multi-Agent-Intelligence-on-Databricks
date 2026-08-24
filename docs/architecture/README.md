@@ -20,6 +20,7 @@ This guide is the entry point for the architecture corpus. It separates authorit
 | [Runtime technical specifications](runtime-technical-specs.md) | Current implementation facts, model routes, delegation, release state |
 | [API contracts](api-contracts.md) | External request, stream, and delegation-status behavior |
 | [Tool and model registry](tool-and-model-registry.md) | Active dev tools, MCP routes, Lakebase configuration, and model routes |
+| [Semantics layer design](semantics-layer-design.md) | Semantics layer scope, ownership boundaries, and build pipelines for AI Search indexes and Metric Views |
 | [High-level architecture](high-level-architecture.md) | System boundaries, trust model, and end-to-end control planes |
 | [Low-level design](low-level-design.md) | Module responsibilities, request lifecycle, configuration, and implementation patterns |
 | [Backend framework design](backend-framework-design.md) | Backend package layout, dependency composition, staged execution, and service responsibilities |

@@ -2,6 +2,12 @@
 
 Databricks notebooks that build and refresh the governed data assets behind the
 runtime tools registered in [`docs/architecture/tool-and-model-registry.md`](../../docs/architecture/tool-and-model-registry.md).
+
+See [`docs/architecture/semantics-layer-design.md`](../../docs/architecture/semantics-layer-design.md)
+for the semantics layer design and ownership boundaries (this project builds AI
+Search indexes and Metric Views only; Genie Agent spaces and the Lakebase
+project are owned by other projects).
+
 Each notebook is idempotent and is intended to run as a Databricks Job (see
 `resources/semantics_jobs.yml`), not interactively against production data.
 
