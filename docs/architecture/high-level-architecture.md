@@ -26,7 +26,7 @@ It routes user requests across backend capabilities:
 - Serving endpoint agents
 - Optional app-based specialists
 - AI Search MCP routes (RAG)
-- Lakebase PostgreSQL databases (SQL via psycopg2 with secret-backed SCRAM or OAuth credentials)
+- Lakebase PostgreSQL databases (SQL via psycopg2 with OAuth credentials)
 
 Authorization boundary:
 
@@ -94,7 +94,7 @@ flowchart LR
             A2[MCP Product Index Assistant AI Search]
             A3[MCP Flink Support Agent RAG]
             A4[Genie CDI Agent]
-            A5[Lakebase ODS Agent psycopg2 SCRAM or OAuth]
+            A5[Lakebase ODS Agent psycopg2 OAuth]
         end
 
         subgraph Semantic[Business Semantic Layer]
@@ -138,8 +138,6 @@ flowchart LR
     MCP --> BSL
     MCP --> VS
     A5 --> LB
-    APPID --> SECRET[Databricks Secret Scope multiagent_app]
-    SECRET --> LB
     BSL --> ST
     BSL --> MV
     VS --> PT
@@ -177,9 +175,9 @@ flowchart TD
 
     G --> M[MCP Genie Space sales]
     K --> R1[Vector Search dim_product_search_index]
-    F --> R3[Vector Search flink_support_search_index]
+    F --> R3[Vector Search flink_support_index]
     CDI --> M2[MCP Genie Space CDI metrics]
-    LB --> PG[Lakebase PostgreSQL via secret-backed SCRAM or OAuth fallback]
+    LB --> PG[Lakebase PostgreSQL via OAuth credentials]
 
     M --> R[Response Aggregation and Guardrails]
     R1 --> R
@@ -203,7 +201,7 @@ The orchestrator uses subagent-level auth configuration (`auth_mode`) to decide 
 
 If an `obo` tool is required but no forwarded token is available, the tool is marked unavailable or returns a clear authorization error.
 
-### Lakebase Secret Configuration
+### Lakebase OAuth Configuration
 
 The dev app uses the existing Lakebase Autoscaling resources:
 
@@ -213,7 +211,7 @@ The dev app uses the existing Lakebase Autoscaling resources:
 - Database resource ID: `db-j7lf-e5xmy0cwq4`
 - Endpoint: `primary`
 
-The Databricks App receives `LAKEBASE_PG_PASSWORD` through the `multiagent_app` secret scope and `lakebase_pg_password` key. The plaintext password is not stored in bundle target files. Runtime code prefers this secret-backed password and retains OAuth credential retrieval as a fallback when the secret is absent.
+Runtime code requests a short-lived database OAuth credential from the Databricks Postgres credentials API. The configured `pg_user` must match the app service principal's Lakebase OAuth role.
 
 The app resource grant uses the Autoscaling form:
 
@@ -226,7 +224,7 @@ postgres:
 
 ### Execution and Frontend Metadata
 
-Before orchestration, the handler applies input guardrails and builds a capability-based route plan. Tool and MCP execution emits lifecycle metadata including status, latency, attempt count, auth mode, and error code. The React UI consumes stream deltas incrementally and displays tools, source categories, guardrail state, auth state, persona, and response-budget status in a collapsible run-context panel.
+Before orchestration, the handler applies input guardrails and builds a capability-based route plan. Tool and MCP execution emits lifecycle metadata including status, latency, attempt count, auth mode, and error code. Stream events are finalized after guardrail evaluation; the React UI renders only text deltas and displays tools, source categories, guardrail state, auth state, persona, and response-budget status in a collapsible run-context panel.
 
 ### Message Bus Observability
 

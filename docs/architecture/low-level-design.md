@@ -160,7 +160,7 @@ Supported subagent types:
 - `serving_endpoint` via Databricks Responses API (`endpoint` required)
 - `app` via Databricks Responses API using `apps/<endpoint>` model mapping
 - `mcp` via generic Databricks MCP route (`mcp_url` required)
-- `lakebase` via PostgreSQL wire protocol with secret-backed SCRAM or OAuth fallback (`project_id`, `branch_id`, `endpoint_id`, `database`, `pg_host` required)
+- `lakebase` via PostgreSQL wire protocol and OAuth credentials (`project_id`, `branch_id`, `endpoint_id`, `database`, `pg_host` required)
 
 Supported auth modes:
 
@@ -245,7 +245,7 @@ Direct non-interactive Databricks Apps invocation tests should use:
 ## Operational Constraints in Design
 
 - MCP health checks run in parallel with timeout controls and short TTL caching for healthy/unhealthy outcomes.
-- Fallback deployment path exists for Terraform registry outages (`bundle sync` + `apps deploy`).
+- `make upload-wheel` provides the lifecycle-gated source deployment path for Terraform registry outages; it does not apply bundle-managed resources or grants.
 - Genie-backed queries require SQL warehouse and Unity Catalog grants for both user and app service principal.
 
 ## Key Files Quick Map

@@ -24,7 +24,9 @@ Primary implementation:
 - Supported subagent kinds include genie, serving_endpoint, app, mcp, and lakebase.
 - Non-Genie function tools are generated dynamically from subagent metadata.
 - Genie integrations use MCP server registration with parallel runtime health checks and short TTL health caching.
-- Lakebase integrations use PostgreSQL wire protocol with a secret-backed SCRAM password when configured, falling back to OAuth credentials generated at invocation time.
+- Lakebase integrations use PostgreSQL wire protocol with an OAuth credential generated at invocation time by the Databricks Postgres credentials API.
+- Native function and MCP calls are required; pseudo-tool text is not valid tool execution.
+- A Lakebase request may use one schema-discovery query followed by one data query. A `LAKEBASE_QUERY_FAILED` result is not retried.
 - Capability-based route planning produces a typed `RoutePlan`; ambiguous requests fall back to the policy-approved subagent set.
 - Route confidence is based on the winning capability score relative to the runner-up. Plans below the implementation threshold of `0.60` use `low_confidence_fallback` and do not hard-restrict the model to a heuristic candidate.
 
@@ -43,7 +45,7 @@ Primary implementation:
 - auth_mode app uses app identity.
 - auth_mode obo uses forwarded user identity via x-forwarded-access-token.
 - Missing required OBO identity produces explicit authorization failure behavior.
-- Lakebase password material is supplied through the `multiagent_app/lakebase_pg_password` Databricks secret and is never read from target YAML values.
+- Lakebase uses the app identity's OAuth database role. The configured `pg_user` must match that role.
 
 Primary implementation:
 
@@ -138,7 +140,7 @@ Primary implementation:
 - Unit and integration tests cover subagent config, runtime auth, policy, message bus, and guardrails.
 - Compile checks and preflight runtime checks are used for end-to-end local validation.
 - Bundle validation is used to verify deploy-time configuration integrity.
-- App resource validation includes Lakebase Autoscaling `branch`, `database`, and `CAN_CONNECT_AND_CREATE` fields plus secret-scope resource grants.
+- App resource validation includes Lakebase Autoscaling `branch`, `database`, and `CAN_CONNECT_AND_CREATE` fields.
 
 ## 10. Evaluation Readiness
 

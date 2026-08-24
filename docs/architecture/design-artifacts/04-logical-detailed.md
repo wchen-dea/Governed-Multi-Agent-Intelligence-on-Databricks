@@ -16,7 +16,7 @@ flowchart TB
     OR --> SC[Subagent Config — subagent_config.py]
     OR --> TL[Tool Builders — serving_endpoint / app]
     OR --> MCP[MCP Server Builders — genie / mcp]
-    OR --> LB[Lakebase Tools Builder — psycopg2 + secret-backed SCRAM or OAuth]
+    OR --> LB[Lakebase Tools Builder — psycopg2 + OAuth credentials]
     OR --> RP[Deterministic Route Planner — capability match or fallback]
 
     SC --> S1[sales_insights_agent — Genie — manager only]
@@ -49,10 +49,10 @@ sequenceDiagram
     H->>OR: Build RoutePlan and candidate tools
     OR-->>H: low_confidence_fallback when intent is uncertain
     H->>OR: create_orchestrator_agent(model, candidates, servers, tools)
-    OR->>TS: Runner.run / Runner.run_streamed
+    OR->>TS: Native Runner tool/MCP call
     TS-->>OR: Tool results
     OR-->>H: Response items / stream events
-    H->>GR: Evaluate (response_text, used_subagents, response budget)
+    H->>GR: Finalize buffered stream and evaluate response budget/guardrails
     GR-->>H: GuardrailResult (blocked/reasons)
     H->>MB: response envelope (status, sources, truncation, guardrails)
     H->>MB: request.invoke.succeeded / failed

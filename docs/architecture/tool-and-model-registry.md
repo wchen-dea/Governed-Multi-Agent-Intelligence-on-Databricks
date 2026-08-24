@@ -49,8 +49,8 @@ Typical source pattern for Genie Agents:
 
 - Type: mcp
 - Runtime name: `product_index_assistant`
-- MCP URL: `/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/dim_product_search_index`
-- Backing AI Search endpoint: `knowledge-assistant-product-ep`
+- MCP URL: `/api/2.0/mcp/vector-search/quickstart_catalog/multi_agent_schema/dim_product_search_index`
+- Backing AI Search endpoint: `product_index_ep`
 - Auth mode: app
 - Classification: internal
 - Owner: platform-docs
@@ -60,7 +60,7 @@ Typical source pattern for Genie Agents:
 
 - Type: mcp
 - Runtime name: `flink_support_agent`
-- MCP URL: `/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/flink_support_search_index`
+- MCP URL: `/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/flink_support_index`
 - Source: RAG over `/Volumes/quickstart_catalog/multi_agent_schema/support_kb`
 - Auth mode: app
 - Classification: internal
@@ -97,7 +97,8 @@ Typical source pattern for Genie Agents:
 - Database: `operationaldatastore`
 - Database resource: `projects/ore/branches/production/databases/db-j7lf-e5xmy0cwq4` (runtime database name: `operationaldatastore`)
 - Auth mode: app
-- Password source: Databricks secret scope `multiagent_app`, key `lakebase_pg_password`; OAuth credentials API is the runtime fallback.
+- Credential source: Databricks Postgres credentials API, using the app identity's OAuth database role.
+- Query contract: one optional schema-discovery query followed by one data query; `LAKEBASE_QUERY_FAILED` is not retried.
 - Classification: confidential
 - Owner: data-platform
 - Status: active

@@ -13,7 +13,7 @@ flowchart LR
     ORCH --> TOOL[Tool + MCP Adapter Layer]
     TOOL --> GENIE[Genie MCP — sales_insights_agent / cdi_agent]
     TOOL --> AIS[AI Search MCP — product_index_assistant / flink_support_agent]
-    TOOL --> LB[Lakebase — lakebase_ods_agent — psycopg2 + secret-backed SCRAM or OAuth]
+    TOOL --> LB[Lakebase — lakebase_ods_agent — psycopg2 + OAuth credentials]
     GENIE --> ST[Sales Tables — quickstart_catalog]
     GENIE --> MV[CDI Materialized Views]
     AIS --> PI[dim_product_search_index]

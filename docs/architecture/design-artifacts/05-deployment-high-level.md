@@ -30,10 +30,10 @@ flowchart TB
     BE --> GENIE[Genie MCP — Sales Space / CDI Space]
     BE --> AIS[AI Search MCP — Product Index / Flink Support Index]
     BE --> LB[Lakebase PostgreSQL — projects/ore/branches/production]
-    BE --> SEC[Secret scope — multiagent_app/lakebase_pg_password]
+    BE --> OAuth[Postgres Credentials API — OAuth database token]
     BE --> AUD[UC Audit Table — quickstart_catalog.multi_agent_schema.agent_lifecycle_events]
     BE --> OBS[MLflow Tracing — target experiment]
-    SEC --> LB
+    OAuth --> LB
 ```
 
 ## 3. Subagent Resource Mapping (dev)

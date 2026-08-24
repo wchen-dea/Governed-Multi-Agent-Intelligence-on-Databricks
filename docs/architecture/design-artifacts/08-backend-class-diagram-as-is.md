@@ -345,7 +345,7 @@ class product_index_assistant {
     auth_mode = app
     classification = internal
     personas = analyst, manager, engineer
-    mcp_url = /api/2.0/mcp/ai-search/.../dim_product_search_index
+    mcp_url = /api/2.0/mcp/vector-search/.../dim_product_search_index
     freshness_sla = 24h
 }
 

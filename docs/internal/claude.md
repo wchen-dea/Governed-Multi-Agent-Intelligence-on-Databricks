@@ -121,7 +121,7 @@ Constraints: If app exists, bind instead of delete.
   - `serving_endpoint` requires `endpoint`
   - `app` requires `endpoint`
   - `mcp` requires `mcp_url`
-  - `lakebase` requires `project_id`, `branch_id`, `endpoint_id`, `database`, `pg_host`; password is supplied by `multiagent_app/lakebase_pg_password` when SCRAM is configured, with OAuth fallback
+  - `lakebase` requires `project_id`, `branch_id`, `endpoint_id`, `database`, `pg_host`, and an app identity with a matching Lakebase OAuth role
 
 ### modify-agent
 
@@ -142,7 +142,7 @@ Constraints: If app exists, bind instead of delete.
 - Standard flow:
   - `make redeploy TARGET=<target> APP_NAME=<app-name> PROFILE=<profile>`
 - Targets: `dev`, `qa`, `stg`, `prod`
-- Fallback: `bundle sync` plus `apps deploy` if Terraform registry is unavailable
+- Source-only fallback: `make upload-wheel TARGET=<target> APP_NAME=<app-name> PROFILE=<profile>` if Terraform Registry is unavailable; successful bundle apply is still required for resource-grant changes
 
 ## Operating Guidelines
 

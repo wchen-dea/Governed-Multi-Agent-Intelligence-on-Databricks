@@ -17,7 +17,7 @@ This document covers deployment and operations only. High-level system context i
 - Deployment can fail intermittently when Terraform provider registry is unreachable or the provider crashes.
 - Fallback workflow is in active use when registry outage or provider crash occurs.
 - SNAPSHOT-mode deploys do not inject `app.yml` env vars at the platform level; the launcher reads them from `app.yml` at startup.
-- Lakebase ODS agent uses the `multiagent_app/lakebase_pg_password` secret for SCRAM authentication, with OAuth credentials as runtime fallback.
+- Lakebase ODS uses OAuth credentials from the Databricks Postgres credentials API; its `pg_user` must be a valid OAuth database role for the app identity.
 
 ## Start Here
 
@@ -31,7 +31,7 @@ Use this default release sequence:
 6. Deploy app from workspace source path
 7. Execute post-deploy verification
 
-The bundle deployment must apply both the Lakebase Autoscaling app resource and the Databricks secret resource. For the dev target, the expected references are `projects/ore/branches/production`, `projects/ore/branches/production/databases/operationaldatastore`, and secret `multiagent_app/lakebase_pg_password`.
+The bundle deployment must apply the Lakebase Autoscaling app resource. For the dev target, the expected references are `projects/ore/branches/production` and `projects/ore/branches/production/databases/operationaldatastore`.
 
 For target values:
 
@@ -46,16 +46,8 @@ For target values:
 
 - Confirm target (`dev` / `qa` / `stg` / `prod`) and CLI profile.
 - Confirm target variables in `targets/*.yml` are correct.
-- Confirm Databricks credentials/secrets are available for target, including the `multiagent_app` scope and rotated `lakebase_pg_password` key; never place the value in `targets/*.yml`.
+- Confirm the app service principal has a Lakebase OAuth role and the app has the target `postgres` resource grant.
 - Confirm no pending manual hotfix state in the target app.
-
-For a new environment, create the secret before deployment:
-
-```bash
-databricks secrets create-scope multiagent_app --profile PROFILE
-databricks secrets put-secret multiagent_app lakebase_pg_password --profile PROFILE
-databricks secrets list-secrets multiagent_app --profile PROFILE
-```
 
 ### UC Audit + KPI Gate Release Checklist
 
@@ -132,31 +124,25 @@ databricks apps deploy APP_NAME --profile PROFILE --source-code-path "$APP_SRC" 
 Use this procedure when `bundle deploy` fails due to Terraform provider registry availability.
 
 ```bash
-databricks bundle sync -t TARGET --profile PROFILE
-APP_SRC=$(databricks apps get APP_NAME --output json --profile PROFILE | jq -r '.default_source_code_path')
-databricks apps deploy APP_NAME --profile PROFILE --source-code-path "$APP_SRC" --mode SNAPSHOT
+make upload-wheel TARGET=TARGET APP_NAME=APP_NAME PROFILE=PROFILE
 ```
 
-Concrete command form (dev example):
+`upload-wheel` runs `ensure-running`, builds the wheel and React payload, removes generated remote wheels, imports the source, deploys it, and checks health. It does not apply bundle-managed app resources or grants.
+
+For a full release attempt with validation, optional bundle apply, grants, health, and smoke checks, use:
 
 ```bash
-APP_NAME="multiagent-app-dev"
-PROFILE="DEFAULT"
-APP_SRC="$(databricks apps get "$APP_NAME" --profile "$PROFILE" --output json | jq -r '.default_source_code_path')"
-databricks apps deploy "$APP_NAME" --profile "$PROFILE" --source-code-path "$APP_SRC" --mode SNAPSHOT
+make redeploy TARGET=TARGET APP_NAME=APP_NAME PROFILE=PROFILE
 ```
 
 ### Databricks App Source Caveat
 
 In some environments, relying on bundle runtime commands may use a reduced source payload (for example, only bundle resource files), which can fail startup with errors such as missing command or missing modules.
 
-When this occurs, use the explicit app-source deployment path below to deploy the app-source payload:
+When this occurs, use `make upload-wheel` to deploy the complete app-source payload. It creates a versioned wheel, uploads it under the app source path, and deploys the resulting snapshot:
 
 ```bash
-uv run runtime-build-source
-databricks apps deploy APP_NAME --profile PROFILE \
-  --source-code-path "/Workspace/Users/<user>/.bundle/<bundle-name>/<target>/files/.databricks_app_source" \
-  --mode SNAPSHOT
+make upload-wheel TARGET=TARGET APP_NAME=APP_NAME PROFILE=PROFILE
 ```
 
 Then verify:
@@ -180,6 +166,8 @@ The GitHub Actions deployment pipeline is aligned to this runbook and uses Makef
 4. Import prepared app source to workspace: `make import TARGET="$DAB_TARGET" APP_NAME="$APP_NAME"`.
 5. Deploy app from workspace source path: `make deploy TARGET="$DAB_TARGET" APP_NAME="$APP_NAME"`.
 6. Final health and smoke gates: `make health ...` and `make smoke ...`.
+
+For an operator-driven source-only recovery, use `make upload-wheel` instead of manually composing steps 1, 4, 5, and health.
 
 This keeps repository state clean (no committed wheel binaries) while ensuring each CI run deploys a fresh wheel artifact.
 
@@ -392,7 +380,7 @@ Escalate immediately if issue affects multiple targets or production user traffi
 - OBO flow missing forwarded token (`x-forwarded-access-token`) for tools configured with `auth_mode: obo`.
 - User identity has insufficient data permissions even when app identity has access.
 - Invalid local credentials in `.env` (for example stale `DATABRICKS_TOKEN`).
-- Lakebase auth failure due to SCRAM password mismatch or OAuth `pg_user` misconfiguration.
+- Lakebase auth failure due to a missing OAuth database role, invalid `pg_user`, or missing app `postgres` resource grant.
 - Databricks SDK `Config.authenticate()` signature change breaking Lakebase OAuth token retrieval.
 
 ### Rollback
@@ -506,7 +494,6 @@ App URL: `https://multiagent-app-dev-4225037891036111.aws.databricksapps.com`
 - Runtime database: `operationaldatastore`
 - Database resource ID: `db-j7lf-e5xmy0cwq4`
 - Database resource: `projects/ore/branches/production/databases/operationaldatastore`
-- Secret: scope `multiagent_app`, key `lakebase_pg_password` (injected as `LAKEBASE_PG_PASSWORD`)
 - App SP role: `sp-multiagent-app` (postgres_role: `da6ab9ef-2c0f-4f9b-9950-b618b9f4fede`, membership: `DATABRICKS_SUPERUSER`)
 
 **Steps:**
@@ -652,14 +639,12 @@ For the dev product index, verify the app has `CAN_USE` on `product_index_ep` an
 **Fix:** Use the fallback import/deploy workflow:
 
 ```bash
-make build-app-source
-make import TARGET=dev
-make deploy TARGET=dev APP_NAME=multiagent-app-dev
+make upload-wheel TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT
 ```
 
 Or use `make redeploy` which has built-in fallback logic.
 
-The fallback only deploys application source. It does not replace a failed bundle apply for app resource grants. If the bundle failed before applying `resources/multiagent_app.yml`, restore Terraform registry connectivity and rerun `databricks bundle deploy`; otherwise the app may run without its Lakebase or secret resource permissions.
+The fallback only deploys application source. It does not replace a failed bundle apply for app resource grants. If the bundle failed before applying `resources/multiagent_app.yml`, restore Terraform registry connectivity and rerun `databricks bundle deploy`; otherwise the app may run without its Lakebase resource permission.
 
 ### Terraform provider crash during `bundle deploy`
 
@@ -703,15 +688,15 @@ The fallback only deploys application source. It does not replace a failed bundl
    make deploy TARGET=dev APP_NAME=multiagent-app-dev
    ```
 
-### Lakebase ODS agent authentication failure
+### Lakebase ODS agent OAuth failure
 
-**Symptom:** `password authentication failed for user 'multiagent_svc'` or `password authentication failed for user 'databricks'`.
+**Symptom:** `OAuth: User is not authorized`, credential rejection, or `pg_user` role errors.
 
 **Cause:** One of:
-- SCRAM password mismatch: the `LAKEBASE_PG_PASSWORD` value doesn't match the Lakebase role's password.
-- OAuth user mismatch: `pg_user` in the subagent config doesn't match a valid Lakebase OAuth role.
-- Secret resource missing: the app was deployed without the `multiagent_app` secret grant, so `LAKEBASE_PG_PASSWORD` is absent.
-- SDK API change: `Config.authenticate()` signature changed from `authenticate(headers_dict)` to `authenticate() -> dict`.
+- `pg_user` in the subagent config does not match a valid Lakebase OAuth role.
+- The app service principal does not have `LAKEBASE_OAUTH_V1` access on the branch.
+- The app is missing its Lakebase `postgres` resource grant.
+- The credentials API or workspace identity cannot mint an OAuth database token.
 
 **Fix (OAuth — recommended):**
 
@@ -723,35 +708,9 @@ The fallback only deploys application source. It does not replace a failed bundl
 
 2. Set `pg_user` in `src/backend/domain/subagents.<target>.json` to the SP's `postgres_role` value (e.g., `da6ab9ef-2c0f-4f9b-9950-b618b9f4fede`).
 
-3. Remove the secret-backed `LAKEBASE_PG_PASSWORD` reference only if OAuth-only operation is intentional; otherwise retain the secret and verify the app resource grant.
+3. Ensure `_get_lakebase_token()` in `orchestrator_service.py` calls `ws_client.config.authenticate()` (no arguments, returns dict).
 
-4. Ensure `_get_lakebase_token()` in `orchestrator_service.py` calls `ws_client.config.authenticate()` (no arguments, returns dict).
-
-5. Rebuild and redeploy.
-
-**Fix (SCRAM password):**
-
-If you prefer SCRAM auth, reset the password via the Lakebase CLI:
-
-```bash
-# Delete and recreate the role
-databricks postgres delete-role "projects/<project>/branches/<branch>/roles/<role-id>"
-databricks postgres create-role "projects/<project>/branches/<branch>" \
-  --role-id "<role-id>" \
-  --json '{"spec": {"auth_method": "PG_PASSWORD_SCRAM_SHA_256", "postgres_role": "<pg_user>"}}'
-```
-
-Note: the `password` field is not currently accepted by the CLI `create-role` command; password must be set through a direct PG session from within the Databricks VPC. The Lakebase PG endpoint is not reachable from local machines.
-
-**Secret setup:**
-
-```bash
-databricks secrets create-scope multiagent_app --profile PROFILE
-databricks secrets put-secret multiagent_app lakebase_pg_password --profile PROFILE
-databricks secrets list-secrets multiagent_app --profile PROFILE
-```
-
-The `put-secret` command prompts for the value. Do not put the password in shell history, Git, bundle variables, or chat. Confirm the app resource includes `permission: READ` for this secret and rebuild/redeploy after changing the reference.
+4. Rebuild and redeploy with `make upload-wheel TARGET=TARGET APP_NAME=APP_NAME PROFILE=PROFILE`.
 
 **Lakebase role management commands:**
 

@@ -9,7 +9,7 @@ Modern AI applications are moving from single-model chatbots to orchestrated sys
 
 - Route requests to specialized agents and tools
 - Ground responses on governed business data
-- Stream responses in real time for interactive UX
+- Return guardrail-finalized streamed responses for interactive UX
 - Ship safely through multi-environment CI/CD
 
 This repository provides an MVP foundation that can easily scale to enterprise use cases.
@@ -78,8 +78,8 @@ Current dev target examples:
 
 - Genie Agent: `sales_insights_agent` (space id configured in `subagents.dev.json`)
 - Genie Agent: `cdi_agent` — Customer Delight Indicator analytics backed by materialized view `quickstart_catalog.multi_agent_schema.fct_cdi_trusted_expert_score_metric_view`
-- AI Search MCP index: `product_index_assistant` using `/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/dim_product_search_index`
-- AI Search MCP index: `flink_support_agent` using `/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/flink_support_search_index` (RAG over support KB volume)
+- Vector Search MCP index: `product_index_assistant` using `/api/2.0/mcp/vector-search/quickstart_catalog/multi_agent_schema/dim_product_search_index`
+- AI Search MCP index: `flink_support_agent` using `/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/flink_support_index` (RAG over support KB volume)
 
 Typical Genie Agent source pattern:
 
@@ -111,7 +111,7 @@ This project uses a modern AI app stack on Databricks:
 - Governed data access: Unity Catalog permissions and SQL warehouse controls.
 - Hybrid authorization model: per-tool app identity and user identity (OBO) routing.
 - Deployment-as-code: Databricks Declarative Automation Bundles with target overlays.
-- Streaming-first UX: React + TypeScript frontend with incremental token streaming.
+- Streamed UX: React + TypeScript frontend renders finalized text deltas and run context.
 
 ## Functionality Perspective
 
@@ -119,7 +119,7 @@ The app provides:
 
 - Unified endpoint: A single app endpoint for multi-tool, multi-agent interaction.
 - Dynamic routing: Requests are routed to Genie Agents, serving endpoints, or app-based specialists.
-- Real-time responses: Streaming responses for conversational latency.
+- Guardrailed streaming: buffered response events are finalized before visible text is emitted.
 - Configurable specialist set: Subagents can be added and validated through typed configuration.
 - Auth-aware tool routing: each subagent declares `auth_mode` (`app` or `obo`).
 - Governed routing policy: persona, tool-targeting, identity, and data-classification checks run before tool execution.
@@ -254,6 +254,14 @@ The command uses the pinned `markdownlint-cli2` version through `scripts/lint_ma
 
 If bundle deploy fails due to Terraform provider registry availability, use the operational fallback documented in [docs/operations/operations-runbook.md](docs/operations/operations-runbook.md).
 
+For a source-only deployment that does not contact Terraform Registry, run:
+
+```bash
+make upload-wheel TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT
+```
+
+This builds versioned wheel and React payloads, clears prior generated remote wheels, uploads the payload, deploys it through the Databricks Apps API, and checks health. It does not apply bundle-managed resource grants.
+
 ## Runtime Environment Variables
 
 - `BACKEND_LOG_LEVEL`: backend log level (default `INFO`).
@@ -290,6 +298,14 @@ MCP connect/probe performance controls:
 - `MCP_HEALTH_FAILURE_TTL_SECONDS`: cached unhealthy MCP status TTL in seconds (default `10`).
 - `ORCHESTRATOR_INSTRUCTIONS_CACHE_SIZE`: max in-memory cached static instruction variants (default `128`).
 
+## Runtime Status
+
+- Current package version: `0.1.2`.
+- Lakebase uses an OAuth credential minted from the Databricks Postgres credentials API; the app service principal needs a matching Lakebase OAuth role and `postgres` app resource grant.
+- The UI renders `response.output_text.delta` events and source/tool badges. It does not render raw function, MCP, or tool-output events.
+- Local source deploys are lifecycle-gated, but bundle-managed resource changes still require a successful bundle apply.
+- The current Databricks-backed evaluation release gate remains blocked at tool-call accuracy `0.400 < 0.800`.
+
 ## Documentation
 
 - [CONTRIBUTING.md](CONTRIBUTING.md): contributor workflow and project docstring standard.
@@ -318,6 +334,7 @@ MCP connect/probe performance controls:
 Useful operational commands:
 
 - `make redeploy TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT`
+- `make upload-wheel TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT`
 - `make grants TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT`
 - `make query-dev TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT QUERY='top stores by revenue' QUERY_PERSONA=manager`
 

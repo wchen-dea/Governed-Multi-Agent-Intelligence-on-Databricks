@@ -36,9 +36,9 @@ Optional headers:
 
 ## Stream Contract
 
-- Stream events are normalized for stable output item identifiers
-- Tool output items are converted into response output item events
-- The React client receives text deltas incrementally and may receive governance metadata in `response_envelope` or `governance` events.
+- Stream events are normalized for stable output item identifiers and buffered until response guardrails and source metadata are finalized.
+- Tool output items are retained as metadata events; they are not visible assistant content.
+- The React client renders only `response.output_text.delta` as answer text and uses other events for governance hints.
 
 ## Governance Metadata Contract
 

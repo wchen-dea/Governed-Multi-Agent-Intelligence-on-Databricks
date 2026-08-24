@@ -15,7 +15,7 @@ flowchart LR
     BE --> GENIE[Genie MCP — /api/2.0/mcp/genie/]
     BE --> AIS[AI Search MCP — /api/2.0/mcp/ai-search/]
     BE --> LB[Lakebase — projects/ore/branches/production/databases/operationaldatastore]
-    BE --> SEC[Databricks Secret — multiagent_app/lakebase_pg_password]
+    BE --> OAuth[Postgres Credentials API — OAuth database token]
     BE --> FM[Model Serving — target-configured orchestrator model]
     BE --> UC[UC Audit Table — SQL Statement API — warehouse b20f70f71c2f52e2]
 
@@ -33,8 +33,8 @@ flowchart TD
     Eval --> Decision{All required KPIs pass?}
     Decision -- No --> Block[Block promotion — current tool-call KPI 0.400 < 0.800]
     Decision -- Yes --> Validate[databricks bundle validate -t dev]
-    Validate --> DeployDev[make deploy — dev target]
-    DeployDev --> Smoke[make test-deployed — health + invoke check]
+    Validate --> DeployDev[make redeploy or make upload-wheel — dev target]
+    DeployDev --> Smoke[make health and make smoke]
     Smoke --> DeployQA[bundle deploy -t qa]
     DeployQA --> DeployStg[bundle deploy -t stg]
     DeployStg --> DeployProd[bundle deploy -t prod]
@@ -74,7 +74,7 @@ flowchart LR
         V7[lakebase_project_id = ore]
         V8[lakebase_branch_id = production]
         V9[lakebase_database = operationaldatastore]
-        V10[secret key = lakebase_pg_password]
+        V10[Lakebase postgres resource grant]
     end
 
     BundleVars --> App[Databricks App Environment Variables]

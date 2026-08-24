@@ -8,7 +8,7 @@ Create measurable operating budgets and escalation thresholds for runtime cost a
 
 ## Performance Targets
 
-- Interactive response target: optimized for streaming-first UX
+- Interactive response target: optimized for guardrail-finalized streaming UX
 - Track both first-byte and full-response latency for invoke and stream modes
 - Preflight startup target: server readiness and invocation checks must pass in local validation
 - Tool route health: MCP/tool failures should degrade gracefully when possible
