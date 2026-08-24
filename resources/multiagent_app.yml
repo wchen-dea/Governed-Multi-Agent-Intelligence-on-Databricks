@@ -48,6 +48,14 @@ resources:
           value: ${var.openai_base_url}
         - name: DATABRICKS_OPENAI_TIMEOUT_SECONDS
           value: ${var.openai_timeout_seconds}
+        - name: MODEL_ROUTING_ENABLED
+          value: ${var.model_routing_enabled}
+        - name: MODEL_ROUTING_DEFAULT_MODEL
+          value: ${var.model_routing_default_model}
+        - name: MODEL_ROUTING_REASONING_MODEL
+          value: ${var.model_routing_reasoning_model}
+        - name: MODEL_ROUTING_QUALITY_MODEL
+          value: ${var.model_routing_quality_model}
         - name: API_PROXY
           value: ${var.api_proxy}
         - name: CHAT_APP_PORT

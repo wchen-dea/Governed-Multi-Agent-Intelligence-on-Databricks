@@ -7,6 +7,7 @@ This document summarizes the technical specifications currently implemented in t
 - Layered backend architecture is implemented with API, services, domain, and shared layers.
 - Request handling supports both invoke and stream flows through MLflow Agent Server handlers.
 - Orchestrator agent is assembled at runtime with available tools and healthy MCP servers.
+- A deterministic model router selects a configured Databricks model before agent assembly and records the decision in routing lifecycle metadata.
 - Frontend runtime is React UI first, with a legacy Chainlit path retained for compatibility.
 
 Primary implementation:
@@ -14,6 +15,18 @@ Primary implementation:
 - src/backend/api/handlers.py
 - src/backend/api/dependencies.py
 - src/backend/services/orchestrator_service.py
+
+### Task-Type Model Routes
+
+| Task type | Default dev model | Examples |
+| --- | --- | --- |
+| standard | `databricks-gpt-5-6-luna` | product lookups and ordinary conversational requests |
+| reasoning | `databricks-gpt-5-6-luna` | appointments, orders, SQL, Flink, streaming, debugging, and troubleshooting |
+| synthesis | `databricks-gpt-5-6-luna` | analysis, comparison, executive summaries, recommendations, and plans |
+
+Dev keeps all task classes on the verified balanced model. Promote a task route to another Databricks model only after a successful live invocation and evaluation run for that route.
+
+Set `MODEL_ROUTING_ENABLED=false` to retain `ORCHESTRATOR_MODEL` for every task. Configure individual routes through `MODEL_ROUTING_DEFAULT_MODEL`, `MODEL_ROUTING_REASONING_MODEL`, and `MODEL_ROUTING_QUALITY_MODEL`.
 - src/reactui/src/App.tsx
 - src/reactui/src/api.ts
 - src/scripts/react_ui_server.py

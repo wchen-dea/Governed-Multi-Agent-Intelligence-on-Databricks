@@ -12,6 +12,14 @@ env:
   value: ""
 - name: DATABRICKS_OPENAI_TIMEOUT_SECONDS
   value: "0"
+- name: MODEL_ROUTING_ENABLED
+  value: "true"
+- name: MODEL_ROUTING_DEFAULT_MODEL
+  value: databricks-gpt-5-6-luna
+- name: MODEL_ROUTING_REASONING_MODEL
+  value: databricks-gpt-5-6-luna
+- name: MODEL_ROUTING_QUALITY_MODEL
+  value: databricks-gpt-5-6-luna
 - name: API_PROXY
   value: http://localhost:8000/invocations
 - name: CHAT_APP_PORT

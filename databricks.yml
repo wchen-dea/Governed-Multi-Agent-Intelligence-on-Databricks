@@ -22,6 +22,18 @@ variables:
   openai_timeout_seconds:
     description: Optional timeout in seconds for Databricks OpenAI calls; 0 keeps SDK defaults
     default: "0"
+  model_routing_enabled:
+    description: Whether the orchestrator selects a configured model by request task type
+    default: "true"
+  model_routing_default_model:
+    description: Databricks model for standard lookups and conversational requests
+    default: databricks-gpt-5-6-luna
+  model_routing_reasoning_model:
+    description: Databricks model for operational, SQL, support, and troubleshooting tasks
+    default: databricks-claude-sonnet-5
+  model_routing_quality_model:
+    description: Databricks model for analysis, comparison, and recommendation tasks
+    default: databricks-claude-sonnet-5
   api_proxy:
     description: API proxy URL for the chat app
     default: http://localhost:8000/invocations

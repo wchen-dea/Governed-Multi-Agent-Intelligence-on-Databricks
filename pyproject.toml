@@ -1,6 +1,6 @@
 [project]
 name = "multiagent-app-on-databricks"
-version = "0.1.5"
+version = "0.1.7"
 description = "Multi-agent orchestrator that queries other agents, Genie Agents, and serving endpoints"
 readme = "README.md"
 authors = [
