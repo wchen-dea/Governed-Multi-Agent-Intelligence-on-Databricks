@@ -47,8 +47,7 @@ def get_session_id(request: ResponsesAgentRequest) -> str | None:
             return hashlib.sha256(fwd_token[:64].encode()).hexdigest()[:24]
     except Exception:
         pass
-    # Final fallback: use a fixed test session to verify memory pipeline.
-    return "memory-pipeline-test-session"
+    return None
 
 
 def get_databricks_host(workspace_client: WorkspaceClient | None = None) -> str | None:
