@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from mlflow.types.responses import ResponsesAgentRequest
 
 from backend.domain.subagent_config import SubagentConfig
+from backend.shared.runtime_utils import get_session_id
 from backend.services.agent_task_bus import InMemoryAgentTaskBus
 from backend.services.runtime_auth_service import (
     RuntimeAuthDependencies,
@@ -30,6 +31,12 @@ def _sample_subagents() -> list[SubagentConfig]:
             description="serving",
         ),
     ]
+
+
+def test_get_session_id_returns_none_without_session_identity():
+    request = ResponsesAgentRequest(input=[])
+
+    assert get_session_id(request) is None
 
 
 def test_build_runtime_auth_context_without_user_identity():

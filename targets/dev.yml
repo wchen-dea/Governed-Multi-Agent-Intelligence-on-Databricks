@@ -31,6 +31,13 @@ targets:
       lakebase_project_id: "ore"
       lakebase_branch_id: "production"
       lakebase_database: "db-j7lf-e5xmy0cwq4"
+      memory_backend: "lakebase"
+      memory_project_id: "ore"
+      memory_branch_id: "production"
+      memory_endpoint_id: "primary"
+      memory_database: "operationaldatastore"
+      memory_pg_host: "ep-falling-cake-d1j29nc5.database.us-west-2.cloud.databricks.com"
+      memory_pg_user: "da6ab9ef-2c0f-4f9b-9950-b618b9f4fede"
       lakebase_sql_warehouse_id: "ep-falling-cake-d1j29nc5"
       message_bus_backend: uc_table
       message_bus_topic: agent-lifecycle-events

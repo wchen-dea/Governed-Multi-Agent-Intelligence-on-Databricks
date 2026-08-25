@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -51,6 +53,22 @@ def health() -> dict[str, str]:
 @app.post("/invocations")
 async def proxy_invocations(request: Request) -> StreamingResponse:
     payload = await request.body()
+
+    # Inject session_id for memory persistence when not present in the request.
+    try:
+        body = json.loads(payload)
+        if isinstance(body, dict):
+            custom_inputs = body.get("custom_inputs") or {}
+            if not custom_inputs.get("session_id") and not (body.get("context") or {}).get("conversation_id"):
+                fwd_token = request.headers.get("x-forwarded-access-token", "")
+                session_seed = fwd_token[:32] if fwd_token else request.client.host
+                custom_inputs["session_id"] = hashlib.sha256(session_seed.encode()).hexdigest()[:24]
+                body["custom_inputs"] = custom_inputs
+                print(f"[frontend] Injected session_id={custom_inputs['session_id']}")
+            payload = json.dumps(body).encode()
+    except (json.JSONDecodeError, TypeError) as exc:
+        print(f"[frontend] session_id injection skipped: {exc}")
+
     headers = {
         key: value
         for key, value in request.headers.items()
