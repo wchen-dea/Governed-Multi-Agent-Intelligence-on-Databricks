@@ -64,8 +64,8 @@ MEMORY_TYPE_SCHEMAS: dict[str, dict[str, list[str]]] = {
     },
     "openai": {
         MEMORY_SCHEMA: [
-            "agent_sessions",
-            "agent_messages",
+            "agent_memory_conversations",
+            "agent_memory_preferences",
         ],
         "backend": [
             "responses",
