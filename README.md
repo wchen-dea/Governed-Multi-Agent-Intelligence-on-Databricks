@@ -1,4 +1,4 @@
-# Multi-Agent App on Databricks
+# Governed Multi-Agent Intelligence on Databricks
 
 **A governed agentic AI platform for operational decisions, not another generic chatbot.**
 
