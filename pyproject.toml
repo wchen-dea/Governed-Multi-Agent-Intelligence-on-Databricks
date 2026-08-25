@@ -18,6 +18,7 @@ dependencies = [
     "chainlit>=2.0.0",
     "httpx>=0.28.0",
     "psycopg2-binary>=2.9.9",
+    "databricks-ai-bridge[memory]>=0.21.0",
 ]
 
 [build-system]
