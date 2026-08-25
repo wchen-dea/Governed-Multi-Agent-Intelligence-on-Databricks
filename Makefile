@@ -52,7 +52,7 @@ help:
 	@printf "  make query-dev TARGET=dev APP_NAME=multiagent-app-dev QUERY='top stores by revenue' QUERY_PERSONA=manager\n"
 
 test:
-	uv run pytest -q
+	uv run python -m pytest -q
 
 lint:
 	./scripts/lint_code.sh
