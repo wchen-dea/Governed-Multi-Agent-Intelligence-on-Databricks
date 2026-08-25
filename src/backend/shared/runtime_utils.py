@@ -35,7 +35,19 @@ def get_session_id(request: ResponsesAgentRequest) -> str | None:
     if request.context and request.context.conversation_id:
         return request.context.conversation_id
     if request.custom_inputs and isinstance(request.custom_inputs, dict):
-        return request.custom_inputs.get("session_id")
+        sid = request.custom_inputs.get("session_id")
+        if sid:
+            return sid
+    # Fallback: derive a stable session ID from the forwarded access token header.
+    import hashlib
+    try:
+        from mlflow.genai.agent_server import get_request_headers
+        headers = get_request_headers() or {}
+        fwd_token = headers.get("x-forwarded-access-token", "")
+        if fwd_token:
+            return hashlib.sha256(fwd_token[:64].encode()).hexdigest()[:24]
+    except Exception:
+        pass
     return None
 
 
