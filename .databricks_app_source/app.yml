@@ -52,3 +52,17 @@ env:
   value: "true"
 - name: AGENT_TASK_WORKER_POLL_SECONDS
   value: "1"
+- name: MEMORY_BACKEND
+  value: lakebase
+- name: MEMORY_PROJECT_ID
+  value: ore
+- name: MEMORY_BRANCH_ID
+  value: production
+- name: MEMORY_ENDPOINT_ID
+  value: primary
+- name: MEMORY_DATABASE
+  value: operationaldatastore
+- name: MEMORY_PG_HOST
+  value: ep-falling-cake-d1j29nc5.database.us-west-2.cloud.databricks.com
+- name: MEMORY_PG_USER
+  value: da6ab9ef-2c0f-4f9b-9950-b618b9f4fede
