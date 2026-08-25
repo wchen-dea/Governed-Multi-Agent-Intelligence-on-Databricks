@@ -167,6 +167,38 @@ def _apply_remembered_persona(request: ResponsesAgentRequest, conversation_id: s
     request.custom_inputs = merged
 
 
+def _restore_conversation_memory(
+    request: ResponsesAgentRequest, conversation_id: str | None
+) -> None:
+    """Prepend durable conversation history when the client sends one turn."""
+    if not conversation_id or SETTINGS.memory_max_turns <= 0:
+        return
+
+    remembered_turns = HANDLER_DEPS.memory.recent_turns(
+        conversation_id, SETTINGS.memory_max_turns
+    )
+    if not remembered_turns:
+        return
+
+    input_items = list(request.input)
+    existing_turns = []
+    for item in input_items:
+        data = item.model_dump() if hasattr(item, "model_dump") else item
+        if (
+            isinstance(data, dict)
+            and data.get("role") in {"user", "assistant"}
+            and isinstance(data.get("content"), str)
+        ):
+            existing_turns.append(data)
+    history_length = len(remembered_turns)
+    if any(
+        existing_turns[index : index + history_length] == remembered_turns
+        for index in range(len(existing_turns) - history_length + 1)
+    ):
+        return
+    request.input = [*remembered_turns, *input_items]
+
+
 def _extract_user_question(messages: list[Any]) -> str:
     """Extract the latest user message text from normalized request messages."""
     for message in reversed(messages):
@@ -802,6 +834,7 @@ async def invoke_handler(request: ResponsesAgentRequest) -> ResponsesAgentRespon
     )
     conversation_id = get_session_id(request)
     _apply_remembered_persona(request, conversation_id)
+    _restore_conversation_memory(request, conversation_id)
     prepared = _prepare_request_stage(request)
     persona = _request_persona(request)
 
@@ -864,6 +897,7 @@ async def stream_handler(
     )
     conversation_id = get_session_id(request)
     _apply_remembered_persona(request, conversation_id)
+    _restore_conversation_memory(request, conversation_id)
     prepared = _prepare_request_stage(request)
     persona = _request_persona(request)
 
