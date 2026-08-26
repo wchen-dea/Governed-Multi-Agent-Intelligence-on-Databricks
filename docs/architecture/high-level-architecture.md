@@ -236,6 +236,8 @@ postgres:
     permission: CAN_CONNECT_AND_CREATE
 ```
 
+Conversation/persona memory (`MEMORY_BACKEND=lakebase`) uses the same project/branch/endpoint but a separate `agent_memory` database, isolated from the `operations` database used by `lakebase_ods_agent`. See [Tool and Model Registry](tool-and-model-registry.md#conversation-memory-lakebase-not-a-subagent).
+
 ### Execution and Frontend Metadata
 
 Before orchestration, the handler applies input guardrails and builds a capability-based route plan. Tool and MCP execution emits lifecycle metadata including status, latency, attempt count, auth mode, and error code. Stream events are finalized after guardrail evaluation; the React UI renders only text deltas and displays tools, source categories, guardrail state, auth state, persona, and response-budget status in a collapsible run-context panel.

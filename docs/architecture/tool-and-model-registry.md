@@ -127,6 +127,16 @@ Promotion remains blocked until [ToolCallCorrectness](../quality/evaluation-spec
 - Owner: data-platform
 - Status: active
 
+### Conversation memory (Lakebase, not a subagent)
+
+Conversation/persona memory (`MEMORY_BACKEND=lakebase`) uses a separate Lakebase database from `lakebase_ods_agent`, dedicated to agent memory only:
+
+- Project: `ore`, Branch: `production`, Endpoint: `primary` (same Lakebase Autoscaling instance as `lakebase_ods_agent`)
+- Database: `agent_memory` (distinct from the `operations` database used by `lakebase_ods_agent`)
+- Tables: `agent_conversations`, `agent_preferences` (auto-created via `CREATE TABLE IF NOT EXISTS` on first connect; configurable via `MEMORY_CONVERSATION_TABLE`/`MEMORY_PREFERENCE_TABLE`)
+- Configured via `memory_*` variables in `targets/<target>.yml`, propagated to the app through `resources/multiagent_app.yml`
+- Disabled by default (`MEMORY_BACKEND=disabled`); review data classification before enabling persistence of conversation content.
+
 ## Maintenance Rules
 
 - Registry updates are required whenever any `src/aiserver/domain/subagents.<target>.json` changes.

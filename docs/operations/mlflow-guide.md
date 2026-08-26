@@ -28,7 +28,7 @@ Traces route to the experiment specified by `MLFLOW_EXPERIMENT_ID`:
 | dev | `3025644123415124` | `/Shared/multiagent-app-dev` |
 | qa/stg/prd | Set per target | See `targets/*.yml` |
 
-Configuration chain: `targets/dev.yml` → `databricks.yml` variable → `resources/multiagent_app.yml` env injection → `app.yml` deployed to Databricks App.
+Configuration chain: `targets/dev.yml` variable → `databricks.yml` variable default (fallback) → `resources/multiagent_app.yml` `${var.x}` reference → `prepare_app_source.py` resolves and writes `.databricks_app_source/app.yml` on every `make build-app-source` run → deployed to the Databricks App and read by `launcher.py` at startup.
 
 ### Viewing traces
 
