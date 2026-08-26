@@ -17,8 +17,8 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
-DEFAULT_DIST_DIR = Path(__file__).resolve().parents[1] / "reactui" / "dist"
-REACT_UI_DIST_DIR = Path(os.environ.get("REACT_UI_DIST_DIR", str(DEFAULT_DIST_DIR))).resolve()
+DEFAULT_DIST_DIR = Path(__file__).resolve().parents[1] / "aiweb" / "dist"
+AIWEB_DIST_DIR = Path(os.environ.get("AIWEB_DIST_DIR", str(DEFAULT_DIST_DIR))).resolve()
 BACKEND_PROXY_URL = os.environ.get("FRONTEND_BACKEND_PROXY", "http://localhost:8000/invocations")
 
 REQUEST_HEADER_SKIP = {"host", "content-length", "connection", "accept-encoding"}
@@ -26,9 +26,9 @@ RESPONSE_HEADER_ALLOW = {"content-type", "cache-control", "x-request-id", "date"
 
 
 def _validate_dist() -> None:
-    if not REACT_UI_DIST_DIR.exists():
+    if not AIWEB_DIST_DIR.exists():
         raise RuntimeError(
-            f"React UI dist not found at {REACT_UI_DIST_DIR}. Run `uv run runtime-build-source` first."
+            f"React UI dist not found at {AIWEB_DIST_DIR}. Run `uv run runtime-build-source` first."
         )
 
 
@@ -45,7 +45,7 @@ app = FastAPI(title="React UI Proxy Server", lifespan=_lifespan)
 def health() -> dict[str, str]:
     return {
         "status": "ok",
-        "ui_dist": str(REACT_UI_DIST_DIR),
+        "ui_dist": str(AIWEB_DIST_DIR),
         "backend_proxy": BACKEND_PROXY_URL,
     }
 
@@ -59,7 +59,9 @@ async def proxy_invocations(request: Request) -> StreamingResponse:
         body = json.loads(payload)
         if isinstance(body, dict):
             custom_inputs = body.get("custom_inputs") or {}
-            if not custom_inputs.get("session_id") and not (body.get("context") or {}).get("conversation_id"):
+            if not custom_inputs.get("session_id") and not (body.get("context") or {}).get(
+                "conversation_id"
+            ):
                 fwd_token = request.headers.get("x-forwarded-access-token", "")
                 session_seed = fwd_token[:32] if fwd_token else request.client.host
                 custom_inputs["session_id"] = hashlib.sha256(session_seed.encode()).hexdigest()[:24]
@@ -128,22 +130,22 @@ async def proxy_delegation_status(task_id: str, request: Request):
     return response.json()
 
 
-assets_dir = REACT_UI_DIST_DIR / "assets"
+assets_dir = AIWEB_DIST_DIR / "assets"
 if assets_dir.exists():
     app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 
 
 @app.get("/")
 def index() -> FileResponse:
-    return FileResponse(REACT_UI_DIST_DIR / "index.html")
+    return FileResponse(AIWEB_DIST_DIR / "index.html")
 
 
 @app.get("/{path:path}")
 def spa_fallback(path: str) -> FileResponse:
-    candidate = REACT_UI_DIST_DIR / path
+    candidate = AIWEB_DIST_DIR / path
     if candidate.is_file():
         return FileResponse(candidate)
-    return FileResponse(REACT_UI_DIST_DIR / "index.html")
+    return FileResponse(AIWEB_DIST_DIR / "index.html")
 
 
 def main() -> None:

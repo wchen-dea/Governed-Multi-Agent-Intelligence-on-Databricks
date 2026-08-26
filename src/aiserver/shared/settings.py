@@ -50,8 +50,8 @@ class AppSettings:
     memory_database: str = ""
     memory_pg_host: str = ""
     memory_pg_user: str = ""
-    memory_conversation_table: str = "agent_memory_conversations"
-    memory_preference_table: str = "agent_memory_preferences"
+    memory_conversation_table: str = "agent_conversations"
+    memory_preference_table: str = "agent_preferences"
     memory_max_turns: int = 20
     memory_fail_open: bool = True
 
@@ -136,10 +136,8 @@ def get_settings() -> AppSettings:
         memory_database=os.getenv("MEMORY_DATABASE", ""),
         memory_pg_host=os.getenv("MEMORY_PG_HOST", ""),
         memory_pg_user=os.getenv("MEMORY_PG_USER", ""),
-        memory_conversation_table=os.getenv(
-            "MEMORY_CONVERSATION_TABLE", "agent_memory_conversations"
-        ),
-        memory_preference_table=os.getenv("MEMORY_PREFERENCE_TABLE", "agent_memory_preferences"),
+        memory_conversation_table=os.getenv("MEMORY_CONVERSATION_TABLE", "agent_conversations"),
+        memory_preference_table=os.getenv("MEMORY_PREFERENCE_TABLE", "agent_preferences"),
         memory_max_turns=_env_int("MEMORY_MAX_TURNS", 20),
         memory_fail_open=os.getenv("MEMORY_FAIL_OPEN", "true").lower()
         in {"1", "true", "yes", "on"},

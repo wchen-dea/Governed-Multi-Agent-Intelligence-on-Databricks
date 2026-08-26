@@ -221,7 +221,7 @@ The dev app uses the existing Lakebase Autoscaling resources:
 
 - Project: `ore`
 - Branch: `production`
-- Runtime database: `operationaldatastore`
+- Runtime database: `operations`
 - Database resource ID: `db-j7lf-e5xmy0cwq4`
 - Endpoint: `primary`
 
@@ -270,7 +270,7 @@ Optional runtime mode:
 | Development | dev | development | dev |
 | QA | qa | development | qa |
 | Staging | stg | production | stg |
-| Production | prod | production | prd |
+| Production | prd | production | prd |
 
 ## Related Docs
 

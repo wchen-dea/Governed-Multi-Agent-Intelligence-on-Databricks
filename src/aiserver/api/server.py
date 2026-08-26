@@ -11,13 +11,13 @@ from dotenv import load_dotenv
 from fastapi import HTTPException
 from mlflow.genai.agent_server import AgentServer, setup_mlflow_git_based_version_tracking
 
-from backend.api.dependencies import get_app_dependency_container
-from backend.domain.subagent_config import SUBAGENTS
-from backend.services.agent_task_worker import AgentTaskWorker
-from backend.services.orchestrator_service import build_lakebase_delegation_executors
-from backend.shared.logging_config import configure_logging
-from backend.shared.runtime_utils import build_request_identity_context
-from backend.shared.settings import get_settings
+from aiserver.api.dependencies import get_app_dependency_container
+from aiserver.domain.subagent_config import SUBAGENTS
+from aiserver.services.agent_task_worker import AgentTaskWorker
+from aiserver.services.orchestrator_service import build_lakebase_delegation_executors
+from aiserver.shared.logging_config import configure_logging
+from aiserver.shared.runtime_utils import build_request_identity_context
+from aiserver.shared.settings import get_settings
 
 load_dotenv(dotenv_path=Path(__file__).parent.parent.parent.parent / ".env", override=True)
 configure_logging(get_settings())
@@ -26,7 +26,7 @@ if not os.getenv("MLFLOW_EXPERIMENT_ID", "").strip():
     os.environ.pop("MLFLOW_EXPERIMENT_ID", None)
 
 # Ensure @invoke/@stream handlers are registered.
-import backend.api.handlers  # noqa: E402, F401
+import aiserver.api.handlers  # noqa: E402, F401
 
 agent_server = AgentServer("ResponsesAgent", enable_chat_proxy=True)
 app = agent_server.app
@@ -133,4 +133,4 @@ except Exception as exc:
 
 def main():
     """Run the AgentServer application."""
-    agent_server.run(app_import_string="backend.api.server:app")
+    agent_server.run(app_import_string="aiserver.api.server:app")

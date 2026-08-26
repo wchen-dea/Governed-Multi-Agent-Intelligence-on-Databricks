@@ -19,15 +19,15 @@ from mlflow.types.responses import (
     ResponsesAgentStreamEvent,
 )
 
-from backend.api.dependencies import get_handler_dependencies
-from backend.domain.execution_contracts import ResponseEnvelope
-from backend.domain.subagent_config import SUBAGENTS, SubagentConfig
-from backend.services.guardrails_service import truncate_response_text
-from backend.services.model_routing_service import select_model
-from backend.services.route_planner import build_route_plan
-from backend.shared.request_utils import extract_mcp_errors, to_messages
-from backend.shared.runtime_utils import get_session_id, process_agent_stream_events
-from backend.shared.settings import get_settings
+from aiserver.api.dependencies import get_handler_dependencies
+from aiserver.domain.execution_contracts import ResponseEnvelope
+from aiserver.domain.subagent_config import SUBAGENTS, SubagentConfig
+from aiserver.services.guardrails_service import truncate_response_text
+from aiserver.services.model_routing_service import select_model
+from aiserver.services.route_planner import build_route_plan
+from aiserver.shared.request_utils import extract_mcp_errors, to_messages
+from aiserver.shared.runtime_utils import get_session_id, process_agent_stream_events
+from aiserver.shared.settings import get_settings
 
 SETTINGS = get_settings()
 HANDLER_DEPS = get_handler_dependencies()
@@ -174,9 +174,7 @@ def _restore_conversation_memory(
     if not conversation_id or SETTINGS.memory_max_turns <= 0:
         return
 
-    remembered_turns = HANDLER_DEPS.memory.recent_turns(
-        conversation_id, SETTINGS.memory_max_turns
-    )
+    remembered_turns = HANDLER_DEPS.memory.recent_turns(conversation_id, SETTINGS.memory_max_turns)
     if not remembered_turns:
         return
 

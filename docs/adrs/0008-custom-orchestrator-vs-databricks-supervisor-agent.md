@@ -58,9 +58,9 @@ Adopt Supervisor Agent selectively for standardized, lower-risk use cases where 
 
 ## Implementation Notes
 
-- Orchestrator service: [src/backend/services/orchestrator_service.py](../../src/backend/services/orchestrator_service.py) (`create_orchestrator_agent`, `connect_healthy_mcp_servers`, `build_subagent_tools`, `build_lakebase_tools`)
-- Pipeline execution: [src/backend/api/handlers.py](../../src/backend/api/handlers.py) (staged pipeline using `Runner.run` / `Runner.run_streamed`)
-- Runtime auth and policy: [src/backend/services/runtime_auth_service.py](../../src/backend/services/runtime_auth_service.py), [src/backend/services/policy_service.py](../../src/backend/services/policy_service.py)
-- Guardrails: [src/backend/services/guardrails_service.py](../../src/backend/services/guardrails_service.py)
-- Subagent registry: [src/backend/domain/subagents.dev.json](../../src/backend/domain/subagents.dev.json) (5 subagents, per-persona access)
+- Orchestrator service: [src/aiserver/services/orchestrator_service.py](../../src/aiserver/services/orchestrator_service.py) (`create_orchestrator_agent`, `connect_healthy_mcp_servers`, `build_subagent_tools`, `build_lakebase_tools`)
+- Pipeline execution: [src/aiserver/api/handlers.py](../../src/aiserver/api/handlers.py) (staged pipeline using `Runner.run` / `Runner.run_streamed`)
+- Runtime auth and policy: [src/aiserver/services/runtime_auth_service.py](../../src/aiserver/services/runtime_auth_service.py), [src/aiserver/services/policy_service.py](../../src/aiserver/services/policy_service.py)
+- Guardrails: [src/aiserver/services/guardrails_service.py](../../src/aiserver/services/guardrails_service.py)
+- Subagent registry: [src/aiserver/domain/subagents.dev.json](../../src/aiserver/domain/subagents.dev.json) (5 subagents, per-persona access)
 - Deployment: [Makefile](../../Makefile) (`make deploy`, `make redeploy`), [docs/operations/operations-runbook.md](../operations/operations-runbook.md)

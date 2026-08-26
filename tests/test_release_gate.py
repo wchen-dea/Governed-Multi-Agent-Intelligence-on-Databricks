@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from backend.evaluate_agent import enforce_release_gate
+from aiserver.evaluate_agent import enforce_release_gate
 
 
 class _FakeResult:

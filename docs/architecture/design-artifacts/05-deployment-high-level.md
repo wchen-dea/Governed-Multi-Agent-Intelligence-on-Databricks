@@ -8,7 +8,7 @@ This document captures high-level deployment architecture across environments.
 flowchart LR
     Dev[dev — dbc-baff2b7f-4402] --> QA[qa]
     QA --> STG[stg]
-    STG --> PRD[prod]
+    STG --> PRD[prd]
 
     Dev -. bundle validate .-> QA
     QA -. bundle deploy .-> STG
@@ -54,7 +54,7 @@ flowchart TB
     end
 
     subgraph Lakebase
-        S5[lakebase_ods_agent — operationaldatastore DB]
+        S5[lakebase_ods_agent — operations DB]
     end
 
     BE[Backend] --> S1

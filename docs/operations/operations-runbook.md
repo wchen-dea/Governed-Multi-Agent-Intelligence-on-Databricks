@@ -31,27 +31,27 @@ Use this default release sequence:
 6. Deploy app from workspace source path
 7. Execute post-deploy verification
 
-The bundle deployment must apply the Lakebase Autoscaling app resource. For the dev target, the expected references are `projects/ore/branches/production` and `projects/ore/branches/production/databases/operationaldatastore`.
+The bundle deployment must apply the Lakebase Autoscaling app resource. For the dev target, the expected references are `projects/ore/branches/production` and `projects/ore/branches/production/databases/operations`.
 
 For target values:
 
 - `dev`: `--profile dev`
 - `qa`: `--profile qa`
 - `stg`: `--profile stg`
-- `prod`: `--profile prd`
+- `prd`: `--profile prd`
 
 ## Run Procedures
 
 ### Pre-Deployment Checklist
 
-- Confirm target (`dev` / `qa` / `stg` / `prod`) and CLI profile.
+- Confirm target (`dev` / `qa` / `stg` / `prd`) and CLI profile.
 - Confirm target variables in `targets/*.yml` are correct.
 - Confirm the app service principal has a Lakebase OAuth role and the app has the target `postgres` resource grant.
 - Confirm no pending manual hotfix state in the target app.
 
 ### UC Audit + KPI Gate Release Checklist
 
-Before promoting to `qa`, `stg`, or `prod`, ensure these placeholders are replaced in the corresponding target file:
+Before promoting to `qa`, `stg`, or `prd`, ensure these placeholders are replaced in the corresponding target file:
 
 - `message_bus_backend: uc_table`
 - `uc_audit_warehouse_id: <...>`
@@ -97,7 +97,7 @@ Notes:
 databricks bundle validate -t dev --profile dev
 databricks bundle validate -t qa --profile qa
 databricks bundle validate -t stg --profile stg
-databricks bundle validate -t prod --profile prd
+databricks bundle validate -t prd --profile prd
 ```
 
 #### 2) Deploy
@@ -180,7 +180,7 @@ Required GitHub secrets by environment suffix:
 - `DATABRICKS_HOST_DEV`, `DATABRICKS_CLIENT_ID_DEV`, `DATABRICKS_CLIENT_SECRET_DEV`
 - `DATABRICKS_HOST_QA`, `DATABRICKS_CLIENT_ID_QA`, `DATABRICKS_CLIENT_SECRET_QA`
 - `DATABRICKS_HOST_STG`, `DATABRICKS_CLIENT_ID_STG`, `DATABRICKS_CLIENT_SECRET_STG`
-- `DATABRICKS_HOST_PROD`, `DATABRICKS_CLIENT_ID_PROD`, `DATABRICKS_CLIENT_SECRET_PROD`
+- `DATABRICKS_HOST_PRD`, `DATABRICKS_CLIENT_ID_PRD`, `DATABRICKS_CLIENT_SECRET_PRD`
 
 ### Existing App Conflict
 
@@ -217,7 +217,7 @@ Use this short checklist when onboarding or updating a Genie Agent backed by bus
 
 3. Register Genie Agent runtime configuration
 
-- Add or update the target entry in `src/backend/domain/subagents.<target>.json`.
+- Add or update the target entry in `src/aiserver/domain/subagents.<target>.json`.
 - Verify `space_id`, `auth_mode`, classification metadata, and owner metadata.
 
 4. Grant and verify permissions
@@ -492,16 +492,16 @@ App URL: `https://multiagent-app-dev-4225037891036111.aws.databricksapps.com`
 - Project: `ore` (resource path: `projects/ore`)
 - Branch: `production` (resource path: `projects/ore/branches/production`)
 - Endpoint: `primary` (host: `ep-falling-cake-d1j29nc5.database.us-west-2.cloud.databricks.com`)
-- Runtime database: `operationaldatastore`
+- Runtime database: `operations`
 - Database resource ID: `db-j7lf-e5xmy0cwq4`
-- Database resource: `projects/ore/branches/production/databases/operationaldatastore`
+- Database resource: `projects/ore/branches/production/databases/operations`
 - App SP role: `sp-multiagent-app` (postgres_role: `da6ab9ef-2c0f-4f9b-9950-b618b9f4fede`, membership: `DATABRICKS_SUPERUSER`)
 
 **Steps:**
 
 1. Open the app URL in a browser.
 2. Type: `How many appointments have an invoice order type name?`
-3. Verify the agent generates a SQL query against the Lakebase `operationaldatastore` database and returns a count.
+3. Verify the agent generates a SQL query against the Lakebase `operations` database and returns a count.
 4. Follow up: `Break that down by month for the last 6 months`
 5. Verify the response contains a formatted table with monthly counts and evidence citation.
 
@@ -521,7 +521,7 @@ App URL: `https://multiagent-app-dev-4225037891036111.aws.databricksapps.com`
 
 **Fix:**
 
-- For Genie agents: set `requires_evidence: false` in `src/backend/domain/subagents.<target>.json`. Genie output is inherently grounded in SQL.
+- For Genie agents: set `requires_evidence: false` in `src/aiserver/domain/subagents.<target>.json`. Genie output is inherently grounded in SQL.
 - For MCP/RAG agents: either set `requires_evidence: false`, or strengthen the system prompt to explicitly instruct: "append a bracketed citation like `[1]`" and "end with a `Source:` line."
 - Rebuild and redeploy after changes.
 
@@ -529,11 +529,11 @@ App URL: `https://multiagent-app-dev-4225037891036111.aws.databricksapps.com`
 
 **Symptom:** `{"detail": "Error code: 400 ... Function tools with reasoning_effort are not supported for gpt-5.6-luna in /v1/chat/completions."}`
 
-**Cause:** The openai-agents SDK API mode is set to `chat_completions` in `src/backend/api/handlers.py`, but the orchestrator model (e.g., `gpt-5.6-luna`) requires the `/v1/responses` endpoint for function tool support.
+**Cause:** The openai-agents SDK API mode is set to `chat_completions` in `src/aiserver/api/handlers.py`, but the orchestrator model (e.g., `gpt-5.6-luna`) requires the `/v1/responses` endpoint for function tool support.
 
 **Fix:**
 
-In `src/backend/api/handlers.py`, ensure:
+In `src/aiserver/api/handlers.py`, ensure:
 
 ```python
 set_default_openai_api("responses")
@@ -707,7 +707,7 @@ The fallback only deploys application source. It does not replace a failed bundl
    ```
    Look for a role with `auth_method: LAKEBASE_OAUTH_V1` and `identity_type: SERVICE_PRINCIPAL` — note its `postgres_role` value (the SP client ID).
 
-2. Set `pg_user` in `src/backend/domain/subagents.<target>.json` to the SP's `postgres_role` value (e.g., `da6ab9ef-2c0f-4f9b-9950-b618b9f4fede`).
+2. Set `pg_user` in `src/aiserver/domain/subagents.<target>.json` to the SP's `postgres_role` value (e.g., `da6ab9ef-2c0f-4f9b-9950-b618b9f4fede`).
 
 3. Ensure `_get_lakebase_token()` in `orchestrator_service.py` calls `ws_client.config.authenticate()` (no arguments, returns dict).
 

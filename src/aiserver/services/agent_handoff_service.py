@@ -5,10 +5,10 @@ from typing import Any
 
 from agents import function_tool
 
-from backend.domain.agent_messages import DelegationTask
-from backend.domain.subagent_config import SubagentConfig
-from backend.services.agent_task_worker import AgentTaskWorker
-from backend.services.interfaces import AgentTaskBus, MessageBus
+from aiserver.domain.agent_messages import DelegationTask
+from aiserver.domain.subagent_config import SubagentConfig
+from aiserver.services.agent_task_worker import AgentTaskWorker
+from aiserver.services.interfaces import AgentTaskBus, MessageBus
 
 DelegationExecutor = Callable[[dict[str, Any]], Awaitable[dict[str, Any]]]
 

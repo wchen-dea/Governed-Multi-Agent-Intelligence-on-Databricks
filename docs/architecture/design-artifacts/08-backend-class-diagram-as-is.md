@@ -414,7 +414,7 @@ class lakebase_ods_agent {
     auth_mode = app
     classification = confidential
     personas = analyst, manager, engineer
-    database = operationaldatastore
+    database = operations
     freshness_sla = 1h
 }
 
@@ -427,7 +427,7 @@ SubagentRegistry --> lakebase_ods_agent
 
 ## Notes
 
-- All diagrams mirror current implementation naming in `src/backend/`.
+- All diagrams mirror current implementation naming in `src/aiserver/`.
 - Views are logic-isolated: domain/policy, composition/ports, runtime stages, message bus strategy, subagent registry.
 - Use with `07-request-execution-flow-class-diagram.md` for invoke-vs-stream pipeline emphasis.
 - The durable delegation and model-routing classes above are the control planes that keep agent expansion bounded, observable, and policy-aware.

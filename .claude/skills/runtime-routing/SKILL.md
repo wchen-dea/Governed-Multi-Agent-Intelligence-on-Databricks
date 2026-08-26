@@ -23,16 +23,16 @@ This skill does not cover:
 
 ## Preconditions
 
-- Target is selected: `dev`, `qa`, `stg`, or `prod`.
+- Target is selected: `dev`, `qa`, `stg`, or `prd`.
 - Databricks profile for target is available.
 - Required resource IDs and endpoint names are known.
 
 ## Files Typically Changed
 
-- `src/backend/domain/subagents.<target>.json`
-- `src/backend/services/orchestrator_service.py`
-- `src/backend/services/policy_service.py`
-- `src/backend/services/runtime_auth.py`
+- `src/aiserver/domain/subagents.<target>.json`
+- `src/aiserver/services/orchestrator_service.py`
+- `src/aiserver/services/policy_service.py`
+- `src/aiserver/services/runtime_auth.py`
 - `docs/architecture/tool-and-model-registry.md`
 
 ## Workflow
@@ -45,7 +45,7 @@ This skill does not cover:
 
 ### 2) Update target subagent config
 
-- Add or edit entries in `src/backend/domain/subagents.<target>.json`.
+- Add or edit entries in `src/aiserver/domain/subagents.<target>.json`.
 - Populate `name`, route target fields, `description`, `auth_mode`, and classification metadata.
 - Avoid placeholders in promoted environments.
 

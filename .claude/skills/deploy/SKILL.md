@@ -13,7 +13,7 @@ This repository deploys using DAB with target overlays in `targets/`.
 make redeploy TARGET=<target> APP_NAME=<app-name> PROFILE=<profile>
 ```
 
-Targets used in this repo: `dev`, `qa`, `stg`, `prod`.
+Targets used in this repo: `dev`, `qa`, `stg`, `prd`.
 
 ## Existing App Already Exists
 

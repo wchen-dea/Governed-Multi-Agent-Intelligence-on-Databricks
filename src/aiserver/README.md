@@ -14,15 +14,15 @@ Core responsibilities:
 
 Primary entrypoint:
 
-- `src/backend/api/server.py`
+- `src/aiserver/api/server.py`
 
 ## Structure
 
-- `src/backend/api/`
+- `src/aiserver/api/`
   - `server.py`: AgentServer bootstrap and app startup.
   - `handlers.py`: `@invoke` and `@stream` request handlers.
   - `dependencies.py`: dependency wiring for services.
-- `src/backend/services/`
+- `src/aiserver/services/`
   - `orchestrator_service.py`: tool construction and orchestration behavior.
   - `runtime_auth_service.py`: request-scoped auth context and policy-aware availability.
   - `policy_service.py`: deterministic request-time policy checks.
@@ -37,16 +37,16 @@ Supported subagent types:
   - `app`: Databricks App via Responses API.
   - `mcp`: AI Search or generic MCP route.
   - `lakebase`: Lakebase PostgreSQL via psycopg2 with OAuth credentials.
-- `src/backend/domain/`
+- `src/aiserver/domain/`
   - `subagent_config.py`: typed config model and validation.
   - `subagents.<target>.json`: environment-specific subagent/tool registry config.
-- `src/backend/shared/`
+- `src/aiserver/shared/`
   - `settings.py`: typed runtime settings.
   - `runtime_utils.py`: auth/request helper utilities.
   - `request_utils.py`: request normalization helpers.
   - `logging_config.py`: backend logging configuration.
   - `lakebase_client.py`: shared OAuth/psycopg2 connection helper for Lakebase Postgres.
-- `src/backend/evaluate_agent.py`: release-gate evaluation runner.
+- `src/aiserver/evaluate_agent.py`: release-gate evaluation runner.
 
 ## Local Run
 
@@ -70,19 +70,19 @@ Invoke endpoint:
 Use this workflow when iterating on orchestration logic:
 
 1. Start backend: `uv run runtime-serve-backend --reload`
-2. Modify handlers/services under `src/backend/api/` and `src/backend/services/`
+2. Modify handlers/services under `src/aiserver/api/` and `src/aiserver/services/`
 3. Run targeted tests: `uv run pytest -q`
 
 Most common edit locations:
 
-- `src/backend/api/handlers.py`: invoke/stream flow and guardrail enforcement.
-- `src/backend/services/runtime_auth_service.py`: auth context and tool availability.
-- `src/backend/services/policy_service.py`: deterministic policy checks.
-- `src/backend/services/orchestrator_service.py`: tool and MCP orchestration behavior.
+- `src/aiserver/api/handlers.py`: invoke/stream flow and guardrail enforcement.
+- `src/aiserver/services/runtime_auth_service.py`: auth context and tool availability.
+- `src/aiserver/services/policy_service.py`: deterministic policy checks.
+- `src/aiserver/services/orchestrator_service.py`: tool and MCP orchestration behavior.
 
 Tip:
 
-- Keep `src/backend/domain/subagents.<target>.json` and runtime behavior aligned when adding/changing tools.
+- Keep `src/aiserver/domain/subagents.<target>.json` and runtime behavior aligned when adding/changing tools.
 
 ## Key Environment Variables
 
@@ -106,7 +106,7 @@ Conversation memory (disabled by default; persists conversation content when ena
 
 - `MEMORY_BACKEND`: `disabled` (default) or `lakebase`.
 - `MEMORY_PROJECT_ID`, `MEMORY_BRANCH_ID`, `MEMORY_ENDPOINT_ID`, `MEMORY_DATABASE`, `MEMORY_PG_HOST`, `MEMORY_PG_USER`
-- `MEMORY_CONVERSATION_TABLE` (default `agent_memory_conversations`), `MEMORY_PREFERENCE_TABLE` (default `agent_memory_preferences`)
+- `MEMORY_CONVERSATION_TABLE` (default `agent_conversations`), `MEMORY_PREFERENCE_TABLE` (default `agent_preferences`)
 - `MEMORY_MAX_TURNS` (default `20`), `MEMORY_FAIL_OPEN` (default `true`)
 
 Evaluation gate:

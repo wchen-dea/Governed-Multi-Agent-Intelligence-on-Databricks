@@ -18,7 +18,7 @@ Scope: applies to agent runtime, tracing, evaluation, CI release gates, and prod
 
 - Owner: AI Platform Lead
 - Tasks:
-  - Define environment-specific experiment naming and location for dev, qa, stg, and prod.
+  - Define environment-specific experiment naming and location for dev, qa, stg, and prd.
   - Ensure local and deployed runtimes resolve to the expected experiment without manual overrides.
   - Record experiment map in docs and runbook.
 - Acceptance Criteria:

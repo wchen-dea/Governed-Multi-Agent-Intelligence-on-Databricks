@@ -26,7 +26,7 @@ This folder provides the primary TypeScript and React frontend used by the app r
 1. Install dependencies.
 
 ```bash
-cd src/reactui
+cd src/aiweb
 npm install
 ```
 

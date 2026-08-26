@@ -61,8 +61,8 @@ runtime_auth.context.built / policy.denied
 
 ## Implementation Notes
 
-- Protocol + all backends: [src/backend/services/message_bus.py](../../src/backend/services/message_bus.py)
-- Settings fields: `message_bus_backend`, `message_bus_topic`, `message_bus_fail_open`, `message_bus_async`, `message_bus_async_queue_size`, `message_bus_async_drain_timeout_seconds` in [src/backend/shared/settings.py](../../src/backend/shared/settings.py)
+- Protocol + all backends: [src/aiserver/services/message_bus.py](../../src/aiserver/services/message_bus.py)
+- Settings fields: `message_bus_backend`, `message_bus_topic`, `message_bus_fail_open`, `message_bus_async`, `message_bus_async_queue_size`, `message_bus_async_drain_timeout_seconds` in [src/aiserver/shared/settings.py](../../src/aiserver/shared/settings.py)
 - Current dev config: `MESSAGE_BUS_BACKEND=uc_table` (writes to `quickstart_catalog.multi_agent_schema.agent_lifecycle_events`)
-- Handler publishing: [src/backend/api/handlers.py](../../src/backend/api/handlers.py)
+- Handler publishing: [src/aiserver/api/handlers.py](../../src/aiserver/api/handlers.py)
 - Tests: [tests/test_message_bus_backends.py](../../tests/test_message_bus_backends.py), [tests/test_message_bus_integration.py](../../tests/test_message_bus_integration.py)

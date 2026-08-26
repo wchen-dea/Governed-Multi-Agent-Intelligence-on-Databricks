@@ -44,7 +44,7 @@ setup = [
 default-groups = ["dev", "setup"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/backend", "src/scripts", "src/frontend"]
+packages = ["src/aiserver", "src/scripts", "src/frontend"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
@@ -62,12 +62,12 @@ ignore = ["E501"]
 [project.scripts]
 # Runtime core: commands required to run, validate, and package the application.
 runtime-serve-app = "scripts.start_app:main"
-runtime-serve-backend = "backend.api.server:main"
+runtime-serve-backend = "aiserver.api.server:main"
 runtime-preflight = "scripts.preflight:main"
 runtime-build-source = "scripts.prepare_app_source:main"
 # Assistant and operations: evaluation, discovery, setup, permissions, and diagnostics.
 assistant-bootstrap = "scripts.quickstart:main"
-assistant-evaluate = "backend.evaluate_agent:evaluate"
+assistant-evaluate = "aiserver.evaluate_agent:evaluate"
 assistant-discover-tools = "scripts.discover_tools:main"
 assistant-setup-flink = "scripts.setup_flink_support_rag:main"
 assistant-setup-cdi = "scripts.setup_cdi_agent:main"

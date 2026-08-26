@@ -12,9 +12,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DIST_DIR = REPO_ROOT / "dist"
 APP_SOURCE_DIR = REPO_ROOT / ".databricks_app_source"
 WHEELS_DIR = APP_SOURCE_DIR / "wheels"
-REACT_UI_DIR = REPO_ROOT / "src" / "reactui"
+REACT_UI_DIR = REPO_ROOT / "src" / "aiweb"
 REACT_DIST_DIR = REACT_UI_DIR / "dist"
-APP_REACT_DIST_DIR = APP_SOURCE_DIR / "reactui-dist"
+APP_REACT_DIST_DIR = APP_SOURCE_DIR / "aiweb-dist"
 
 
 def _log(message: str) -> None:

@@ -229,7 +229,7 @@ def _is_configured_subagent(entry: dict[str, Any]) -> bool:
 
 SUBAGENTS_CONFIG_PATH_ENV = "SUBAGENTS_CONFIG_PATH"
 TARGET_ENV_VARS = ("DATABRICKS_BUNDLE_TARGET", "BUNDLE_TARGET", "TARGET", "APP_ENV")
-SUPPORTED_TARGETS = ("dev", "qa", "stg", "prod")
+SUPPORTED_TARGETS = ("dev", "qa", "stg", "prd")
 DEFAULT_TARGET_FALLBACK = "dev"
 
 

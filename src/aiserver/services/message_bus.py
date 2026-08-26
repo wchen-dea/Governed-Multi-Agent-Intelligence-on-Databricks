@@ -13,8 +13,8 @@ from uuid import uuid4
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.sql import StatementParameterListItem
 
-from backend.services.interfaces import MessageBus
-from backend.shared.settings import AppSettings, get_settings
+from aiserver.services.interfaces import MessageBus
+from aiserver.shared.settings import AppSettings, get_settings
 
 logger = logging.getLogger(__name__)
 

@@ -12,9 +12,9 @@ This document summarizes the technical specifications currently implemented in t
 
 Primary implementation:
 
-- src/backend/api/handlers.py
-- src/backend/api/dependencies.py
-- src/backend/services/orchestrator_service.py
+- src/aiserver/api/handlers.py
+- src/aiserver/api/dependencies.py
+- src/aiserver/services/orchestrator_service.py
 
 ### Task-Type Model Routes
 
@@ -29,8 +29,8 @@ Dev keeps all task classes on the verified balanced model. Promote a task route 
 Set `MODEL_ROUTING_ENABLED=false` to retain `ORCHESTRATOR_MODEL` for every task. Configure individual routes through `MODEL_ROUTING_DEFAULT_MODEL`, `MODEL_ROUTING_REASONING_MODEL`, and `MODEL_ROUTING_QUALITY_MODEL`.
 
 With routing enabled, dev currently resolves standard, reasoning, and synthesis tasks to `databricks-gpt-5-6-luna`. Model-route metadata is not proof of tool-call correctness.
-- src/reactui/src/App.tsx
-- src/reactui/src/api.ts
+- src/aiweb/src/App.tsx
+- src/aiweb/src/api.ts
 - src/scripts/react_ui_server.py
 
 This document is the canonical implementation-fact index for architecture behavior; [API contracts](api-contracts.md), [tool and model registry](tool-and-model-registry.md), and [low-level design](low-level-design.md) remain authoritative for their named concerns.
@@ -49,12 +49,12 @@ This document is the canonical implementation-fact index for architecture behavi
 
 Primary implementation:
 
-- src/backend/domain/subagent_config.py
-- src/backend/domain/subagents.dev.json
-- src/backend/domain/subagents.qa.json
-- src/backend/domain/subagents.stg.json
-- src/backend/domain/subagents.prod.json
-- src/backend/services/orchestrator_service.py
+- src/aiserver/domain/subagent_config.py
+- src/aiserver/domain/subagents.dev.json
+- src/aiserver/domain/subagents.qa.json
+- src/aiserver/domain/subagents.stg.json
+- src/aiserver/domain/subagents.prd.json
+- src/aiserver/services/orchestrator_service.py
 
 ## 3. Authorization Specification
 
@@ -66,8 +66,8 @@ Primary implementation:
 
 Primary implementation:
 
-- src/backend/shared/runtime_utils.py
-- src/backend/services/runtime_auth_service.py
+- src/aiserver/shared/runtime_utils.py
+- src/aiserver/services/runtime_auth_service.py
 
 ## 4. Governance and Policy Specification
 
@@ -82,9 +82,9 @@ Primary implementation:
 
 Primary implementation:
 
-- src/backend/domain/subagent_config.py
-- src/backend/services/policy_service.py
-- src/backend/services/runtime_auth_service.py
+- src/aiserver/domain/subagent_config.py
+- src/aiserver/services/policy_service.py
+- src/aiserver/services/runtime_auth_service.py
 
 ## 5. Response Guardrail Specification
 
@@ -97,8 +97,8 @@ Primary implementation:
 
 Primary implementation:
 
-- src/backend/services/guardrails_service.py
-- src/backend/api/handlers.py
+- src/aiserver/services/guardrails_service.py
+- src/aiserver/api/handlers.py
 
 ## 6. Observability and Audit Specification
 
@@ -119,8 +119,8 @@ Supported backends:
 
 Primary implementation:
 
-- src/backend/services/message_bus.py
-- src/backend/shared/settings.py
+- src/aiserver/services/message_bus.py
+- src/aiserver/shared/settings.py
 
 ## 7. Release Quality Gate Specification
 
@@ -131,7 +131,7 @@ Primary implementation:
 
 Primary implementation:
 
-- src/backend/evaluate_agent.py
+- src/aiserver/evaluate_agent.py
 - .github/workflows/databricks-cicd.yml
 
 ## 8. Agent Delegation Specification
@@ -148,15 +148,15 @@ Primary implementation:
 
 Primary implementation:
 
-- src/backend/domain/agent_messages.py
-- src/backend/services/agent_task_bus.py
-- src/backend/services/agent_task_worker.py
-- src/backend/services/agent_handoff_service.py
-- src/backend/services/agent_delegation_policy_service.py
+- src/aiserver/domain/agent_messages.py
+- src/aiserver/services/agent_task_bus.py
+- src/aiserver/services/agent_task_worker.py
+- src/aiserver/services/agent_handoff_service.py
+- src/aiserver/services/agent_delegation_policy_service.py
 
 ## 9. Deployment and Environment Specification
 
-- Deployment is target-based with dev, qa, stg, and prod overlays.
+- Deployment is target-based with dev, qa, stg, and prd overlays.
 - Shared resource configuration is centralized and target overrides are explicit.
 - Environment variables configure runtime behavior for auth, bus backends, UC audit sink, and release gates.
 - Process concurrency tuning is supported through backend and frontend Uvicorn worker env controls.
@@ -169,7 +169,7 @@ Primary implementation:
 - targets/dev.yml
 - targets/qa.yml
 - targets/stg.yml
-- targets/prod.yml
+- targets/prd.yml
 - docs/operations/operations-runbook.md
 
 ## 10. Validation Specification

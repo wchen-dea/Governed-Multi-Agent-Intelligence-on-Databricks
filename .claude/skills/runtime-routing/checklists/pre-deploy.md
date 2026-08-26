@@ -1,6 +1,6 @@
 # Runtime Routing Pre-Deploy Checklist
 
-- Confirm target and profile are correct (`dev`, `qa`, `stg`, `prod`).
+- Confirm target and profile are correct (`dev`, `qa`, `stg`, `prd`).
 - Confirm route IDs/names are real values (no placeholders for promoted targets).
 - Confirm `auth_mode` is set per route and reviewed.
 - Confirm persona and classification metadata are present.

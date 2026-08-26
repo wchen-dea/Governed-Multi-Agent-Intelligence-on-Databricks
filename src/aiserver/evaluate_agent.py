@@ -20,8 +20,8 @@ from mlflow.genai.scorers import (
 from mlflow.genai.simulators import ConversationSimulator
 from mlflow.types.responses import ResponsesAgentRequest
 
-from backend.shared.logging_config import configure_logging
-from backend.shared.settings import get_settings
+from aiserver.shared.logging_config import configure_logging
+from aiserver.shared.settings import get_settings
 
 # Load environment variables from .env when available.
 load_dotenv(dotenv_path=".env", override=True)
@@ -35,8 +35,8 @@ configure_logging(get_settings())
 os.environ["MLFLOW_ENABLE_ASYNC_TRACE_LOGGING"] = "false"
 
 # Import handlers so @invoke-registered functions are discoverable.
-import backend.api.handlers  # noqa: E402, F401
-from backend.domain.subagent_config import skipped_subagent_names  # noqa: E402
+import aiserver.api.handlers  # noqa: E402, F401
+from aiserver.domain.subagent_config import skipped_subagent_names  # noqa: E402
 
 # Evaluation dataset.
 # Scorer documentation:
@@ -48,7 +48,7 @@ from backend.domain.subagent_config import skipped_subagent_names  # noqa: E402
 # ToolCallCorrectness ground truth; DataToolAttempt remains the reliable tool-use check.
 #
 # Test cases are kept aligned with the loaded subagent config
-# (`src/backend/domain/subagents.<target>.json`) by
+# (`src/aiserver/domain/subagents.<target>.json`) by
 # `tests/test_evaluation_dataset_sync.py`: each `expected_tool_calls`/
 # `restricted_tools` name must exist, and each case's persona must be in that
 # subagent's `allowed_personas`, or the expectation is policy-denied before

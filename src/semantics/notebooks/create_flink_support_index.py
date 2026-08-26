@@ -18,7 +18,9 @@
 dbutils.widgets.text("catalog", "quickstart_catalog", "Unity Catalog catalog")
 dbutils.widgets.text("schema", "multi_agent_schema", "Unity Catalog schema")
 dbutils.widgets.text(
-    "volume_path", "/Volumes/quickstart_catalog/multi_agent_schema/support_kb", "Support KB volume path"
+    "volume_path",
+    "/Volumes/quickstart_catalog/multi_agent_schema/support_kb",
+    "Support KB volume path",
 )
 dbutils.widgets.text("source_table", "flink_support_kb", "Source table for the index")
 dbutils.widgets.text("index_name", "flink_support_index", "Vector Search index name")
@@ -172,7 +174,9 @@ try:
     print(f"Endpoint {endpoint_name!r} already exists.")
 except Exception:
     print(f"Creating endpoint {endpoint_name!r} …")
-    w.vector_search_endpoints.create_endpoint(name=endpoint_name, endpoint_type=EndpointType.STANDARD)
+    w.vector_search_endpoints.create_endpoint(
+        name=endpoint_name, endpoint_type=EndpointType.STANDARD
+    )
     _wait_for_endpoint(endpoint_name)
 
 try:

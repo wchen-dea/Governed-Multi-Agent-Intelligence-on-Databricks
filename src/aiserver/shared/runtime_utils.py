@@ -40,6 +40,7 @@ def get_session_id(request: ResponsesAgentRequest) -> str | None:
             return sid
     # Fallback: derive a stable session ID from the forwarded access token header.
     import hashlib
+
     try:
         headers = get_request_headers() or {}
         fwd_token = headers.get("x-forwarded-access-token", "")

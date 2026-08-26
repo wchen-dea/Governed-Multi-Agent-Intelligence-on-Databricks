@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from backend.domain.subagent_config import load_subagents, parse_subagents
+from aiserver.domain.subagent_config import load_subagents, parse_subagents
 
 
 def test_load_subagents_valid_defaults(tmp_path):
@@ -312,7 +312,7 @@ def test_load_subagents_resolves_path_from_target_env(tmp_path, monkeypatch):
     monkeypatch.setenv("DATABRICKS_BUNDLE_TARGET", "qa")
     monkeypatch.delenv("SUBAGENTS_CONFIG_PATH", raising=False)
 
-    import backend.domain.subagent_config as subagent_config
+    import aiserver.domain.subagent_config as subagent_config
 
     monkeypatch.setattr(subagent_config, "__file__", str(tmp_path / "subagent_config.py"))
 
@@ -329,7 +329,7 @@ def test_load_subagents_raises_helpful_error_when_unresolvable(tmp_path, monkeyp
     monkeypatch.delenv("TARGET", raising=False)
     monkeypatch.delenv("APP_ENV", raising=False)
 
-    import backend.domain.subagent_config as subagent_config
+    import aiserver.domain.subagent_config as subagent_config
 
     monkeypatch.setattr(subagent_config, "__file__", str(tmp_path / "subagent_config.py"))
 

@@ -1,7 +1,7 @@
 """Tests for deterministic request model selection."""
 
-from backend.services.model_routing_service import select_model
-from backend.shared.settings import AppSettings
+from aiserver.services.model_routing_service import select_model
+from aiserver.shared.settings import AppSettings
 
 
 def _settings(**overrides: object) -> AppSettings:

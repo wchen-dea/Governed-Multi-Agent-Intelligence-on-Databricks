@@ -111,7 +111,9 @@ try:
     print(f"Endpoint {endpoint_name!r} already exists.")
 except Exception:
     print(f"Creating endpoint {endpoint_name!r} …")
-    w.vector_search_endpoints.create_endpoint(name=endpoint_name, endpoint_type=EndpointType.STANDARD)
+    w.vector_search_endpoints.create_endpoint(
+        name=endpoint_name, endpoint_type=EndpointType.STANDARD
+    )
     _wait_for_endpoint(endpoint_name)
 
 try:
@@ -128,7 +130,9 @@ except Exception:
         delta_sync_index_spec=DeltaSyncVectorIndexSpecRequest(
             source_table=full_source_table,
             embedding_source_columns=[
-                EmbeddingSourceColumn(name="search_text", embedding_model_endpoint_name=embedding_model)
+                EmbeddingSourceColumn(
+                    name="search_text", embedding_model_endpoint_name=embedding_model
+                )
             ],
             pipeline_type=PipelineType.TRIGGERED,
         ),

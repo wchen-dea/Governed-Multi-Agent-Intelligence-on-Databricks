@@ -10,7 +10,7 @@ As services gained protocol-based dependencies (runtime auth, orchestration, mes
 
 ## Decision
 
-Use `src/backend/api/dependencies.py` as the single composition root. This module builds three nested dependency containers and exposes a single entrypoint for handler consumption:
+Use `src/aiserver/api/dependencies.py` as the single composition root. This module builds three nested dependency containers and exposes a single entrypoint for handler consumption:
 
 ```
 AppDependencyContainer
@@ -63,7 +63,7 @@ Handlers receive only `HandlerDependencies` — a flat, frozen dataclass of comp
 
 ## Implementation Notes
 
-- Composition root: [src/backend/api/dependencies.py](../../src/backend/api/dependencies.py) (`build_dependency_container`, `get_handler_dependencies`)
-- Protocol contracts: [src/backend/services/interfaces.py](../../src/backend/services/interfaces.py)
-- Handler consumption: [src/backend/api/handlers.py](../../src/backend/api/handlers.py) (`HANDLER_DEPS = get_handler_dependencies()`)
+- Composition root: [src/aiserver/api/dependencies.py](../../src/aiserver/api/dependencies.py) (`build_dependency_container`, `get_handler_dependencies`)
+- Protocol contracts: [src/aiserver/services/interfaces.py](../../src/aiserver/services/interfaces.py)
+- Handler consumption: [src/aiserver/api/handlers.py](../../src/aiserver/api/handlers.py) (`HANDLER_DEPS = get_handler_dependencies()`)
 - All containers use frozen dataclasses — no runtime mutation after construction.

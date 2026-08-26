@@ -65,7 +65,7 @@ What these skills enable:
 - Governed multi-agent routing and policy-aware tool execution.
 - Genie Agent and AI Search integration with environment-specific configuration.
 - Hybrid authorization support (`app` and `obo`) for runtime tool calls.
-- Repeatable promotion across `dev`, `qa`, `stg`, and `prod`.
+- Repeatable promotion across `dev`, `qa`, `stg`, and `prd`.
 - Operational validation with observability and quality-gate alignment.
 
 Runtime skills playbooks:
@@ -78,7 +78,7 @@ Runtime skills playbooks:
 ## Introduction Dependencies
 
 The current implementation depends on business semantics and AI metadata across governed tools and indexes.
-Runtime integrations are environment-specific through `src/backend/domain/subagents.<target>.json`.
+Runtime integrations are environment-specific through `src/aiserver/domain/subagents.<target>.json`.
 
 Current dev target examples:
 
@@ -102,7 +102,7 @@ Semantics layer build automation:
 Project guidelines and best practices for Unity Catalog-governed backend execution:
 
 - Apply least privilege by default for both app identity and OBO identity, granting only required `USE CATALOG`, `USE SCHEMA`, and object-level permissions.
-- Separate environment assets (dev, qa, stg, prod) with explicit catalog/schema boundaries and avoid cross-environment data access from runtime credentials.
+- Separate environment assets (dev, qa, stg, prd) with explicit catalog/schema boundaries and avoid cross-environment data access from runtime credentials.
 - Enforce classification-aware routing in subagent metadata (`data_classification`, `allowed_personas`, `requires_evidence`) before tool execution.
 - Require evidence-backed responses for governed or sensitive routes and block outputs that fail guardrail policy checks.
 - Use Unity Catalog-governed audit persistence (`MESSAGE_BUS_BACKEND=uc_table`) for lifecycle, policy, auth, and guardrail events.
@@ -135,7 +135,7 @@ The app provides:
 - Auth-aware tool routing: each subagent declares `auth_mode` (`app` or `obo`).
 - Governed routing policy: persona, tool-targeting, identity, and data-classification checks run before tool execution.
 - Response guardrails: governed responses enforce evidence/citation requirements and sensitive-output safety checks.
-- Environment isolation: dev, qa, stg, and prod with explicit target-specific settings.
+- Environment isolation: dev, qa, stg, and prd with explicit target-specific settings.
 - Operational fallback path: Direct apps deploy path when Terraform registry availability is degraded.
 
 ## 5-Minute Start
@@ -163,7 +163,7 @@ The runtime uses a hybrid authorization model:
 - App Authorization: tools execute with the app service principal identity.
 - User Authorization (OBO): tools execute with the forwarded user access token.
 
-Subagent authorization is configured in target-specific files such as `src/backend/domain/subagents.dev.json` using `auth_mode`:
+Subagent authorization is configured in target-specific files such as `src/aiserver/domain/subagents.dev.json` using `auth_mode`:
 
 - `auth_mode: app`
 - `auth_mode: obo`
@@ -173,7 +173,7 @@ Current defaults:
 - Genie Agent subagents default to `obo` when not explicitly set.
 - Non-Genie subagents default to `app` when not explicitly set.
 
-The backend loads an environment-specific file at startup and validates it with typed models in `src/backend/domain/subagent_config.py`.
+The backend loads an environment-specific file at startup and validates it with typed models in `src/aiserver/domain/subagent_config.py`.
 Override the path with `SUBAGENTS_CONFIG_PATH`.
 
 If an OBO tool is selected and no forwarded token is present, the runtime raises a clear user-facing authorization error instead of falling back silently.
@@ -222,10 +222,10 @@ For architecture diagrams, see [docs/architecture/high-level-architecture.md](do
 
 ## Project Layout
 
-- [src/backend/](src/backend): orchestrator runtime, handlers, request normalization, server startup
-- [src/backend/README.md](src/backend/README.md): backend-focused setup, runtime behavior, and operations guide
-- [src/reactui/](src/reactui): primary React UI (TypeScript) client for chat, commands, and stream rendering
-- [src/reactui/README.md](src/reactui/README.md): React UI setup, build, and local run guide
+- [src/aiserver/](src/aiserver): orchestrator runtime, handlers, request normalization, server startup
+- [src/aiserver/README.md](src/aiserver/README.md): backend-focused setup, runtime behavior, and operations guide
+- [src/aiweb/](src/aiweb): primary React UI (TypeScript) client for chat, commands, and stream rendering
+- [src/aiweb/README.md](src/aiweb/README.md): React UI setup, build, and local run guide
 - [src/frontend/](src/frontend): legacy Chainlit frontend retained for compatibility and migration fallback
 - [src/frontend/README.md](src/frontend/README.md): legacy Chainlit frontend guide
 - [src/scripts/](src/scripts): quickstart, preflight, local start, discovery, and permission helpers
@@ -346,7 +346,7 @@ MCP connect/probe performance controls:
 - [docs/product/business-specs.md](docs/product/business-specs.md): business requirements, constraints, and success metrics.
 - [docs/architecture/runtime-technical-specs.md](docs/architecture/runtime-technical-specs.md): centralized technical implementation map and cross-space contracts.
 - [docs/quality/evaluation-spec.md](docs/quality/evaluation-spec.md): datasets, scorers, KPI thresholds, and release-gate rules.
-- [Model Matrix and Environment Recommendations](docs/quality/evaluation-spec.md#model-matrix-and-environment-recommendations): environment-specific model profile guidance for dev, qa, stg, and prod release planning.
+- [Model Matrix and Environment Recommendations](docs/quality/evaluation-spec.md#model-matrix-and-environment-recommendations): environment-specific model profile guidance for dev, qa, stg, and prd release planning.
 - [docs/governance/prompt-policy-controls.md](docs/governance/prompt-policy-controls.md): prompt layering and deterministic policy/guardrail behavior.
 - [docs/architecture/tool-and-model-registry.md](docs/architecture/tool-and-model-registry.md): registry of active tools, endpoints, and Genie Agents.
 - [docs/governance/data-contracts-lineage.md](docs/governance/data-contracts-lineage.md): data contracts, classification, and lineage requirements.
@@ -378,5 +378,5 @@ Useful operational commands:
 - Development environment is active and user-accessible.
 - Multi-agent routing across Genie and serving endpoints is implemented.
 - Governed routing policy, response guardrails, and lifecycle audit-table persistence are implemented.
-- GitHub Actions pipeline supports PR CI and deployment automation for dev, qa, stg, and prod.
+- GitHub Actions pipeline supports PR CI and deployment automation for dev, qa, stg, and prd.
 - Operational controls and troubleshooting guidance are documented in the runbook.

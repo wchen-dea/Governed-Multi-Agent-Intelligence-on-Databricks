@@ -10,8 +10,8 @@ import logging
 
 from databricks.sdk import WorkspaceClient
 
-from backend.shared.lakebase_client import connect_lakebase
-from backend.shared.settings import AppSettings, get_settings
+from aiserver.shared.lakebase_client import connect_lakebase
+from aiserver.shared.settings import AppSettings, get_settings
 
 logger = logging.getLogger(__name__)
 

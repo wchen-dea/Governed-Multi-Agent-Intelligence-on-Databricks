@@ -6,7 +6,8 @@ This script performs these actions:
 3) Checks underlying resource existence (Genie Agents, UC catalog/schema, AI Search,
    serving endpoints, SQL warehouse).
 4) Grants required permissions to the app service principal:
-   - Unity Catalog: USE CATALOG, USE SCHEMA, SELECT ON ALL TABLES
+   - Unity Catalog: SELECT ON ALL TABLES (catalog/schema USE grants are
+     provisioned outside this pipeline)
     - Genie Agents: CAN_RUN
     - AI Search endpoints: CAN_USE
    - Serving endpoints: CAN_QUERY
@@ -26,7 +27,7 @@ from typing import Any
 
 from ruamel.yaml import YAML
 
-SUPPORTED_TARGETS = ("dev", "qa", "stg", "prod")
+SUPPORTED_TARGETS = ("dev", "qa", "stg", "prd")
 
 
 def _is_placeholder(value: str | None) -> bool:
@@ -98,7 +99,7 @@ class PermissionManager:
 
         Args:
             cli: Databricks CLI wrapper.
-            target: Deployment target (`dev`, `qa`, `stg`, or `prod`).
+            target: Deployment target (`dev`, `qa`, `stg`, or `prd`).
             app_name: Databricks app name used to resolve app principal.
             dry_run: If true, print planned actions without applying grants.
             fail_open: If true, return success even when some grants fail.
@@ -144,7 +145,7 @@ class PermissionManager:
         Raises:
             CliError: If the subagent file exists but contains invalid JSON.
         """
-        config_file = Path("src/backend/domain") / f"subagents.{self.target}.json"
+        config_file = Path("src/aiserver/domain") / f"subagents.{self.target}.json"
         if not config_file.exists():
             return [], [], [], []
 
@@ -366,8 +367,15 @@ class PermissionManager:
         if not isinstance(result, dict):
             return False
 
-        status = (result.get("status") or {}).get("state")
-        return status in {"SUCCEEDED", "PENDING", "RUNNING"}
+        status = result.get("status") or {}
+        state = status.get("state")
+        if state not in {"SUCCEEDED", "PENDING", "RUNNING"}:
+            error_message = (status.get("error") or {}).get("message")
+            if error_message:
+                print(f"  SQL error: {error_message}")
+            return False
+        return True
+
 
     def _grant_uc_privilege(
         self,
@@ -415,7 +423,7 @@ class PermissionManager:
         checked: list[tuple[str, str, list[str]]] = []
         print("Validating AI Search UC securables before grants...")
         for catalog, schema, index_name in ai_search_indexes:
-            source_table = f"{index_name.replace('_index', '_source_final')}"
+            source_table = f"{index_name.replace('_index', '_index_writeback_table')}"
             tables = [index_name, source_table]
 
             cat_ok = self._uc_securable_exists("catalog", catalog)
@@ -457,8 +465,9 @@ class PermissionManager:
             sp_client_id: App service principal client id.
 
         Side Effects:
-            Applies `USE_CATALOG`, `USE_SCHEMA`, and `SELECT` grants through
-            Databricks grants APIs.
+            Applies `SELECT` grants through Databricks grants APIs. Catalog/schema
+            `USE_CATALOG`/`USE_SCHEMA` access is provisioned outside this app's
+            deploy pipeline and is not granted here.
         """
         if not ai_search_securables:
             print("INFO: No validated AI Search UC securables to grant.")
@@ -468,17 +477,6 @@ class PermissionManager:
         principal = sp_client_id
 
         for catalog, schema, table_names in ai_search_securables:
-            cat_ok = self._grant_uc_privilege("catalog", catalog, "USE_CATALOG", principal)
-            print(f"UC GRANT: {'OK' if cat_ok else 'FAILED'} -> USE_CATALOG ON {catalog}")
-            if not cat_ok:
-                self._warn_or_fail(f"Failed UC grant USE_CATALOG on {catalog}")
-
-            schema_full = f"{catalog}.{schema}"
-            schema_ok = self._grant_uc_privilege("schema", schema_full, "USE_SCHEMA", principal)
-            print(f"UC GRANT: {'OK' if schema_ok else 'FAILED'} -> USE_SCHEMA ON {schema_full}")
-            if not schema_ok:
-                self._warn_or_fail(f"Failed UC grant USE_SCHEMA on {schema_full}")
-
             for table in table_names:
                 table_full = f"{catalog}.{schema}.{table}"
                 select_ok = self._grant_uc_privilege("table", table_full, "SELECT", principal)
@@ -521,13 +519,15 @@ class PermissionManager:
             self._warn_or_fail(f"Schema not found or inaccessible: {catalog}.{schema}")
             return
 
+        # Catalog/schema `USE CATALOG`/`USE SCHEMA` access is provisioned outside
+        # this app's deploy pipeline and is not granted here.
+        # Unity Catalog has no "ALL TABLES IN SCHEMA" clause; schema-level SELECT/MODIFY
+        # grants are inherited by all tables within the schema.
         principal = sp_client_id.replace("`", "")
         statements = [
-            f"GRANT USE CATALOG ON CATALOG `{catalog}` TO `{principal}`",
-            f"GRANT USE SCHEMA ON SCHEMA `{catalog}`.`{schema}` TO `{principal}`",
             f"GRANT CREATE TABLE ON SCHEMA `{catalog}`.`{schema}` TO `{principal}`",
-            f"GRANT SELECT ON ALL TABLES IN SCHEMA `{catalog}`.`{schema}` TO `{principal}`",
-            f"GRANT MODIFY ON ALL TABLES IN SCHEMA `{catalog}`.`{schema}` TO `{principal}`",
+            f"GRANT SELECT ON SCHEMA `{catalog}`.`{schema}` TO `{principal}`",
+            f"GRANT MODIFY ON SCHEMA `{catalog}`.`{schema}` TO `{principal}`",
         ]
         for stmt in statements:
             ok = self._execute_sql_grant(warehouse_id, stmt)

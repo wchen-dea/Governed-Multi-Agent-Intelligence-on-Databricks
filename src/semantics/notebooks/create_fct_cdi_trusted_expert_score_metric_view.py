@@ -16,12 +16,16 @@
 dbutils.widgets.text("catalog", "quickstart_catalog", "Unity Catalog catalog")
 dbutils.widgets.text("schema", "multi_agent_schema", "Unity Catalog schema")
 dbutils.widgets.text("source_table", "dt_prod_gold.dwh_dbx.fct_cdi", "Base CDI fact asset")
-dbutils.widgets.text("cdi_daily_table", "cdi_daily", "Daily rolling aggregate join source (many_to_one)")
+dbutils.widgets.text(
+    "cdi_daily_table", "cdi_daily", "Daily rolling aggregate join source (many_to_one)"
+)
 dbutils.widgets.text(
     "total_time_score_table", "total_time_score", "Total time score join source (one_to_many)"
 )
 dbutils.widgets.text(
-    "trusted_expert_score_table", "trusted_expert_score", "Trusted expert score join source (one_to_many)"
+    "trusted_expert_score_table",
+    "trusted_expert_score",
+    "Trusted expert score join source (one_to_many)",
 )
 dbutils.widgets.text(
     "metric_view", "fct_cdi_trusted_expert_score_metric_view", "Target metric view name"

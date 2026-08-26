@@ -2,10 +2,10 @@ from types import SimpleNamespace
 
 from mlflow.types.responses import ResponsesAgentRequest
 
-from backend.api.dependencies import build_dependency_container
-from backend.domain.subagent_config import SubagentConfig
-from backend.services.orchestrator_service import OrchestratorDependencies, build_subagent_tools
-from backend.services.runtime_auth_service import (
+from aiserver.api.dependencies import build_dependency_container
+from aiserver.domain.subagent_config import SubagentConfig
+from aiserver.services.orchestrator_service import OrchestratorDependencies, build_subagent_tools
+from aiserver.services.runtime_auth_service import (
     RuntimeAuthDependencies,
     build_runtime_auth_context,
 )

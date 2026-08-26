@@ -10,12 +10,12 @@ Separate model instruction strategy from hard policy enforcement and define safe
 
 ### Orchestrator Instructions
 
-- Source: runtime instruction assembly in `src/backend/services/orchestrator_service.py`
+- Source: runtime instruction assembly in `src/aiserver/services/orchestrator_service.py`
 - Responsibility: tool routing intent, unavailable tool behavior, citation expectation
 
 ### Tool Function Prompts
 
-- Source: function tool wrappers in `src/backend/services/orchestrator_service.py`
+- Source: function tool wrappers in `src/aiserver/services/orchestrator_service.py`
 - Responsibility: model and endpoint invocation shape
 
 ### UI Behavior Hints
@@ -27,7 +27,7 @@ Separate model instruction strategy from hard policy enforcement and define safe
 
 ### Request-Time Policy
 
-- Source: `src/backend/services/policy_service.py`
+- Source: `src/aiserver/services/policy_service.py`
 - Checks:
   - auth mode and identity presence
   - persona allow-list
@@ -36,7 +36,7 @@ Separate model instruction strategy from hard policy enforcement and define safe
 
 ### Response-Time Guardrails
 
-- Source: `src/backend/services/guardrails_service.py`
+- Source: `src/aiserver/services/guardrails_service.py`
 - Checks:
   - evidence requirement
   - unsafe output patterns

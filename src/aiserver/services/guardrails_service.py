@@ -5,7 +5,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any
 
-from backend.domain.subagent_config import SubagentConfig
+from aiserver.domain.subagent_config import SubagentConfig
 
 
 @dataclass(frozen=True)

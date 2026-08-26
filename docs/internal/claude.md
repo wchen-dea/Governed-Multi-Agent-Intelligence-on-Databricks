@@ -37,7 +37,7 @@ Use this default sequence unless you have a specific reason to skip steps:
 | `run-locally` | Local run, smoke tests, troubleshooting | healthy local app and `/invocations` checks |
 | `discover-tools` | Identify available Databricks resources | Genie IDs, endpoint names, integration inventory |
 | `create-tools` | Provision missing workspace resources | new Genie/endpoint/app resources to integrate |
-| `add-tools` | Add routing + resource permissions | updated `src/backend/domain/subagents.<target>.json` and `resources/multiagent_app.yml` |
+| `add-tools` | Add routing + resource permissions | updated `src/aiserver/domain/subagents.<target>.json` and `resources/multiagent_app.yml` |
 | `modify-agent` | Change orchestration behavior | updated backend orchestration/request logic |
 | `deploy` | Validate, deploy, and restart by target | deployed app and runtime verification |
 
@@ -114,7 +114,7 @@ Constraints: If app exists, bind instead of delete.
 
 ### add-tools
 
-- Update routing in `src/backend/domain/subagents.<target>.json`.
+- Update routing in `src/aiserver/domain/subagents.<target>.json`.
 - Update app resource permissions in `resources/multiagent_app.yml`.
 - Supported subagent types:
   - `genie` requires `space_id`
@@ -126,22 +126,22 @@ Constraints: If app exists, bind instead of delete.
 ### modify-agent
 
 - Primary files:
-  - `src/backend/api/handlers.py`
-  - `src/backend/services/orchestrator_service.py`
-  - `src/backend/services/runtime_auth_service.py`
-  - `src/backend/domain/subagent_config.py`
-  - `src/backend/domain/subagents.dev.json` (and other target variants)
-  - `src/backend/shared/request_utils.py`
-  - `src/backend/shared/runtime_utils.py`
+  - `src/aiserver/api/handlers.py`
+  - `src/aiserver/services/orchestrator_service.py`
+  - `src/aiserver/services/runtime_auth_service.py`
+  - `src/aiserver/domain/subagent_config.py`
+  - `src/aiserver/domain/subagents.dev.json` (and other target variants)
+  - `src/aiserver/shared/request_utils.py`
+  - `src/aiserver/shared/runtime_utils.py`
 - Validate:
-  - `python -m py_compile src/backend/*.py src/scripts/*.py src/frontend/*.py`
+  - `python -m py_compile src/aiserver/*.py src/scripts/*.py src/frontend/*.py`
   - `uv run runtime-preflight`
 
 ### deploy
 
 - Standard flow:
   - `make redeploy TARGET=<target> APP_NAME=<app-name> PROFILE=<profile>`
-- Targets: `dev`, `qa`, `stg`, `prod`
+- Targets: `dev`, `qa`, `stg`, `prd`
 - Source-only fallback: `make upload-wheel TARGET=<target> APP_NAME=<app-name> PROFILE=<profile>` if Terraform Registry is unavailable; successful bundle apply is still required for resource-grant changes
 
 ## Operating Guidelines

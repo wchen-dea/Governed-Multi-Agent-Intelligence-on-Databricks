@@ -9,13 +9,13 @@ from typing import Any
 
 from databricks.sdk import WorkspaceClient
 
-from backend.domain.agent_messages import (
+from aiserver.domain.agent_messages import (
     DelegationResult,
     DelegationTask,
     DelegationTaskRecord,
     utc_now,
 )
-from backend.shared.settings import AppSettings
+from aiserver.shared.settings import AppSettings
 
 
 class InMemoryAgentTaskBus:

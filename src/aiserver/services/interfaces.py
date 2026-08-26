@@ -6,9 +6,9 @@ from databricks_openai import AsyncDatabricksOpenAI
 from databricks_openai.agents import McpServer
 from mlflow.types.responses import ResponsesAgentRequest
 
-from backend.domain.agent_messages import DelegationResult, DelegationTask, DelegationTaskRecord
-from backend.domain.subagent_config import SubagentConfig
-from backend.shared.runtime_utils import RequestIdentityContext
+from aiserver.domain.agent_messages import DelegationResult, DelegationTask, DelegationTaskRecord
+from aiserver.domain.subagent_config import SubagentConfig
+from aiserver.shared.runtime_utils import RequestIdentityContext
 
 
 class IdentityContextProvider(Protocol):
@@ -100,7 +100,9 @@ class AgentTaskBus(Protocol):
 class ConversationMemory(Protocol):
     """Persist and recall conversation turns and persona preferences."""
 
-    def save_turn(self, conversation_id: str, persona: str | None, role: str, content: str) -> None: ...
+    def save_turn(
+        self, conversation_id: str, persona: str | None, role: str, content: str
+    ) -> None: ...
     def recent_turns(self, conversation_id: str, limit: int) -> list[dict[str, str]]: ...
     def save_persona_preference(self, conversation_id: str, persona: str) -> None: ...
     def get_persona_preference(self, conversation_id: str) -> str | None: ...

@@ -16,7 +16,7 @@ Provide a governed enterprise AI assistant that routes requests to the right dat
 - **Governed, auditable AI**: access policy (persona, data classification, identity/auth mode) is enforced before tool execution, unsafe or low-confidence sensitive answers are blocked with explicit reasons, and every routing/policy/tool decision is published as a lifecycle event persisted to Unity Catalog for compliance review.
 - **Quality-gated releases**: deployment is blocked automatically when measured KPIs (tool-call accuracy, authorization correctness, safety, groundedness) fall below thresholds, preventing unvetted releases from reaching users.
 - **Reusable semantics layer**: AI Search indexes and Unity Catalog Metric Views are built as governed, reusable artifacts over gold-layer Delta tables, so other teams/agents can reuse the same curated search index or metric definitions.
-- **Repeatable multi-environment delivery**: deterministic `dev`/`qa`/`stg`/`prod` promotion via Databricks Asset Bundles, with a documented fallback deploy path when Terraform registry access fails.
+- **Repeatable multi-environment delivery**: deterministic `dev`/`qa`/`stg`/`prd` promotion via Databricks Asset Bundles, with a documented fallback deploy path when Terraform registry access fails.
 
 ## Target Users
 
@@ -62,7 +62,7 @@ The system must block deployment when critical quality KPIs are below thresholds
 
 ### BR-5: Multi-Environment Consistency
 
-The system must support dev, qa, stg, and prod environments with deterministic target configuration.
+The system must support dev, qa, stg, and prd environments with deterministic target configuration.
 
 ## Non-Functional Requirements
 

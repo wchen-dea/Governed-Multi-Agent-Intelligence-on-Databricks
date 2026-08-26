@@ -65,8 +65,8 @@ Full table path: `quickstart_catalog.multi_agent_schema.agent_lifecycle_events`
 
 ## Implementation Notes
 
-- Backend implementation: [src/backend/services/message_bus.py](../../src/backend/services/message_bus.py) (`UcAuditTableMessageBus`)
-- Settings fields: `message_bus_uc_warehouse_id`, `message_bus_uc_catalog`, `message_bus_uc_schema`, `message_bus_uc_table` in [src/backend/shared/settings.py](../../src/backend/shared/settings.py)
+- Backend implementation: [src/aiserver/services/message_bus.py](../../src/aiserver/services/message_bus.py) (`UcAuditTableMessageBus`)
+- Settings fields: `message_bus_uc_warehouse_id`, `message_bus_uc_catalog`, `message_bus_uc_schema`, `message_bus_uc_table` in [src/aiserver/shared/settings.py](../../src/aiserver/shared/settings.py)
 - Bundle variables: `uc_audit_warehouse_id`, `uc_audit_catalog`, `uc_audit_schema`, `uc_audit_table` in [databricks.yml](../../databricks.yml)
-- Per-target values: [targets/dev.yml](../../targets/dev.yml), [targets/qa.yml](../../targets/qa.yml), [targets/stg.yml](../../targets/stg.yml), [targets/prod.yml](../../targets/prod.yml)
+- Per-target values: [targets/dev.yml](../../targets/dev.yml), [targets/qa.yml](../../targets/qa.yml), [targets/stg.yml](../../targets/stg.yml), [targets/prd.yml](../../targets/prd.yml)
 - Tests: [tests/test_message_bus_backends.py](../../tests/test_message_bus_backends.py)

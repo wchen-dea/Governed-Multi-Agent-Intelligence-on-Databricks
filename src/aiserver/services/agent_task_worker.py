@@ -4,10 +4,10 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from backend.domain.agent_messages import DelegationResult, DelegationTask
-from backend.domain.subagent_config import SubagentConfig
-from backend.services.agent_delegation_policy_service import evaluate_delegation_policy
-from backend.services.interfaces import AgentTaskBus, MessageBus
+from aiserver.domain.agent_messages import DelegationResult, DelegationTask
+from aiserver.domain.subagent_config import SubagentConfig
+from aiserver.services.agent_delegation_policy_service import evaluate_delegation_policy
+from aiserver.services.interfaces import AgentTaskBus, MessageBus
 
 
 class AgentTaskWorker:

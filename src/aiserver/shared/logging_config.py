@@ -2,7 +2,7 @@
 
 import logging
 
-from backend.shared.settings import AppSettings
+from aiserver.shared.settings import AppSettings
 
 _CONFIGURED = False
 

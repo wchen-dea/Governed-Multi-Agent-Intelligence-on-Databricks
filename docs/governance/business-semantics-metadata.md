@@ -211,12 +211,12 @@ Hard-fail release if any of the following is true:
 
 Current repository components aligned to this spec:
 
-- Route metadata and validation: `src/backend/domain/subagent_config.py`
-- Request-time policy enforcement: `src/backend/services/policy_service.py`
-- Runtime auth enforcement: `src/backend/services/runtime_auth_service.py`
-- Response guardrails: `src/backend/services/guardrails_service.py`
-- Lifecycle and lineage events: `src/backend/services/message_bus.py`
-- Release gate evaluation: `src/backend/evaluate_agent.py`
+- Route metadata and validation: `src/aiserver/domain/subagent_config.py`
+- Request-time policy enforcement: `src/aiserver/services/policy_service.py`
+- Runtime auth enforcement: `src/aiserver/services/runtime_auth_service.py`
+- Response guardrails: `src/aiserver/services/guardrails_service.py`
+- Lifecycle and lineage events: `src/aiserver/services/message_bus.py`
+- Release gate evaluation: `src/aiserver/evaluate_agent.py`
 
 ## Adoption Plan
 

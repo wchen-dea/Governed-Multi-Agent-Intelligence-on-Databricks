@@ -12,9 +12,9 @@ from databricks_openai import AsyncDatabricksOpenAI
 from databricks_openai.agents import McpServer
 from mlflow.types.responses import ResponsesAgentRequest
 
-from backend.domain.subagent_config import SubagentConfig
-from backend.services.agent_handoff_service import build_delegation_tool
-from backend.services.interfaces import (
+from aiserver.domain.subagent_config import SubagentConfig
+from aiserver.services.agent_handoff_service import build_delegation_tool
+from aiserver.services.interfaces import (
     AgentTaskBus,
     IdentityContextProvider,
     LakebaseToolsBuilder,
@@ -25,20 +25,20 @@ from backend.services.interfaces import (
     SubagentToolsBuilder,
     TraceMetadataUpdater,
 )
-from backend.services.message_bus import NoOpMessageBus
-from backend.services.orchestrator_service import (
+from aiserver.services.message_bus import NoOpMessageBus
+from aiserver.services.orchestrator_service import (
     build_lakebase_delegation_executors,
     build_lakebase_tools,
     build_mcp_servers,
     build_subagent_tools,
 )
-from backend.services.policy_service import (
+from aiserver.services.policy_service import (
     PolicyContext,
     PolicyDecision,
     build_policy_context,
     filter_subagents_by_policy,
 )
-from backend.shared.runtime_utils import (
+from aiserver.shared.runtime_utils import (
     RequestIdentityContext,
     build_request_identity_context,
     get_session_id,

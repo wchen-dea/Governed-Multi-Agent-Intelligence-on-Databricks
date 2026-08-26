@@ -15,17 +15,17 @@ from agents.exceptions import UserError
 from databricks_openai import AsyncDatabricksOpenAI
 from databricks_openai.agents import McpServer
 
-from backend.domain.execution_contracts import ToolExecutionResult
-from backend.domain.subagent_config import SubagentConfig
-from backend.services.interfaces import (
+from aiserver.domain.execution_contracts import ToolExecutionResult
+from aiserver.domain.subagent_config import SubagentConfig
+from aiserver.services.interfaces import (
     FunctionToolWrapper,
     McpServerFactory,
     MessageBus,
     TraceMetadataUpdater,
 )
-from backend.services.message_bus import NoOpMessageBus
-from backend.shared.lakebase_client import connect_lakebase
-from backend.shared.runtime_utils import RequestIdentityContext, build_mcp_url
+from aiserver.services.message_bus import NoOpMessageBus
+from aiserver.shared.lakebase_client import connect_lakebase
+from aiserver.shared.runtime_utils import RequestIdentityContext, build_mcp_url
 
 logger = logging.getLogger(__name__)
 
@@ -404,7 +404,7 @@ def _format_lakebase_results(columns: list[str], rows: list[tuple]) -> str:
 
 def _get_lakebase_token(ws_client, cfg: SubagentConfig) -> str:
     """Get an OAuth token for the configured Lakebase endpoint."""
-    from backend.shared.lakebase_client import get_lakebase_token
+    from aiserver.shared.lakebase_client import get_lakebase_token
 
     return get_lakebase_token(
         ws_client,

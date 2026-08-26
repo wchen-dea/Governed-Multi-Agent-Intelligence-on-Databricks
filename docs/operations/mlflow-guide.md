@@ -8,7 +8,7 @@ Every request to the app generates an MLflow trace automatically.
 
 ### How it works
 
-`mlflow.openai.autolog()` in [handlers.py](../../src/backend/api/handlers.py) captures every `AsyncDatabricksOpenAI` call as a traced span. The `@invoke()` and `@stream()` decorators from `mlflow.genai.agent_server` register the handlers and wrap each request in a trace context.
+`mlflow.openai.autolog()` in [handlers.py](../../src/aiserver/api/handlers.py) captures every `AsyncDatabricksOpenAI` call as a traced span. The `@invoke()` and `@stream()` decorators from `mlflow.genai.agent_server` register the handlers and wrap each request in a trace context.
 
 `set_trace_processors([])` clears the OpenAI Agents SDK's own trace sinks so MLflow is the single tracing backend — no duplicate trace output.
 
@@ -17,7 +17,7 @@ Every request to the app generates an MLflow trace automatically.
 - Full span tree: handler → orchestrator → tool calls (Genie / AI Search / Lakebase)
 - Per-span latency and token counts (input + output)
 - Request and response payloads
-- Git commit SHA and branch (via `setup_mlflow_git_based_version_tracking()` in [server.py](../../src/backend/api/server.py))
+- Git commit SHA and branch (via `setup_mlflow_git_based_version_tracking()` in [server.py](../../src/aiserver/api/server.py))
 
 ### Where traces land
 
@@ -26,7 +26,7 @@ Traces route to the experiment specified by `MLFLOW_EXPERIMENT_ID`:
 | Environment | Experiment ID | Experiment Path |
 |-------------|--------------|-----------------|
 | dev | `3025644123415124` | `/Shared/multiagent-app-dev` |
-| qa/stg/prod | Set per target | See `targets/*.yml` |
+| qa/stg/prd | Set per target | See `targets/*.yml` |
 
 Configuration chain: `targets/dev.yml` → `databricks.yml` variable → `resources/multiagent_app.yml` env injection → `app.yml` deployed to Databricks App.
 
@@ -46,7 +46,7 @@ Click any span to see latency, token counts, and full input/output text.
 
 ## 2. Agent Evaluation
 
-The evaluation pipeline in [evaluate_agent.py](../../src/backend/evaluate_agent.py) runs multi-turn conversations against the deployed agent and scores the results.
+The evaluation pipeline in [evaluate_agent.py](../../src/aiserver/evaluate_agent.py) runs multi-turn conversations against the deployed agent and scores the results.
 
 The simulator includes both tool-requiring and conversational turns. A failed tool-call KPI must therefore be investigated against individual traces rather than inferred from route-plan events alone. Route-plan events are diagnostic metadata; `ToolCallCorrectness` evaluates the actual model/tool behavior.
 
