@@ -19,6 +19,7 @@ dependencies = [
     "httpx>=0.28.0",
     "psycopg2-binary>=2.9.9",
     "databricks-ai-bridge[memory]>=0.21.0",
+    "mysql-connector-python>=26.7.0",
 ]
 
 [build-system]
