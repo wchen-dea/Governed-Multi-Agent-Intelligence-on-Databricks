@@ -376,7 +376,7 @@ Escalate immediately if issue affects multiple targets or production user traffi
 - Missing CI secrets for environment.
 - Terraform registry unreachable or Terraform provider crash (`Plugin did not respond`).
 - Deploy completed but app-source import/deploy path was skipped.
-- SNAPSHOT deploy did not inject env vars — launcher must read them from `app.yml`.
+- SNAPSHOT deploy did not inject env vars — launcher must read them from `app.yml`, which `prepare_app_source.py` now auto-syncs from `resources/multiagent_app.yml` + `targets/<target>.yml` on every `make build-app-source` run.
 - Missing Unity Catalog grants for Genie query paths.
 - OBO flow missing forwarded token (`x-forwarded-access-token`) for tools configured with `auth_mode: obo`.
 - User identity has insufficient data permissions even when app identity has access.
