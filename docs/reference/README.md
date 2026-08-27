@@ -14,3 +14,4 @@ These documents are platform-neutral enterprise reference material and target-st
 6. [05-platform-comparison.md](05-platform-comparison.md)
 7. [06-traceability-matrix.md](06-traceability-matrix.md)
 8. [07-use-case-workflows.md](07-use-case-workflows.md)
+9. [08-ai-coe-business-requirements-and-case-design-rules.md](08-ai-coe-business-requirements-and-case-design-rules.md)
