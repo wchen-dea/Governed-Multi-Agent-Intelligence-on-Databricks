@@ -1,4 +1,4 @@
-from backend.services.message_bus import (
+from aiserver.services.message_bus import (
     AsyncMessageBus,
     KafkaMessageBus,
     NoOpMessageBus,
@@ -7,7 +7,7 @@ from backend.services.message_bus import (
     UcAuditTableMessageBus,
     default_message_bus,
 )
-from backend.shared.settings import AppSettings
+from aiserver.shared.settings import AppSettings
 
 
 def _settings(**kwargs) -> AppSettings:

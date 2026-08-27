@@ -2,21 +2,21 @@
 
 **A governed agentic AI platform for operational decisions, not another generic chatbot.**
 
-This repository is a production-oriented Databricks blueprint for AI executives and AI architects building systems that can select the right model, invoke the right governed tool, operate on live enterprise data, coordinate bounded agent work, and leave an auditable record of every consequential decision. It turns Databricks AI capabilities into a deployable operating model for business intelligence, operations, support, and data-driven workflows.
+This repository is a production-oriented Databricks blueprint for AI executives, AI architects, and AI engineers building systems that select the right model, invoke the right governed tool, operate on live enterprise data, coordinate bounded agent work, and leave an auditable record of every consequential decision. It turns Databricks AI capabilities into a deployable operating model for business intelligence, operations, support, and data-driven workflows.
 
 ## Executive Summary
 
 The next generation of enterprise AI will be judged by execution, controls, and measurable business outcomes, not conversational fluency alone. This implementation is designed for that standard.
 
-| For AI executives | For AI architects |
-| --- | --- |
-| Move from isolated copilots to an accountable AI operating model with governed data access, release gates, and measurable quality. | Separate routing, model selection, authorization, delegation, guardrails, audit, and deployment into independently testable control planes. |
-| Expand AI by business domain without losing policy ownership, identity boundaries, or operational evidence. | Add agents, models, tools, and asynchronous workflows through typed contracts rather than bespoke point-to-point integrations. |
-| Make AI capability investable through explicit controls, evidence, and promotion criteria. | Build on Databricks Apps, MLflow Agent Server, MCP, Unity Catalog, Lakebase, and DAB target overlays. |
+| For AI executives | For AI architects | For AI engineers |
+| --- | --- | --- |
+| Move from isolated copilots to an accountable AI operating model with governed data access, release gates, and measurable quality. | Separate routing, model selection, authorization, delegation, guardrails, audit, and deployment into independently testable control planes. | Build and extend agents against typed contracts, a composed dependency root, and reproducible local/CI workflows instead of ad hoc scripts. |
+| Expand AI by business domain without losing policy ownership, identity boundaries, or operational evidence. | Add agents, models, tools, and asynchronous workflows through typed contracts rather than bespoke point-to-point integrations. | Ship changes with confidence: unit tests, evaluation KPIs, lint/format tooling, and a documented deploy/rollback path cover every layer. |
+| Make AI capability investable through explicit controls, evidence, and promotion criteria. | Build on Databricks Apps, MLflow Agent Server, MCP, Unity Catalog, Lakebase, and DAB target overlays. | Debug fast with lifecycle audit events, MLflow tracing, and a local 5-minute start path that mirrors production behavior. |
 
 ## Why This Matters
 
-This platform operationalizes the advanced AI patterns enterprises need now:
+This platform operationalizes the AI patterns enterprises need now:
 
 - **From answers to action:** native function calls orchestrate MCP, Genie, Vector Search, Lakebase, serving endpoints, and app tools.
 - **Governed data intelligence:** Unity Catalog, app/OBO identity, persona policy, classifications, and guardrails are evaluated before tools execute.
@@ -27,12 +27,10 @@ This platform operationalizes the advanced AI patterns enterprises need now:
 
 The operating principle is simple: use agents where tools add verified value, preserve enterprise controls where data and identity matter, and promote only what can be measured.
 
-## Databricks Features Used
+## Databricks AI Platform Features Used
 
-This project currently uses the following Databricks features:
+This project currently uses the following Databricks AI platform features:
 
-- Databricks Apps: hosts the deployed multi-agent application runtime.
-- Databricks Declarative Automation Bundles (DAB): environment-aware deploy configuration and overlays.
 - Databricks Model Serving: specialist serving-endpoint integrations and model-access routing.
 - Databricks Foundation Model APIs (OpenAI-compatible): orchestrator model calls through Databricks OpenAI APIs.
 - Unity AI Gateway-ready configuration: optional base URL and timeout settings for gateway-based routing.
@@ -43,10 +41,29 @@ This project currently uses the following Databricks features:
 - Genie Agents: natural-language access to governed structured business data.
 - Unity Catalog Semantic Metric Views: recommended semantic source layer for Genie Agents and KPI-aligned business metrics.
 - AI Search: retrieval integration via MCP route-backed index access.
+- Lakebase PostgreSQL: optional conversation/persona memory persistence (`MEMORY_BACKEND=lakebase`, disabled by default).
+
+Supporting platform infrastructure:
+
+- Databricks Apps: hosts the deployed multi-agent application runtime.
+- Databricks Declarative Automation Bundles (DAB): environment-aware deploy configuration and overlays.
 - Unity Catalog: governed data access controls, metadata boundaries, and environment isolation.
 - Databricks SQL Warehouse: backend execution path for UC-governed audit table writes.
 - Databricks Apps telemetry export: application telemetry routing to a Unity Catalog table.
-- Lakebase PostgreSQL: optional conversation/persona memory persistence (`MEMORY_BACKEND=lakebase`, disabled by default).
+
+## AI Engineering Techniques Used
+
+Beyond the Databricks platform features above, this project implements these AI engineering techniques:
+
+- OpenAI Agents SDK (`openai-agents`): agent orchestration runtime (`Agent`, `Runner.run`/`Runner.run_streamed`, native function-calling tools).
+- Model Context Protocol (MCP): standardized tool-calling protocol for Genie and AI Search integrations, with health-checked, TTL-cached server connections.
+- Task-aware model routing: deterministic selection between standard/reasoning/synthesis Databricks models per request, recorded via `routing.plan.selected` lifecycle events.
+- Multi-agent delegation with typed contracts: bounded async agent-to-agent task handoff with correlation IDs, idempotency keys, leases, retries, and dead-letter states.
+- LLM-as-judge evaluation: `ToolCallCorrectness`, `Safety`, and `ConversationalSafety` scorers plus custom `AuthCorrectness` and `DirectGroundedness` (evidence-marker-based) scorers.
+- Deterministic response guardrails: evidence/citation enforcement and unsafe-pattern/low-confidence blocking applied post-generation, independent of the LLM judge path.
+- Persona-based policy authorization: governed routing that filters candidate subagents by persona, auth mode, and data classification before tool execution.
+- Streaming agent responses: token/tool-event streaming with mid-stream guardrail finalization for the chat UI.
+- RAG (retrieval-augmented generation): AI Search/Vector Search-backed retrieval for product knowledge and Flink support troubleshooting, with citation-grounded answers.
 
 ## Team Onboarding: Project Skills and Capabilities
 
@@ -65,7 +82,7 @@ What these skills enable:
 - Governed multi-agent routing and policy-aware tool execution.
 - Genie Agent and AI Search integration with environment-specific configuration.
 - Hybrid authorization support (`app` and `obo`) for runtime tool calls.
-- Repeatable promotion across `dev`, `qa`, `stg`, and `prod`.
+- Repeatable promotion across `dev`, `qa`, `stg`, and `prd`.
 - Operational validation with observability and quality-gate alignment.
 
 Runtime skills playbooks:
@@ -75,15 +92,15 @@ Runtime skills playbooks:
 - [runtime-auth-obo](.claude/skills/runtime-auth-obo/SKILL.md): app-vs-obo auth-mode enforcement and forwarded-token requirements.
 - [runtime-audit-observability](.claude/skills/runtime-audit-observability/SKILL.md): lifecycle event auditing, UC audit persistence, and backend observability checks.
 
-## Introduction Dependencies
+## Semantic Data Dependencies
 
 The current implementation depends on business semantics and AI metadata across governed tools and indexes.
-Runtime integrations are environment-specific through `src/backend/domain/subagents.<target>.json`.
+Runtime integrations are environment-specific through `src/aiserver/domain/subagents.<target>.json`.
 
 Current dev target examples:
 
 - Genie Agent: `sales_insights_agent` (space id configured in `subagents.dev.json`)
-- Genie Agent: `cdi_agent` — Customer Delight Indicator analytics backed by materialized view `quickstart_catalog.multi_agent_schema.fct_cdi_trusted_expert_score_metric_view`
+- Genie Agent: `cdi_agent` — Customer Delight Indicator analytics backed by UC Semantic Metric View `quickstart_catalog.multi_agent_schema.fct_cdi_trusted_expert_score_metric_view`
 - Vector Search MCP index: `product_index_assistant` using `/api/2.0/mcp/vector-search/quickstart_catalog/multi_agent_schema/dim_product_search_index`
 - AI Search MCP index: `flink_support_agent` using `/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/flink_support_index` (RAG over support KB volume)
 
@@ -102,14 +119,14 @@ Semantics layer build automation:
 Project guidelines and best practices for Unity Catalog-governed backend execution:
 
 - Apply least privilege by default for both app identity and OBO identity, granting only required `USE CATALOG`, `USE SCHEMA`, and object-level permissions.
-- Separate environment assets (dev, qa, stg, prod) with explicit catalog/schema boundaries and avoid cross-environment data access from runtime credentials.
+- Separate environment assets (dev, qa, stg, prd) with explicit catalog/schema boundaries and avoid cross-environment data access from runtime credentials.
 - Enforce classification-aware routing in subagent metadata (`data_classification`, `allowed_personas`, `requires_evidence`) before tool execution.
 - Require evidence-backed responses for governed or sensitive routes and block outputs that fail guardrail policy checks.
 - Use Unity Catalog-governed audit persistence (`MESSAGE_BUS_BACKEND=uc_table`) for lifecycle, policy, auth, and guardrail events.
 - Protect customer and regional-store datasets with row/column-level governance controls and avoid exposing restricted fields in tool responses.
 - Keep backend-to-data contracts versioned and reviewed when adding new Genie Agents, AI Search indexes, or Lakebase ODS endpoints.
 
-## Technology Perspective
+## Technology Stack
 
 This project uses a modern AI app stack on Databricks:
 
@@ -124,7 +141,7 @@ This project uses a modern AI app stack on Databricks:
 - Deployment-as-code: Databricks Declarative Automation Bundles with target overlays.
 - Streamed UX: React + TypeScript frontend renders finalized text deltas and run context.
 
-## Functionality Perspective
+## Core Capabilities
 
 The app provides:
 
@@ -135,7 +152,7 @@ The app provides:
 - Auth-aware tool routing: each subagent declares `auth_mode` (`app` or `obo`).
 - Governed routing policy: persona, tool-targeting, identity, and data-classification checks run before tool execution.
 - Response guardrails: governed responses enforce evidence/citation requirements and sensitive-output safety checks.
-- Environment isolation: dev, qa, stg, and prod with explicit target-specific settings.
+- Environment isolation: dev, qa, stg, and prd with explicit target-specific settings.
 - Operational fallback path: Direct apps deploy path when Terraform registry availability is degraded.
 
 ## 5-Minute Start
@@ -163,7 +180,7 @@ The runtime uses a hybrid authorization model:
 - App Authorization: tools execute with the app service principal identity.
 - User Authorization (OBO): tools execute with the forwarded user access token.
 
-Subagent authorization is configured in target-specific files such as `src/backend/domain/subagents.dev.json` using `auth_mode`:
+Subagent authorization is configured in target-specific files such as `src/aiserver/domain/subagents.dev.json` using `auth_mode`:
 
 - `auth_mode: app`
 - `auth_mode: obo`
@@ -173,7 +190,7 @@ Current defaults:
 - Genie Agent subagents default to `obo` when not explicitly set.
 - Non-Genie subagents default to `app` when not explicitly set.
 
-The backend loads an environment-specific file at startup and validates it with typed models in `src/backend/domain/subagent_config.py`.
+The backend loads an environment-specific file at startup and validates it with typed models in `src/aiserver/domain/subagent_config.py`.
 Override the path with `SUBAGENTS_CONFIG_PATH`.
 
 If an OBO tool is selected and no forwarded token is present, the runtime raises a clear user-facing authorization error instead of falling back silently.
@@ -222,10 +239,10 @@ For architecture diagrams, see [docs/architecture/high-level-architecture.md](do
 
 ## Project Layout
 
-- [src/backend/](src/backend): orchestrator runtime, handlers, request normalization, server startup
-- [src/backend/README.md](src/backend/README.md): backend-focused setup, runtime behavior, and operations guide
-- [src/reactui/](src/reactui): primary React UI (TypeScript) client for chat, commands, and stream rendering
-- [src/reactui/README.md](src/reactui/README.md): React UI setup, build, and local run guide
+- [src/aiserver/](src/aiserver): orchestrator runtime, handlers, request normalization, server startup
+- [src/aiserver/README.md](src/aiserver/README.md): backend-focused setup, runtime behavior, and operations guide
+- [src/aiweb/](src/aiweb): primary React UI (TypeScript) client for chat, commands, and stream rendering
+- [src/aiweb/README.md](src/aiweb/README.md): React UI setup, build, and local run guide
 - [src/frontend/](src/frontend): legacy Chainlit frontend retained for compatibility and migration fallback
 - [src/frontend/README.md](src/frontend/README.md): legacy Chainlit frontend guide
 - [src/scripts/](src/scripts): quickstart, preflight, local start, discovery, and permission helpers
@@ -346,7 +363,7 @@ MCP connect/probe performance controls:
 - [docs/product/business-specs.md](docs/product/business-specs.md): business requirements, constraints, and success metrics.
 - [docs/architecture/runtime-technical-specs.md](docs/architecture/runtime-technical-specs.md): centralized technical implementation map and cross-space contracts.
 - [docs/quality/evaluation-spec.md](docs/quality/evaluation-spec.md): datasets, scorers, KPI thresholds, and release-gate rules.
-- [Model Matrix and Environment Recommendations](docs/quality/evaluation-spec.md#model-matrix-and-environment-recommendations): environment-specific model profile guidance for dev, qa, stg, and prod release planning.
+- [Model Matrix and Environment Recommendations](docs/quality/evaluation-spec.md#model-matrix-and-environment-recommendations): environment-specific model profile guidance for dev, qa, stg, and prd release planning.
 - [docs/governance/prompt-policy-controls.md](docs/governance/prompt-policy-controls.md): prompt layering and deterministic policy/guardrail behavior.
 - [docs/architecture/tool-and-model-registry.md](docs/architecture/tool-and-model-registry.md): registry of active tools, endpoints, and Genie Agents.
 - [docs/governance/data-contracts-lineage.md](docs/governance/data-contracts-lineage.md): data contracts, classification, and lineage requirements.
@@ -378,5 +395,5 @@ Useful operational commands:
 - Development environment is active and user-accessible.
 - Multi-agent routing across Genie and serving endpoints is implemented.
 - Governed routing policy, response guardrails, and lifecycle audit-table persistence are implemented.
-- GitHub Actions pipeline supports PR CI and deployment automation for dev, qa, stg, and prod.
+- GitHub Actions pipeline supports PR CI and deployment automation for dev, qa, stg, and prd.
 - Operational controls and troubleshooting guidance are documented in the runbook.

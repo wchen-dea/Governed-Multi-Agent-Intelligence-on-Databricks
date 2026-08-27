@@ -14,7 +14,7 @@ flowchart LR
     BE --> OBO[OBO — x-forwarded-access-token]
     BE --> GENIE[Genie MCP — /api/2.0/mcp/genie/]
     BE --> AIS[AI Search MCP — /api/2.0/mcp/ai-search/]
-    BE --> LB[Lakebase — projects/ore/branches/production/databases/operationaldatastore]
+    BE --> LB[Lakebase — projects/ore/branches/production/databases/operations]
     BE --> OAuth[Postgres Credentials API — OAuth database token]
     BE --> TASKS[UC Delegation Task and Event Tables]
     BE --> STATUS[GET delegations task status payload-redacted]
@@ -40,7 +40,7 @@ flowchart TD
     DeployDev --> Smoke[make health and make smoke]
     Smoke --> DeployQA[bundle deploy -t qa]
     DeployQA --> DeployStg[bundle deploy -t stg]
-    DeployStg --> DeployProd[bundle deploy -t prod]
+    DeployStg --> DeployProd[bundle deploy -t prd]
 ```
 
 ## 3. Observability Architecture
@@ -76,7 +76,7 @@ flowchart LR
         V6[cdi_genie_space_id = 01f19b2a...]
         V7[lakebase_project_id = ore]
         V8[lakebase_branch_id = production]
-        V9[lakebase_database = operationaldatastore]
+        V9[lakebase_database = operations]
         V10[Lakebase postgres resource grant]
     end
 

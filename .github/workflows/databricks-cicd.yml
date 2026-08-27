@@ -2,21 +2,21 @@ name: Databricks App CI/CD
 
 on:
   pull_request:
-    branches: [dev, qa, stg, prod]
+    branches: [dev, qa, stg, prd]
     types: [opened, synchronize, reopened, ready_for_review]
   push:
-    branches: [dev, qa, stg, prod]
+    branches: [dev, qa, stg, prd]
   workflow_dispatch:
     inputs:
       target:
-        description: "Deployment target (dev|qa|stg|prod)"
+        description: "Deployment target (dev|qa|stg|prd)"
         required: true
         type: choice
         options:
           - dev
           - qa
           - stg
-          - prod
+          - prd
 
 concurrency:
   group: databricks-cicd-${{ github.workflow }}-${{ github.ref }}
@@ -114,15 +114,15 @@ jobs:
           DATABRICKS_HOST_STG: ${{ secrets.DATABRICKS_HOST_STG }}
           DATABRICKS_CLIENT_ID_STG: ${{ secrets.DATABRICKS_CLIENT_ID_STG }}
           DATABRICKS_CLIENT_SECRET_STG: ${{ secrets.DATABRICKS_CLIENT_SECRET_STG }}
-          DATABRICKS_HOST_PROD: ${{ secrets.DATABRICKS_HOST_PROD }}
-          DATABRICKS_CLIENT_ID_PROD: ${{ secrets.DATABRICKS_CLIENT_ID_PROD }}
-          DATABRICKS_CLIENT_SECRET_PROD: ${{ secrets.DATABRICKS_CLIENT_SECRET_PROD }}
+          DATABRICKS_HOST_PRD: ${{ secrets.DATABRICKS_HOST_PRD }}
+          DATABRICKS_CLIENT_ID_PRD: ${{ secrets.DATABRICKS_CLIENT_ID_PRD }}
+          DATABRICKS_CLIENT_SECRET_PRD: ${{ secrets.DATABRICKS_CLIENT_SECRET_PRD }}
         run: |
           set -euo pipefail
 
           TARGET="${INPUT_TARGET:-$GH_REF_NAME}"
           case "$TARGET" in
-            dev|qa|stg|prod) ;;
+            dev|qa|stg|prd) ;;
             *)
               echo "Unsupported target: $TARGET" >&2
               exit 1
@@ -141,7 +141,7 @@ jobs:
           done
 
           echo "TARGET=$TARGET" >> "$GITHUB_ENV"
-          if [ "$TARGET" = "prod" ]; then
+          if [ "$TARGET" = "prd" ]; then
             echo "APP_NAME=multiagent-app" >> "$GITHUB_ENV"
           else
             echo "APP_NAME=multiagent-app-$TARGET" >> "$GITHUB_ENV"

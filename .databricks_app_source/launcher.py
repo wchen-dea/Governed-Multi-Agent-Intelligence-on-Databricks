@@ -81,7 +81,7 @@ def main() -> None:
     # Inject env vars from app.yml (don't override existing env)
     for key, value in _load_app_yml_env(source_root).items():
         env.setdefault(key, value)
-    env.setdefault("REACT_UI_DIST_DIR", str(source_root / "reactui-dist"))
+    env.setdefault("AIWEB_DIST_DIR", str(source_root / "aiweb-dist"))
     # Start the packaged app entrypoint after installation.
     cmd = ["uv", "run", "python", "-m", "scripts.start_app"]
     raise SystemExit(subprocess.call(cmd, env=env))

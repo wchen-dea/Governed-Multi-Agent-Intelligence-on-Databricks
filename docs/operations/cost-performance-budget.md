@@ -21,7 +21,7 @@ Recommended request-latency SLOs (per environment profile):
 - `mcp.connect_latency_ms`: p50 and p95
 - `mcp.unavailable_ratio`: percentage of requests with MCP unavailability
 
-Default operational targets should be set by environment (`dev`, `qa`, `stg`, `prod`) and reviewed at release gates.
+Default operational targets should be set by environment (`dev`, `qa`, `stg`, `prd`) and reviewed at release gates.
 
 ## Cost Drivers
 
@@ -75,7 +75,7 @@ Tuning guardrails:
 
 Recommended metric dimensions:
 
-- environment (`dev`, `qa`, `stg`, `prod`)
+- environment (`dev`, `qa`, `stg`, `prd`)
 - mode (`invoke`, `stream`)
 - auth path (`app`, `obo`)
 - tool route (`genie`, `mcp`, `serving_endpoint`, `app`)

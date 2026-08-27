@@ -1,7 +1,7 @@
 """Tests for user-safe delegation status responses."""
 
-from backend.api.server import _delegation_status_payload
-from backend.domain.agent_messages import DelegationTask, DelegationTaskRecord
+from aiserver.api.server import _delegation_status_payload
+from aiserver.domain.agent_messages import DelegationTask, DelegationTaskRecord
 
 
 def test_delegation_status_does_not_expose_task_sql_payload():

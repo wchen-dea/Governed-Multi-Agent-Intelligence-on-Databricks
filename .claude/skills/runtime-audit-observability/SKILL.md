@@ -28,8 +28,8 @@ This skill does not cover:
 
 ## Files Typically Changed
 
-- `src/backend/services/message_bus.py`
-- `src/backend/shared/settings.py`
+- `src/aiserver/services/message_bus.py`
+- `src/aiserver/shared/settings.py`
 - `targets/<env>.yml`
 - `resources/multiagent_app.yml`
 - `tests/test_message_bus_backends.py`

@@ -6,14 +6,12 @@ env:
   value: databricks
 - name: MLFLOW_REGISTRY_URI
   value: databricks-uc
-- name: MLFLOW_EXPERIMENT_ID
-  value: "3025644123415124"
 - name: DATABRICKS_OPENAI_BASE_URL
-  value: ""
+  value: ''
 - name: DATABRICKS_OPENAI_TIMEOUT_SECONDS
-  value: "0"
+  value: '0'
 - name: MODEL_ROUTING_ENABLED
-  value: "true"
+  value: 'true'
 - name: MODEL_ROUTING_DEFAULT_MODEL
   value: databricks-gpt-5-6-luna
 - name: MODEL_ROUTING_REASONING_MODEL
@@ -23,11 +21,19 @@ env:
 - name: API_PROXY
   value: http://localhost:8000/invocations
 - name: CHAT_APP_PORT
-  value: "3000"
+  value: '3000'
 - name: CHAT_PROXY_TIMEOUT_SECONDS
-  value: "300"
+  value: '300'
+- name: SUBAGENTS_CONFIG_PATH
+  value: ''
 - name: DEFAULT_REQUEST_PERSONA
   value: manager
+- name: MAX_INPUT_CHARS
+  value: '12000'
+- name: MAX_RESPONSE_CHARS
+  value: '20000'
+- name: MLFLOW_EXPERIMENT_ID
+  value: '3025644123415124'
 - name: MESSAGE_BUS_BACKEND
   value: uc_table
 - name: MESSAGE_BUS_TOPIC
@@ -49,9 +55,9 @@ env:
 - name: AGENT_TASK_SCHEMA
   value: multi_agent_schema
 - name: AGENT_TASK_WORKER_ENABLED
-  value: "true"
+  value: 'true'
 - name: AGENT_TASK_WORKER_POLL_SECONDS
-  value: "1"
+  value: '1'
 - name: MEMORY_BACKEND
   value: lakebase
 - name: MEMORY_PROJECT_ID
@@ -61,7 +67,7 @@ env:
 - name: MEMORY_ENDPOINT_ID
   value: primary
 - name: MEMORY_DATABASE
-  value: operationaldatastore
+  value: agent_memory
 - name: MEMORY_PG_HOST
   value: ep-falling-cake-d1j29nc5.database.us-west-2.cloud.databricks.com
 - name: MEMORY_PG_USER

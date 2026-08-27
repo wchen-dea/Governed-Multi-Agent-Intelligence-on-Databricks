@@ -221,7 +221,7 @@ The dev app uses the existing Lakebase Autoscaling resources:
 
 - Project: `ore`
 - Branch: `production`
-- Runtime database: `operationaldatastore`
+- Runtime database: `operations`
 - Database resource ID: `db-j7lf-e5xmy0cwq4`
 - Endpoint: `primary`
 
@@ -235,6 +235,8 @@ postgres:
     database: projects/ore/branches/production/databases/db-j7lf-e5xmy0cwq4
     permission: CAN_CONNECT_AND_CREATE
 ```
+
+Conversation/persona memory (`MEMORY_BACKEND=lakebase`) uses the same project/branch/endpoint but a separate `agent_memory` database, isolated from the `operations` database used by `lakebase_ods_agent`. See [Tool and Model Registry](tool-and-model-registry.md#conversation-memory-lakebase-not-a-subagent).
 
 ### Execution and Frontend Metadata
 
@@ -270,7 +272,7 @@ Optional runtime mode:
 | Development | dev | development | dev |
 | QA | qa | development | qa |
 | Staging | stg | production | stg |
-| Production | prod | production | prd |
+| Production | prd | production | prd |
 
 ## Related Docs
 

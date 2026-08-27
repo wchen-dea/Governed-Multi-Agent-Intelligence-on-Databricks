@@ -1,4 +1,4 @@
-from backend.api.handlers import (
+from aiserver.api.handlers import (
     _append_source_to_output_items,
     _event_has_tool_activity,
     _governed_source_suffix,
@@ -8,7 +8,7 @@ from backend.api.handlers import (
     _select_route_tools,
     _used_subagents_from_payloads,
 )
-from backend.domain.subagent_config import SubagentConfig
+from aiserver.domain.subagent_config import SubagentConfig
 
 
 def test_guardrail_block_message_mentions_reason_and_remediation():
@@ -167,7 +167,7 @@ def test_confident_lakebase_route_selects_wrapped_tool_name():
         kind="lakebase",
         project_id="ore",
         branch_id="production",
-        database="operationaldatastore",
+        database="operations",
         pg_host="lakebase.example.com",
         endpoint_id="primary",
         description="appointments and order status",

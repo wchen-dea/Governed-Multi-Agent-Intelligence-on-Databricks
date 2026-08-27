@@ -22,15 +22,15 @@ This skill does not cover:
 
 ## Preconditions
 
-- Target selected (`dev`, `qa`, `stg`, `prod`).
+- Target selected (`dev`, `qa`, `stg`, `prd`).
 - Existing policy and metadata expectations are documented.
 - Test scenarios are defined for both pass and block paths.
 
 ## Files Typically Changed
 
-- `src/backend/services/guardrails_service.py`
-- `src/backend/services/policy_service.py`
-- `src/backend/domain/subagents.<target>.json`
+- `src/aiserver/services/guardrails_service.py`
+- `src/aiserver/services/policy_service.py`
+- `src/aiserver/domain/subagents.<target>.json`
 - `tests/test_guardrails_service.py`
 - `docs/governance/prompt-policy-controls.md`
 

@@ -2,12 +2,12 @@
 
 import asyncio
 
-from backend.domain.agent_messages import DelegationTask
-from backend.domain.subagent_config import SubagentConfig
-from backend.services.agent_delegation_policy_service import evaluate_delegation_policy
-from backend.services.agent_handoff_service import build_delegation_tool, execute_delegation
-from backend.services.agent_task_bus import InMemoryAgentTaskBus
-from backend.services.agent_task_worker import AgentTaskWorker
+from aiserver.domain.agent_messages import DelegationTask
+from aiserver.domain.subagent_config import SubagentConfig
+from aiserver.services.agent_delegation_policy_service import evaluate_delegation_policy
+from aiserver.services.agent_handoff_service import build_delegation_tool, execute_delegation
+from aiserver.services.agent_task_bus import InMemoryAgentTaskBus
+from aiserver.services.agent_task_worker import AgentTaskWorker
 
 
 class RecordingBus:
@@ -34,7 +34,7 @@ def _agents() -> list[SubagentConfig]:
             kind="lakebase",
             project_id="ore",
             branch_id="production",
-            database="operationaldatastore",
+            database="operations",
             pg_host="lakebase.example.com",
             endpoint_id="primary",
             description="appointment data",

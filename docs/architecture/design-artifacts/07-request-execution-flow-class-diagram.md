@@ -1,6 +1,6 @@
 # Request Execution Flow: Class Diagram
 
-These diagrams focus on request execution in `src/backend/api/handlers.py` using the staged-pipeline pattern.
+These diagrams focus on request execution in `src/aiserver/api/handlers.py` using the staged-pipeline pattern.
 They separate the invoke and stream pipeline views while showing the shared stages.
 
 ## Invoke Pipeline

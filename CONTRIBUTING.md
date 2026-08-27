@@ -34,7 +34,7 @@ Use this order when sections are relevant:
 
 - Do not restate type hints only.
 - Do not describe line-by-line implementation details.
-- Keep examples realistic and target-aware (`dev`, `qa`, `stg`, `prod`).
+- Keep examples realistic and target-aware (`dev`, `qa`, `stg`, `prd`).
 - Update docstrings in the same change set as behavior updates.
 
 ### Function Template
@@ -44,7 +44,7 @@ def example(target: str, dry_run: bool) -> dict[str, str]:
     """Apply target-scoped configuration updates.
 
     Args:
-        target: Deployment target name (`dev`, `qa`, `stg`, or `prod`).
+        target: Deployment target name (`dev`, `qa`, `stg`, or `prd`).
         dry_run: When true, report planned changes without applying updates.
 
     Returns:

@@ -46,8 +46,8 @@ Current state: all 5 configured subagents use `auth_mode=app`. OBO paths are wir
 
 ## Implementation Notes
 
-- Identity resolution: [src/backend/shared/runtime_utils.py](../../src/backend/shared/runtime_utils.py) (`RequestIdentityContext`, `build_request_identity_context`)
-- Auth context assembly: [src/backend/services/runtime_auth_service.py](../../src/backend/services/runtime_auth_service.py) (`build_runtime_auth_context`)
-- Policy enforcement: [src/backend/services/policy_service.py](../../src/backend/services/policy_service.py) (`obo_identity_required` reason code)
+- Identity resolution: [src/aiserver/shared/runtime_utils.py](../../src/aiserver/shared/runtime_utils.py) (`RequestIdentityContext`, `build_request_identity_context`)
+- Auth context assembly: [src/aiserver/services/runtime_auth_service.py](../../src/aiserver/services/runtime_auth_service.py) (`build_runtime_auth_context`)
+- Policy enforcement: [src/aiserver/services/policy_service.py](../../src/aiserver/services/policy_service.py) (`obo_identity_required` reason code)
 - Token forwarding UX: React UI `/token <databricks_access_token>` command sets `x-forwarded-access-token` header
-- Auth mode config: `auth_mode` field in [src/backend/domain/subagents.dev.json](../../src/backend/domain/subagents.dev.json)
+- Auth mode config: `auth_mode` field in [src/aiserver/domain/subagents.dev.json](../../src/aiserver/domain/subagents.dev.json)

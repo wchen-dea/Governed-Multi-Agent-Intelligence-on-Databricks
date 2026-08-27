@@ -21,10 +21,10 @@ Provide an auditable and maintainable registry for runtime integrations and owne
 ## Configuration Source
 
 - Runtime subagent config is environment-specific:
-	- `src/backend/domain/subagents.dev.json`
-	- `src/backend/domain/subagents.qa.json`
-	- `src/backend/domain/subagents.stg.json`
-	- `src/backend/domain/subagents.prod.json`
+	- `src/aiserver/domain/subagents.dev.json`
+	- `src/aiserver/domain/subagents.qa.json`
+	- `src/aiserver/domain/subagents.stg.json`
+	- `src/aiserver/domain/subagents.prd.json`
 
 ## Semantics Layer Build Automation
 
@@ -46,7 +46,7 @@ Typical source pattern for Genie Agents:
 
 - Type: genie
 - Runtime name: `sales_insights_agent`
-- Space ID source: `src/backend/domain/subagents.dev.json`
+- Space ID source: `src/aiserver/domain/subagents.dev.json`
 - Genie space created and owned by the Genie/analytics project; this project only registers the space id and routes to it via MCP.
 - Auth mode: app
 - Classification: confidential
@@ -83,7 +83,7 @@ Typical source pattern for Genie Agents:
 
 - Type: genie
 - Runtime name: `cdi_agent`
-- Space ID source: `src/backend/domain/subagents.dev.json`
+- Space ID source: `src/aiserver/domain/subagents.dev.json`
 - Source: materialized view `quickstart_catalog.multi_agent_schema.fct_cdi_trusted_expert_score_metric_view`
 - Genie space created and owned by the Genie/analytics project; this project only registers the space id and routes to it via MCP.
 - Auth mode: app
@@ -93,8 +93,8 @@ Typical source pattern for Genie Agents:
 
 ## Other Environments
 
-- QA/STG/PROD define the same 5 subagents as dev (`sales_insights_agent`, `product_index_assistant`, `flink_support_agent`, `cdi_agent`, `lakebase_ods_agent`), aligned in shape and `auth_mode`/`requires_evidence` settings.
-- `cdi_agent.space_id` and `lakebase_ods_agent`'s Lakebase connection fields (`project_id`, `branch_id`, `endpoint_id`, `database`, `pg_host`, `pg_user`) remain placeholders in QA/STG/PROD until those resources are provisioned per environment.
+- QA/STG/PRD define the same 5 subagents as dev (`sales_insights_agent`, `product_index_assistant`, `flink_support_agent`, `cdi_agent`, `lakebase_ods_agent`), aligned in shape and `auth_mode`/`requires_evidence` settings.
+- `cdi_agent.space_id` and `lakebase_ods_agent`'s Lakebase connection fields (`project_id`, `branch_id`, `endpoint_id`, `database`, `pg_host`, `pg_user`) remain placeholders in QA/STG/PRD until those resources are provisioned per environment.
 - Entries with placeholder identifiers are skipped at runtime until concrete IDs are configured.
 
 ## Active Model Routes (Dev)
@@ -118,8 +118,8 @@ Promotion remains blocked until [ToolCallCorrectness](../quality/evaluation-spec
 - Project: `ore` (resource path: `projects/ore`)
 - Branch: `production` (resource path: `projects/ore/branches/production`)
 - Endpoint: `primary` (host: `ep-falling-cake-d1j29nc5.database.us-west-2.cloud.databricks.com`)
-- Database: `operationaldatastore`
-- Database resource: `projects/ore/branches/production/databases/db-j7lf-e5xmy0cwq4` (runtime database name: `operationaldatastore`)
+- Database: `operations`
+- Database resource: `projects/ore/branches/production/databases/db-j7lf-e5xmy0cwq4` (runtime database name: `operations`)
 - Auth mode: app
 - Credential source: Databricks Postgres credentials API, using the app identity's OAuth database role.
 - Query contract: one optional schema-discovery query followed by one data query; `LAKEBASE_QUERY_FAILED` is not retried.
@@ -127,9 +127,19 @@ Promotion remains blocked until [ToolCallCorrectness](../quality/evaluation-spec
 - Owner: data-platform
 - Status: active
 
+### Conversation memory (Lakebase, not a subagent)
+
+Conversation/persona memory (`MEMORY_BACKEND=lakebase`) uses a separate Lakebase database from `lakebase_ods_agent`, dedicated to agent memory only:
+
+- Project: `ore`, Branch: `production`, Endpoint: `primary` (same Lakebase Autoscaling instance as `lakebase_ods_agent`)
+- Database: `agent_memory` (distinct from the `operations` database used by `lakebase_ods_agent`)
+- Tables: `agent_conversations`, `agent_preferences` (auto-created via `CREATE TABLE IF NOT EXISTS` on first connect; configurable via `MEMORY_CONVERSATION_TABLE`/`MEMORY_PREFERENCE_TABLE`)
+- Configured via `memory_*` variables in `targets/<target>.yml`, propagated to the app through `resources/multiagent_app.yml`
+- Disabled by default (`MEMORY_BACKEND=disabled`); review data classification before enabling persistence of conversation content.
+
 ## Maintenance Rules
 
-- Registry updates are required whenever any `src/backend/domain/subagents.<target>.json` changes.
+- Registry updates are required whenever any `src/aiserver/domain/subagents.<target>.json` changes.
 - Deprecated entries must include migration guidance and removal timeline.
 - Runtime, bundle variables, and app permissions must remain consistent.
 

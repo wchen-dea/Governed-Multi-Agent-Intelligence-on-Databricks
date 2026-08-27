@@ -28,9 +28,9 @@ This skill does not cover:
 
 ## Files Typically Changed
 
-- `src/backend/services/runtime_auth.py`
-- `src/backend/services/orchestrator_service.py`
-- `src/backend/domain/subagents.<target>.json`
+- `src/aiserver/services/runtime_auth.py`
+- `src/aiserver/services/orchestrator_service.py`
+- `src/aiserver/domain/subagents.<target>.json`
 - `tests/test_runtime_auth.py`
 - `docs/governance/security-threat-model.md`
 

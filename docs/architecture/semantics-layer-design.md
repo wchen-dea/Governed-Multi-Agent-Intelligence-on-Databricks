@@ -58,7 +58,7 @@ This project implements **only part** of the full ai-ready semantics layer. The 
 | --- | --- | --- |
 | AI Search (Vector Search) indexes | **Yes** | Built by pipelines in `src/semantics/notebooks/`, deployed as Databricks Jobs in `resources/semantics_jobs.yml`. |
 | Unity Catalog Metric Views | **Yes** | Published by `src/semantics/notebooks/create_fct_cdi_trusted_expert_score_metric_view.py` over gold-layer Delta tables. |
-| Genie Agent spaces | No — other project | This repo only registers the Genie space id in `src/backend/domain/subagents.<target>.json` and routes to it via MCP. Space creation, metric-view binding at the Genie level, and prompt tuning are owned by the Genie/analytics project. |
+| Genie Agent spaces | No — other project | This repo only registers the Genie space id in `src/aiserver/domain/subagents.<target>.json` and routes to it via MCP. Space creation, metric-view binding at the Genie level, and prompt tuning are owned by the Genie/analytics project. |
 | Lakebase operational data store | No — other project | The Lakebase project (Postgres instance, schema, ODS tables, real-time ingestion) is provisioned and owned by a separate project. This repo only holds a service point (`lakebase_ods_agent` subagent) that connects via OAuth-authenticated `psycopg2` for read queries. |
 
 Consequence: this repository's semantics-layer responsibility is limited to **AI Search indexes** and **Metric Views** built from Delta Lake gold-layer tables. Genie Agent space configuration and Lakebase provisioning are external dependencies, tracked here only as integration points.
@@ -84,14 +84,14 @@ Consequence: this repository's semantics-layer responsibility is limited to **AI
 ### 3. Genie Agent Spaces (external dependency)
 
 - Created and maintained by the Genie/analytics project, using the Metric Views this project publishes (or other governed sources) as their structured semantic source.
-- This project's only touchpoints: `space_id` registration in `src/backend/domain/subagents.<target>.json`, `CAN_RUN` permission grants in `resources/multiagent_app.yml`/`targets/*.yml`, and MCP-based query routing in the orchestrator.
+- This project's only touchpoints: `space_id` registration in `src/aiserver/domain/subagents.<target>.json`, `CAN_RUN` permission grants in `resources/multiagent_app.yml`/`targets/*.yml`, and MCP-based query routing in the orchestrator.
 - Current Genie Agents, all created and owned by the Genie/analytics project: `sales_insights_agent` and `cdi_agent`. Neither space, nor its underlying semantic model, is created by this repository.
 - Recommended blueprint for the owning project: [Unity-Catalog-Semantic-Metric-Views-Blueprint](https://github.com/wchen-dea/Unity-Catalog-Semantic-Metric-Views-Blueprint).
 
 ### 4. Lakebase Operational Data Store (external dependency)
 
 - The Lakebase project (Postgres instance, database, real-time operational tables such as appointments/orders) is provisioned and operated independently of this repository.
-- This project's only touchpoint is a service point: the `lakebase_ods_agent` subagent (`kind: lakebase`) in `src/backend/domain/subagents.<target>.json`, which executes read SQL against the ODS database using short-lived OAuth credentials obtained through the Databricks Postgres credentials API (`src/backend/shared/lakebase_client.py`).
+- This project's only touchpoint is a service point: the `lakebase_ods_agent` subagent (`kind: lakebase`) in `src/aiserver/domain/subagents.<target>.json`, which executes read SQL against the ODS database using short-lived OAuth credentials obtained through the Databricks Postgres credentials API (`src/aiserver/shared/lakebase_client.py`).
 - This repo does not create the Lakebase project, schema, or ingestion pipelines, and does not own its data model.
 
 ## Implementation
@@ -100,8 +100,8 @@ Consequence: this repository's semantics-layer responsibility is limited to **AI
 | --- | --- |
 | Build pipelines (notebooks) | [src/semantics/notebooks/](../../src/semantics/notebooks) — see [src/semantics/README.md](../../src/semantics/README.md) |
 | Build automation (jobs) | `resources/semantics_jobs.yml` (one Databricks Job per notebook) |
-| Runtime consumption config | `src/backend/domain/subagents.<target>.json` (MCP URLs, Genie space ids, Lakebase connection fields) |
-| Runtime consumption code | `src/backend/services/orchestrator_service.py` (MCP/Genie routing), `src/backend/shared/lakebase_client.py` (Lakebase OAuth/psycopg2) |
+| Runtime consumption config | `src/aiserver/domain/subagents.<target>.json` (MCP URLs, Genie space ids, Lakebase connection fields) |
+| Runtime consumption code | `src/aiserver/services/orchestrator_service.py` (MCP/Genie routing), `src/aiserver/shared/lakebase_client.py` (Lakebase OAuth/psycopg2) |
 | Registry/inventory | [Tool and model registry](tool-and-model-registry.md) |
 
 ## Related Docs

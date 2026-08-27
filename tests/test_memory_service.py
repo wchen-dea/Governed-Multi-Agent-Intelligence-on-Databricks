@@ -2,12 +2,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from backend.services.memory_service import (
+from aiserver.services.memory_service import (
     LakebaseConversationMemory,
     NoopConversationMemory,
     default_conversation_memory,
 )
-from backend.shared.settings import AppSettings
+from aiserver.shared.settings import AppSettings
 
 
 def _settings(**kwargs) -> AppSettings:
@@ -32,7 +32,12 @@ class _FakeCursor:
         if statement_lower.startswith("insert into") and "conversations" in statement_lower:
             conversation_id, persona, role, content = params
             self._store.setdefault("turns", []).append(
-                {"conversation_id": conversation_id, "persona": persona, "role": role, "content": content}
+                {
+                    "conversation_id": conversation_id,
+                    "persona": persona,
+                    "role": role,
+                    "content": content,
+                }
             )
         elif statement_lower.startswith("select role, content"):
             conversation_id, limit = params
@@ -77,7 +82,7 @@ def memory_store():
 
 
 def _build_memory(memory_store, **overrides) -> LakebaseConversationMemory:
-    with patch("backend.services.memory_service.connect_lakebase") as connect_mock:
+    with patch("aiserver.services.memory_service.connect_lakebase") as connect_mock:
         connect_mock.side_effect = lambda *a, **k: _FakeConnection(memory_store)
         kwargs = {
             "project_id": "proj",
@@ -86,8 +91,8 @@ def _build_memory(memory_store, **overrides) -> LakebaseConversationMemory:
             "database": "db",
             "pg_host": "host",
             "pg_user": "user",
-            "conversation_table": "agent_memory_conversations",
-            "preference_table": "agent_memory_preferences",
+            "conversation_table": "agent_conversations",
+            "preference_table": "agent_preferences",
             "fail_open": True,
             "workspace_client": MagicMock(),
         }
@@ -97,7 +102,7 @@ def _build_memory(memory_store, **overrides) -> LakebaseConversationMemory:
 
 def test_save_and_recall_turns(memory_store):
     memory = _build_memory(memory_store)
-    with patch("backend.services.memory_service.connect_lakebase") as connect_mock:
+    with patch("aiserver.services.memory_service.connect_lakebase") as connect_mock:
         connect_mock.side_effect = lambda *a, **k: _FakeConnection(memory_store)
         memory.save_turn("conv-1", "manager", "user", "hello")
         memory.save_turn("conv-1", "manager", "assistant", "hi there")
@@ -111,7 +116,7 @@ def test_save_and_recall_turns(memory_store):
 
 def test_save_and_get_persona_preference(memory_store):
     memory = _build_memory(memory_store)
-    with patch("backend.services.memory_service.connect_lakebase") as connect_mock:
+    with patch("aiserver.services.memory_service.connect_lakebase") as connect_mock:
         connect_mock.side_effect = lambda *a, **k: _FakeConnection(memory_store)
         memory.save_persona_preference("conv-1", "analyst")
         assert memory.get_persona_preference("conv-1") == "analyst"
@@ -136,7 +141,7 @@ def test_lakebase_memory_requires_connection_fields():
 
 def test_lakebase_memory_fail_open_swallows_errors(memory_store):
     memory = _build_memory(memory_store)
-    with patch("backend.services.memory_service.connect_lakebase") as connect_mock:
+    with patch("aiserver.services.memory_service.connect_lakebase") as connect_mock:
         connect_mock.side_effect = RuntimeError("connection refused")
         memory.save_turn("conv-1", "manager", "user", "hello")
         assert memory.recent_turns("conv-1", limit=10) == []
@@ -162,9 +167,7 @@ def test_default_conversation_memory_lakebase_missing_config_falls_back_to_noop(
 
 def test_default_conversation_memory_lakebase_missing_config_raises_when_not_fail_open():
     with pytest.raises(ValueError):
-        default_conversation_memory(
-            _settings(memory_backend="lakebase", memory_fail_open=False)
-        )
+        default_conversation_memory(_settings(memory_backend="lakebase", memory_fail_open=False))
 
 
 def test_noop_conversation_memory_is_inert():

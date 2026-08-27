@@ -1,8 +1,8 @@
 import asyncio
 from types import SimpleNamespace
 
-from backend.domain.subagent_config import SubagentConfig
-from backend.services.orchestrator_service import (
+from aiserver.domain.subagent_config import SubagentConfig
+from aiserver.services.orchestrator_service import (
     OrchestratorDependencies,
     _lakebase_failure_result,
     build_mcp_servers,
@@ -184,7 +184,7 @@ def test_create_orchestrator_agent_requires_data_tool_attempt_before_refusal():
             auth_mode="app",
             project_id="ore",
             branch_id="production",
-            database="operationaldatastore",
+            database="operations",
             pg_host="lakebase.example.com",
             endpoint_id="primary",
             description="appointments, orders, invoices, and scheduling operational data",

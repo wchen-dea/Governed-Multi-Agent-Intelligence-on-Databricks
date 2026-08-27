@@ -79,7 +79,7 @@ triage-evaluation:
 	uv run assistant-triage-evaluation $(if $(RUN_ID),--run-id $(RUN_ID)) $(if $(EXPERIMENT_ID),--experiment-id $(EXPERIMENT_ID))
 
 build-app-source:
-	uv run runtime-build-source
+	TARGET="$(TARGET)" uv run runtime-build-source
 
 upload-wheel: ensure-running import deploy health
 

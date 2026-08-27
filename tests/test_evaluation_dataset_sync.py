@@ -7,8 +7,8 @@ the corresponding expectation can never be satisfied under current policy —
 have nothing to do with routing/model quality.
 """
 
-from backend.domain.subagent_config import SUBAGENTS
-from backend.evaluate_agent import test_cases
+from aiserver.domain.subagent_config import SUBAGENTS
+from aiserver.evaluate_agent import test_cases
 
 _SUBAGENTS_BY_NAME = {subagent.name: subagent for subagent in SUBAGENTS}
 _SIMULATOR_KEYS = {"context", "goal", "simulation_guidelines", "persona", "expectations"}
@@ -95,9 +95,7 @@ def test_tool_use_expectations_are_consistent():
     contradictions: list[str] = []
     for test_case in test_cases:
         expectations = test_case["expectations"]
-        expected_names = {
-            expected["name"] for expected in expectations["expected_tool_calls"]
-        }
+        expected_names = {expected["name"] for expected in expectations["expected_tool_calls"]}
         restricted_names = set(expectations.get("restricted_tools", []))
         if expected_names & restricted_names:
             contradictions.append(test_case["goal"])

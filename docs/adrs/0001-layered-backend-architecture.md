@@ -10,14 +10,14 @@ The backend started as a small set of top-level modules. As the application grew
 
 ## Decision
 
-Adopt a four-layer package structure under `src/backend/`:
+Adopt a four-layer package structure under `src/aiserver/`:
 
 | Layer | Path | Responsibility |
 |-------|------|---------------|
-| `api` | `src/backend/api/` | HTTP handlers, MLflow Agent Server bootstrap, dependency composition root |
-| `services` | `src/backend/services/` | Business logic — orchestration, policy, guardrails, auth, message bus |
-| `domain` | `src/backend/domain/` | Typed domain models, subagent config validation, per-environment registries |
-| `shared` | `src/backend/shared/` | Cross-cutting utilities — settings, identity helpers, request normalization |
+| `api` | `src/aiserver/api/` | HTTP handlers, MLflow Agent Server bootstrap, dependency composition root |
+| `services` | `src/aiserver/services/` | Business logic — orchestration, policy, guardrails, auth, message bus |
+| `domain` | `src/aiserver/domain/` | Typed domain models, subagent config validation, per-environment registries |
+| `shared` | `src/aiserver/shared/` | Cross-cutting utilities — settings, identity helpers, request normalization |
 
 Dependencies flow downward only: `api → services → domain → shared`. No upward imports.
 
@@ -46,7 +46,7 @@ Dependencies flow downward only: `api → services → domain → shared`. No up
 Current file inventory:
 
 ```
-src/backend/
+src/aiserver/
 ├── api/
 │   ├── server.py              # MLflow AgentServer bootstrap
 │   ├── handlers.py            # @invoke / @stream pipeline stages
@@ -63,7 +63,7 @@ src/backend/
 │   ├── subagents.dev.json
 │   ├── subagents.qa.json
 │   ├── subagents.stg.json
-│   └── subagents.prod.json
+│   └── subagents.prd.json
 └── shared/
     ├── settings.py            # AppSettings from env vars
     ├── runtime_utils.py       # Identity, MCP URL, stream normalization

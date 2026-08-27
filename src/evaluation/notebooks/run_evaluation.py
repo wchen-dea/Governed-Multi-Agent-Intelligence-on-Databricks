@@ -2,7 +2,7 @@
 # MAGIC %md
 # MAGIC # Run Agent Quality Evaluation
 # MAGIC
-# MAGIC Runs `backend.evaluate_agent.evaluate()` on Databricks compute so both the
+# MAGIC Runs `aiserver.evaluate_agent.evaluate()` on Databricks compute so both the
 # MAGIC MLflow tracking server and Lakebase Postgres are reached over the
 # MAGIC workspace's private network, avoiding local network/tracing-latency
 # MAGIC failures seen when running `make evaluate` from an external shell.
@@ -15,7 +15,7 @@
 
 dbutils.widgets.text("mlflow_experiment_id", "", "MLflow experiment ID")
 dbutils.widgets.text(
-    "bundle_target", "dev", "Bundle target (dev/qa/stg/prod) selecting subagents.<target>.json"
+    "bundle_target", "dev", "Bundle target (dev/qa/stg/prd) selecting subagents.<target>.json"
 )
 dbutils.widgets.text("eval_min_tool_call_accuracy", "0.80", "Minimum tool-call accuracy")
 dbutils.widgets.text("eval_min_auth_correctness", "0.90", "Minimum auth correctness")
@@ -41,7 +41,7 @@ os.environ["EVAL_REQUIRE_ALL_KPIS"] = dbutils.widgets.get("eval_require_all_kpis
 
 # COMMAND ----------
 
-from backend.evaluate_agent import evaluate
+from aiserver.evaluate_agent import evaluate
 
 # Raises on release-gate failure, which fails this job run — the same
 # enforcement behavior as `make evaluate`/`make evaluate-strict` locally.

@@ -1,5 +1,5 @@
-from backend.domain.subagent_config import SubagentConfig
-from backend.services.route_planner import build_route_plan
+from aiserver.domain.subagent_config import SubagentConfig
+from aiserver.services.route_planner import build_route_plan
 
 
 def test_route_planner_selects_best_capability_match():
@@ -79,7 +79,7 @@ def test_route_planner_selects_lakebase_for_appointments_and_order_status():
         kind="lakebase",
         project_id="ore",
         branch_id="production",
-        database="operationaldatastore",
+        database="operations",
         pg_host="lakebase.example.com",
         endpoint_id="primary",
         description="appointments, orders, invoices, and scheduling operational data",

@@ -2,13 +2,13 @@ from types import SimpleNamespace
 
 from mlflow.types.responses import ResponsesAgentRequest
 
-from backend.domain.subagent_config import SubagentConfig
-from backend.shared.runtime_utils import get_session_id
-from backend.services.agent_task_bus import InMemoryAgentTaskBus
-from backend.services.runtime_auth_service import (
+from aiserver.domain.subagent_config import SubagentConfig
+from aiserver.services.agent_task_bus import InMemoryAgentTaskBus
+from aiserver.services.runtime_auth_service import (
     RuntimeAuthDependencies,
     build_runtime_auth_context,
 )
+from aiserver.shared.runtime_utils import get_session_id
 
 
 def _sample_subagents() -> list[SubagentConfig]:
@@ -228,7 +228,7 @@ def test_runtime_auth_exposes_native_handoff_for_approved_lakebase_target():
         auth_mode="app",
         project_id="ore",
         branch_id="production",
-        database="operationaldatastore",
+        database="operations",
         pg_host="lakebase.example.com",
         endpoint_id="primary",
         description="appointments",

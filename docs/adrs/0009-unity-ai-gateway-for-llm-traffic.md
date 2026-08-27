@@ -20,7 +20,7 @@ The integration uses a single environment variable (`DATABRICKS_OPENAI_BASE_URL`
 
 A companion timeout override (`DATABRICKS_OPENAI_TIMEOUT_SECONDS`) accommodates gateway-introduced latency.
 
-Both values are declared as Databricks Asset Bundle variables and propagated per target environment (`dev`, `qa`, `stg`, `prod`), allowing each environment to independently enable or bypass the gateway.
+Both values are declared as Databricks Asset Bundle variables and propagated per target environment (`dev`, `qa`, `stg`, `prd`), allowing each environment to independently enable or bypass the gateway.
 
 ### Gateway capabilities leveraged
 
@@ -71,7 +71,7 @@ Foundation model endpoints (e.g., `databricks-claude-sonnet-4`, `databricks-gpt-
 
 ## Implementation Notes
 
-- Client construction with base URL override: [src/backend/api/handlers.py](../../src/backend/api/handlers.py) (`_build_openai_client`)
-- Settings: [src/backend/shared/settings.py](../../src/backend/shared/settings.py) (`openai_base_url`, `openai_timeout_seconds`)
+- Client construction with base URL override: [src/aiserver/api/handlers.py](../../src/aiserver/api/handlers.py) (`_build_openai_client`)
+- Settings: [src/aiserver/shared/settings.py](../../src/aiserver/shared/settings.py) (`openai_base_url`, `openai_timeout_seconds`)
 - Bundle variables: [databricks.yml](../../databricks.yml) (`openai_base_url`, `openai_timeout_seconds`)
 - Per-target values: [targets/dev.yml](../../targets/dev.yml) (currently `openai_base_url=""` — direct to model serving)

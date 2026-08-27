@@ -71,9 +71,9 @@ All allow/deny decisions are emitted as lifecycle events (`response.guardrail.pa
 
 ## Implementation Notes
 
-- Policy service: [src/backend/services/policy_service.py](../../src/backend/services/policy_service.py) (`PolicyContext`, `PolicyDecision`, `filter_subagents_by_policy`)
-- Guardrails service: [src/backend/services/guardrails_service.py](../../src/backend/services/guardrails_service.py) (`GuardrailResult`, `evaluate_response_guardrails`)
-- Runtime integration: [src/backend/services/runtime_auth_service.py](../../src/backend/services/runtime_auth_service.py) (`build_runtime_auth_context`)
-- Handler enforcement: [src/backend/api/handlers.py](../../src/backend/api/handlers.py) (`_finalize_invoke_stage`, `_finalize_stream_stage`)
-- Persona config: `allowed_personas` field in [src/backend/domain/subagents.dev.json](../../src/backend/domain/subagents.dev.json)
+- Policy service: [src/aiserver/services/policy_service.py](../../src/aiserver/services/policy_service.py) (`PolicyContext`, `PolicyDecision`, `filter_subagents_by_policy`)
+- Guardrails service: [src/aiserver/services/guardrails_service.py](../../src/aiserver/services/guardrails_service.py) (`GuardrailResult`, `evaluate_response_guardrails`)
+- Runtime integration: [src/aiserver/services/runtime_auth_service.py](../../src/aiserver/services/runtime_auth_service.py) (`build_runtime_auth_context`)
+- Handler enforcement: [src/aiserver/api/handlers.py](../../src/aiserver/api/handlers.py) (`_finalize_invoke_stage`, `_finalize_stream_stage`)
+- Persona config: `allowed_personas` field in [src/aiserver/domain/subagents.dev.json](../../src/aiserver/domain/subagents.dev.json)
 - Tests: [tests/test_policy_service.py](../../tests/test_policy_service.py), [tests/test_guardrails_service.py](../../tests/test_guardrails_service.py)

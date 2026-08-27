@@ -30,7 +30,7 @@ from dotenv import load_dotenv
 BACKEND_READY = [r"Uvicorn running on", r"Application startup complete", r"Started server process"]
 FRONTEND_READY = [r"Uvicorn running on", r"Application startup complete", r"Started server process"]
 SRC_DIR = Path(__file__).parent.parent
-FRONTEND_DIST_PATH = SRC_DIR / "reactui" / "dist"
+FRONTEND_DIST_PATH = SRC_DIR / "aiweb" / "dist"
 
 
 def _env_int(primary: str, fallback: str | None, default: int) -> int:
@@ -298,7 +298,7 @@ class ProcessManager:
             self.port = backend_port
 
         react_dist_path = Path(
-            os.environ.get("REACT_UI_DIST_DIR", str(FRONTEND_DIST_PATH))
+            os.environ.get("AIWEB_DIST_DIR", str(FRONTEND_DIST_PATH))
         ).resolve()
         if not self.no_ui:
             if not react_dist_path.exists():
@@ -311,10 +311,10 @@ class ProcessManager:
             else:
                 # Route browser-origin invocations through the React UI proxy server.
                 os.environ["FRONTEND_BACKEND_PROXY"] = f"http://localhost:{self.port}/invocations"
-                os.environ["REACT_UI_DIST_DIR"] = str(react_dist_path)
+                os.environ["AIWEB_DIST_DIR"] = str(react_dist_path)
 
         # Open process log files with line-buffered writes.
-        self.backend_log = open("backend.log", "w", buffering=1)
+        self.backend_log = open("aiserver.log", "w", buffering=1)
         if not self.no_ui:
             self.frontend_log = open("frontend.log", "w", buffering=1)
 
@@ -327,7 +327,7 @@ class ProcessManager:
                 "-c",
                 (
                     "import sys; "
-                    "from backend.api.server import main; "
+                    "from aiserver.api.server import main; "
                     "sys.argv = ['start-server'] + sys.argv[1:]; "
                     "main()"
                 ),
@@ -399,7 +399,7 @@ class ProcessManager:
             print(
                 f"\n{'=' * 42}\nERROR: {failed_name} process exited with code {exit_code}\n{'=' * 42}"
             )
-            self.print_logs("backend.log")
+            self.print_logs("aiserver.log")
             if not self.no_ui:
                 self.print_logs("frontend.log")
             return exit_code

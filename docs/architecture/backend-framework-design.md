@@ -9,7 +9,7 @@ The runtime is deployed as a Databricks App and uses the OpenAI Agents SDK (`ope
 ## Package Structure
 
 ```
-src/backend/
+src/aiserver/
 ├── api/                  ← HTTP layer, DI composition root
 │   ├── server.py         # MLflow AgentServer bootstrap
 │   ├── handlers.py       # @invoke / @stream request pipeline
