@@ -27,7 +27,7 @@ targets:
       cdi_genie_space_id: "01f19b2ab0f014daa3325ff30142f873"
       knowledge_assistant_endpoint_name: ""
       product_index_ep: "product_index_ep"
-      flink_support_ed: "flink_support_ed"
+      flink_support_ep: "flink_support_ed"
       lakebase_project_id: "ore"
       lakebase_branch_id: "production"
       lakebase_database: "db-j7lf-e5xmy0cwq4"
@@ -37,7 +37,7 @@ targets:
       memory_endpoint_id: "primary"
       memory_database: "agent_memory"
       memory_pg_host: "ep-falling-cake-d1j29nc5.database.us-west-2.cloud.databricks.com"
-      memory_pg_user: "da6ab9ef-2c0f-4f9b-9950-b618b9f4fede"
+      memory_pg_user: "718a84e4-78d1-4bb5-bca3-ddbc603c2dc6"
       lakebase_sql_warehouse_id: "ep-falling-cake-d1j29nc5"
       message_bus_backend: uc_table
       message_bus_topic: agent-lifecycle-events

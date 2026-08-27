@@ -45,6 +45,7 @@ Runtime skills playbooks:
 Use this index to navigate project documentation by purpose:
 
 - [product/README.md](product/README.md): business outcomes, scope, and current capability boundary.
+- [product/agent-usage-guide.md](product/agent-usage-guide.md): what each agent is best at, perfect-match query types, and composite/freshness guidance for end users.
 - [architecture/README.md](architecture/README.md): architecture reading paths, authority map, and current control planes.
 - [governance/README.md](governance/README.md): policy, data, semantic, and security ownership.
 - [operations/README.md](operations/README.md): deployment, verification, MLflow, scripts, and incident paths.
@@ -53,6 +54,9 @@ Use this index to navigate project documentation by purpose:
 - [architecture/runtime-technical-specs.md](architecture/runtime-technical-specs.md): centralized technical implementation specification.
 - [quality/evaluation-spec.md](quality/evaluation-spec.md): datasets, scorers, KPI thresholds, and release-gate behavior.
 - [governance/prompt-policy-controls.md](governance/prompt-policy-controls.md): prompt layering, deterministic policy checks, and guardrail controls.
+- [governance/prompt-engineering-guidelines.md](governance/prompt-engineering-guidelines.md): hands-on conventions for writing and reviewing subagent `system_prompt`/`description` fields and orchestrator instructions.
+- [governance/context-engineering-guidelines.md](governance/context-engineering-guidelines.md): conventions for what context to assemble, retrieve, remember, and discard (routing instructions, sticky routing, memory, retrieval).
+- [governance/agent-harness-engineering-guidelines.md](governance/agent-harness-engineering-guidelines.md): conventions for request pipeline, execution contracts, delegation bounds, model selection, and lifecycle observability.
 - [architecture/tool-and-model-registry.md](architecture/tool-and-model-registry.md): inventory of active models, endpoints, and Genie Agents.
 - [architecture/semantics-layer-design.md](architecture/semantics-layer-design.md): semantics layer scope, ownership boundaries, and AI Search index/Metric View build pipelines.
 - [governance/data-contracts-lineage.md](governance/data-contracts-lineage.md): request and response contracts, sensitivity model, and audit lineage requirements.
@@ -60,6 +64,7 @@ Use this index to navigate project documentation by purpose:
 - [governance/security-threat-model.md](governance/security-threat-model.md): trust boundaries, threats, and implemented controls.
 - [operations/cost-performance-budget.md](operations/cost-performance-budget.md): operating budgets, key signals, and release checks.
 - [operations/mlflow-guide.md](operations/mlflow-guide.md): how MLflow tracing, evaluation, and release gating work in this project.
+- [operations/ai-agent-monitoring-observability.md](operations/ai-agent-monitoring-observability.md): consolidated status of observability, evaluation/quality, safety, drift/anomaly detection, and cost monitoring — including what is not yet implemented.
 - [operations/mlflow-rollout-checklist.md](operations/mlflow-rollout-checklist.md): one-page implementation plan with owners, tasks, and acceptance criteria for MLflow rollout.
 - [operations/mlflow-rollout-tracker.md](operations/mlflow-rollout-tracker.md): live status board template for owners, dates, dependencies, evidence, and blockers.
 - [architecture/api-contracts.md](architecture/api-contracts.md): API request/response and error behavior contract.

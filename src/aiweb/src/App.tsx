@@ -35,17 +35,44 @@ function isThemeValue(value: string | null): value is ThemeValue {
   return THEMES.some((theme) => theme.value === value);
 }
 
-const STARTERS = [
-  "/persona manager",
-  "/persona analyst",
-  "/persona operator",
-  "/persona engineer",
-  "What is the monthly aggregated total tax amount from sales receipts?",
-  "How do delight scores compare for appointments vs walk-ins?",
-  "What is the distribution of sales receipt document type to understand the different document types in sales receipts?",
-  "Flink streaming job has increasing consumer lag. What are the common causes and how do we fix it?",
-  "List latest day's appointments and their current order status.",
-  "Look up product details for brand code 'MICH' and list matching article types.",
+const STARTER_GROUPS = ["Business", "Operations", "Insight", "Commands"] as const;
+
+type StarterGroup = (typeof STARTER_GROUPS)[number];
+
+const STARTERS: { group: StarterGroup; text: string }[] = [
+  { group: "Commands", text: "/persona manager" },
+  { group: "Commands", text: "/persona analyst" },
+  { group: "Commands", text: "/persona operator" },
+  { group: "Commands", text: "/persona engineer" },
+  { group: "Business", text: "What are the top 5 stores by revenue for the current season?" },
+  {
+    group: "Business",
+    text: "Look up product details for brand code 'MICH' and list matching article types.",
+  },
+  {
+    group: "Business",
+    text: "How do CDI promoter and detractor counts compare across stores this month?",
+  },
+  {
+    group: "Operations",
+    text: "Flink streaming job has increasing consumer lag. What are the common causes and how do we fix it?",
+  },
+  {
+    group: "Operations",
+    text: "List today's open appointments and their current order status.",
+  },
+  {
+    group: "Insight",
+    text: "What are the top 5 stores by appointment count, and are they also in the top 20 stores by sales?",
+  },
+  {
+    group: "Insight",
+    text: "Which stores have strong sales performance but below-average CDI scores, where we might be winning on revenue but losing on customer experience?",
+  },
+  {
+    group: "Insight",
+    text: "Which stores have appointment demand outpacing their sales ranking, suggesting an opportunity to convert more service visits into purchases?",
+  },
 ];
 
 function renderMarkdown(text: string): JSX.Element {
@@ -179,7 +206,7 @@ export default function App() {
   const [token, setToken] = useState<string | null>(null);
   const [persona, setPersona] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
-  const [starterGroup, setStarterGroup] = useState("Business");
+  const [starterGroup, setStarterGroup] = useState<StarterGroup>("Business");
   const [theme, setTheme] = useState<ThemeValue>(() => {
     if (typeof window === "undefined") return "deep-ocean";
     const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
@@ -527,7 +554,7 @@ export default function App() {
 
       <section className="starter-area">
         <div className="starter-tabs">
-          {["Business", "Operations", "Commands"].map((group) => (
+          {STARTER_GROUPS.map((group) => (
             <button
               key={group}
               type="button"
@@ -539,27 +566,20 @@ export default function App() {
           ))}
         </div>
         <div className="starters">
-          {STARTERS.filter((starter) =>
-            starterGroup === "Commands"
-              ? starter.startsWith("/")
-              : starterGroup === "Operations"
-                ? starter.toLowerCase().includes("flink") ||
-                  starter.toLowerCase().includes("appointments")
-                : !starter.startsWith("/") &&
-                  !starter.toLowerCase().includes("flink") &&
-                  !starter.toLowerCase().includes("appointments"),
-          ).map((starter, index) => (
-            <button
-              key={`${starterGroup}-${index}-${starter}`}
-              type="button"
-              onClick={() => {
-                void submitMessage(starter);
-              }}
-              disabled={isSending}
-            >
-              {starter}
-            </button>
-          ))}
+          {STARTERS.filter((starter) => starter.group === starterGroup).map(
+            (starter, index) => (
+              <button
+                key={`${starterGroup}-${index}-${starter.text}`}
+                type="button"
+                onClick={() => {
+                  void submitMessage(starter.text);
+                }}
+                disabled={isSending}
+              >
+                {starter.text}
+              </button>
+            ),
+          )}
         </div>
       </section>
 

@@ -49,9 +49,18 @@ Runtime tuning controls in this repository:
   - `MESSAGE_BUS_ASYNC_DRAIN_TIMEOUT_SECONDS`
 - MCP latency and cache tuning:
   - `MCP_CONNECT_TIMEOUT_SECONDS`
-  - `MCP_LIST_TOOLS_TIMEOUT_SECONDS`
+  - `MCP_LIST_TOOLS_TIMEOUT_SECONDS` (default `30`, was `10`): pre-flight `list_tools()`
+    probe timeout used to decide whether a tool is reported "unavailable" to the model
+    before any real turn runs. Too tight a value causes false "please enable this agent"
+    responses when a Genie space is slow/cold but would have succeeded on a real query.
   - `MCP_HEALTH_TTL_SECONDS`
   - `MCP_HEALTH_FAILURE_TTL_SECONDS`
+  - `MCP_SESSION_TIMEOUT_SECONDS` (default `45`): read timeout for the MCP `ClientSession`
+    used on every agent turn (not just the pre-flight health check). The underlying SDK
+    defaults this to `20` seconds if unset, which can be too tight for a slow/cold Genie
+    space and surfaces as an uncaught `McpError` mid-turn instead of a graceful
+    "unavailable" degradation. Raise this if composite/multi-Genie queries intermittently
+    fail with `McpError: Timed out while waiting for response to ClientRequest`.
 - Orchestrator setup efficiency:
   - `ORCHESTRATOR_INSTRUCTIONS_CACHE_SIZE`
 

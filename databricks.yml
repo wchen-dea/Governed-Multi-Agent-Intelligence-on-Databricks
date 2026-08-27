@@ -86,7 +86,7 @@ variables:
   product_index_ep:
     description: AI search serving endpoint name for the current environment
     default: "product_index_ep"
-  flink_support_ed:
+  flink_support_ep:
     description: Vector Search endpoint name for the Flink support RAG index
     default: "flink-support-ed"
   semantics_catalog:

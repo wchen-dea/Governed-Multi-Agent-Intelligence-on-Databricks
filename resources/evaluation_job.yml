@@ -1,7 +1,7 @@
 resources:
   jobs:
-    run_agent_quality_evaluation:
-      name: "run_agent_quality_evaluation"
+    multiagent_evaluation:
+      name: "multiagent_evaluation"
       tags:
         purpose: quality-gate
       tasks:

@@ -30,9 +30,19 @@ from aiserver.shared.runtime_utils import RequestIdentityContext, build_mcp_url
 logger = logging.getLogger(__name__)
 
 MCP_CONNECT_TIMEOUT_SECONDS = float(os.getenv("MCP_CONNECT_TIMEOUT_SECONDS", "10"))
-MCP_LIST_TOOLS_TIMEOUT_SECONDS = float(os.getenv("MCP_LIST_TOOLS_TIMEOUT_SECONDS", "10"))
+# Pre-flight health-check timeout for the initial `list_tools()` probe used to decide
+# whether a tool is reported "unavailable" to the model before any real turn runs. A
+# slow/cold Genie space (sales/CDI) can exceed a tight timeout here even though it would
+# succeed on a real query, producing a false "please enable this agent" response. Kept
+# below MCP_SESSION_TIMEOUT_SECONDS since this only gates the pre-flight probe.
+MCP_LIST_TOOLS_TIMEOUT_SECONDS = float(os.getenv("MCP_LIST_TOOLS_TIMEOUT_SECONDS", "30"))
 MCP_HEALTH_TTL_SECONDS = float(os.getenv("MCP_HEALTH_TTL_SECONDS", "30"))
 MCP_HEALTH_FAILURE_TTL_SECONDS = float(os.getenv("MCP_HEALTH_FAILURE_TTL_SECONDS", "10"))
+# Read timeout for the MCP ClientSession (covers list_tools/tool calls made on every agent
+# turn, not just the pre-flight health check). databricks_openai's McpServer defaults this
+# to 20.0s if unset, which can be too tight for a slow/cold Genie space and surfaces as an
+# uncaught McpError mid-turn instead of a graceful "unavailable" degradation.
+MCP_SESSION_TIMEOUT_SECONDS = float(os.getenv("MCP_SESSION_TIMEOUT_SECONDS", "45"))
 ORCHESTRATOR_INSTRUCTIONS_CACHE_SIZE = int(os.getenv("ORCHESTRATOR_INSTRUCTIONS_CACHE_SIZE", "128"))
 
 
@@ -149,6 +159,19 @@ def _build_base_orchestrator_instructions(subagents: list[SubagentConfig]) -> st
             "do not stop after returning schema metadata. If a Lakebase tool result starts with "
             "LAKEBASE_QUERY_FAILED, do not retry it. Explain its category (authorization, "
             "authentication, connectivity, or execution) concisely."
+            + "\nFor composite requests that require comparing results from two different "
+            "tools (for example, cross-referencing the top appointment-count stores against "
+            "the top sales-performing stores), call each relevant tool once in sequence to "
+            "gather both result sets, then compute the requested comparison or intersection "
+            "yourself. State clearly which items appear in both lists and which do not before "
+            "giving the final answer."
+            + "\nEach configured tool above lists its freshness SLA. When a composite request "
+            "combines tools with different freshness SLAs (for example, a 15-minute sales feed "
+            "compared against a 4-hour CDI feed or a 1-hour operational feed), do not present "
+            "the combined result as one single as-of snapshot. State each source's freshness "
+            "SLA next to its contribution (e.g., 'sales data as of the last 15 minutes; CDI "
+            "data as of the last 4 hours') so the user understands the two figures may not "
+            "reflect the same point in time."
             + "\nUse native tool calling only. Never write pseudo-tool syntax such as "
             "`to=query_*`, `code:`, or a tool-call JSON payload in assistant text."
             + "\nFor an approved cross-agent handoff, use the native delegate_to_agent tool. "
@@ -644,6 +667,7 @@ def build_mcp_servers(
                 url=url,
                 name=server_name,
                 workspace_client=workspace_client,
+                timeout=MCP_SESSION_TIMEOUT_SECONDS,
             )
         )
         dependencies.message_bus.publish(

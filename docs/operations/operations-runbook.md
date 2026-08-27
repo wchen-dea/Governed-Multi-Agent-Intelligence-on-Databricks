@@ -491,7 +491,7 @@ App URL: `https://multiagent-app-dev-4225037891036111.aws.databricksapps.com`
 - Runtime database: `operations`
 - Database resource ID: `db-j7lf-e5xmy0cwq4`
 - Database resource: `projects/ore/branches/production/databases/operations`
-- App SP role: `sp-multiagent-app` (postgres_role: `da6ab9ef-2c0f-4f9b-9950-b618b9f4fede`, membership: `DATABRICKS_SUPERUSER`)
+- App SP role: `sp-multiagent-app` (postgres_role: `718a84e4-78d1-4bb5-bca3-ddbc603c2dc6`, membership: `DATABRICKS_SUPERUSER`)
 
 **Steps:**
 
@@ -708,7 +708,7 @@ The fallback only deploys application source. It does not replace a failed bundl
    ```
    Look for a role with `auth_method: LAKEBASE_OAUTH_V1` and `identity_type: SERVICE_PRINCIPAL` — note its `postgres_role` value (the SP client ID).
 
-2. Set `pg_user` in `src/aiserver/domain/subagents.<target>.json` to the SP's `postgres_role` value (e.g., `da6ab9ef-2c0f-4f9b-9950-b618b9f4fede`).
+2. Set `pg_user` in `src/aiserver/domain/subagents.<target>.json` to the SP's `postgres_role` value (e.g., `718a84e4-78d1-4bb5-bca3-ddbc603c2dc6`).
 
 3. Ensure `_get_lakebase_token()` in `orchestrator_service.py` calls `ws_client.config.authenticate()` (no arguments, returns dict).
 

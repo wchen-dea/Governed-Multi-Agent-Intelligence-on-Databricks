@@ -62,6 +62,9 @@ from aiserver.domain.subagent_config import skipped_subagent_names  # noqa: E402
 #   allowing the "engineer" persona alongside flink_support_agent.
 # - flink_support_agent additionally asserts `requires_evidence`/
 #   `freshness_sla`, matching its system_prompt's explicit citation mandate.
+# - Three composite cases (manager persona) cover the orchestrator's cross-tool
+#   comparison rule: appointments-vs-sales, sales-vs-CDI, and appointments-vs-
+#   sales-ranking, matching the homepage "Insight" tab starters.
 test_cases = [
     {
         "goal": "Find out the top 3 stores by revenue for the current season",
@@ -137,6 +140,61 @@ test_cases = [
         "simulation_guidelines": [
             "Ask to query the operational data store to compare order counts against appointment counts for the latest day.",
             "Expect the operational data tool to be attempted; the engineer persona is authorized for the operational data store.",
+        ],
+    },
+    {
+        "goal": "Cross-reference top appointment-count stores against top sales-performing stores",
+        "persona": "A manager who wants to know if high-appointment stores are also high-sales stores.",
+        "context": {"custom_inputs": {"persona": "manager"}},
+        "expectations": {
+            "requires_tool_attempt": True,
+            "expected_tool_calls": [
+                {"name": "lakebase_ods_agent"},
+                {"name": "sales_insights_agent"},
+            ],
+        },
+        "simulation_guidelines": [
+            "Ask for the top 5 stores by appointment count, then ask whether those same stores "
+            "are also in the top 20 stores by sales.",
+            "Expect both the operational data tool and the sales tool to be called once each, "
+            "and the final answer to state which stores overlap and which do not.",
+            "Expect each source's freshness to be disclosed separately (appointment data vs sales data) "
+            "rather than presented as one combined as-of snapshot.",
+        ],
+    },
+    {
+        "goal": "Identify stores with strong sales but below-average CDI scores",
+        "persona": "A manager looking for stores that are winning on revenue but losing on customer experience.",
+        "context": {"custom_inputs": {"persona": "manager"}},
+        "expectations": {
+            "requires_tool_attempt": True,
+            "expected_tool_calls": [
+                {"name": "sales_insights_agent"},
+                {"name": "cdi_agent"},
+            ],
+        },
+        "simulation_guidelines": [
+            "Ask which stores have strong sales performance but below-average CDI scores.",
+            "Expect both the sales tool and the CDI tool to be called once each, and the final "
+            "answer to identify the specific stores with a sales-CDI gap.",
+            "Expect each source's freshness to be disclosed separately (sales data vs CDI data).",
+        ],
+    },
+    {
+        "goal": "Identify stores where appointment demand outpaces sales ranking",
+        "persona": "A manager looking for stores with high service demand but comparatively lower sales rank.",
+        "context": {"custom_inputs": {"persona": "manager"}},
+        "expectations": {
+            "requires_tool_attempt": True,
+            "expected_tool_calls": [
+                {"name": "lakebase_ods_agent"},
+                {"name": "sales_insights_agent"},
+            ],
+        },
+        "simulation_guidelines": [
+            "Ask which stores have appointment demand outpacing their sales ranking.",
+            "Expect both the operational data tool and the sales tool to be called once each, and "
+            "the final answer to identify the specific stores with a demand-versus-sales gap.",
         ],
     },
     {

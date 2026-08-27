@@ -37,7 +37,7 @@ SCHEMA = "multi_agent_schema"
 TABLE_NAME = "flink_support_kb"
 FULL_TABLE_NAME = f"{CATALOG}.{SCHEMA}.{TABLE_NAME}"
 INDEX_NAME = f"{CATALOG}.{SCHEMA}.flink_support_search_index"
-DEFAULT_ENDPOINT_NAME = "flink_support_ed"
+DEFAULT_ENDPOINT_NAME = "flink_support_ep"
 EMBEDDING_MODEL = "databricks-gte-large-en"
 
 

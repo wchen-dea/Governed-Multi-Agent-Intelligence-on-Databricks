@@ -71,4 +71,4 @@ env:
 - name: MEMORY_PG_HOST
   value: ep-falling-cake-d1j29nc5.database.us-west-2.cloud.databricks.com
 - name: MEMORY_PG_USER
-  value: da6ab9ef-2c0f-4f9b-9950-b618b9f4fede
+  value: 718a84e4-78d1-4bb5-bca3-ddbc603c2dc6

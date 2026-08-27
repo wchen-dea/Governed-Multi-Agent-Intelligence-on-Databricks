@@ -620,25 +620,58 @@ class PermissionManager:
             branch_id = cfg["branch_id"]
             branch_path = f"projects/{project_id}/branches/{branch_id}"
 
-            # Check if the SP already has a role on this branch.
+            # Check if the SP already has a role on this branch, and whether that
+            # role actually carries the expected membership (a role can pre-exist
+            # with no membership_roles at all, e.g. auto-created by the platform
+            # when the app's service principal rotates).
             existing_roles = self.cli.run(
                 ["postgres", "list-roles", branch_path, "--output", "json"],
                 expect_json=True,
                 check=False,
             )
-            already_granted = False
+            existing_role_name = ""
+            existing_membership: list[str] = []
             if isinstance(existing_roles, list):
                 for role in existing_roles:
-                    if isinstance(role, dict):
-                        pg_role = (role.get("status") or role.get("spec") or {}).get(
-                            "postgres_role", ""
-                        )
-                        if pg_role == sp_client_id:
-                            already_granted = True
-                            break
+                    if not isinstance(role, dict):
+                        continue
+                    status = role.get("status") or {}
+                    if status.get("postgres_role", "") == sp_client_id:
+                        existing_role_name = role.get("name", "")
+                        existing_membership = status.get("membership_roles") or []
+                        break
 
-            if already_granted:
+            if existing_role_name and "DATABRICKS_SUPERUSER" in existing_membership:
                 print(f"LAKEBASE ROLE: ALREADY EXISTS -> {branch_path} for {sp_client_id}")
+                continue
+
+            if existing_role_name:
+                print(
+                    f"LAKEBASE ROLE: EXISTS BUT UNDER-PRIVILEGED -> {branch_path} "
+                    f"for {sp_client_id} (membership_roles={existing_membership}); "
+                    "granting DATABRICKS_SUPERUSER"
+                )
+                if self.dry_run:
+                    print(f"DRY RUN: databricks postgres update-role {existing_role_name}")
+                    continue
+                update_result = self.cli.run(
+                    [
+                        "postgres",
+                        "update-role",
+                        existing_role_name,
+                        "spec.membership_roles",
+                        "--json",
+                        json.dumps({"spec": {"membership_roles": ["DATABRICKS_SUPERUSER"]}}),
+                    ],
+                    check=False,
+                )
+                ok = update_result.returncode == 0
+                print(f"LAKEBASE ROLE: {'OK' if ok else 'FAILED'} -> {existing_role_name} updated")
+                if not ok:
+                    self._warn_or_fail(
+                        f"Failed to update Lakebase Postgres role membership on {branch_path}: "
+                        f"{(update_result.stderr or '').strip()}"
+                    )
                 continue
 
             role_id = f"sp-{self.app_name}"[:63]
@@ -734,7 +767,7 @@ class PermissionManager:
                 for v in [
                     target_vars.get("vector_search_endpoint_name"),
                     target_vars.get("product_index_ep"),
-                    target_vars.get("flink_support_ed"),
+                    target_vars.get("flink_support_ep"),
                 ]
                 if isinstance(v, str) and v.strip() and not _is_placeholder(v)
             }

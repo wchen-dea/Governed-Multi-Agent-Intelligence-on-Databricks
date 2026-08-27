@@ -193,7 +193,7 @@ If an OBO tool is invoked without a forwarded token, the runtime returns a clear
 - `genie_space_id`
 - `knowledge_assistant_endpoint_name`
 - `product_index_ep`
-- `flink_support_ed`
+- `flink_support_ep`
 - `semantics_catalog`
 - `semantics_schema`
 - `memory_backend`
