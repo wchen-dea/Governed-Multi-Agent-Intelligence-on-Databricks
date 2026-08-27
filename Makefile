@@ -115,8 +115,14 @@ import: build-app-source
 	@APP_JSON="$$($(APP_GET_JSON))"; \
 	APP_SRC="$$(printf "%s" "$$APP_JSON" | jq -r '.default_source_code_path')"; \
 	if [ -z "$$APP_SRC" ] || [ "$$APP_SRC" = "null" ]; then \
-		printf "Could not resolve default_source_code_path for $(APP_NAME)\n" >&2; \
-		exit 1; \
+		printf "default_source_code_path is unset for $(APP_NAME) (deployment record reset); deriving path from bundle validate...\n" >&2; \
+		WS_FILE_PATH="$$(databricks bundle validate -t "$(TARGET)" --profile "$(PROFILE)" --output json | jq -r '.workspace.file_path')"; \
+		if [ -z "$$WS_FILE_PATH" ] || [ "$$WS_FILE_PATH" = "null" ]; then \
+			printf "Could not derive app source path for $(APP_NAME) from bundle validate either\n" >&2; \
+			exit 1; \
+		fi; \
+		APP_SRC="$$WS_FILE_PATH/.databricks_app_source"; \
+		printf "Derived app source path: %s\n" "$$APP_SRC" >&2; \
 	fi; \
 	databricks workspace delete "$$APP_SRC/wheels" --recursive --profile "$(PROFILE)" >/dev/null 2>&1 || true; \
 	databricks workspace import-dir .databricks_app_source "$$APP_SRC" --overwrite --profile "$(PROFILE)"
@@ -156,8 +162,15 @@ deploy: wait-stable
 	DEPLOY_STATE="$$(printf "%s" "$$APP_JSON" | jq -r '.active_deployment.status.state // "NONE"')"; \
 	ATTEMPT=0; \
 	if [ -z "$$APP_SRC" ] || [ "$$APP_SRC" = "null" ]; then \
-		printf "Could not resolve default_source_code_path for $(APP_NAME)\n" >&2; \
-		exit 1; \
+		printf "default_source_code_path is unset for $(APP_NAME) (deployment record reset); deriving path from bundle validate...\n" >&2; \
+		WS_FILE_PATH="$$(databricks bundle validate -t "$(TARGET)" --profile "$(PROFILE)" --output json | jq -r '.workspace.file_path')"; \
+		if [ -z "$$WS_FILE_PATH" ] || [ "$$WS_FILE_PATH" = "null" ]; then \
+			printf "Could not derive app source path for $(APP_NAME) from bundle validate either\n" >&2; \
+			exit 1; \
+		fi; \
+		APP_SRC="$$WS_FILE_PATH/.databricks_app_source"; \
+		printf "Derived app source path: %s\n" "$$APP_SRC" >&2; \
+		DEPLOY_STATE="NONE"; \
 	fi; \
 	while [ "$$DEPLOY_STATE" = "IN_PROGRESS" ] && [ $$ATTEMPT -lt "$(APP_DEPLOY_MAX_ATTEMPTS)" ]; do \
 		printf "Waiting for active deployment lock to clear: attempt=%s/%s state=%s\n" "$$((ATTEMPT + 1))" "$(APP_DEPLOY_MAX_ATTEMPTS)" "$$DEPLOY_STATE"; \
