@@ -40,12 +40,12 @@ const STARTERS = [
   "/persona analyst",
   "/persona operator",
   "/persona engineer",
-  "What is the monthly aggregated total tax amount from sales receipts?",
-  "How do delight scores compare for appointments vs walk-ins?",
-  "What is the distribution of sales receipt document type to understand the different document types in sales receipts?",
-  "Flink streaming job has increasing consumer lag. What are the common causes and how do we fix it?",
-  "List latest day's appointments and their current order status.",
+  "What are the top 5 stores by revenue for the current season?",
   "Look up product details for brand code 'MICH' and list matching article types.",
+  "How do CDI promoter and detractor counts compare across stores this month?",
+  "Flink streaming job has increasing consumer lag. What are the common causes and how do we fix it?",
+  "List today's open appointments and their current order status.",
+  "What are the top 5 stores by appointment count, and are they also in the top 20 stores by sales?",
 ];
 
 function renderMarkdown(text: string): JSX.Element {
