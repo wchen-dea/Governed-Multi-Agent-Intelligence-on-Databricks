@@ -121,11 +121,10 @@ class AppSettings {
     +message_bus_topic: str
     +message_bus_fail_open: bool
     +default_request_persona: str
-    +subagents_config_path: str
-    +uc_audit_warehouse_id: str
-    +uc_audit_catalog: str
-    +uc_audit_schema: str
-    +uc_audit_table: str
+    +message_bus_uc_warehouse_id: str
+    +message_bus_uc_catalog: str
+    +message_bus_uc_schema: str
+    +message_bus_uc_table: str
 }
 
 class AppDependencyContainer {
@@ -153,6 +152,7 @@ class RuntimeAuthDependencies {
     +policy_context_builder
     +subagent_policy_filter
     +message_bus: MessageBus
+    +delegation_task_bus: AgentTaskBus?
 }
 
 class HandlerDependencies {
@@ -160,7 +160,9 @@ class HandlerDependencies {
     +mcp_connector
     +orchestrator_factory
     +guardrails_evaluator
+    +input_guardrails_evaluator
     +message_bus: MessageBus
+    +memory: ConversationMemory
 }
 
 class MessageBus {

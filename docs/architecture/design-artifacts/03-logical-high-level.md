@@ -73,7 +73,7 @@ flowchart TD
     GR --> O[Output to User]
 
     N --> E1[request.invoke.started]
-    P --> E2[runtime_auth.policy.denied]
+    P --> E2[policy.subagent.decision]
     GR --> E3[response.guardrail.passed/blocked]
     O --> E4[request.invoke.succeeded]
     E1 --> L[UC Audit Table]

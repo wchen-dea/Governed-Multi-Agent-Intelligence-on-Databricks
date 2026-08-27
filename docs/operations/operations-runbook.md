@@ -158,16 +158,14 @@ Expected health fields:
 
 ### GitHub Actions Pipeline Alignment (App-Source Payload)
 
-The GitHub Actions deployment pipeline is aligned to this runbook and uses Makefile-driven app-source payload delivery (wheel + React UI):
+The GitHub Actions deployment pipeline (`.github/workflows/databricks-cicd.yml`) is aligned to this runbook:
 
-1. Build wheel and React UI payload: `make build-app-source`.
-2. Validate bundle by target: `make validate TARGET="$DAB_TARGET"`.
-3. Attempt bundle deploy: `make bundle-deploy TARGET="$DAB_TARGET"`.
-4. Import prepared app source to workspace: `make import TARGET="$DAB_TARGET" APP_NAME="$APP_NAME"`.
-5. Deploy app from workspace source path: `make deploy TARGET="$DAB_TARGET" APP_NAME="$APP_NAME"`.
-6. Final health and smoke gates: `make health ...` and `make smoke ...`.
+- **`pr-ci` job** (pull requests): `uv run pytest -q` → `uv run assistant-evaluate` → `make build-app-source` → `make validate TARGET=<pr-base-branch>`.
+- **`deploy` job** (push to `dev`/`qa`/`stg`/`prd` or manual dispatch): `uv run pytest -q` → `uv run assistant-evaluate` → `make redeploy TARGET=<target> APP_NAME=<app-name>`.
 
-For an operator-driven source-only recovery, use `make upload-wheel` instead of manually composing steps 1, 4, 5, and health.
+`make redeploy` is a single composite target that runs `build-app-source`, `validate`, `bundle-deploy-optional`, `import`, `deploy`, `grants`, `health`, and `smoke` in sequence (see [Makefile](../../Makefile)).
+
+For an operator-driven source-only recovery, use `make upload-wheel` instead of `make redeploy`.
 
 This keeps repository state clean (no committed wheel binaries) while ensuring each CI run deploys a fresh wheel artifact.
 

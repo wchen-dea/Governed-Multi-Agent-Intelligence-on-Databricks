@@ -8,7 +8,7 @@ This document summarizes the technical specifications currently implemented in t
 - Request handling supports both invoke and stream flows through MLflow Agent Server handlers.
 - Orchestrator agent is assembled at runtime with available tools and healthy MCP servers.
 - A deterministic model router selects a configured Databricks model before agent assembly and records the decision in routing lifecycle metadata.
-- Frontend runtime is React UI first, with a legacy Chainlit path retained for compatibility.
+- Frontend runtime is a React UI, bundled and served in-process by the backend.
 
 Primary implementation:
 
@@ -144,7 +144,7 @@ Primary implementation:
 - The first enabled dev handoff is `orchestrator -> lakebase_ods_agent` with intent `appointment_summary`.
 - Dev provisions `quickstart_catalog.multi_agent_schema.agent_delegation_tasks` and `agent_delegation_events`, with exact-table `SELECT, MODIFY` access for the app identity.
 - When `AGENT_TASK_WORKER_ENABLED=true`, the backend lifespan starts a bounded background worker that leases durable tasks at `AGENT_TASK_WORKER_POLL_SECONDS` intervals and stops it cleanly at shutdown.
-- `GET /delegations/{task_id}` exposes a payload-redacted task status view through the backend and React proxy.
+- `GET /delegations/{task_id}` exposes a payload-redacted task status view through the backend.
 
 Primary implementation:
 
@@ -159,7 +159,7 @@ Primary implementation:
 - Deployment is target-based with dev, qa, stg, and prd overlays.
 - Shared resource configuration is centralized and target overrides are explicit.
 - Environment variables configure runtime behavior for auth, bus backends, UC audit sink, and release gates.
-- Process concurrency tuning is supported through backend and frontend Uvicorn worker env controls.
+- Process concurrency tuning is supported through a backend Uvicorn worker env control (`BACKEND_UVICORN_WORKERS`).
 - Operational fallback deployment path is documented for registry outage scenarios.
 
 Primary implementation:

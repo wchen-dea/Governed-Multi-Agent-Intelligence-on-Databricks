@@ -28,7 +28,7 @@ This skill does not cover:
 
 ## Files Typically Changed
 
-- `src/aiserver/services/runtime_auth.py`
+- `src/aiserver/services/runtime_auth_service.py`
 - `src/aiserver/services/orchestrator_service.py`
 - `src/aiserver/domain/subagents.<target>.json`
 - `tests/test_runtime_auth.py`

@@ -22,9 +22,9 @@ flowchart TB
     OR --> LB[Lakebase Tools Builder — psycopg2 + OAuth credentials]
     OR --> RP[Deterministic Route Planner — capability match or fallback]
 
-    SC --> S1[sales_insights_agent — Genie — manager only]
-    SC --> S2[product_index_assistant — AI Search MCP — analyst, manager, engineer]
-    SC --> S3[flink_support_agent — AI Search MCP RAG — operator, manager, engineer]
+    SC --> S1[sales_insights_agent — Genie — analyst, manager]
+    SC --> S2[product_index_assistant — AI Search MCP — analyst, manager]
+    SC --> S3[flink_support_agent — AI Search MCP RAG — analyst, operator, manager, engineer]
     SC --> S4[cdi_agent — Genie — manager only]
     SC --> S5[lakebase_ods_agent — Lakebase PostgreSQL — analyst, manager, engineer]
 ```

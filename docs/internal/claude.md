@@ -16,6 +16,10 @@ Applies only to active skills under `.claude/skills/` for this project:
 - `add-tools`
 - `modify-agent`
 - `deploy`
+- `runtime-routing`
+- `runtime-guardrails`
+- `runtime-auth-obo`
+- `runtime-audit-observability`
 
 ## Start Here
 
@@ -40,6 +44,10 @@ Use this default sequence unless you have a specific reason to skip steps:
 | `add-tools` | Add routing + resource permissions | updated `src/aiserver/domain/subagents.<target>.json` and `resources/multiagent_app.yml` |
 | `modify-agent` | Change orchestration behavior | updated backend orchestration/request logic |
 | `deploy` | Validate, deploy, and restart by target | deployed app and runtime verification |
+| `runtime-routing` | Change orchestrator tool selection and policy-aware subagent targeting | updated route rules and route metadata |
+| `runtime-guardrails` | Change sensitive-output rules and evidence/citation enforcement | updated guardrail checks and blocked-output controls |
+| `runtime-auth-obo` | Change app vs OBO auth rules and forwarded-token handling | updated auth-mode enforcement and validation outcomes |
+| `runtime-audit-observability` | Change message bus backend, event schemas, or async publish behavior | updated lifecycle auditing and observability checks |
 
 ## Claude Code Usage (Selected Skills)
 

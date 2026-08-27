@@ -43,9 +43,9 @@ All allow/deny decisions are emitted as lifecycle events (`response.guardrail.pa
 | Persona | Accessible Agents |
 |---------|-------------------|
 | manager | all 5 agents |
-| analyst | product_index_assistant, lakebase_ods_agent |
+| analyst | sales_insights_agent, product_index_assistant, lakebase_ods_agent |
 | operator | flink_support_agent |
-| engineer | product_index_assistant, flink_support_agent, lakebase_ods_agent |
+| engineer | flink_support_agent, lakebase_ods_agent |
 
 ## Alternatives Considered
 

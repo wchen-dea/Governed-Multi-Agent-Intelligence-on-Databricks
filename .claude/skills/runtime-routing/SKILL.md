@@ -32,7 +32,7 @@ This skill does not cover:
 - `src/aiserver/domain/subagents.<target>.json`
 - `src/aiserver/services/orchestrator_service.py`
 - `src/aiserver/services/policy_service.py`
-- `src/aiserver/services/runtime_auth.py`
+- `src/aiserver/services/runtime_auth_service.py`
 - `docs/architecture/tool-and-model-registry.md`
 
 ## Workflow
