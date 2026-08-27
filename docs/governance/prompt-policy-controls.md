@@ -11,7 +11,7 @@ Separate model instruction strategy from hard policy enforcement and define safe
 ### Orchestrator Instructions
 
 - Source: runtime instruction assembly in `src/aiserver/services/orchestrator_service.py`
-- Responsibility: tool routing intent, unavailable tool behavior, citation expectation
+- Responsibility: tool routing intent, unavailable tool behavior, citation expectation, composite/multi-tool comparison sequencing (call each relevant tool once, then compute the comparison itself)
 
 ### Tool Function Prompts
 
@@ -41,6 +41,7 @@ Separate model instruction strategy from hard policy enforcement and define safe
   - evidence requirement
   - unsafe output patterns
   - low-confidence sensitive output
+- A subagent's `requires_evidence` flag must match its `system_prompt` citation mandate (see [prompt-engineering-guidelines.md](prompt-engineering-guidelines.md)); a mismatch either silently skips enforcement or blocks output the prompt never asked for citations on.
 
 ## Decision Logging
 
@@ -69,6 +70,7 @@ For any prompt or policy change:
 ## Related Documents
 
 - business-semantics-metadata.md
+- prompt-engineering-guidelines.md
 - ../architecture/runtime-technical-specs.md
 - ../quality/evaluation-spec.md
 - ../adrs/0005-governed-routing-policy-and-response-guardrails.md

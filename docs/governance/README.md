@@ -9,6 +9,9 @@ This section defines policy intent, data semantics, lineage expectations, and se
 | Document | Owns |
 | --- | --- |
 | [Prompt policy controls](prompt-policy-controls.md) | Prompt layers, policy checks, and guardrail intent |
+| [Prompt engineering guidelines](prompt-engineering-guidelines.md) | Hands-on conventions for writing/reviewing subagent prompts and descriptions |
+| [Context engineering guidelines](context-engineering-guidelines.md) | Conventions for what context to assemble, retrieve, remember, and discard |
+| [Agent harness engineering guidelines](agent-harness-engineering-guidelines.md) | Conventions for request pipeline, execution contracts, delegation, and observability plumbing |
 | [Data contracts and lineage](data-contracts-lineage.md) | Data boundaries, lifecycle lineage, and contract expectations |
 | [Business semantics metadata](business-semantics-metadata.md) | Domain definitions and metadata expectations |
 | [Security threat model](security-threat-model.md) | Threats, trust boundaries, and hardening priorities |
@@ -17,8 +20,11 @@ This section defines policy intent, data semantics, lineage expectations, and se
 
 1. [Security threat model](security-threat-model.md)
 2. [Prompt policy controls](prompt-policy-controls.md)
-3. [Data contracts and lineage](data-contracts-lineage.md)
-4. [Business semantics metadata](business-semantics-metadata.md)
+3. [Prompt engineering guidelines](prompt-engineering-guidelines.md)
+4. [Context engineering guidelines](context-engineering-guidelines.md)
+5. [Agent harness engineering guidelines](agent-harness-engineering-guidelines.md)
+6. [Data contracts and lineage](data-contracts-lineage.md)
+7. [Business semantics metadata](business-semantics-metadata.md)
 
 ## Current Boundary
 
