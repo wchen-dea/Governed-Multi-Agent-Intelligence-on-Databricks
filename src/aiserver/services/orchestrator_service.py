@@ -30,7 +30,12 @@ from aiserver.shared.runtime_utils import RequestIdentityContext, build_mcp_url
 logger = logging.getLogger(__name__)
 
 MCP_CONNECT_TIMEOUT_SECONDS = float(os.getenv("MCP_CONNECT_TIMEOUT_SECONDS", "10"))
-MCP_LIST_TOOLS_TIMEOUT_SECONDS = float(os.getenv("MCP_LIST_TOOLS_TIMEOUT_SECONDS", "10"))
+# Pre-flight health-check timeout for the initial `list_tools()` probe used to decide
+# whether a tool is reported "unavailable" to the model before any real turn runs. A
+# slow/cold Genie space (sales/CDI) can exceed a tight timeout here even though it would
+# succeed on a real query, producing a false "please enable this agent" response. Kept
+# below MCP_SESSION_TIMEOUT_SECONDS since this only gates the pre-flight probe.
+MCP_LIST_TOOLS_TIMEOUT_SECONDS = float(os.getenv("MCP_LIST_TOOLS_TIMEOUT_SECONDS", "30"))
 MCP_HEALTH_TTL_SECONDS = float(os.getenv("MCP_HEALTH_TTL_SECONDS", "30"))
 MCP_HEALTH_FAILURE_TTL_SECONDS = float(os.getenv("MCP_HEALTH_FAILURE_TTL_SECONDS", "10"))
 # Read timeout for the MCP ClientSession (covers list_tools/tool calls made on every agent

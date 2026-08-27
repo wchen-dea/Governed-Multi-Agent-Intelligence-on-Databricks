@@ -49,7 +49,10 @@ Runtime tuning controls in this repository:
   - `MESSAGE_BUS_ASYNC_DRAIN_TIMEOUT_SECONDS`
 - MCP latency and cache tuning:
   - `MCP_CONNECT_TIMEOUT_SECONDS`
-  - `MCP_LIST_TOOLS_TIMEOUT_SECONDS`
+  - `MCP_LIST_TOOLS_TIMEOUT_SECONDS` (default `30`, was `10`): pre-flight `list_tools()`
+    probe timeout used to decide whether a tool is reported "unavailable" to the model
+    before any real turn runs. Too tight a value causes false "please enable this agent"
+    responses when a Genie space is slow/cold but would have succeeded on a real query.
   - `MCP_HEALTH_TTL_SECONDS`
   - `MCP_HEALTH_FAILURE_TTL_SECONDS`
   - `MCP_SESSION_TIMEOUT_SECONDS` (default `45`): read timeout for the MCP `ClientSession`
