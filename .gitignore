@@ -32,6 +32,7 @@ build/
 dist/
 pip-wheel-metadata/
 site/
+src/aiserver/static/
 
 # Python tooling and test outputs
 .coverage*
@@ -57,6 +58,7 @@ node_modules/
 .databricks/
 **/.databricks
 **/mlruns/
+mlflow.db
 .databricks_app_source/wheels/*.whl
 !.databricks_app_source/wheels/.gitkeep
 load-test-runs/

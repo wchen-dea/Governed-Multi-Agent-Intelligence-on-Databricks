@@ -1,4 +1,4 @@
-from scripts.grant_app_runtime_permissions import PermissionManager
+from operations.grant_app_runtime_permissions import PermissionManager
 
 
 def test_permission_parser_accepts_canonical_vector_search_route():

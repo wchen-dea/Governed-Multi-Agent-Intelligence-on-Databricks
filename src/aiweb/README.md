@@ -61,5 +61,4 @@ Coverage includes desktop and mobile layouts, incremental streaming, governance 
 ## Notes
 
 - Default backend URL is `http://localhost:8000/invocations`.
-- The React UI is served by the app runtime through `src/scripts/react_ui_server.py`.
-- The legacy Chainlit implementation remains available under `src/frontend/` for fallback and compatibility checks.
+- The built React UI is bundled into the backend wheel (`src/aiserver/static/`, produced by `prepare_app_source.py`) and served in-process by `src/aiserver/api/server.py` \u2014 same origin, no separate proxy process.

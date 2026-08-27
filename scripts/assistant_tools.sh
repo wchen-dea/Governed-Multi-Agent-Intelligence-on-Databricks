@@ -12,7 +12,8 @@ usage() {
     '  assistant-setup-cdi             Prepare the CDI Genie agent' \
     '  assistant-grant-app-permissions Grant app runtime permissions' \
     '  assistant-grant-lakebase-memory Grant Lakebase memory permissions' \
-    '  assistant-benchmark-stream      Benchmark stream parsing helpers'
+    '  assistant-benchmark-stream      Benchmark stream parsing helpers' \
+    '  assistant-triage-evaluation     Triage MLflow evaluation run failures'
 }
 
 if [ "$#" -eq 0 ]; then
@@ -32,6 +33,7 @@ case "$command" in
   assistant-grant-app-permissions) exec uv run assistant-grant-app-permissions "$@" ;;
   assistant-grant-lakebase-memory) exec uv run assistant-grant-lakebase-memory "$@" ;;
   assistant-benchmark-stream) exec uv run assistant-benchmark-stream "$@" ;;
+  assistant-triage-evaluation) exec uv run assistant-triage-evaluation "$@" ;;
   help|-h|--help) usage ;;
   *) printf 'Unknown assistant command: %s\n\n' "$command" >&2; usage >&2; exit 2 ;;
 esac

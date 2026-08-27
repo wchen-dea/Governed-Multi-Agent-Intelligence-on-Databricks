@@ -43,7 +43,6 @@ Runtime tuning controls in this repository:
 
 - Process tuning:
   - `BACKEND_UVICORN_WORKERS`
-  - `FRONTEND_UVICORN_WORKERS`
 - Message bus async path:
   - `MESSAGE_BUS_ASYNC`
   - `MESSAGE_BUS_ASYNC_QUEUE_SIZE`

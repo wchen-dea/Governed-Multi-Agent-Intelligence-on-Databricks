@@ -111,7 +111,7 @@ Typical Genie Agent source pattern:
 
 Semantics layer build automation:
 
-- Notebooks under [src/semantics/notebooks/](src/semantics/notebooks) build/refresh `dim_product_search_index`, `flink_support_index`, and `fct_cdi_trusted_expert_score_metric_view`.
+- Notebooks under [src/semantics/](src/semantics) build/refresh `dim_product_search_index`, `flink_support_index`, and `fct_cdi_trusted_expert_score_metric_view`.
 - Corresponding Databricks Jobs are declared in `resources/semantics_jobs.yml`; see [src/semantics/README.md](src/semantics/README.md).
 
 ## Backend UC Security and Governance Guidelines
@@ -139,7 +139,7 @@ This project uses a modern AI app stack on Databricks:
 - Governed data access: Unity Catalog permissions and SQL warehouse controls.
 - Hybrid authorization model: per-tool app identity and user identity (OBO) routing.
 - Deployment-as-code: Databricks Declarative Automation Bundles with target overlays.
-- Streamed UX: React + TypeScript frontend renders finalized text deltas and run context.
+- Streamed UX: React + TypeScript frontend, bundled into the backend wheel and served in-process, renders finalized text deltas and run context.
 
 ## Core Capabilities
 
@@ -169,7 +169,7 @@ What this does:
 
 - `quickstart`: prepares local environment and baseline config.
 - `preflight`: validates local startup, health endpoint, and `/invocations` request path.
-- `start-app`: runs backend and UI for interactive testing.
+- `runtime-serve-app`: runs the backend and UI together (single process) for interactive testing.
 
 For deployment, continue with the standard bundle flow in Quick Start.
 
@@ -243,9 +243,7 @@ For architecture diagrams, see [docs/architecture/high-level-architecture.md](do
 - [src/aiserver/README.md](src/aiserver/README.md): backend-focused setup, runtime behavior, and operations guide
 - [src/aiweb/](src/aiweb): primary React UI (TypeScript) client for chat, commands, and stream rendering
 - [src/aiweb/README.md](src/aiweb/README.md): React UI setup, build, and local run guide
-- [src/frontend/](src/frontend): legacy Chainlit frontend retained for compatibility and migration fallback
-- [src/frontend/README.md](src/frontend/README.md): legacy Chainlit frontend guide
-- [src/scripts/](src/scripts): quickstart, preflight, local start, discovery, and permission helpers
+- [src/operations/](src/operations): quickstart, preflight, local start, discovery, and permission helpers
 - [resources/multiagent_app.yml](resources/multiagent_app.yml): shared Databricks app resource definition
 - [targets/](targets): target-specific deployment overlays
 - [databricks.yml](databricks.yml): DAB bundle root configuration
@@ -302,8 +300,7 @@ This builds versioned wheel and React payloads, clears prior generated remote wh
 - `BACKEND_LOG_LEVEL`: backend log level (default `INFO`).
 - `BACKEND_LOG_FORMAT`: Python logging format string for backend logs.
 - `BACKEND_LOG_DATE_FORMAT`: datetime format used in backend logs.
-- `BACKEND_UVICORN_WORKERS`: backend worker count for `start-app`/`start-server` launch (fallback `WEB_CONCURRENCY`, default `1`).
-- `FRONTEND_UVICORN_WORKERS`: React UI proxy worker count for `start-app` frontend process (default `1`).
+- `BACKEND_UVICORN_WORKERS`: worker count for `runtime-serve-app`/`runtime-serve-backend` (fallback `WEB_CONCURRENCY`, default `1`).
 - `MESSAGE_BUS_BACKEND`: `structured_logging` (default), `noop`, `kafka`, `rabbitmq`, or `uc_table`.
 - `MESSAGE_BUS_TOPIC`: topic name used by message bus backends (default `agent-lifecycle-events`).
 - `MESSAGE_BUS_FAIL_OPEN`: when `true`, fallback to structured logging if bus init fails.

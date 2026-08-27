@@ -134,7 +134,7 @@ Constraints: If app exists, bind instead of delete.
   - `src/aiserver/shared/request_utils.py`
   - `src/aiserver/shared/runtime_utils.py`
 - Validate:
-  - `python -m py_compile src/aiserver/*.py src/scripts/*.py src/frontend/*.py`
+  - `python -m py_compile src/aiserver/*.py src/operations/*.py`
   - `uv run runtime-preflight`
 
 ### deploy

@@ -56,8 +56,8 @@ This project implements **only part** of the full ai-ready semantics layer. The 
 
 | Component | Built/owned by this project | Notes |
 | --- | --- | --- |
-| AI Search (Vector Search) indexes | **Yes** | Built by pipelines in `src/semantics/notebooks/`, deployed as Databricks Jobs in `resources/semantics_jobs.yml`. |
-| Unity Catalog Metric Views | **Yes** | Published by `src/semantics/notebooks/create_fct_cdi_trusted_expert_score_metric_view.py` over gold-layer Delta tables. |
+| AI Search (Vector Search) indexes | **Yes** | Built by pipelines in `src/semantics/`, deployed as Databricks Jobs in `resources/semantics_jobs.yml`. |
+| Unity Catalog Metric Views | **Yes** | Published by `src/semantics/create_fct_cdi_trusted_expert_score_metric_view.py` over gold-layer Delta tables. |
 | Genie Agent spaces | No — other project | This repo only registers the Genie space id in `src/aiserver/domain/subagents.<target>.json` and routes to it via MCP. Space creation, metric-view binding at the Genie level, and prompt tuning are owned by the Genie/analytics project. |
 | Lakebase operational data store | No — other project | The Lakebase project (Postgres instance, schema, ODS tables, real-time ingestion) is provisioned and owned by a separate project. This repo only holds a service point (`lakebase_ods_agent` subagent) that connects via OAuth-authenticated `psycopg2` for read queries. |
 
@@ -98,7 +98,7 @@ Consequence: this repository's semantics-layer responsibility is limited to **AI
 
 | Layer | Location |
 | --- | --- |
-| Build pipelines (notebooks) | [src/semantics/notebooks/](../../src/semantics/notebooks) — see [src/semantics/README.md](../../src/semantics/README.md) |
+| Build pipelines (notebooks) | [src/semantics/](../../src/semantics) — see [src/semantics/README.md](../../src/semantics/README.md) |
 | Build automation (jobs) | `resources/semantics_jobs.yml` (one Databricks Job per notebook) |
 | Runtime consumption config | `src/aiserver/domain/subagents.<target>.json` (MCP URLs, Genie space ids, Lakebase connection fields) |
 | Runtime consumption code | `src/aiserver/services/orchestrator_service.py` (MCP/Genie routing), `src/aiserver/shared/lakebase_client.py` (Lakebase OAuth/psycopg2) |

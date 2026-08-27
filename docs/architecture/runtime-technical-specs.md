@@ -31,7 +31,7 @@ Set `MODEL_ROUTING_ENABLED=false` to retain `ORCHESTRATOR_MODEL` for every task.
 With routing enabled, dev currently resolves standard, reasoning, and synthesis tasks to `databricks-gpt-5-6-luna`. Model-route metadata is not proof of tool-call correctness.
 - src/aiweb/src/App.tsx
 - src/aiweb/src/api.ts
-- src/scripts/react_ui_server.py
+- src/aiserver/api/server.py (mounts the built UI in-process; no separate proxy server)
 
 This document is the canonical implementation-fact index for architecture behavior; [API contracts](api-contracts.md), [tool and model registry](tool-and-model-registry.md), and [low-level design](low-level-design.md) remain authoritative for their named concerns.
 
@@ -194,7 +194,7 @@ Primary implementation:
 - tests/test_guardrails_service.py
 - tests/test_message_bus_backends.py
 - tests/test_message_bus_integration.py
-- src/scripts/preflight.py
+- src/operations/preflight.py
 
 ## Related Documents
 

@@ -27,6 +27,12 @@ Primary entrypoint:
   - `runtime_auth_service.py`: request-scoped auth context and policy-aware availability.
   - `policy_service.py`: deterministic request-time policy checks.
   - `guardrails_service.py`: deterministic response-time guardrail checks.
+  - `route_planner.py`: conservative pre-model route plans.
+  - `model_routing_service.py`: per-task-type model selection.
+  - `agent_handoff_service.py`: native agent handoffs exposed as function tools.
+  - `agent_delegation_policy_service.py`: deny-by-default agent-to-agent delegation policy.
+  - `agent_task_bus.py`: durable task bus (in-memory and UC Delta-backed implementations).
+  - `agent_task_worker.py`: bounded worker that executes delegated tasks.
   - `message_bus.py`: structured logging, noop, Kafka, RabbitMQ, UC table backends.
   - `memory_service.py`: no-op and Lakebase-backed conversation/persona memory backends.
   - `interfaces.py`: service protocols for dependency injection.
@@ -39,6 +45,8 @@ Supported subagent types:
   - `lakebase`: Lakebase PostgreSQL via psycopg2 with OAuth credentials.
 - `src/aiserver/domain/`
   - `subagent_config.py`: typed config model and validation.
+  - `agent_messages.py`: typed contracts for bounded agent-to-agent delegation.
+  - `execution_contracts.py`: typed contracts shared by routing, execution, and response policy layers.
   - `subagents.<target>.json`: environment-specific subagent/tool registry config.
 - `src/aiserver/shared/`
   - `settings.py`: typed runtime settings.
