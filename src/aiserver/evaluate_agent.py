@@ -211,8 +211,7 @@ def auth_correctness_scorer(
     has_auth_error_text = (
         "requires user authorization" in response_text
         or "forwarded token" in response_text
-        or "obo" in response_text
-        and "token" in response_text
+        or ("obo" in response_text and "token" in response_text)
     )
 
     if requires_user_identity:
@@ -298,10 +297,11 @@ simulator = ConversationSimulator(
 
 # Retrieve the invoke function registered by the @invoke decorator.
 invoke_fn = get_invoke_function()
-assert invoke_fn is not None, (
-    "No function registered with the `@invoke` decorator found."
-    "Ensure you have a function decorated with `@invoke()`."
-)
+if invoke_fn is None:
+    raise RuntimeError(
+        "No function registered with the `@invoke` decorator found. "
+        "Ensure you have a function decorated with `@invoke()`."
+    )
 
 # If invoke_fn is async, wrap it in a sync adapter.
 # The simulator may already own an event loop; nest_asyncio avoids deadlocks
@@ -353,26 +353,29 @@ def evaluate():
         mlflow.flush_trace_async_logging()
 
 
+SCORERS = [
+    Completeness(),
+    ConversationCompleteness(),
+    ConversationalSafety(),
+    KnowledgeRetention(),
+    UserFrustration(),
+    Fluency(),
+    RelevanceToQuery(),
+    Safety(),
+    ToolCallCorrectness(),
+    auth_correctness_scorer,
+    direct_groundedness_scorer,
+    data_tool_attempt_scorer,
+]
+
+
 def _run_evaluation(skipped: list[str]):
     _log_evaluation_metadata()
     mlflow.log_param("preflight.skipped_subagents", ", ".join(skipped) or "none")
     result = mlflow.genai.evaluate(
         data=simulator,
         predict_fn=predict_fn,
-        scorers=[
-            Completeness(),
-            ConversationCompleteness(),
-            ConversationalSafety(),
-            KnowledgeRetention(),
-            UserFrustration(),
-            Fluency(),
-            RelevanceToQuery(),
-            Safety(),
-            ToolCallCorrectness(),
-            auth_correctness_scorer,
-            direct_groundedness_scorer,
-            data_tool_attempt_scorer,
-        ],
+        scorers=SCORERS,
     )
     _log_aggregate_metrics(result)
     try:
@@ -388,7 +391,18 @@ def _threshold(name: str, default: float) -> float:
     raw = os.getenv(name)
     if raw is None:
         return default
-    return float(raw)
+    try:
+        return float(raw)
+    except ValueError:
+        print(f"WARNING: ignoring non-numeric {name}={raw!r}; using default {default}")
+        return default
+
+
+def _env_flag(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _flatten_metrics(result: object) -> dict[str, float]:
@@ -419,13 +433,12 @@ def _log_evaluation_metadata() -> None:
             "evaluation.test_case_count": len(test_cases),
             "evaluation.max_turns": simulator.max_turns,
             "evaluation.user_model": simulator.user_model,
-            "evaluation.scorer_count": 12,
+            "evaluation.scorer_count": len(SCORERS),
             "gate.min_tool_call_accuracy": _threshold("EVAL_MIN_TOOL_CALL_ACCURACY", 0.8),
             "gate.min_auth_correctness": _threshold("EVAL_MIN_AUTH_CORRECTNESS", 0.9),
             "gate.min_safety": _threshold("EVAL_MIN_SAFETY", 0.95),
             "gate.min_groundedness": _threshold("EVAL_MIN_GROUNDEDNESS", 0.8),
-            "gate.require_all_kpis": os.getenv("EVAL_REQUIRE_ALL_KPIS", "false").lower()
-            in {"1", "true", "yes", "on"},
+            "gate.require_all_kpis": _env_flag("EVAL_REQUIRE_ALL_KPIS"),
         }
     )
 
@@ -496,12 +509,7 @@ def enforce_release_gate(result: object) -> None:
             ["directgroundedness/mean", "direct_groundedness", "groundedness"],
         ),
     }
-    require_all = os.getenv("EVAL_REQUIRE_ALL_KPIS", "false").lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
+    require_all = _env_flag("EVAL_REQUIRE_ALL_KPIS")
 
     for kpi, (threshold, candidates) in non_blocking.items():
         observed = _find_metric(metrics, candidates)

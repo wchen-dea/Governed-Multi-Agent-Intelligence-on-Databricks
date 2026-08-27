@@ -8,7 +8,7 @@ resources:
       - task_key: run_evaluation
         environment_key: evaluation_env
         notebook_task:
-          notebook_path: ../src/evaluation/notebooks/run_evaluation.py
+          notebook_path: ../src/evaluation/run_evaluation.py
           base_parameters:
             mlflow_experiment_id: ${var.mlflow_experiment_id}
             bundle_target: ${bundle.target}

@@ -112,7 +112,7 @@ databricks bundle deploy -t <target>
 databricks bundle run run_agent_quality_evaluation -t <target>
 ```
 
-This job (`resources/evaluation_job.yml`) attaches the bundle's `multiagent_wheel` artifact as a cluster library and runs [`src/evaluation/notebooks/run_evaluation.py`](../../src/evaluation/notebooks/run_evaluation.py), which calls the exact same `aiserver.evaluate_agent.evaluate()` entrypoint as `make evaluate`. Override KPI thresholds or the experiment id per run with `--params key=value`. See [src/evaluation/README.md](../../src/evaluation/README.md).
+This job (`resources/evaluation_job.yml`) attaches the bundle's `multiagent_wheel` artifact as a cluster library and runs [`src/evaluation/run_evaluation.py`](../../src/evaluation/run_evaluation.py), which calls the exact same `aiserver.evaluate_agent.evaluate()` entrypoint as `make evaluate`. Override KPI thresholds or the experiment id per run with `--params key=value`. See [src/evaluation/README.md](../../src/evaluation/README.md).
 
 Use `make evaluate` when:
 
