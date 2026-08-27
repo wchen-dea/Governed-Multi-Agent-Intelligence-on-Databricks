@@ -11,7 +11,7 @@ Separate model instruction strategy from hard policy enforcement and define safe
 ### Orchestrator Instructions
 
 - Source: runtime instruction assembly in `src/aiserver/services/orchestrator_service.py`
-- Responsibility: tool routing intent, unavailable tool behavior, citation expectation, composite/multi-tool comparison sequencing (call each relevant tool once, then compute the comparison itself)
+- Responsibility: tool routing intent, unavailable tool behavior, citation expectation, composite/multi-tool comparison sequencing (call each relevant tool once, then compute the comparison itself), and per-source freshness-SLA disclosure when combining tools with different freshness SLAs
 
 ### Tool Function Prompts
 

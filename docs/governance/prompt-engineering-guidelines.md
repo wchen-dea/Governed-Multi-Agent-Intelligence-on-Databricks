@@ -43,6 +43,7 @@ Changes to shared routing/evidence/delegation rules live in `_build_base_orchest
 - Keep rules tool-agnostic; tool-specific behavior belongs in that subagent's `system_prompt`.
 - State call-count limits explicitly (e.g., "at most once per tool, except Lakebase schema discovery + data query").
 - For composite/multi-tool comparison requests, instruct the model to call each relevant tool once, gather both result sets, then compute the comparison itself before answering — do not leave this to prompt inference alone.
+- For composite requests combining tools with different `freshness_sla` values, instruct the model to disclose each source's freshness next to its contribution instead of presenting a combined result as one as-of snapshot.
 - Require native tool calling only; forbid pseudo-tool syntax in assistant text.
 - End with the evidence/citation requirement for any tool marked `requires_evidence: true`.
 

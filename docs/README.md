@@ -45,6 +45,7 @@ Runtime skills playbooks:
 Use this index to navigate project documentation by purpose:
 
 - [product/README.md](product/README.md): business outcomes, scope, and current capability boundary.
+- [product/agent-usage-guide.md](product/agent-usage-guide.md): what each agent is best at, perfect-match query types, and composite/freshness guidance for end users.
 - [architecture/README.md](architecture/README.md): architecture reading paths, authority map, and current control planes.
 - [governance/README.md](governance/README.md): policy, data, semantic, and security ownership.
 - [operations/README.md](operations/README.md): deployment, verification, MLflow, scripts, and incident paths.

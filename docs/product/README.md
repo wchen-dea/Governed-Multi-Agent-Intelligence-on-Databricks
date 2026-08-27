@@ -7,6 +7,7 @@ This section owns business outcomes, use cases, constraints, and success measure
 ## Primary Document
 
 - [Business specifications](business-specs.md): business goals, stakeholders, functional expectations, and success criteria.
+- [Agent usage guide](agent-usage-guide.md): what each agent is best at, perfect-match query types, and how composite/cross-agent questions and freshness differences are handled.
 
 ## Current Capability Boundary
 

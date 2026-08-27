@@ -49,6 +49,7 @@ For the aspirational, not-yet-implemented target-state pipeline (composite relev
 
 - Source: orchestrator base instructions (composite/multi-tool comparison rule) + ranked-list conventions in `sales_insights_agent`, `cdi_agent`, `lakebase_ods_agent` prompts.
 - Rule: when a request needs data from two tools (e.g., cross-referencing top appointment-count stores against top sales stores), each tool must return the entity identifier alongside its ranked metric so the orchestrator can join the two result sets without a third retrieval round-trip.
+- Rule: when the combined tools have different `freshness_sla` values (e.g., `sales_insights_agent` 15m vs. `cdi_agent` 4h vs. `lakebase_ods_agent` 1h), the orchestrator must disclose each source's freshness next to its contribution rather than presenting the combination as one as-of snapshot — this prevents a stale-looking or misleadingly precise combined answer.
 
 ## What Not to Do
 
