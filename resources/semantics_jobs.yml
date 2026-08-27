@@ -1,7 +1,7 @@
 resources:
   jobs:
     multiagent_dim_product_search_index:
-      name: multiagent_build_dim_product_search_index
+      name: multiagent_dim_product_search_index
       tags:
         layer: semantics
       tasks:
