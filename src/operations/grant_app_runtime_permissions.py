@@ -734,7 +734,7 @@ class PermissionManager:
                 for v in [
                     target_vars.get("vector_search_endpoint_name"),
                     target_vars.get("product_index_ep"),
-                    target_vars.get("flink_support_ed"),
+                    target_vars.get("flink_support_ep"),
                 ]
                 if isinstance(v, str) and v.strip() and not _is_placeholder(v)
             }
