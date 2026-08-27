@@ -231,6 +231,7 @@ body {
   border-radius: 4px;
   padding: 0.45rem 0.85rem;
   cursor: pointer;
+  text-align: left;
   transition:
     border-color 0.2s ease,
     transform 0.2s ease;
