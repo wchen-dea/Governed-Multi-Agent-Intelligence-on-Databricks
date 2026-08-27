@@ -1,7 +1,7 @@
 resources:
   jobs:
-    build_dim_product_search_index:
-      name: build_dim_product_search_index
+    multiagent_dim_product_search_index:
+      name: multiagent_build_dim_product_search_index
       tags:
         layer: semantics
       tasks:
@@ -12,8 +12,8 @@ resources:
             catalog: ${var.semantics_catalog}
             schema: ${var.semantics_schema}
             endpoint_name: ${var.product_index_ep}
-    build_flink_support_index:
-      name: build_flink_support_index
+    multiagent_flink_support_index:
+      name: multiagent_flink_support_index
       tags:
         layer: semantics
       tasks:
@@ -24,7 +24,7 @@ resources:
           base_parameters:
             catalog: ${var.semantics_catalog}
             schema: ${var.semantics_schema}
-            endpoint_name: ${var.flink_support_ed}
+            endpoint_name: ${var.flink_support_ep}
       environments:
       - environment_key: flink_support_env
         spec:
@@ -33,8 +33,8 @@ resources:
           - python-docx
           - pypdf
           - openpyxl
-    build_fct_cdi_trusted_expert_score_metric_view:
-      name: build_fct_cdi_trusted_expert_score_metric_view
+    multiagent_fct_cdi_trusted_expert_score_metric_view:
+      name: multiagent_fct_cdi_trusted_expert_score_metric_view
       tags:
         layer: semantics
       tasks:
