@@ -75,7 +75,9 @@ class FunctionToolWrapper(Protocol):
 class McpServerFactory(Protocol):
     """Build an MCP server instance from connection details."""
 
-    def __call__(self, *, url: str, name: str, workspace_client: Any) -> McpServer: ...
+    def __call__(
+        self, *, url: str, name: str, workspace_client: Any, timeout: float | None = None
+    ) -> McpServer: ...
 
 
 class MessageBus(Protocol):

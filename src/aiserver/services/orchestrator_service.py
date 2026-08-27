@@ -33,6 +33,11 @@ MCP_CONNECT_TIMEOUT_SECONDS = float(os.getenv("MCP_CONNECT_TIMEOUT_SECONDS", "10
 MCP_LIST_TOOLS_TIMEOUT_SECONDS = float(os.getenv("MCP_LIST_TOOLS_TIMEOUT_SECONDS", "10"))
 MCP_HEALTH_TTL_SECONDS = float(os.getenv("MCP_HEALTH_TTL_SECONDS", "30"))
 MCP_HEALTH_FAILURE_TTL_SECONDS = float(os.getenv("MCP_HEALTH_FAILURE_TTL_SECONDS", "10"))
+# Read timeout for the MCP ClientSession (covers list_tools/tool calls made on every agent
+# turn, not just the pre-flight health check). databricks_openai's McpServer defaults this
+# to 20.0s if unset, which can be too tight for a slow/cold Genie space and surfaces as an
+# uncaught McpError mid-turn instead of a graceful "unavailable" degradation.
+MCP_SESSION_TIMEOUT_SECONDS = float(os.getenv("MCP_SESSION_TIMEOUT_SECONDS", "45"))
 ORCHESTRATOR_INSTRUCTIONS_CACHE_SIZE = int(os.getenv("ORCHESTRATOR_INSTRUCTIONS_CACHE_SIZE", "128"))
 
 
@@ -657,6 +662,7 @@ def build_mcp_servers(
                 url=url,
                 name=server_name,
                 workspace_client=workspace_client,
+                timeout=MCP_SESSION_TIMEOUT_SECONDS,
             )
         )
         dependencies.message_bus.publish(
