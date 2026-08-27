@@ -64,6 +64,7 @@ Use this index to navigate project documentation by purpose:
 - [governance/security-threat-model.md](governance/security-threat-model.md): trust boundaries, threats, and implemented controls.
 - [operations/cost-performance-budget.md](operations/cost-performance-budget.md): operating budgets, key signals, and release checks.
 - [operations/mlflow-guide.md](operations/mlflow-guide.md): how MLflow tracing, evaluation, and release gating work in this project.
+- [operations/ai-agent-monitoring-observability.md](operations/ai-agent-monitoring-observability.md): consolidated status of observability, evaluation/quality, safety, drift/anomaly detection, and cost monitoring — including what is not yet implemented.
 - [operations/mlflow-rollout-checklist.md](operations/mlflow-rollout-checklist.md): one-page implementation plan with owners, tasks, and acceptance criteria for MLflow rollout.
 - [operations/mlflow-rollout-tracker.md](operations/mlflow-rollout-tracker.md): live status board template for owners, dates, dependencies, evidence, and blockers.
 - [architecture/api-contracts.md](architecture/api-contracts.md): API request/response and error behavior contract.

@@ -11,6 +11,7 @@ This section owns deployment procedures, runtime verification, MLflow operations
 | Deploy or recover an app | [Operations runbook](operations-runbook.md) |
 | Review commands | [Script catalog](script-catalog.md) |
 | Trace or evaluate behavior | [MLflow guide](mlflow-guide.md) and [evaluation specification](../quality/evaluation-spec.md) |
+| Understand monitoring coverage and gaps | [AI agent monitoring: observability, evaluation, safety, drift, and cost](ai-agent-monitoring-observability.md) |
 | Plan cost/performance | [Cost and performance budget](cost-performance-budget.md) |
 | Run a release activity | [MLflow rollout checklist](mlflow-rollout-checklist.md) |
 | Capture an incident | [Postmortem template](postmortem-template.md) |
