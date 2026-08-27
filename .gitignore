@@ -53,6 +53,7 @@ htmlcov/
 **/.vite/
 bower_components/
 node_modules/
+*.tsbuildinfo
 
 # Databricks and MLflow local artifacts
 .databricks/
