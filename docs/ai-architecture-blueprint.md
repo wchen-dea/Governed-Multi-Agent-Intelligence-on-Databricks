@@ -11,7 +11,7 @@ Skills, MCP, Tools, Governance, and Relevance Scoring
 
 ## Project Introduction
 
-This repository, Multi-Agent-App-On-Databricks, is the current
+This repository, Governed-Multi-Agent-Intelligence-On-Databricks, is the current
 implementation instance of this AI Systems Architecture Blueprint on the
 Databricks platform. It operationalizes the blueprint into a deployable
 multi-agent application with governed routing, runtime policy controls,
@@ -34,12 +34,12 @@ selected blueprint patterns. Current implementation authority is the
 
 | Blueprint Section | Primary Repo Mapping |
 | --- | --- |
-| 2. Target Layered Architecture | `src/aiserver/`, `aiweb/src/`, `docs/architecture/high-level-architecture.md` |
+| 2. Target Layered Architecture | `src/aiserver/`, `src/aiweb/src/`, `docs/architecture/high-level-architecture.md` |
 | 3. Core Architecture Components | `src/aiserver/domain/`, `src/aiserver/services/`, `src/aiserver/shared/` |
 | 4. Reference Workflow: Operational Investigation and Incident Decision | `src/aiserver/services/`, `tests/test_orchestrator_service.py`, `tests/test_api_handlers.py` |
 | 6. Context Engineering and Relevance Scoring Design | `docs/governance/business-semantics-metadata.md`, `docs/governance/data-contracts-lineage.md` |
 | 7. Governance, Security, and Observability Model | `docs/governance/security-threat-model.md`, `tests/test_guardrails_service.py`, `tests/test_runtime_auth.py`, `tests/test_policy_service.py` |
-| 8. Skill Catalog and Reusable Capability Model | `src/aiserver/README.md`, `scripts/discover_tools.py`, `docs/architecture/tool-and-model-registry.md` |
+| 8. Skill Catalog and Reusable Capability Model | `src/aiserver/README.md`, `src/operations/discover_tools.py`, `docs/architecture/tool-and-model-registry.md` |
 | 9. Implementation Roadmap | `docs/operations/operations-runbook.md`, `docs/operations/mlflow-rollout-checklist.md`, `targets/` |
 | 10. Additional Architecture Controls | `docs/adrs/`, `tests/test_message_bus_backends.py`, `tests/test_message_bus_integration.py` |
 

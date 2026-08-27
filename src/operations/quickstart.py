@@ -67,7 +67,7 @@ def _load_yml(path: Path):
     yaml = YAML()
     yaml.preserve_quotes = True
     yaml.indent(sequence=4, offset=2)
-    with open(path) as f:
+    with path.open() as f:
         return yaml, yaml.load(f)
 
 
@@ -79,7 +79,7 @@ def _save_yml(yaml: YAML, data, path: Path) -> None:
         data: YAML data structure to persist.
         path: Destination YAML file path.
     """
-    with open(path, "w") as f:
+    with path.open("w") as f:
         yaml.dump(data, f)
 
 
@@ -423,8 +423,7 @@ def select_profile_interactive(profiles: list[dict]) -> str:
             index = int(choice) - 1
             if 0 <= index < len(profiles):
                 return profiles[index]["name"]
-            else:
-                print_error(f"Please choose a number between 1 and {len(profiles)}")
+            print_error(f"Please choose a number between 1 and {len(profiles)}")
         except ValueError:
             print_error("Please enter a valid number")
 
@@ -666,7 +665,7 @@ def validate_lakebase_config(profile_name: str, config: dict) -> bool:
     """
     if config["type"] == "provisioned":
         return validate_lakebase_instance(profile_name, config["instance_name"]) is not None
-    elif config["type"] == "autoscaling":
+    if config["type"] == "autoscaling":
         return validate_lakebase_autoscaling_endpoint(profile_name, config["endpoint"]) is not None
     return False
 
@@ -1920,10 +1919,9 @@ Examples:
                     summary += f"\n\n✓ Lakebase for {lakebase_purpose}: autoscaling"
 
         summary += (
-            "\nNext step (backend only): Run 'uv run start-server' to start the agent locally"
+            "\nNext step: Run 'uv run runtime-serve-app' to start the agent locally "
+            "(serves the API and, if built, the React UI together).\n"
         )
-        summary += "\nRun 'uv run start-app' to start the backend + Chainlit chat UI together."
-        summary += "\nRun 'uv run start-app --no-ui' to start the backend only.\n"
         print(summary)
 
     except KeyboardInterrupt:

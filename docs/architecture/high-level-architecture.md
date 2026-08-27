@@ -48,7 +48,7 @@ Runtime stack:
 
 ### Major Components
 
-- Client: React UI static app + proxy
+- Client: React UI static app, served in-process by the backend
 - Entry runtime: MLflow Agent Server (`ResponsesAgent`)
 - Orchestration layer: tool selection and response composition
 - Integration layer: MCP + serving endpoint + Lakebase PostgreSQL calls

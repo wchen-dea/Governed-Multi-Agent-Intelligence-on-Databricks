@@ -28,7 +28,7 @@ Provide an auditable and maintainable registry for runtime integrations and owne
 
 ## Semantics Layer Build Automation
 
-- Notebooks: `src/semantics/notebooks/` (see [src/semantics/README.md](../../src/semantics/README.md))
+- Notebooks: `src/semantics/` (see [src/semantics/README.md](../../src/semantics/README.md))
 - Design and ownership boundaries: [Semantics layer design](semantics-layer-design.md) — this project builds AI Search indexes and Metric Views only; Genie Agent spaces and the Lakebase project are owned by other projects.
 - Jobs: `resources/semantics_jobs.yml` (one Databricks Job per notebook, run on demand or scheduled per target)
 - `create_dim_product_search_index.py` curates `dim_product` and builds/refreshes the `dim_product_search_index` Vector Search index.

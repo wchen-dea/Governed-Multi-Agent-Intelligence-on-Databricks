@@ -1,11 +1,59 @@
 #!/usr/bin/env python3
-"""Micro-benchmark for frontend stream event parsing paths."""
+"""Micro-benchmark for frontend stream event parsing paths.
+
+Usage:
+    uv run assistant-benchmark-stream
+"""
 
 from __future__ import annotations
 
 from time import perf_counter
 
-from frontend.app.stream_events import update_stream_hints
+
+def update_stream_hints(
+    event: dict[str, object], categories: set[str], tools: set[str]
+) -> str:
+    """Single-pass parser mirroring src/aiweb/src/stream.ts's updateStreamHints."""
+    event_type_raw = event.get("type")
+    event_type = event_type_raw if isinstance(event_type_raw, str) else ""
+
+    item_raw = event.get("item")
+    item = item_raw if isinstance(item_raw, dict) else None
+    item_type_raw = item.get("type") if item else ""
+    item_type = item_type_raw if isinstance(item_type_raw, str) else ""
+
+    delta = ""
+    if event_type == "response.output_text.delta":
+        delta_raw = event.get("delta")
+        if isinstance(delta_raw, str):
+            delta = delta_raw
+        elif delta_raw:
+            delta = str(delta_raw)
+
+    if "mcp" in event_type or "mcp" in item_type:
+        categories.add("Genie MCP")
+
+    if event_type.startswith("response.output_item") and item_type == "tool_call_output_item":
+        categories.add("Tool Execution")
+
+    candidates = (
+        event.get("name"),
+        item.get("name") if item else None,
+        item.get("tool_name") if item else None,
+    )
+    for candidate in candidates:
+        if not isinstance(candidate, str):
+            continue
+        tool_name = candidate.strip()
+        if not tool_name:
+            continue
+        tools.add(tool_name)
+        if tool_name.startswith("query_"):
+            categories.add("Serving Endpoint Tool")
+        else:
+            categories.add("Function Tool")
+
+    return delta
 
 
 def _legacy_parse(event: dict[str, object]) -> tuple[str, set[str], set[str]]:

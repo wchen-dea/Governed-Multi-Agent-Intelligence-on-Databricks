@@ -8,7 +8,7 @@ resources:
       - task_key: run_evaluation
         environment_key: evaluation_env
         notebook_task:
-          notebook_path: ../src/evaluation/notebooks/run_evaluation.py
+          notebook_path: ../src/evaluation/run_evaluation.py
           base_parameters:
             mlflow_experiment_id: ${var.mlflow_experiment_id}
             bundle_target: ${bundle.target}
@@ -17,6 +17,19 @@ resources:
             eval_min_safety: "0.95"
             eval_min_groundedness: "0.80"
             eval_require_all_kpis: "true"
+      - task_key: triage_evaluation
+        depends_on:
+        - task_key: run_evaluation
+        # Runs even if run_evaluation fails the release gate, since that is
+        # exactly the case triage is meant to help diagnose.
+        run_if: ALL_DONE
+        environment_key: evaluation_env
+        python_wheel_task:
+          package_name: multiagent_app_on_databricks
+          entry_point: assistant-triage-evaluation
+          parameters:
+          - "--experiment-id"
+          - ${var.mlflow_experiment_id}
       environments:
       - environment_key: evaluation_env
         spec:

@@ -18,7 +18,9 @@ APP_SOURCE_DIR = REPO_ROOT / ".databricks_app_source"
 WHEELS_DIR = APP_SOURCE_DIR / "wheels"
 REACT_UI_DIR = REPO_ROOT / "src" / "aiweb"
 REACT_DIST_DIR = REACT_UI_DIR / "dist"
-APP_REACT_DIST_DIR = APP_SOURCE_DIR / "aiweb-dist"
+# Bundled into the wheel as aiserver package data so the backend can serve the
+# UI in-process; see aiserver/api/server.py's UI_DIST_DIR.
+PACKAGED_UI_DIR = REPO_ROOT / "src" / "aiserver" / "static"
 APP_YML_PATH = APP_SOURCE_DIR / "app.yml"
 BUNDLE_FILE = REPO_ROOT / "databricks.yml"
 APP_RESOURCE_FILE = REPO_ROOT / "resources" / "multiagent_app.yml"
@@ -44,12 +46,16 @@ def _latest_wheel() -> Path:
 
 
 def _prepare_react_assets() -> None:
+    """Build the React UI and copy its dist/ into the aiserver package as data.
+
+    Must run before `uv build --wheel` so the built wheel bundles the UI.
+    """
     if not REACT_UI_DIR.exists():
         raise FileNotFoundError(f"React UI directory not found: {REACT_UI_DIR}")
 
     package_lock = REACT_UI_DIR / "package-lock.json"
     build_env = os.environ.copy()
-    # Use same-origin backend proxy endpoint served by the React UI server.
+    # Use same-origin backend proxy endpoint served by the backend directly.
     build_env.setdefault("VITE_API_PROXY", "/invocations")
 
     if package_lock.exists():
@@ -62,9 +68,9 @@ def _prepare_react_assets() -> None:
     if not REACT_DIST_DIR.exists():
         raise FileNotFoundError(f"React UI build output not found: {REACT_DIST_DIR}")
 
-    if APP_REACT_DIST_DIR.exists():
-        shutil.rmtree(APP_REACT_DIST_DIR)
-    shutil.copytree(REACT_DIST_DIR, APP_REACT_DIST_DIR)
+    if PACKAGED_UI_DIR.exists():
+        shutil.rmtree(PACKAGED_UI_DIR)
+    shutil.copytree(REACT_DIST_DIR, PACKAGED_UI_DIR)
 
 
 def _current_target() -> str:
@@ -161,6 +167,10 @@ def main() -> int:
     WHEELS_DIR.mkdir(parents=True, exist_ok=True)
     _log(f"Preparing app source in {APP_SOURCE_DIR}")
 
+    # Build React UI assets into the aiserver package first, so the wheel
+    # built next bundles the UI as package data.
+    _prepare_react_assets()
+
     # Build a fresh wheel artifact for this revision.
     _run(["uv", "build", "--wheel"])
 
@@ -177,15 +187,12 @@ def main() -> int:
     shutil.copy2(latest, destination)
     _log(f"Copied wheel artifact: {latest.name}")
 
-    # Build and package React UI assets for Databricks App static hosting.
-    _prepare_react_assets()
-
     target = _current_target()
     _sync_app_yml_env(target)
 
     print(f"Prepared Databricks app source at: {APP_SOURCE_DIR}")
     print(f"Wheel included: {destination.name}")
-    print(f"React UI assets included: {APP_REACT_DIST_DIR}")
+    print(f"React UI assets bundled in wheel from: {PACKAGED_UI_DIR}")
     return 0
 
 

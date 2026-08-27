@@ -178,7 +178,7 @@ grants:
 	FLAGS=""; \
 	if [ "$(PERMISSIONS_DRY_RUN)" = "true" ]; then FLAGS="$$FLAGS --dry-run"; fi; \
 	if [ "$(PERMISSIONS_FAIL_OPEN)" = "true" ]; then FLAGS="$$FLAGS --fail-open"; fi; \
-	uv run python src/scripts/grant_app_runtime_permissions.py \
+	uv run python src/operations/grant_app_runtime_permissions.py \
 		--app-name "$(APP_NAME)" \
 		--target "$(TARGET)" \
 		--profile "$(PROFILE)" \

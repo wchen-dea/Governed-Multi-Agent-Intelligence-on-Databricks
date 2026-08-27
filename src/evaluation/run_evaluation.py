@@ -8,7 +8,7 @@
 # MAGIC failures seen when running `make evaluate` from an external shell.
 # MAGIC
 # MAGIC Requires the project wheel attached as a cluster library (see
-# MAGIC `resources/evaluation_job.yml`), which provides the `backend` package and
+# MAGIC `resources/evaluation_job.yml`), which provides the `aiserver` package and
 # MAGIC its dependencies.
 
 # COMMAND ----------

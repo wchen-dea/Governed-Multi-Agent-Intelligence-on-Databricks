@@ -29,6 +29,8 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path=Path(__file__).parent.parent.parent / ".env", override=True)
 
 TOOL_CALL_SCORER_NAMES = ("tool_call_correctness", "datatoolattempt")
+_RATIONALE_TRUNCATE_LEN = 200
+_MAX_DETAIL_ENTRIES = 10
 
 _CATEGORY_KEYWORDS = {
     "policy_or_auth_mismatch": (
@@ -85,8 +87,6 @@ def _feedback_passed(value: object) -> bool:
     """
     if isinstance(value, str):
         return value.strip().lower() in {"yes", "true", "pass", "passed"}
-    if isinstance(value, (int, float)):
-        return bool(value)
     return bool(value)
 
 
@@ -142,7 +142,7 @@ def triage_run(run_id: str | None, experiment_id: str | None) -> dict[str, list[
             rationale = str(getattr(assessment, "rationale", "") or "")
             category = _classify(rationale, has_error)
             buckets.setdefault(category, []).append(
-                {"trace_id": str(trace_id), "rationale": rationale[:200]}
+                {"trace_id": str(trace_id), "rationale": rationale[:_RATIONALE_TRUNCATE_LEN]}
             )
 
     return buckets
@@ -157,6 +157,8 @@ def main() -> None:
         help="Experiment id to triage the latest run from (used when --run-id is omitted)",
     )
     args = parser.parse_args()
+    if not args.run_id and not args.experiment_id:
+        parser.error("one of --run-id or --experiment-id is required")
 
     buckets = triage_run(args.run_id, args.experiment_id)
     if not buckets:
@@ -169,12 +171,13 @@ def main() -> None:
         print(f"  {category}: {count}")
 
     print("\n--- Details ---")
-    for category, entries in buckets.items():
+    for category, _count in counts.most_common():
+        entries = buckets[category]
         print(f"\n[{category}]")
-        for entry in entries[:10]:
+        for entry in entries[:_MAX_DETAIL_ENTRIES]:
             print(f"  trace={entry['trace_id']}  rationale={entry['rationale']!r}")
-        if len(entries) > 10:
-            print(f"  ... ({len(entries) - 10} more)")
+        if len(entries) > _MAX_DETAIL_ENTRIES:
+            print(f"  ... ({len(entries) - _MAX_DETAIL_ENTRIES} more)")
 
 
 if __name__ == "__main__":

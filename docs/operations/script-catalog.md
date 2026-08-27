@@ -32,6 +32,7 @@ Use [scripts/assistant_tools.sh](../../scripts/assistant_tools.sh) for evaluatio
 ./scripts/assistant_tools.sh assistant-grant-app-permissions --help
 ./scripts/assistant_tools.sh assistant-grant-lakebase-memory --help
 ./scripts/assistant_tools.sh assistant-benchmark-stream
+./scripts/assistant_tools.sh assistant-triage-evaluation
 ```
 
 The equivalent Make target displays the group:

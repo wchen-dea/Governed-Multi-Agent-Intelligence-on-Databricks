@@ -12,7 +12,7 @@ This document covers low-level design and implementation details. See [high-leve
 
 - Runtime uses a layered backend package structure (`src/aiserver/api`, `src/aiserver/services`, `src/aiserver/domain`, `src/aiserver/shared`).
 - Dependency composition and protocol-driven DI are centralized in `src/aiserver/api/dependencies.py` and `src/aiserver/services/interfaces.py`.
-- Local startup orchestration handles hosted-port conflicts in `src/scripts/start_app.py`.
+- Local and hosted-app startup resolves the bind port from `DATABRICKS_APP_PORT`/`PORT`/`CHAT_APP_PORT` in `src/aiserver/api/server.py` (`main()`, `_resolve_port()`), run via the `runtime-serve-app` entry point.
 
 ## Main Content
 
@@ -117,20 +117,14 @@ This document covers low-level design and implementation details. See [high-leve
 - `src/aiweb/src/config.ts`
   - Loads typed runtime settings from frontend environment variables
 
-- `src/scripts/react_ui_server.py`
-  - Serves built React assets and proxies `/invocations` to backend runtime
+- `src/aiserver/api/server.py`
+  - Mounts built React static assets and SPA fallback directly on the backend FastAPI app; falls back to a JSON status payload if the UI isn't bundled
 
-- `src/frontend/`
-  - Legacy Chainlit frontend retained for compatibility and fallback use
+### Runtime Startup
 
-#### Local Process Orchestration
-
-- `src/scripts/start_app.py`
-  - Starts backend and optional frontend in parallel
-  - Supports env-driven backend/frontend worker tuning for Uvicorn process fan-out
-  - Tracks readiness patterns from logs
-  - Detects first failure and exits with failing process code
-  - In Databricks hosted runtime, remaps backend to internal port when UI shares app port
+- `src/aiserver/api/server.py` `main()`
+  - Resolves the bind port from `DATABRICKS_APP_PORT`/`PORT`/`CHAT_APP_PORT` (falls back to AgentServer's default of 8000) and the worker count from `BACKEND_UVICORN_WORKERS`/`WEB_CONCURRENCY`
+  - Runs a single Uvicorn process serving both the API and the UI — no separate frontend process or proxy layer
 
 ### Design Patterns
 
@@ -142,7 +136,6 @@ This document covers low-level design and implementation details. See [high-leve
 - Dependency injection pattern: handlers/services support typed dependency containers for testability and decoupling.
 - Event bus pattern: lifecycle events are published through an abstract message bus interface.
 - Adapter pattern: request and error normalization provides a stable internal payload shape.
-- Proxy pattern: React UI server proxies browser-origin requests to backend invocation handlers.
 - Environment overlay pattern: shared bundle config plus per-target overrides (`dev`, `qa`, `stg`, `prd`).
 
 ## Request Lifecycle
@@ -190,8 +183,8 @@ If an OBO tool is invoked without a forwarded token, the runtime returns a clear
 
 - `databricks.yml`: bundle root config, shared variables, includes, and the `multiagent_wheel` artifact (built via `uv build --wheel`)
 - `resources/multiagent_app.yml`: shared app defaults and baseline resource permissions
-- `resources/semantics_jobs.yml`: semantics-layer Databricks Jobs that build/refresh `dim_product_search_index`, `flink_support_index`, and `fct_cdi_trusted_expert_score_metric_view` from `src/semantics/notebooks/`
-- `resources/evaluation_job.yml`: Databricks Job that runs `aiserver.evaluate_agent.evaluate()` on workspace compute (`src/evaluation/notebooks/run_evaluation.py`) so the release-gate evaluation reaches MLflow tracking and Lakebase over the private network
+- `resources/semantics_jobs.yml`: semantics-layer Databricks Jobs that build/refresh `dim_product_search_index`, `flink_support_index`, and `fct_cdi_trusted_expert_score_metric_view` from `src/semantics/`
+- `resources/evaluation_job.yml`: Databricks Job that runs `aiserver.evaluate_agent.evaluate()` on workspace compute (`src/evaluation/run_evaluation.py`) so the release-gate evaluation reaches MLflow tracking and Lakebase over the private network, followed by a `triage_evaluation` task that runs `assistant-triage-evaluation` against the same experiment regardless of gate outcome
 - `targets/*.yml`: target-specific host, state path, variables, and resource overrides
 
 ### Frequently Used Variables
@@ -221,7 +214,6 @@ Used by local and hosted startup:
 - `BACKEND_LOG_FORMAT`
 - `BACKEND_LOG_DATE_FORMAT`
 - `BACKEND_UVICORN_WORKERS` (backend worker count, fallback to `WEB_CONCURRENCY`)
-- `FRONTEND_UVICORN_WORKERS` (React UI proxy worker count; values >1 use Uvicorn multi-worker mode)
 - `MESSAGE_BUS_BACKEND`
 - `MESSAGE_BUS_TOPIC`
 - `MESSAGE_BUS_FAIL_OPEN`
@@ -267,10 +259,9 @@ Direct non-interactive Databricks Apps invocation tests should use:
 | `src/aiserver/api/handlers.py` | Handler entrypoints and orchestration wiring |
 | `src/aiserver/services/orchestrator_service.py` | Tool/server construction and orchestrator assembly |
 | `src/aiserver/domain/subagent_config.py` | Typed subagent definitions and validation |
-| `src/aiserver/api/server.py` | MLflow Agent Server bootstrap |
+| `src/aiserver/api/server.py` | MLflow Agent Server bootstrap, hosted-port resolution |
 | `src/aiserver/services/memory_service.py` | No-op and Lakebase-backed conversation/persona memory |
 | `src/aiweb/src/App.tsx` | Primary chat UI and command flow |
-| `src/scripts/start_app.py` | Local process supervision |
 
 ## Related Docs
 

@@ -70,18 +70,18 @@ def discover_uc_functions(
                 for schema in schemas_to_search:
                     try:
                         funcs = list(w.functions.list(catalog_name=cat, schema_name=schema.name))
-                        for func in funcs:
-                            functions.append(
-                                {
-                                    "type": "uc_function",
-                                    "name": func.full_name,
-                                    "catalog": cat,
-                                    "schema": schema.name,
-                                    "function_name": func.name,
-                                    "comment": func.comment,
-                                    "routine_definition": getattr(func, "routine_definition", None),
-                                }
-                            )
+                        functions.extend(
+                            {
+                                "type": "uc_function",
+                                "name": func.full_name,
+                                "catalog": cat,
+                                "schema": schema.name,
+                                "function_name": func.name,
+                                "comment": func.comment,
+                                "routine_definition": getattr(func, "routine_definition", None),
+                            }
+                            for func in funcs
+                        )
                     except Exception:
                         # Skip inaccessible schemas and continue discovery.
                         continue
@@ -194,19 +194,19 @@ def discover_vector_search_indexes(w: WorkspaceClient) -> list[dict[str, Any]]:
                 endpoint_indexes = list(
                     w.vector_search_indexes.list_indexes(endpoint_name=endpoint.name)
                 )
-                for idx in endpoint_indexes:
-                    indexes.append(
-                        {
-                            "type": "vector_search_index",
-                            "name": idx.name,
-                            "endpoint": endpoint.name,
-                            "primary_key": idx.primary_key,
-                            "index_type": idx.index_type.value if idx.index_type else None,
-                            "status": idx.status.state.value
-                            if idx.status and idx.status.state
-                            else None,
-                        }
-                    )
+                indexes.extend(
+                    {
+                        "type": "vector_search_index",
+                        "name": idx.name,
+                        "endpoint": endpoint.name,
+                        "primary_key": idx.primary_key,
+                        "index_type": idx.index_type.value if idx.index_type else None,
+                        "status": idx.status.state.value
+                        if idx.status and idx.status.state
+                        else None,
+                    }
+                    for idx in endpoint_indexes
+                )
             except Exception:
                 # Skip inaccessible endpoints and continue discovery.
                 continue
@@ -225,15 +225,15 @@ def discover_genie_spaces(w: WorkspaceClient) -> list[dict[str, Any]]:
         # Use the SDK to enumerate Genie Agents.
         response = w.genie.list_spaces()
         genie_spaces = response.spaces if hasattr(response, "spaces") else []
-        for space in genie_spaces:
-            spaces.append(
-                {
-                    "type": "genie_space",
-                    "id": space.space_id,
-                    "name": space.title,
-                    "description": space.description,
-                }
-            )
+        spaces.extend(
+            {
+                "type": "genie_space",
+                "id": space.space_id,
+                "name": space.title,
+                "description": space.description,
+            }
+            for space in genie_spaces
+        )
     except Exception as e:
         print(f"Error discovering Genie Agents: {e}", file=sys.stderr)
 
@@ -247,19 +247,19 @@ def discover_custom_mcp_servers(w: WorkspaceClient) -> list[dict[str, Any]]:
     try:
         # Enumerate Databricks Apps and retain names prefixed with mcp-.
         apps = w.apps.list()
-        for app in apps:
-            if app.name and app.name.startswith("mcp-"):
-                custom_servers.append(
-                    {
-                        "type": "custom_mcp_server",
-                        "name": app.name,
-                        "url": app.url,
-                        "status": app.app_status.state.value
-                        if app.app_status and app.app_status.state
-                        else None,
-                        "description": app.description,
-                    }
-                )
+        custom_servers.extend(
+            {
+                "type": "custom_mcp_server",
+                "name": app.name,
+                "url": app.url,
+                "status": app.app_status.state.value
+                if app.app_status and app.app_status.state
+                else None,
+                "description": app.description,
+            }
+            for app in apps
+            if app.name and app.name.startswith("mcp-")
+        )
     except Exception as e:
         print(f"Error discovering custom MCP servers: {e}", file=sys.stderr)
 
@@ -273,20 +273,19 @@ def discover_external_mcp_servers(w: WorkspaceClient) -> list[dict[str, Any]]:
     try:
         # Enumerate Unity Catalog connections and retain MCP connections.
         connections = w.connections.list()
-        for conn in connections:
-            # Identify MCP connections via the standard connection option flag.
-            if conn.options and conn.options.get("is_mcp_connection") == "true":
-                external_servers.append(
-                    {
-                        "type": "external_mcp_server",
-                        "name": conn.name,
-                        "connection_type": conn.connection_type.value
-                        if hasattr(conn.connection_type, "value")
-                        else str(conn.connection_type),
-                        "comment": conn.comment,
-                        "full_name": conn.full_name,
-                    }
-                )
+        external_servers.extend(
+            {
+                "type": "external_mcp_server",
+                "name": conn.name,
+                "connection_type": conn.connection_type.value
+                if hasattr(conn.connection_type, "value")
+                else str(conn.connection_type),
+                "comment": conn.comment,
+                "full_name": conn.full_name,
+            }
+            for conn in connections
+            if conn.options and conn.options.get("is_mcp_connection") == "true"
+        )
     except Exception as e:
         print(f"Error discovering external MCP servers: {e}", file=sys.stderr)
 
@@ -446,10 +445,7 @@ def main():
 
     # Initialize Databricks workspace client.
     profile = args.profile or os.environ.get("DATABRICKS_CONFIG_PROFILE")
-    if profile:
-        w = WorkspaceClient(profile=profile)
-    else:
-        w = WorkspaceClient()
+    w = WorkspaceClient(profile=profile) if profile else WorkspaceClient()
 
     results = {}
 

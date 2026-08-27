@@ -376,7 +376,6 @@ class PermissionManager:
             return False
         return True
 
-
     def _grant_uc_privilege(
         self,
         securable_type: str,

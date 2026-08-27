@@ -3,12 +3,15 @@
 import asyncio
 import logging
 import os
+import sys
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from mlflow.genai.agent_server import AgentServer, setup_mlflow_git_based_version_tracking
 
 from aiserver.api.dependencies import get_app_dependency_container
@@ -34,13 +37,21 @@ _worker_stop_event: asyncio.Event | None = None
 _worker_task: asyncio.Task[None] | None = None
 _agent_server_lifespan = app.router.lifespan_context
 
+# Built React UI assets, bundled inside this package's wheel (see
+# prepare_app_source.py). Override with AIWEB_DIST_DIR for local iteration
+# against a dist/ built outside the installed package.
+UI_DIST_DIR = Path(
+    os.environ.get("AIWEB_DIST_DIR", str(Path(__file__).resolve().parent.parent / "static"))
+)
 
-@app.get("/")
-def root():
-    """Return a simple service status payload for root path probes."""
+
+@app.get("/health")
+def health():
+    """Return a simple service status payload for readiness probes."""
     return {
         "status": "ok",
-        "message": "Service is running. Use /health for readiness or /invocations for agent requests.",
+        "message": "Service is running. Use /invocations for agent requests.",
+        "ui_dist": str(UI_DIST_DIR),
     }
 
 
@@ -122,6 +133,38 @@ async def _lifespan(_: object) -> AsyncIterator[None]:
 
 app.router.lifespan_context = _lifespan
 
+# Serve the built React UI (assets + SPA fallback) in-process. Registered
+# after every API route above so it never shadows /invocations, /delegations,
+# or MLflow AgentServer's own routes — Starlette matches routes in
+# registration order.
+_ui_assets_dir = UI_DIST_DIR / "assets"
+if _ui_assets_dir.exists():
+    app.mount("/assets", StaticFiles(directory=_ui_assets_dir), name="ui-assets")
+
+
+@app.get("/")
+def index():
+    index_path = UI_DIST_DIR / "index.html"
+    if index_path.exists():
+        return FileResponse(index_path)
+    return {
+        "status": "ok",
+        "message": "Service is running. Use /invocations for agent requests.",
+    }
+
+
+@app.get("/{path:path}")
+def spa_fallback(path: str):
+    # Resolve and confirm containment before serving, since "path" is
+    # attacker-controlled and may contain traversal segments (e.g. "../../etc/passwd").
+    candidate = (UI_DIST_DIR / path).resolve()
+    if candidate.is_relative_to(UI_DIST_DIR.resolve()) and candidate.is_file():
+        return FileResponse(candidate)
+    index_path = UI_DIST_DIR / "index.html"
+    if index_path.exists():
+        return FileResponse(index_path)
+    raise HTTPException(status_code=404, detail="Not found")
+
 
 try:
     setup_mlflow_git_based_version_tracking()
@@ -131,6 +174,44 @@ except Exception as exc:
     )
 
 
+def _resolve_port() -> int | None:
+    """Resolve the bind port Databricks Apps (or a local override) expects.
+
+    Priority: an explicit --port already on argv (leave AgentServer's own
+    parsing alone), then DATABRICKS_APP_PORT/PORT/CHAT_APP_PORT, else None to
+    keep AgentServer's built-in default (8000).
+    """
+    if "--port" in sys.argv:
+        return None
+    for env_var in ("DATABRICKS_APP_PORT", "PORT", "CHAT_APP_PORT"):
+        raw = os.environ.get(env_var)
+        if raw:
+            try:
+                return int(raw)
+            except ValueError:
+                continue
+    return None
+
+
+def _resolve_workers() -> int | None:
+    if "--workers" in sys.argv:
+        return None
+    for env_var in ("BACKEND_UVICORN_WORKERS", "WEB_CONCURRENCY"):
+        raw = os.environ.get(env_var)
+        if raw:
+            try:
+                return max(int(raw), 1)
+            except ValueError:
+                continue
+    return None
+
+
 def main():
-    """Run the AgentServer application."""
+    """Run the AgentServer application, binding to the platform-provided port."""
+    port = _resolve_port()
+    if port is not None:
+        sys.argv += ["--port", str(port)]
+    workers = _resolve_workers()
+    if workers is not None:
+        sys.argv += ["--workers", str(workers)]
     agent_server.run(app_import_string="aiserver.api.server:app")

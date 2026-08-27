@@ -7,6 +7,7 @@ Usage:
     uv run runtime-preflight
 """
 
+import contextlib
 import json
 import os
 import socket
@@ -52,7 +53,7 @@ def start_server(port: int) -> subprocess.Popen:
         popen_kwargs["preexec_fn"] = os.setsid
 
     proc = subprocess.Popen(
-        ["uv", "run", "start-server", "--port", str(port)],
+        ["uv", "run", "runtime-serve-backend", "--port", str(port)],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.PIPE,
         text=True,
@@ -62,8 +63,10 @@ def start_server(port: int) -> subprocess.Popen:
     lines_queue: list[str] = []
 
     def _reader():
+        # Streams lines as they arrive; not a list-copy, so list(iter(...)) would
+        # block until EOF instead of letting the polling loop below react live.
         for line in iter(proc.stderr.readline, ""):
-            lines_queue.append(line)
+            lines_queue.append(line)  # noqa: PERF402
 
     t = threading.Thread(target=_reader, daemon=True)
     t.start()
@@ -102,10 +105,8 @@ def stop_server(proc: subprocess.Popen):
     else:
         import signal
 
-        try:
+        with contextlib.suppress(ProcessLookupError):
             os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
-        except ProcessLookupError:
-            pass
     try:
         proc.wait(timeout=10)
     except subprocess.TimeoutExpired:

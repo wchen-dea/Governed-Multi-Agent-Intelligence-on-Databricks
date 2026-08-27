@@ -19,9 +19,9 @@ flowchart LR
 flowchart TB
     subgraph Business
         U1[Manager — full agent access]
-        U2[Analyst — Product Index + Lakebase ODS]
+        U2[Analyst — Sales Insights + Product Index + Lakebase ODS]
         U3[Operator — Flink Support only]
-        U4[Engineer — Product Index + Flink Support + Lakebase ODS]
+        U4[Engineer — Flink Support + Lakebase ODS]
     end
 
     subgraph Platform

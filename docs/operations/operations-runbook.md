@@ -12,7 +12,7 @@ This document covers deployment and operations only. High-level system context i
 ## Current Status
 
 - Dev app is running and user-accessible.
-- Hosted startup uses UI mode with backend internal port remapping.
+- Hosted startup runs a single process that serves the API and the bundled React UI together, binding directly to the Databricks Apps-provided port.
 - Bundle validation is stable.
 - Deployment can fail intermittently when Terraform provider registry is unreachable or the provider crashes.
 - Fallback workflow is in active use when registry outage or provider crash occurs.
@@ -158,16 +158,14 @@ Expected health fields:
 
 ### GitHub Actions Pipeline Alignment (App-Source Payload)
 
-The GitHub Actions deployment pipeline is aligned to this runbook and uses Makefile-driven app-source payload delivery (wheel + React UI):
+The GitHub Actions deployment pipeline (`.github/workflows/databricks-cicd.yml`) is aligned to this runbook:
 
-1. Build wheel and React UI payload: `make build-app-source`.
-2. Validate bundle by target: `make validate TARGET="$DAB_TARGET"`.
-3. Attempt bundle deploy: `make bundle-deploy TARGET="$DAB_TARGET"`.
-4. Import prepared app source to workspace: `make import TARGET="$DAB_TARGET" APP_NAME="$APP_NAME"`.
-5. Deploy app from workspace source path: `make deploy TARGET="$DAB_TARGET" APP_NAME="$APP_NAME"`.
-6. Final health and smoke gates: `make health ...` and `make smoke ...`.
+- **`pr-ci` job** (pull requests): `uv run pytest -q` → `uv run assistant-evaluate` → `make build-app-source` → `make validate TARGET=<pr-base-branch>`.
+- **`deploy` job** (push to `dev`/`qa`/`stg`/`prd` or manual dispatch): `uv run pytest -q` → `uv run assistant-evaluate` → `make redeploy TARGET=<target> APP_NAME=<app-name>`.
 
-For an operator-driven source-only recovery, use `make upload-wheel` instead of manually composing steps 1, 4, 5, and health.
+`make redeploy` is a single composite target that runs `build-app-source`, `validate`, `bundle-deploy-optional`, `import`, `deploy`, `grants`, `health`, and `smoke` in sequence (see [Makefile](../../Makefile)).
+
+For an operator-driven source-only recovery, use `make upload-wheel` instead of `make redeploy`.
 
 This keeps repository state clean (no committed wheel binaries) while ensuring each CI run deploys a fresh wheel artifact.
 
@@ -207,7 +205,7 @@ Use this short checklist when onboarding or updating a Genie Agent backed by bus
 - Define business KPI scope, grain, dimensions, and measures.
 - Apply consistent semantic metadata (for example domain, subject, owner, grain).
 - Recommended blueprint: [Unity-Catalog-Semantic-Metric-Views-Blueprint](https://github.com/wchen-dea/Unity-Catalog-Semantic-Metric-Views-Blueprint)
-- Publish/refresh via the `build_fct_cdi_trusted_expert_score_metric_view` job (`resources/semantics_jobs.yml`, notebook `src/semantics/notebooks/create_fct_cdi_trusted_expert_score_metric_view.py`).
+- Publish/refresh via the `build_fct_cdi_trusted_expert_score_metric_view` job (`resources/semantics_jobs.yml`, notebook `src/semantics/create_fct_cdi_trusted_expert_score_metric_view.py`).
 
 2. Validate with representative Genie prompts
 
@@ -260,7 +258,6 @@ Optional worker tuning (local or hosted startup path):
 
 ```bash
 BACKEND_UVICORN_WORKERS=2
-FRONTEND_UVICORN_WORKERS=1
 ```
 
 #### RabbitMQ message bus local example
@@ -322,7 +319,6 @@ ORCHESTRATOR_INSTRUCTIONS_CACHE_SIZE=128
 
 ```bash
 uv run runtime-serve-backend --reload
-uv run runtime-serve-app --no-ui
 ```
 
 #### Preflight and evaluation

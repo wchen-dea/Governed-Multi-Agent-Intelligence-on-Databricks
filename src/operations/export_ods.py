@@ -1,5 +1,6 @@
 import csv
 import os
+from pathlib import Path
 
 import mysql.connector
 from dotenv import load_dotenv
@@ -24,9 +25,9 @@ cursor = conn.cursor()
 # List all tables in the database
 cursor.execute(
     """
-    SELECT table_name 
-    FROM information_schema.tables 
-    WHERE table_schema = %s 
+    SELECT table_name
+    FROM information_schema.tables
+    WHERE table_schema = %s
     AND table_type = 'BASE TABLE'
 """,
     (database,),
@@ -37,8 +38,8 @@ print(f"Found {len(tables)} tables: {tables}")
 
 tables = ["", ""]
 # Export each table as CSV to a local directory (upload to the UC volume separately if needed).
-output_path = os.environ.get("ODS_EXPORT_DIR", "./ods_export")
-os.makedirs(output_path, exist_ok=True)
+output_path = Path(os.environ.get("ODS_EXPORT_DIR", "./ods_export"))
+output_path.mkdir(parents=True, exist_ok=True)
 
 for table_name in tables:
     print(f"Exporting table: {table_name}")
@@ -46,8 +47,8 @@ for table_name in tables:
     rows = cursor.fetchall()
     columns = [desc[0] for desc in cursor.description]
 
-    file_path = os.path.join(output_path, f"{table_name}.csv")
-    with open(file_path, "w", newline="") as f:
+    file_path = output_path / f"{table_name}.csv"
+    with file_path.open("w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(columns)
         writer.writerows(rows)

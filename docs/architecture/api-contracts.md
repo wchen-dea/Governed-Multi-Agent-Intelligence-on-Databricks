@@ -61,7 +61,6 @@ The public Responses API output structure remains backward-compatible; governanc
 - `GET /delegations/{task_id}` returns a user-safe task lifecycle view for accepted agent handoffs.
 - The response includes task ID, correlation ID, source/target agents, intent, state, retry count, and terminal failure code when available.
 - The endpoint never returns the delegated SQL, task payload, credentials, or tool output.
-- The React proxy exposes the same path to browser clients.
 - A missing task returns HTTP `404`. Access requires the same Databricks Apps authentication boundary as other backend routes.
 
 ## Error Semantics

@@ -41,13 +41,13 @@ flowchart TB
     M --> FS
     M --> LB
 
-    A[analyst] --> PI
+    A[analyst] --> SA
+    A --> PI
     A --> LB
 
     OP[operator] --> FS
 
-    E[engineer] --> PI
-    E --> FS
+    E[engineer] --> FS
     E --> LB
 ```
 

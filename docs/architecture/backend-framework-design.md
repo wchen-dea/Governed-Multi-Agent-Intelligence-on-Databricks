@@ -20,6 +20,7 @@ src/aiserver/
 │   ├── policy_service.py         # Deterministic request-time policy checks
 │   ├── guardrails_service.py     # Deterministic response-time guardrails
 │   ├── model_routing_service.py  # Deterministic task-type model selection
+│   ├── route_planner.py          # Conservative pre-model route plans
 │   ├── agent_task_bus.py         # In-memory and UC-backed delegation task stores
 │   ├── agent_task_worker.py      # Bounded durable delegation worker
 │   ├── agent_handoff_service.py  # Native delegate_to_agent tool
@@ -28,6 +29,8 @@ src/aiserver/
 │   └── interfaces.py             # Protocol-based contracts for DI
 ├── domain/               ← Typed models and config
 │   ├── subagent_config.py        # SubagentConfig dataclass, validation, loading
+│   ├── agent_messages.py         # Typed contracts for agent-to-agent delegation
+│   ├── execution_contracts.py    # Shared routing/execution/response-policy contracts
 │   └── subagents.{env}.json      # Per-environment subagent registries
 └── shared/               ← Cross-cutting utilities
     ├── settings.py               # AppSettings from env vars
@@ -140,7 +143,8 @@ All request stages publish structured events via a pluggable message bus:
 request.invoke.started → request.invoke.succeeded / request.invoke.failed
 request.stream.started → request.stream.succeeded / request.stream.failed
 response.guardrail.passed / response.guardrail.blocked
-runtime_auth.context.built / runtime_auth.policy.denied
+auth.identity.resolved / auth.context.built / auth.trace.metadata.updated
+policy.subagent.decision (result: allow | deny)
 ```
 
 Supported backends: `noop`, `structured_logging`, `kafka`, `rabbitmq`, `uc_table` (Unity Catalog Delta table via SQL Statement API).

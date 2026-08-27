@@ -35,7 +35,10 @@ Introduce a `MessageBus` protocol and publish lifecycle events across handlers, 
 request.invoke.started / succeeded / failed
 request.stream.started / succeeded / failed
 response.guardrail.passed / blocked
-runtime_auth.context.built / policy.denied
+auth.identity.resolved
+auth.context.built
+auth.trace.metadata.updated
+policy.subagent.decision (result: allow | deny)
 ```
 
 ## Alternatives Considered

@@ -8,7 +8,7 @@ This document summarizes the technical specifications currently implemented in t
 - Request handling supports both invoke and stream flows through MLflow Agent Server handlers.
 - Orchestrator agent is assembled at runtime with available tools and healthy MCP servers.
 - A deterministic model router selects a configured Databricks model before agent assembly and records the decision in routing lifecycle metadata.
-- Frontend runtime is React UI first, with a legacy Chainlit path retained for compatibility.
+- Frontend runtime is a React UI, bundled and served in-process by the backend.
 
 Primary implementation:
 
@@ -31,7 +31,7 @@ Set `MODEL_ROUTING_ENABLED=false` to retain `ORCHESTRATOR_MODEL` for every task.
 With routing enabled, dev currently resolves standard, reasoning, and synthesis tasks to `databricks-gpt-5-6-luna`. Model-route metadata is not proof of tool-call correctness.
 - src/aiweb/src/App.tsx
 - src/aiweb/src/api.ts
-- src/scripts/react_ui_server.py
+- src/aiserver/api/server.py (mounts the built UI in-process; no separate proxy server)
 
 This document is the canonical implementation-fact index for architecture behavior; [API contracts](api-contracts.md), [tool and model registry](tool-and-model-registry.md), and [low-level design](low-level-design.md) remain authoritative for their named concerns.
 
@@ -144,7 +144,7 @@ Primary implementation:
 - The first enabled dev handoff is `orchestrator -> lakebase_ods_agent` with intent `appointment_summary`.
 - Dev provisions `quickstart_catalog.multi_agent_schema.agent_delegation_tasks` and `agent_delegation_events`, with exact-table `SELECT, MODIFY` access for the app identity.
 - When `AGENT_TASK_WORKER_ENABLED=true`, the backend lifespan starts a bounded background worker that leases durable tasks at `AGENT_TASK_WORKER_POLL_SECONDS` intervals and stops it cleanly at shutdown.
-- `GET /delegations/{task_id}` exposes a payload-redacted task status view through the backend and React proxy.
+- `GET /delegations/{task_id}` exposes a payload-redacted task status view through the backend.
 
 Primary implementation:
 
@@ -159,7 +159,7 @@ Primary implementation:
 - Deployment is target-based with dev, qa, stg, and prd overlays.
 - Shared resource configuration is centralized and target overrides are explicit.
 - Environment variables configure runtime behavior for auth, bus backends, UC audit sink, and release gates.
-- Process concurrency tuning is supported through backend and frontend Uvicorn worker env controls.
+- Process concurrency tuning is supported through a backend Uvicorn worker env control (`BACKEND_UVICORN_WORKERS`).
 - Operational fallback deployment path is documented for registry outage scenarios.
 
 Primary implementation:
@@ -194,7 +194,7 @@ Primary implementation:
 - tests/test_guardrails_service.py
 - tests/test_message_bus_backends.py
 - tests/test_message_bus_integration.py
-- src/scripts/preflight.py
+- src/operations/preflight.py
 
 ## Related Documents
 

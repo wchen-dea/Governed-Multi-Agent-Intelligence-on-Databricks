@@ -16,9 +16,6 @@ from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=Path(__file__).parent.parent.parent / ".env", override=True)
 
-SOURCE_VIEW = "quickstart_catalog.multi_agent_schema.fct_cdi_trusted_expert_score_metric_view"
-CATALOG = "quickstart_catalog"
-SCHEMA = "multi_agent_schema"
 MV_NAME = "quickstart_catalog.multi_agent_schema.fct_cdi_trusted_expert_score_metric_view"
 
 
@@ -56,11 +53,7 @@ def _execute_sql(w: WorkspaceClient, wh_id: str, stmt: str) -> None:
         sys.exit(1)
 
 
-def _ensure_materialized_view(w: WorkspaceClient, wh_id: str) -> None:
-    print(f"\n→ Creating materialized view {MV_NAME} from {SOURCE_VIEW} …")
-
-
-def _ensure_materialized_view(w: WorkspaceClient, wh_id: str) -> None:
+def _ensure_materialized_view(w: WorkspaceClient) -> None:
     """Verify the materialized view exists."""
     print(f"\n→ Verifying materialized view {MV_NAME} exists …")
     try:
@@ -113,7 +106,7 @@ def main() -> None:
     wh_id = _get_warehouse_id(w)
 
     print("Setting up CDI Agent …")
-    _ensure_materialized_view(w, wh_id)
+    _ensure_materialized_view(w)
 
     space_id = _create_genie_space(w, wh_id)
 

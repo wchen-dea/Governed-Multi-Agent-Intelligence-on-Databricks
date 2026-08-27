@@ -5,8 +5,8 @@ set -eu
 usage() {
   printf '%s\n' \
     'Runtime core commands:' \
-    '  runtime-serve-app      Start backend and React UI' \
-    '  runtime-serve-backend  Start the backend only' \
+    '  runtime-serve-app      Start the API + bundled React UI (single process)' \
+    '  runtime-serve-backend  Same as runtime-serve-app; supports --reload for local iteration' \
     '  runtime-preflight      Validate local startup and invocation path' \
     '  runtime-build-source   Build the deployable wheel and React assets'
 }

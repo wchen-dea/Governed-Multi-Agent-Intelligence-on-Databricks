@@ -9,7 +9,7 @@ reached over the workspace's private network rather than the public internet.
 
 The job attaches the project wheel (built automatically by the bundle's
 `multiagent_wheel` artifact) as a cluster library, then runs
-[notebooks/run_evaluation.py](notebooks/run_evaluation.py), which sets the
+[run_evaluation.py](run_evaluation.py), which sets the
 required environment variables from job parameters and calls
 `aiserver.evaluate_agent.evaluate()` directly — the same function `make
 evaluate` / `uv run assistant-evaluate` invoke locally.

@@ -29,13 +29,17 @@ AppDependencyContainer
 │   ├── lakebase_tools_builder: LakebaseToolsBuilder
 │   ├── policy_context_builder
 │   ├── subagent_policy_filter
-│   └── message_bus: MessageBus
-└── HandlerDependencies
-    ├── runtime_auth_builder
-    ├── mcp_connector
-    ├── orchestrator_factory
-    ├── guardrails_evaluator
-    └── message_bus: MessageBus
+│   ├── message_bus: MessageBus
+│   └── delegation_task_bus: AgentTaskBus | None
+├── HandlerDependencies
+│   ├── runtime_auth_builder
+│   ├── mcp_connector
+│   ├── orchestrator_factory
+│   ├── guardrails_evaluator
+│   ├── input_guardrails_evaluator
+│   ├── message_bus: MessageBus
+│   └── memory: ConversationMemory
+└── delegation_task_bus: AgentTaskBus
 ```
 
 Handlers receive only `HandlerDependencies` — a flat, frozen dataclass of composed callables.
