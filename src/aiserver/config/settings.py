@@ -54,6 +54,12 @@ class AppSettings:
     memory_preference_table: str = "agent_preferences"
     memory_max_turns: int = 20
     memory_fail_open: bool = True
+    approval_backend: str = "memory"
+    approval_warehouse_id: str = ""
+    approval_catalog: str = ""
+    approval_schema: str = ""
+    approval_table: str = "agent_approval_decisions"
+    approval_fail_open: bool = False
 
 
 @lru_cache(maxsize=1)
@@ -140,5 +146,12 @@ def get_settings() -> AppSettings:
         memory_preference_table=os.getenv("MEMORY_PREFERENCE_TABLE", "agent_preferences"),
         memory_max_turns=_env_int("MEMORY_MAX_TURNS", 20),
         memory_fail_open=os.getenv("MEMORY_FAIL_OPEN", "true").lower()
+        in {"1", "true", "yes", "on"},
+        approval_backend=os.getenv("APPROVAL_BACKEND", "memory"),
+        approval_warehouse_id=os.getenv("APPROVAL_WAREHOUSE_ID", ""),
+        approval_catalog=os.getenv("APPROVAL_CATALOG", ""),
+        approval_schema=os.getenv("APPROVAL_SCHEMA", ""),
+        approval_table=os.getenv("APPROVAL_TABLE", "agent_approval_decisions"),
+        approval_fail_open=os.getenv("APPROVAL_FAIL_OPEN", "false").lower()
         in {"1", "true", "yes", "on"},
     )

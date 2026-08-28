@@ -51,6 +51,7 @@ Each governed request should be traceable through:
 - tool call event(s)
 - guardrail decision event
 - final response outcome
+- approval decision when the response requires human review
 
 ## Storage and Audit
 
@@ -62,6 +63,8 @@ Required identifiers:
 - event_type
 - event_ts
 - event_payload
+
+Approval records are a separate durable contract from lifecycle events. They are keyed by `request_id` and contain `agent_name`, optional `store_id`, `approver`, `decision`, `reason`, `notes`, and `status`. Approval records must not contain credentials, raw SQL, or unreviewed tool payloads. An `approved` record authorizes only the reviewed decision boundary; it is not itself a dispatch command.
 
 ## Operational Rules
 

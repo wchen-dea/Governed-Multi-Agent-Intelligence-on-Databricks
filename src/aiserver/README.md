@@ -109,6 +109,7 @@ Message bus:
 - `KAFKA_BOOTSTRAP_SERVERS`, `KAFKA_CLIENT_ID`
 - `RABBITMQ_URL`
 - `UC_AUDIT_WAREHOUSE_ID`, `UC_AUDIT_CATALOG`, `UC_AUDIT_SCHEMA`, `UC_AUDIT_TABLE`
+- `APPROVAL_BACKEND`, `APPROVAL_WAREHOUSE_ID`, `APPROVAL_CATALOG`, `APPROVAL_SCHEMA`, `APPROVAL_TABLE`, `APPROVAL_FAIL_OPEN`
 
 Conversation memory (disabled by default; persists conversation content when enabled — review data classification before turning it on):
 

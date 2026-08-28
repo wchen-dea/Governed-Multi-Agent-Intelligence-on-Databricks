@@ -8,6 +8,8 @@ from aiserver.infrastructure.messaging.bus import (
     UcAuditTableMessageBus,
     default_message_bus,
 )
+from aiserver.infrastructure.persistence.approvals import UcApprovalRepository
+from aiserver.contracts.responses import ApprovalDecisionRecord
 
 
 def _settings(**kwargs) -> AppSettings:
@@ -194,3 +196,63 @@ def test_uc_message_bus_requires_warehouse_id():
     except ValueError:
         return
     raise AssertionError("Expected ValueError when UC warehouse id is missing")
+
+
+def test_uc_approval_repository_upserts_and_reads_decisions():
+    class Result:
+        data_array = [[
+            "req-123",
+            "store_intervention_agent",
+            "store-123",
+            "sam.manager",
+            "approved",
+            "Looks good",
+            "Proceed",
+            "approved",
+        ]]
+
+    class Response:
+        result = Result()
+
+    class StatementExecution:
+        def __init__(self):
+            self.statements = []
+
+        def execute_statement(self, **kwargs):
+            self.statements.append(kwargs)
+            if kwargs["statement"].startswith("SELECT"):
+                return Response()
+            return None
+
+    class Workspace:
+        def __init__(self):
+            self.statement_execution = StatementExecution()
+
+    workspace = Workspace()
+    repository = UcApprovalRepository(
+        warehouse_id="wh-1",
+        catalog="main",
+        schema="audit",
+        table="agent_approval_decisions",
+        fail_open=False,
+        workspace_client=workspace,
+    )
+    record = ApprovalDecisionRecord(
+        request_id="req-123",
+        agent_name="store_intervention_agent",
+        store_id="store-123",
+        approver="sam.manager",
+        decision="approved",
+        reason="Looks good",
+        notes="Proceed",
+        status="approved",
+    )
+
+    repository.save(record)
+    loaded = repository.get("req-123")
+
+    assert loaded == record
+    assert any("MERGE INTO main.audit.agent_approval_decisions" in item["statement"]
+               for item in workspace.statement_execution.statements)
+    assert any("CREATE TABLE IF NOT EXISTS main.audit.agent_approval_decisions" in item["statement"]
+               for item in workspace.statement_execution.statements)

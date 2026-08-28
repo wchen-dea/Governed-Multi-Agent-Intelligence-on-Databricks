@@ -35,7 +35,13 @@ function isThemeValue(value: string | null): value is ThemeValue {
   return THEMES.some((theme) => theme.value === value);
 }
 
-const STARTER_GROUPS = ["Business", "Operations", "Insight", "Commands"] as const;
+const STARTER_GROUPS = [
+  "Business",
+  "Operations",
+  "Insight",
+  "HITL",
+  "Commands",
+] as const;
 
 type StarterGroup = (typeof STARTER_GROUPS)[number];
 
@@ -44,7 +50,10 @@ const STARTERS: { group: StarterGroup; text: string }[] = [
   { group: "Commands", text: "/persona analyst" },
   { group: "Commands", text: "/persona operator" },
   { group: "Commands", text: "/persona engineer" },
-  { group: "Business", text: "What are the top 5 stores by revenue for the current season?" },
+  {
+    group: "Business",
+    text: "What are the top 5 stores by revenue for the current season?",
+  },
   {
     group: "Business",
     text: "Look up product details for brand code 'MICH' and list matching article types.",
@@ -72,6 +81,10 @@ const STARTERS: { group: StarterGroup; text: string }[] = [
   {
     group: "Insight",
     text: "Using the 2025-08-30 to 2026-04-30 time window, which stores are showing strong sales but below-average CDI scores—where we may be performing well on revenue but falling short on customer experience?",
+  },
+  {
+    group: "HITL",
+    text: "Find stores with strong revenue but declining CDI scores, compare each store with its peers and recent trend, prepare an evidence-backed customer-experience intervention packet, and pause for manager approval before any operational dispatch.",
   },
 ];
 

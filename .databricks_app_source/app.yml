@@ -46,6 +46,16 @@ env:
   value: multi_agent_schema
 - name: UC_AUDIT_TABLE
   value: agent_lifecycle_events
+- name: APPROVAL_BACKEND
+  value: uc_table
+- name: APPROVAL_WAREHOUSE_ID
+  value: b20f70f71c2f52e2
+- name: APPROVAL_CATALOG
+  value: quickstart_catalog
+- name: APPROVAL_SCHEMA
+  value: multi_agent_schema
+- name: APPROVAL_TABLE
+  value: agent_approval_decisions
 - name: AGENT_TASK_BACKEND
   value: uc_table
 - name: AGENT_TASK_WAREHOUSE_ID

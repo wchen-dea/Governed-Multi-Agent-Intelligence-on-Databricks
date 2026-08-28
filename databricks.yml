@@ -158,6 +158,21 @@ variables:
   uc_audit_table:
     description: Unity Catalog table name for lifecycle events
     default: agent_lifecycle_events
+  approval_backend:
+    description: Approval decision backend (memory or uc_table)
+    default: memory
+  approval_warehouse_id:
+    description: SQL warehouse id used by the UC approval repository
+    default: ""
+  approval_catalog:
+    description: Unity Catalog catalog for approval decisions
+    default: ""
+  approval_schema:
+    description: Unity Catalog schema for approval decisions
+    default: ""
+  approval_table:
+    description: Unity Catalog table for approval decisions
+    default: agent_approval_decisions
   agent_task_backend:
     description: Delegation task backend (memory or uc_table)
     default: memory

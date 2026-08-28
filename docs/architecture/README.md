@@ -23,6 +23,7 @@ This guide is the entry point for the architecture corpus. It separates authorit
 | [Semantics layer design](semantics-layer-design.md) | Semantics layer scope, ownership boundaries, and build pipelines for AI Search indexes and Metric Views |
 | [High-level architecture](high-level-architecture.md) | System boundaries, trust model, and end-to-end control planes |
 | [Low-level design](low-level-design.md) | Module responsibilities, request lifecycle, configuration, and implementation patterns |
+| [Human-in-the-loop approval](../governance/human-in-the-loop.md) | Approval states, manager decision API, persistence, and dispatch boundary |
 | [Backend framework design](backend-framework-design.md) | Backend package layout, dependency composition, staged execution, and service responsibilities |
 | [Design artifacts](design-artifacts/README.md) | Visual views of the canonical architecture, not independent implementation specifications |
 

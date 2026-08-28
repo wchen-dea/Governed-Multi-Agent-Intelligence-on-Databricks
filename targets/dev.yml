@@ -45,6 +45,11 @@ targets:
       uc_audit_catalog: "quickstart_catalog"
       uc_audit_schema: "multi_agent_schema"
       uc_audit_table: agent_lifecycle_events
+      approval_backend: uc_table
+      approval_warehouse_id: "b20f70f71c2f52e2"
+      approval_catalog: "quickstart_catalog"
+      approval_schema: "multi_agent_schema"
+      approval_table: agent_approval_decisions
       agent_task_backend: uc_table
       agent_task_warehouse_id: "b20f70f71c2f52e2"
       agent_task_catalog: "quickstart_catalog"

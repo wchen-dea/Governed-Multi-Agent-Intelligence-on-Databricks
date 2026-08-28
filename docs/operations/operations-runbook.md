@@ -59,6 +59,16 @@ Before promoting to `qa`, `stg`, or `prd`, ensure these placeholders are replace
 - `uc_audit_schema: <...>`
 - `uc_audit_table: agent_lifecycle_events` (or approved override)
 
+For the implemented store-intervention HITL flow, also ensure the target contains:
+
+- `approval_backend: uc_table`
+- `approval_warehouse_id: <target warehouse id>`
+- `approval_catalog: <target catalog>`
+- `approval_schema: <target schema>`
+- `approval_table: agent_approval_decisions` (or approved override)
+
+The app identity needs permission to create/use the configured approval schema and table through the SQL warehouse. Do not promote `approval_backend: memory` to a production target; it loses decisions on process restart.
+
 Then verify CI/deployment environment variables are set for evaluation gate thresholds:
 
 - `EVAL_MIN_TOOL_CALL_ACCURACY`
@@ -232,6 +242,9 @@ Use this short checklist when onboarding or updating a Genie Agent backed by bus
 - Hybrid auth routing behaves as expected (`app` and `obo` paths).
 - No startup crash loop.
 - Logs do not contain authentication or missing-resource errors.
+- The HITL discovery query returns an evidence-backed pending approval packet for at least one qualifying test case, or clearly reports that no stores meet the condition.
+- A non-production approval decision can be submitted and retrieved through the approval API.
+- The corresponding decision row exists in the target UC Delta table.
 
 Minimum verification commands:
 
@@ -245,6 +258,16 @@ Hybrid auth verification checklist:
 - Execute an `app` auth tool path and confirm success without forwarding user token.
 - Execute an `obo` auth tool path with forwarded token and confirm success.
 - Execute the same `obo` path without forwarded token and confirm clear authorization failure.
+
+HITL verification checklist:
+
+1. Use the manager persona and submit a query that finds stores with strong revenue but declining CDI; do not assume `Store 123` exists.
+2. Confirm the response includes a citation or explicit `Source:` line and an `approval_state` with `status=pending`.
+3. Confirm the response says operational dispatch is waiting for manager review.
+4. Submit a non-production decision through `POST /approval-decisions`.
+5. Retrieve it with `GET /approval-decisions/{request_id}` and verify `decision` and `status`.
+6. Verify the row in `APPROVAL_CATALOG.APPROVAL_SCHEMA.APPROVAL_TABLE`.
+7. Confirm rejected and `more_info_requested` decisions remain non-dispatchable.
 
 ### Local Operations
 
@@ -302,6 +325,33 @@ UC_AUDIT_TABLE=agent_lifecycle_events
 ```
 
 The backend auto-creates the schema/table if they do not exist.
+
+#### UC approval repository local/target example
+
+Use this configuration to persist manager decisions in a Unity Catalog Delta table:
+
+```bash
+APPROVAL_BACKEND=uc_table
+APPROVAL_WAREHOUSE_ID=<warehouse-id>
+APPROVAL_CATALOG=main
+APPROVAL_SCHEMA=governance
+APPROVAL_TABLE=agent_approval_decisions
+APPROVAL_FAIL_OPEN=false
+```
+
+The repository auto-creates the schema and table, then upserts by `request_id`. Keep `APPROVAL_FAIL_OPEN=false` for approval workflows: a manager must not receive a successful approval response when the durable write failed. The in-memory backend is appropriate only for local contract tests and temporary development.
+
+Example API calls:
+
+```bash
+curl -X POST http://localhost:8000/approval-decisions \
+   -H 'Content-Type: application/json' \
+   -d '{"request_id":"test-hitl-001","agent_name":"store_intervention_agent","store_id":"4567","approver":"sam.manager","decision":"approved","reason":"Validated for test workflow","notes":"No dispatch in smoke test"}'
+
+curl http://localhost:8000/approval-decisions/test-hitl-001
+```
+
+Approval persistence failures are fail-closed by default. Investigate SQL warehouse availability, catalog/schema permissions, table identifiers, and app identity grants before retrying. Do not work around the failure by changing a deployed target to the memory backend.
 
 #### MCP latency tuning controls
 

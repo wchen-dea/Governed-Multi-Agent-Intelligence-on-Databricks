@@ -27,7 +27,7 @@ from aiserver.application.runtime.requests import extract_mcp_errors, to_message
 from aiserver.application.runtime.streaming import process_agent_stream_events
 from aiserver.bootstrap.container import get_handler_dependencies
 from aiserver.config.settings import get_settings
-from aiserver.contracts.responses import ResponseEnvelope
+from aiserver.contracts.responses import HumanApprovalState, ResponseEnvelope
 from aiserver.contracts.subagents import SUBAGENTS, SubagentConfig
 
 SETTINGS = get_settings()
@@ -380,6 +380,7 @@ def _finalize_invoke_stage(
         output_items,
         connected.runtime_auth.policy_allowed_subagents,
     )
+    approval_state = _approval_state_for_subagents(guardrail_subagents)
     source_suffix = _governed_source_suffix_with_fallback(
         output_items,
         guardrail_subagents,
@@ -387,6 +388,14 @@ def _finalize_invoke_stage(
     if source_suffix and source_suffix not in response_text:
         response_text += source_suffix
         output_items = _append_source_to_output_items(output_items, source_suffix)
+    if approval_state.required and approval_state.status == "pending":
+        approval_message = (
+            "\n\nApproval required: this recommendation is pending manager review before any "
+            "operational action or dispatch recommendation is sent."
+        )
+        if approval_message not in response_text:
+            response_text += approval_message
+            output_items = _append_approval_message_to_output_items(output_items, approval_state)
     response_text, truncated = truncate_response_text(
         response_text,
         max_response_chars=SETTINGS.max_response_chars,
@@ -425,6 +434,7 @@ def _finalize_invoke_stage(
             truncated=truncated,
             guardrail_reasons=guardrail.reasons,
             source_metadata=(source_suffix,) if source_suffix else (),
+            approval_state=approval_state,
         ),
     )
 
@@ -518,11 +528,20 @@ def _finalize_stream_stage(
     if not source_suffix and guardrail_subagents and executed.has_tool_activity:
         source_suffix = "\n\nSource: tool-backed governed response."
 
+    approval_state = _approval_state_for_subagents(guardrail_subagents)
     streamed_text_parts = list(executed.streamed_text_parts)
     stream_text = "\n".join(streamed_text_parts)
     if source_suffix and source_suffix not in stream_text:
         streamed_text_parts.append(source_suffix)
         stream_text = "\n".join(streamed_text_parts)
+    if approval_state.required and approval_state.status == "pending":
+        approval_message = (
+            "\n\nApproval required: this recommendation is pending manager review before any "
+            "operational action or dispatch recommendation is sent."
+        )
+        if approval_message not in stream_text:
+            streamed_text_parts.append(approval_message)
+            stream_text = "\n".join(streamed_text_parts)
 
     stream_text, truncated = truncate_response_text(
         stream_text,
@@ -565,6 +584,7 @@ def _finalize_stream_stage(
             truncated=truncated,
             guardrail_reasons=guardrail.reasons,
             source_metadata=(source_suffix,) if source_suffix else (),
+            approval_state=approval_state,
         ),
     )
 
@@ -612,6 +632,57 @@ def _text_from_stream_event(event: Any) -> str:
             ]
             return " ".join(chunks)
     return ""
+
+
+def _approval_state_for_subagents(subagents: list[SubagentConfig]) -> HumanApprovalState:
+    """Return a pending approval state for subagents that require manager sign-off."""
+    applicable = [subagent for subagent in subagents if subagent.requires_human_approval]
+    if not applicable:
+        return HumanApprovalState(status="not_required", required=False)
+
+    return HumanApprovalState(
+        status="pending",
+        required=True,
+        approver="manager",
+        reason=(
+            "Human approval required before any operational action can be recommended. "
+            "Prepare the intervention packet and wait for manager sign-off."
+        ),
+    )
+
+
+def _append_approval_message_to_output_items(
+    output_items: list[dict[str, Any]],
+    approval: HumanApprovalState,
+) -> list[dict[str, Any]]:
+    """Append a manager-review footer to the last assistant message when approval is pending."""
+    if not approval.required or approval.status != "pending":
+        return output_items
+
+    message = (
+        "\n\nApproval required: this recommendation is pending manager review before any "
+        "operational action or dispatch recommendation is sent."
+    )
+    updated = [dict(item) for item in output_items]
+    for item in reversed(updated):
+        if item.get("role") != "assistant":
+            continue
+        content = item.get("content")
+        if isinstance(content, str):
+            item["content"] = content + message
+            return updated
+        if isinstance(content, list):
+            blocks: list[Any] = [dict(block) if isinstance(block, dict) else block for block in content]
+            for block in reversed(blocks):
+                if isinstance(block, dict) and isinstance(block.get("text"), str):
+                    block["text"] = block["text"] + message
+                    item["content"] = blocks
+                    return updated
+            blocks.append({"type": "output_text", "text": message.strip()})
+            item["content"] = blocks
+            return updated
+    updated.append({"role": "assistant", "content": message.strip()})
+    return updated
 
 
 def _guardrail_block_message(reasons: tuple[str, ...]) -> str:
@@ -705,20 +776,27 @@ def _payload_has_tool_activity(payload: dict[str, Any]) -> bool:
     """Return true when a single event/output payload indicates tool activity."""
     event_type = payload.get("type")
     if isinstance(event_type, str) and (
-        event_type.startswith("response.output_item") or "tool" in event_type or "mcp" in event_type
+        event_type.startswith("response.output_item")
+        or "tool" in event_type
+        or "mcp" in event_type
+        or "function_call" in event_type
     ):
         item = payload.get("item")
         if isinstance(item, dict):
             item_type = item.get("type")
-            if isinstance(item_type, str) and ("tool" in item_type or "mcp" in item_type):
+            if isinstance(item_type, str) and (
+                "tool" in item_type or "mcp" in item_type or "function_call" in item_type
+            ):
                 return True
-        elif "tool" in event_type or "mcp" in event_type:
+        elif "tool" in event_type or "mcp" in event_type or "function_call" in event_type:
             return True
 
     item = payload.get("item")
     if isinstance(item, dict):
         item_type = item.get("type")
-        if isinstance(item_type, str) and ("tool" in item_type or "mcp" in item_type):
+        if isinstance(item_type, str) and (
+            "tool" in item_type or "mcp" in item_type or "function_call" in item_type
+        ):
             return True
 
     return False

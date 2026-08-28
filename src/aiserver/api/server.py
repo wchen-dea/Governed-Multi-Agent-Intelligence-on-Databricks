@@ -14,6 +14,9 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from mlflow.genai.agent_server import AgentServer, setup_mlflow_git_based_version_tracking
 
+from aiserver.application.ports.audit import ApprovalRepository
+from aiserver.contracts.responses import ApprovalDecisionRecord, ApprovalDecisionRequest
+
 from aiserver.application.delegation.worker import AgentTaskWorker
 from aiserver.application.orchestration.agent import (
     build_lakebase_delegation_executors,
@@ -23,6 +26,7 @@ from aiserver.bootstrap.container import get_app_dependency_container
 from aiserver.config.settings import get_settings
 from aiserver.contracts.subagents import SUBAGENTS
 from aiserver.infrastructure.observability.logging import configure_logging
+from aiserver.infrastructure.persistence.approvals import default_approval_repository
 
 load_dotenv(dotenv_path=Path(__file__).parent.parent.parent.parent / ".env", override=True)
 configure_logging(get_settings())
@@ -57,6 +61,9 @@ def health():
     }
 
 
+_APPROVAL_REPOSITORY: ApprovalRepository = default_approval_repository()
+
+
 def _delegation_status_payload(record) -> dict[str, object]:
     """Return user-safe delegation status without exposing task input payloads."""
     result = record.result
@@ -71,6 +78,70 @@ def _delegation_status_payload(record) -> dict[str, object]:
         "max_attempts": record.task.max_attempts,
         "failure_code": record.failure_code or (result.error_code if result else None),
         "completed": result is not None,
+    }
+
+
+@app.post("/approval-decisions")
+async def submit_approval_decision(payload: dict[str, object]) -> dict[str, object]:
+    """Record a manager decision for a pending approval workflow."""
+    request = ApprovalDecisionRequest(
+        request_id=str(payload.get("request_id", "")),
+        agent_name=str(payload.get("agent_name", "")),
+        store_id=payload.get("store_id"),
+        approver=payload.get("approver"),
+        decision=str(payload.get("decision", "approved")),
+        reason=payload.get("reason"),
+        notes=payload.get("notes"),
+    )
+    if not request.request_id or not request.agent_name:
+        raise HTTPException(status_code=400, detail="request_id and agent_name are required")
+    if request.decision not in {"approved", "rejected", "more_info_requested"}:
+        raise HTTPException(status_code=400, detail="unsupported approval decision")
+
+    record = ApprovalDecisionRecord(
+        request_id=request.request_id,
+        agent_name=request.agent_name,
+        store_id=request.store_id,
+        approver=request.approver,
+        decision=request.decision,
+        reason=request.reason,
+        notes=request.notes,
+        status=request.decision if request.decision in {"approved", "rejected", "more_info_requested"} else "pending",
+    )
+    _APPROVAL_REPOSITORY.save(record)
+    return {
+        "status": "ok",
+        "approval": {
+            "request_id": record.request_id,
+            "agent_name": record.agent_name,
+            "store_id": record.store_id,
+            "approver": record.approver,
+            "decision": record.decision,
+            "reason": record.reason,
+            "notes": record.notes,
+            "status": record.status,
+        },
+    }
+
+
+@app.get("/approval-decisions/{request_id}")
+async def get_approval_decision(request_id: str) -> dict[str, object]:
+    """Return a persisted approval decision by request ID."""
+    record = _APPROVAL_REPOSITORY.get(request_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Approval decision not found")
+    return {
+        "status": "ok",
+        "approval": {
+            "request_id": record.request_id,
+            "agent_name": record.agent_name,
+            "store_id": record.store_id,
+            "approver": record.approver,
+            "decision": record.decision,
+            "reason": record.reason,
+            "notes": record.notes,
+            "status": record.status,
+        },
     }
 
 

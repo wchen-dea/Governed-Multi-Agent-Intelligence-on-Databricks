@@ -18,6 +18,7 @@ This folder provides the primary TypeScript and React frontend used by the app r
 - Visible persona selector and App identity versus Hybrid OBO status.
 - User-selectable homepage background theme (deep ocean, sky blue, deep sky blue), persisted in `localStorage`.
 - Collapsible per-response run context showing tools, sources, guardrail state, and truncation.
+- HITL starter tab with a discovery query for stores with strong revenue and declining CDI, including an approval pause before operational dispatch.
 - Safe rendering for supported headings, tables, and citation markers; model HTML is not executed.
 - Explicit streaming states for blocked, unavailable, error, and truncated responses.
 
