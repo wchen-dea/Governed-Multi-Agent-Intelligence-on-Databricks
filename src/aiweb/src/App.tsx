@@ -71,7 +71,7 @@ const STARTERS: { group: StarterGroup; text: string }[] = [
   },
   {
     group: "Insight",
-    text: "Which stores have appointment demand outpacing their sales ranking, suggesting an opportunity to convert more service visits into purchases?",
+    text: "Using the 2025-08-30 to 2026-04-30 time window, which stores are showing strong sales but below-average CDI scores—where we may be performing well on revenue but falling short on customer experience?",
   },
 ];
 
