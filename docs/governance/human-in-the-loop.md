@@ -66,6 +66,22 @@ APP_SP=$(databricks apps get store-intervention-agent --profile PROFILE --output
 
 The App must be `RUNNING` with an active successful deployment before it is registered in this repository.
 
+For subsequent source updates, use the repository helper from the project root:
+
+```bash
+make update-hitl APP_NAME=store-intervention-agent PROFILE=PROFILE
+```
+
+The helper imports `src/hitl-agent` into the current user's workspace path, deploys the existing App from that workspace source, and prints the resulting deployment status. Override the defaults when needed:
+
+```bash
+HITL_SOURCE_DIR=/path/to/source \
+HITL_WORKSPACE_PATH=/Workspace/Users/owner/store-intervention-agent \
+make update-hitl APP_NAME=store-intervention-agent PROFILE=PROFILE
+```
+
+The script requires `app.py`, `app.yaml`, and `requirements.txt` in the source directory. It does not create the App, alter App permissions, or change the orchestrator registry.
+
 ### 3. Grant the orchestrator access
 
 Grant the orchestrator App service principal permission to use the specialist App. Capture the orchestrator service principal from the target app:
