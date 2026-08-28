@@ -10,9 +10,130 @@ The first implemented HITL use case is the store intervention workflow:
 
 > Find stores with strong revenue but declining CDI scores, compare each store with its peers and recent trend, prepare an evidence-backed customer-experience intervention packet, and pause for manager approval before any operational dispatch.
 
-The workflow is handled by `store_intervention_agent`, which is configured for the `manager` persona, app identity, confidential data, required evidence, and required human approval in `src/aiserver/contracts/subagents.<target>.json`.
+The workflow is handled by `store-intervention-agent`, which is configured for the `manager` persona, app identity, confidential data, required evidence, and required human approval in `src/aiserver/contracts/subagents.<target>.json`.
 
 `Store 123` is not a guaranteed real identifier. Use a store ID discovered from the connected sales and CDI sources, or ask the agent to identify all stores meeting the condition.
+
+## Create `store-intervention-agent`
+
+`store-intervention-agent` is configured as a Databricks App specialist, not as a resource created by this orchestrator bundle. Create the specialist once per environment, then register its App name in this repository.
+
+### 1. Define the specialist contract
+
+The specialist App must expose a Responses API-compatible endpoint that accepts a user question and returns `output_text`. Its implementation must:
+
+- Query or orchestrate the approved sales and CDI data sources.
+- Find stores with strong revenue and declining CDI when the request is a discovery query.
+- Compare each candidate with an explicitly defined peer set and recent or rolling trend.
+- Return an evidence-backed packet with metric definitions, time windows, freshness, source identifiers, risk, proposed options, and success measures.
+- Include a citation marker or an explicit `Source:` line in every governed response.
+- Treat intervention and dispatch language as proposals only.
+- Stop at a pending manager review state and never perform operational dispatch.
+
+Minimum response content for each candidate store:
+
+| Section | Required content |
+| --- | --- |
+| Store identity | Verified store ID and any non-sensitive display label |
+| Revenue signal | Metric, period, value, peer position, and trend |
+| CDI signal | CDI dimension, period, value, peer position, and trend |
+| Materiality | Why the revenue-versus-CDI pattern merits review |
+| Evidence | Citation or `Source:` line with freshness |
+| Proposal | Non-executing intervention options, scope, risk, and success measure |
+| Approval state | Pending manager review; no dispatch performed |
+
+The App must not accept an `approved` value from model text as authorization. Authorization is established only by the orchestrator's approval API and the persisted approval record.
+
+### 2. Create and deploy the App
+
+Use the organization-approved Databricks Apps creation path, naming the App exactly `store-intervention-agent`. The source must include the specialist's Responses API server and its dependency/configuration files.
+
+After the App source is available, deploy it with the Databricks CLI:
+
+```bash
+databricks apps deploy store-intervention-agent \
+  --profile PROFILE \
+  --source-code-path /path/to/store-intervention-agent
+```
+
+Confirm the deployment and capture the App service principal:
+
+```bash
+databricks apps get store-intervention-agent --profile PROFILE --output json
+APP_SP=$(databricks apps get store-intervention-agent --profile PROFILE --output json \
+  | jq -r '.service_principal_name // .service_principal_client_id')
+```
+
+The App must be `RUNNING` with an active successful deployment before it is registered in this repository.
+
+### 3. Grant the orchestrator access
+
+Grant the orchestrator App service principal permission to use the specialist App. Capture the orchestrator service principal from the target app:
+
+```bash
+ORCH_SP=$(databricks apps get multiagent-app-dev --profile PROFILE --output json \
+  | jq -r '.service_principal_name // .service_principal_client_id')
+```
+
+Use the Databricks Apps permission command supported by the installed CLI version:
+
+```bash
+databricks apps update-permissions store-intervention-agent \
+  --profile PROFILE \
+  --service-principal "$ORCH_SP" \
+  --permission-level CAN_USE
+```
+
+Also grant the specialist App's service principal least-privilege access to the approved sales/CDI Genie spaces, SQL warehouse, Unity Catalog schemas, or other data resources it actually calls. Do not grant broad workspace or catalog permissions as a substitute for the exact data dependencies.
+
+### 4. Register the App in this repository
+
+For each target, update `src/aiserver/contracts/subagents.<target>.json` with:
+
+```json
+{
+  "name": "store-intervention-agent",
+  "type": "app",
+  "auth_mode": "app",
+  "allowed_personas": ["manager"],
+  "requires_evidence": true,
+  "requires_human_approval": true,
+  "endpoint": "store-intervention-agent"
+}
+```
+
+Keep the existing `owner`, `data_classification`, `freshness_sla`, `system_prompt`, and `description` fields aligned across dev, QA, staging, and production. The endpoint value is the App name, not the App URL.
+
+If the target uses a different App name, change only that target's `endpoint` and document the mapping. Do not point the route at an unrelated App or an MCP hello-world sample.
+
+### 5. Validate the registration
+
+Run the typed registry and bundle checks:
+
+```bash
+uv run pytest -q tests/test_subagent_config.py tests/test_api_handlers.py
+databricks bundle validate -t TARGET --profile PROFILE
+make redeploy TARGET=TARGET APP_NAME=APP_NAME PROFILE=PROFILE
+```
+
+Then verify the route with the manager persona:
+
+```bash
+make query-dev \
+  TARGET=dev \
+  APP_NAME=multiagent-app-dev \
+  PROFILE=PROFILE \
+  QUERY_PERSONA=manager \
+  QUERY='Find stores with strong revenue but declining CDI scores, compare each store with its peers and recent trend, prepare an evidence-backed customer-experience intervention packet, and pause for manager approval before any operational dispatch.'
+```
+
+A successful verification must show qualifying stores or a clear no-match result, evidence/source metadata, `approval_state.status=pending`, and no operational dispatch. If the result says `App with name store-intervention-agent does not exist`, the App creation, naming, deployment, or permission step is incomplete.
+
+### 6. Promote by environment
+
+Repeat the App creation and least-privilege grants for QA, staging, and production, or use the organization-approved promotion mechanism if the App supports environment isolation. Replace target placeholders before promotion and keep each App's data resources in the same environment boundary as the orchestrator.
+
+The orchestrator bundle does not create or deploy this external specialist App automatically. It validates and deploys the orchestrator configuration only.
 
 ## Decision Boundary
 
@@ -72,7 +193,7 @@ Example request:
 ```json
 {
   "request_id": "req-123",
-  "agent_name": "store_intervention_agent",
+  "agent_name": "store-intervention-agent",
   "store_id": "4567",
   "approver": "sam.manager",
   "decision": "approved",
@@ -100,7 +221,7 @@ A found decision returns:
   "status": "ok",
   "approval": {
     "request_id": "req-123",
-    "agent_name": "store_intervention_agent",
+    "agent_name": "store-intervention-agent",
     "store_id": "4567",
     "approver": "sam.manager",
     "decision": "approved",

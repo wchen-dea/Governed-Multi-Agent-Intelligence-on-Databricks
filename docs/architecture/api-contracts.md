@@ -72,7 +72,7 @@ Request body fields:
 | Field | Required | Meaning |
 | --- | --- | --- |
 | `request_id` | yes | Identifier correlating the decision to the pending review packet |
-| `agent_name` | yes | Subagent that created the packet, such as `store_intervention_agent` |
+| `agent_name` | yes | Subagent that created the packet, such as `store-intervention-agent` |
 | `store_id` | no | Verified store identifier under review |
 | `approver` | no | Manager identity or approver principal |
 | `decision` | yes | `approved`, `rejected`, or `more_info_requested` |
@@ -84,7 +84,7 @@ Example:
 ```json
 {
 	"request_id": "req-123",
-	"agent_name": "store_intervention_agent",
+	"agent_name": "store-intervention-agent",
 	"store_id": "4567",
 	"approver": "sam.manager",
 	"decision": "approved",

@@ -179,7 +179,7 @@ Supported auth modes:
 - `app`: use app identity for tool calls.
 - `obo`: use user identity from forwarded request token.
 
-The `store_intervention_agent` is app-authenticated and available only to the manager persona. It is an analysis and approval-packet generator, not an autonomous dispatch worker.
+The `store-intervention-agent` is app-authenticated and available only to the manager persona. It is an analysis and approval-packet generator, not an autonomous dispatch worker.
 
 Default auth mode behavior:
 

@@ -79,7 +79,7 @@ Primary implementation:
   - requires_evidence
 - Request-time policy enforcement runs before tool execution.
 - Policy decisions produce explicit allow or deny reason codes.
-- The `store_intervention_agent` is manager-only and requires both evidence and human approval before operational action can be recommended.
+- The `store-intervention-agent` is manager-only and requires both evidence and human approval before operational action can be recommended.
 
 Primary implementation:
 

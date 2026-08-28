@@ -23,9 +23,9 @@ def test_guardrail_block_message_mentions_reason_and_remediation():
 
 def test_approval_state_requires_manager_signoff_for_intervention_agent():
     intervention = SubagentConfig(
-        name="store_intervention_agent",
+        name="store-intervention-agent",
         kind="app",
-        endpoint="store_intervention_agent",
+        endpoint="store-intervention-agent",
         description="review store intervention before action",
         auth_mode="app",
         data_classification="confidential",

@@ -218,10 +218,10 @@ def test_parse_subagents_accepts_human_approval_agent():
     subagents = parse_subagents(
         [
             {
-                "name": "store_intervention_agent",
+                "name": "store-intervention-agent",
                 "type": "app",
                 "description": "review store interventions before action",
-                "endpoint": "store_intervention_agent",
+                "endpoint": "store-intervention-agent",
                 "data_classification": "confidential",
                 "owner": "sales-operations",
                 "freshness_sla": "15m",
@@ -233,7 +233,7 @@ def test_parse_subagents_accepts_human_approval_agent():
     )
 
     assert len(subagents) == 1
-    assert subagents[0].name == "store_intervention_agent"
+    assert subagents[0].name == "store-intervention-agent"
     assert subagents[0].allowed_personas == ("manager",)
     assert subagents[0].requires_human_approval is True
 

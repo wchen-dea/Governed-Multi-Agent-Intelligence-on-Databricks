@@ -26,7 +26,7 @@ def test_response_envelope_is_typed_and_serializable():
 def test_explicit_approval_decision_contract_round_trip():
     approval = ApprovalDecisionRequest(
         request_id="req-123",
-        agent_name="store_intervention_agent",
+        agent_name="store-intervention-agent",
         store_id="store-123",
         approver="sam.manager",
         decision="approved",

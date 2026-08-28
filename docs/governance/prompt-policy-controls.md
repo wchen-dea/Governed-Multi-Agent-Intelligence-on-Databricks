@@ -25,7 +25,7 @@ Separate model instruction strategy from hard policy enforcement and define safe
 
 ### Human-in-the-Loop Instructions
 
-- Source: `store_intervention_agent` configuration in `src/aiserver/contracts/subagents.<target>.json`
+- Source: `store-intervention-agent` configuration in `src/aiserver/contracts/subagents.<target>.json`
 - Responsibility: analyze revenue-versus-CDI risk, produce an evidence-backed manager packet, and stop at `pending` approval before any operational recommendation or dispatch.
 - The prompt must not claim approval, dispatch an action, or treat a model-generated recommendation as authorization.
 

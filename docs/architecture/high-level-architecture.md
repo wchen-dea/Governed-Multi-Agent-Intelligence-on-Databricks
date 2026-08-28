@@ -210,7 +210,7 @@ flowchart TD
 
 ### Human Approval Boundary
 
-The `store_intervention_agent` can analyze revenue and CDI signals and prepare an evidence-backed packet, but it cannot authorize operational dispatch. The response is marked pending when manager approval is required. A manager decision is submitted through `/approval-decisions` and persisted in the UC approval table; any future dispatcher must validate that record independently before acting. See [Human-in-the-loop approval](../governance/human-in-the-loop.md).
+The `store-intervention-agent` can analyze revenue and CDI signals and prepare an evidence-backed packet, but it cannot authorize operational dispatch. The response is marked pending when manager approval is required. A manager decision is submitted through `/approval-decisions` and persisted in the UC approval table; any future dispatcher must validate that record independently before acting. See [Human-in-the-loop approval](../governance/human-in-the-loop.md).
 
 The orchestrator uses subagent-level auth configuration (`auth_mode`) to decide execution identity:
 

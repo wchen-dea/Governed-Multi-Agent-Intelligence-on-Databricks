@@ -202,7 +202,7 @@ def test_uc_approval_repository_upserts_and_reads_decisions():
     class Result:
         data_array = [[
             "req-123",
-            "store_intervention_agent",
+            "store-intervention-agent",
             "store-123",
             "sam.manager",
             "approved",
@@ -239,7 +239,7 @@ def test_uc_approval_repository_upserts_and_reads_decisions():
     )
     record = ApprovalDecisionRecord(
         request_id="req-123",
-        agent_name="store_intervention_agent",
+        agent_name="store-intervention-agent",
         store_id="store-123",
         approver="sam.manager",
         decision="approved",

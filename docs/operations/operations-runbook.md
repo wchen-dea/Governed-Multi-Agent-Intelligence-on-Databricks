@@ -46,6 +46,7 @@ For target values:
 
 - Confirm target (`dev` / `qa` / `stg` / `prd`) and CLI profile.
 - Confirm target variables in `targets/*.yml` are correct.
+- Confirm the target's `store-intervention-agent` App exists, is running, and grants the orchestrator service principal `CAN_USE`; follow the [HITL specialist creation procedure](../governance/human-in-the-loop.md#create-store-intervention-agent) when onboarding it.
 - Confirm the app service principal has a Lakebase OAuth role and the app has the target `postgres` resource grant.
 - Confirm no pending manual hotfix state in the target app.
 
@@ -87,6 +88,7 @@ Final pre-release checks:
 - Run `uv run pytest -q`
 - Run `uv run assistant-evaluate`
 - Confirm no placeholder values remain in target config files.
+- Confirm the external `store-intervention-agent` App name is valid for the target and is not a deleted or unrelated App.
 
 ### Standard Deployment
 
@@ -346,7 +348,7 @@ Example API calls:
 ```bash
 curl -X POST http://localhost:8000/approval-decisions \
    -H 'Content-Type: application/json' \
-   -d '{"request_id":"test-hitl-001","agent_name":"store_intervention_agent","store_id":"4567","approver":"sam.manager","decision":"approved","reason":"Validated for test workflow","notes":"No dispatch in smoke test"}'
+   -d '{"request_id":"test-hitl-001","agent_name":"store-intervention-agent","store_id":"4567","approver":"sam.manager","decision":"approved","reason":"Validated for test workflow","notes":"No dispatch in smoke test"}'
 
 curl http://localhost:8000/approval-decisions/test-hitl-001
 ```
