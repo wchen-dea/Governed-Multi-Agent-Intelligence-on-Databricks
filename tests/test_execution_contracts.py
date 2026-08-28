@@ -1,5 +1,5 @@
-from aiserver.domain.execution_contracts import ResponseEnvelope, RoutePlan
-from aiserver.evaluate_agent import direct_groundedness_score
+from aiserver.contracts.responses import ResponseEnvelope, RoutePlan
+from operations.evaluate_agent import direct_groundedness_score
 
 
 def test_response_envelope_is_typed_and_serializable():

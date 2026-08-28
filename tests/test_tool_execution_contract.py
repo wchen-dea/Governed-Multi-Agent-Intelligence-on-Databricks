@@ -1,8 +1,11 @@
 import asyncio
 from types import SimpleNamespace
 
-from aiserver.domain.subagent_config import SubagentConfig
-from aiserver.services.orchestrator_service import OrchestratorDependencies, build_subagent_tools
+from aiserver.application.orchestration.agent import (
+    OrchestratorDependencies,
+    build_subagent_tools,
+)
+from aiserver.contracts.subagents import SubagentConfig
 
 
 def test_tool_lifecycle_events_include_normalized_execution_metadata():

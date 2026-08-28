@@ -1,0 +1,1 @@
+"""Lifecycle event publishing adapters."""

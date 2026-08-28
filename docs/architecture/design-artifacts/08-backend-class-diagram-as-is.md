@@ -136,6 +136,7 @@ class AppDependencyContainer {
 
 class OrchestratorDependencies {
     +trace_metadata_updater: TraceMetadataUpdater
+    +lakebase_connection_factory: LakebaseConnectionFactory
     +function_tool_wrapper: FunctionToolWrapper
     +mcp_server_factory: McpServerFactory
     +message_bus: MessageBus
@@ -149,6 +150,7 @@ class RuntimeAuthDependencies {
     +subagent_tools_builder: SubagentToolsBuilder
     +mcp_servers_builder: McpServersBuilder
     +lakebase_tools_builder: LakebaseToolsBuilder
+    +lakebase_delegation_executors_builder: LakebaseDelegationExecutorsBuilder
     +policy_context_builder
     +subagent_policy_filter
     +message_bus: MessageBus
@@ -285,7 +287,7 @@ class StructuredLoggingMessageBus {
 }
 class AsyncMessageBus {
     -_inner: MessageBus
-    -_queue: asyncio.Queue
+    -_queue: queue.Queue
     +publish(event_type, payload) None
 }
 class KafkaMessageBus {
@@ -294,13 +296,13 @@ class KafkaMessageBus {
     +publish(event_type, payload) None
 }
 class RabbitMQMessageBus {
-    -_connection: pika.BlockingConnection
+    -_conn: pika.BlockingConnection
     -_exchange: str
     +publish(event_type, payload) None
 }
 class UcAuditTableMessageBus {
     -_warehouse_id: str
-    -_full_table_name: str
+    -_table_fqn: str
     +publish(event_type, payload) None
 }
 
@@ -336,12 +338,14 @@ class ModelSelection {
     +task_type: str
     +reason: str
 }
-class ModelRoutingService {
+class ModelRoutingModule {
+    <<module>>
     +select_model(question, settings) ModelSelection
 }
 class AgentTaskBus {
     <<protocol>>
     +submit(task) DelegationTaskRecord
+    +claim_task(task_id, worker_id) DelegationTaskRecord?
     +claim(worker_id) list~DelegationTaskRecord~
     +complete(result, worker_id) DelegationTaskRecord
     +fail(task_id, worker_id, error_code) DelegationTaskRecord
@@ -355,13 +359,15 @@ class AgentTaskWorker {
     +run_once() int
     +run_forever(stop_event) None
 }
-class AgentHandoffService {
-    +delegate_to_agent()
+class DelegationHandoffModule {
+    <<module>>
+    +build_delegation_tool()
+    +execute_delegation()
 }
-ModelRoutingService --> ModelSelection
+ModelRoutingModule --> ModelSelection
 AgentTaskBus <|.. UcAgentTaskBus
 AgentTaskWorker --> AgentTaskBus
-AgentHandoffService --> AgentTaskBus
+DelegationHandoffModule --> AgentTaskBus
 ```
 
 ## 6. Subagent Registry (dev environment)

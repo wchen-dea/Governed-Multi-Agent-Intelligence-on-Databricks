@@ -1,4 +1,5 @@
-from aiserver.services.message_bus import (
+from aiserver.config.settings import AppSettings
+from aiserver.infrastructure.messaging.bus import (
     AsyncMessageBus,
     KafkaMessageBus,
     NoOpMessageBus,
@@ -7,7 +8,6 @@ from aiserver.services.message_bus import (
     UcAuditTableMessageBus,
     default_message_bus,
 )
-from aiserver.shared.settings import AppSettings
 
 
 def _settings(**kwargs) -> AppSettings:
@@ -40,6 +40,48 @@ def test_default_message_bus_async_wraps_structured_logging_backend():
         )
     )
     assert isinstance(bus, AsyncMessageBus)
+
+
+def test_async_message_bus_requires_fail_open_behavior():
+    try:
+        default_message_bus(
+            _settings(
+                message_bus_backend="structured_logging",
+                message_bus_async=True,
+                message_bus_fail_open=False,
+            )
+        )
+    except ValueError as exc:
+        assert "MESSAGE_BUS_ASYNC" in str(exc)
+        return
+    raise AssertionError("Expected async fail-closed configuration to be rejected")
+
+
+def test_kafka_message_bus_flushes_on_close(monkeypatch):
+    class FakeProducer:
+        def __init__(self, config):
+            del config
+            self.flush_timeout = None
+
+        def flush(self, timeout):
+            self.flush_timeout = timeout
+
+    producer = FakeProducer({})
+
+    class FakeProducerModule:
+        def Producer(self, config):
+            del config
+            return producer
+
+    monkeypatch.setattr(
+        "aiserver.infrastructure.messaging.bus.import_module",
+        lambda name: FakeProducerModule(),
+    )
+    bus = KafkaMessageBus("localhost:9092", "events", "app")
+
+    bus.close()
+
+    assert producer.flush_timeout == 10.0
 
 
 def test_default_message_bus_kafka_backend_fail_open_falls_back_without_kafka_dependency():

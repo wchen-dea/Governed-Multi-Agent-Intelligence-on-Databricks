@@ -1,8 +1,8 @@
 """Architecture guardrail: enforce the layered dependency direction from ADR 0001.
 
 Directory nesting alone doesn't stop a lower layer from importing a higher one;
-this test does. Allowed dependency direction: api -> services -> domain/shared,
-with shared as the most foundational (no upward imports at all).
+this test does. Allowed dependency direction: api -> application -> domain/config.
+Infrastructure implements application ports and bootstrap is the only composition root.
 """
 
 import ast
@@ -14,9 +14,10 @@ AISERVER_ROOT = Path(__file__).resolve().parents[1] / "src" / "aiserver"
 
 # (layer directory, banned import prefixes for that layer)
 LAYER_RULES = {
-    "domain": ("aiserver.api", "aiserver.services"),
-    "shared": ("aiserver.api", "aiserver.services", "aiserver.domain"),
-    "services": ("aiserver.api",),
+    "config": ("aiserver.api", "aiserver.application", "aiserver.bootstrap", "aiserver.contracts", "aiserver.infrastructure"),
+    "contracts": ("aiserver.api", "aiserver.application", "aiserver.bootstrap", "aiserver.infrastructure"),
+    "application": ("aiserver.api", "aiserver.bootstrap", "aiserver.infrastructure"),
+    "infrastructure": ("aiserver.api", "aiserver.bootstrap"),
 }
 
 

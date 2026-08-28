@@ -5,6 +5,8 @@ This document adds workflow diagrams for the major business use cases defined in
 ## Interactive Workflow Map
 
 Select a workflow node to jump to the detailed use-case chart in this file.
+Use the list below when your Markdown renderer does not support Mermaid click
+links.
 
 ```mermaid
 flowchart TB
@@ -30,6 +32,16 @@ flowchart TB
   click U8 "#8-supply-chain-resilience-and-logistics-optimization" "Go to use case 8"
   click U9 "#9-operational-command-center-for-retail-intelligence" "Go to use case 9"
 ```
+
+1. [Tire Recommendation and Fitment](#1-ai-powered-tire-recommendation-and-fitment-advisor)
+2. [Store Throughput Optimization](#2-store-service-throughput-optimization)
+3. [Inventory and Replenishment](#3-ai-driven-inventory-and-replenishment-optimization)
+4. [Omnichannel Experience](#4-omnichannel-customer-experience-intelligence)
+5. [Proactive Service Assistant](#5-proactive-vehicle-and-tire-service-assistant)
+6. [Associate and Technician Copilot](#6-ai-assisted-store-associate-and-technician-copilot)
+7. [Dynamic Pricing and Promotions](#7-dynamic-pricing-promotion-and-margin-optimization)
+8. [Supply Chain Resilience](#8-supply-chain-resilience-and-logistics-optimization)
+9. [Operational Command Center](#9-operational-command-center-for-retail-intelligence)
 
 ## 1. AI-Powered Tire Recommendation and Fitment Advisor
 

@@ -1,6 +1,6 @@
 [project]
 name = "multiagent-app-on-databricks"
-version = "0.1.7"
+version = "1.0.0"
 description = "Multi-agent orchestrator that queries other agents, Genie Agents, and serving endpoints"
 readme = "README.md"
 authors = [
@@ -83,7 +83,7 @@ runtime-preflight = "operations.preflight:main"
 runtime-build-source = "operations.prepare_app_source:main"
 # Assistant and operations: evaluation, discovery, setup, permissions, and diagnostics.
 assistant-bootstrap = "operations.quickstart:main"
-assistant-evaluate = "aiserver.evaluate_agent:evaluate"
+assistant-evaluate = "operations.evaluate_agent:evaluate"
 assistant-discover-tools = "operations.discover_tools:main"
 assistant-setup-flink = "operations.setup_flink_support_rag:main"
 assistant-setup-cdi = "operations.setup_cdi_agent:main"

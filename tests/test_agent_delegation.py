@@ -2,12 +2,17 @@
 
 import asyncio
 
-from aiserver.domain.agent_messages import DelegationTask
-from aiserver.domain.subagent_config import SubagentConfig
-from aiserver.services.agent_delegation_policy_service import evaluate_delegation_policy
-from aiserver.services.agent_handoff_service import build_delegation_tool, execute_delegation
-from aiserver.services.agent_task_bus import InMemoryAgentTaskBus
-from aiserver.services.agent_task_worker import AgentTaskWorker
+from aiserver.application.delegation.handoff import (
+    build_delegation_tool,
+    execute_delegation,
+)
+from aiserver.application.delegation.policy import (
+    evaluate_delegation_policy,
+)
+from aiserver.application.delegation.worker import AgentTaskWorker
+from aiserver.contracts.delegation import DelegationTask
+from aiserver.contracts.subagents import SubagentConfig
+from aiserver.infrastructure.persistence.tasks import InMemoryAgentTaskBus
 
 
 class RecordingBus:
@@ -198,5 +203,39 @@ def test_native_handoff_executes_only_explicit_orchestrator_target():
 
         assert result == "appointments=SELECT 1"
         assert audit_bus.events == ["delegation.task.claimed", "delegation.task.completed"]
+
+    asyncio.run(run())
+
+
+def test_native_handoff_claims_its_own_task_when_other_work_is_pending():
+    async def run() -> None:
+        task_bus = InMemoryAgentTaskBus()
+        audit_bus = RecordingBus()
+        target = SubagentConfig(
+            **{
+                **_agents()[1].__dict__,
+                "accepts_delegations_from": ("orchestrator",),
+                "allowed_task_intents": ("appointment_summary",),
+            }
+        )
+        pending_task = _task(task_id="pending-first", idempotency_key="pending-first")
+        await task_bus.submit(pending_task)
+
+        async def execute(payload: dict[str, object]) -> dict[str, object]:
+            return {"result": f"appointments={payload['sql_query']}"}
+
+        result = await execute_delegation(
+            task_bus=task_bus,
+            subagents=[target],
+            executors={"lakebase_ods_agent": execute},
+            message_bus=audit_bus,
+            correlation_id="corr-2",
+            target_agent="lakebase_ods_agent",
+            intent="appointment_summary",
+            sql_query="SELECT 2",
+        )
+
+        assert result == "appointments=SELECT 2"
+        assert (await task_bus.get(pending_task.task_id)).status == "pending"
 
     asyncio.run(run())

@@ -30,11 +30,11 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    Commit[Commit to main] --> Lint[Static Checks — ruff / mypy]
+    Commit[Pull request or target branch push] --> Lint[Static Checks — ruff]
     Lint --> Unit[pytest — test_*.py]
     Unit --> Eval[make evaluate — MLflow KPI gate]
     Eval --> Decision{All required KPIs pass?}
-    Decision -- No --> Block[Block promotion — current tool-call KPI 0.400 < 0.800]
+    Decision -- No --> Block[Block promotion — auth correctness safety or groundedness]
     Decision -- Yes --> Validate[databricks bundle validate -t dev]
     Validate --> DeployDev[make redeploy or make upload-wheel — dev target]
     DeployDev --> Smoke[make health and make smoke]
@@ -51,10 +51,11 @@ flowchart TB
     Tool[Tool Lifecycle Events] --> MB
     Pol[Policy + Guardrail Decisions] --> MB
 
-    MB --> Log[StructuredLoggingMessageBus — JSON logs]
-    MB --> Kafka[KafkaMessageBus — confluent-kafka]
-    MB --> Rabbit[RabbitMQMessageBus — pika]
-    MB --> UCT[UcAuditTableMessageBus — SQL Statement API]
+    MB --> Select{Configured backend}
+    Select --> Log[structured_logging — JSON logs]
+    Select --> Kafka[kafka — confluent-kafka]
+    Select --> Rabbit[rabbitmq — pika]
+    Select --> UCT[uc_table — SQL Statement API]
 
     UCT --> Delta[quickstart_catalog.multi_agent_schema.agent_lifecycle_events]
     Delta --> Dash[Dashboards and Alerts]
@@ -78,6 +79,10 @@ flowchart LR
         V8[lakebase_branch_id = production]
         V9[lakebase_database = operations]
         V10[Lakebase postgres resource grant]
+        V11[message_bus_async = false — optional fail-open queue]
+        V12[agent_task_backend and worker_enabled]
+        V13[model_routing_enabled and route models]
+        V14[memory_backend and response budgets]
     end
 
     BundleVars --> App[Databricks App Environment Variables]
@@ -106,4 +111,4 @@ flowchart LR
 
 ## Current Alignment
 
-The backend lifespan owns the bounded delegation worker. UC delegation state is fail-closed, uses leases and dead-letter states, and requires explicit warehouse/schema/table permissions. The current promotion gate is blocked: `ToolCallCorrectness = 0.400 < 0.800`.
+The backend lifespan owns the optional bounded delegation worker. UC delegation state is fail-closed, uses leases and dead-letter states, and requires explicit warehouse/schema/table permissions. Auth correctness, safety, and groundedness block promotion; tool-call accuracy remains monitored but non-blocking while nested tool spans cannot be scored reliably.

@@ -2,13 +2,13 @@ from types import SimpleNamespace
 
 from mlflow.types.responses import ResponsesAgentRequest
 
-from aiserver.domain.subagent_config import SubagentConfig
-from aiserver.services.agent_task_bus import InMemoryAgentTaskBus
-from aiserver.services.runtime_auth_service import (
+from aiserver.application.auth.context import (
     RuntimeAuthDependencies,
     build_runtime_auth_context,
 )
-from aiserver.shared.runtime_utils import get_session_id
+from aiserver.application.runtime.identity import get_session_id
+from aiserver.contracts.subagents import SubagentConfig
+from aiserver.infrastructure.persistence.tasks import InMemoryAgentTaskBus
 
 
 def _sample_subagents() -> list[SubagentConfig]:

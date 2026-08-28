@@ -10,45 +10,44 @@ The runtime is deployed as a Databricks App and uses the OpenAI Agents SDK (`ope
 
 ```
 src/aiserver/
-├── api/                  ← HTTP layer, DI composition root
+├── api/                  ← HTTP delivery layer
 │   ├── server.py         # MLflow AgentServer bootstrap
-│   ├── handlers.py       # @invoke / @stream request pipeline
-│   └── dependencies.py   # Composition root (wiring all services)
-├── services/             ← Business logic layer
-│   ├── orchestrator_service.py   # Agent assembly, MCP health, tool construction
-│   ├── runtime_auth_service.py   # Request-scoped auth context (app + OBO)
-│   ├── policy_service.py         # Deterministic request-time policy checks
-│   ├── guardrails_service.py     # Deterministic response-time guardrails
-│   ├── model_routing_service.py  # Deterministic task-type model selection
-│   ├── route_planner.py          # Conservative pre-model route plans
-│   ├── agent_task_bus.py         # In-memory and UC-backed delegation task stores
-│   ├── agent_task_worker.py      # Bounded durable delegation worker
-│   ├── agent_handoff_service.py  # Native delegate_to_agent tool
-│   ├── agent_delegation_policy_service.py # Delegation policy
-│   ├── message_bus.py            # Lifecycle event backends (Noop, Logging, Kafka, RabbitMQ, UC)
-│   └── interfaces.py             # Protocol-based contracts for DI
-├── domain/               ← Typed models and config
-│   ├── subagent_config.py        # SubagentConfig dataclass, validation, loading
-│   ├── agent_messages.py         # Typed contracts for agent-to-agent delegation
-│   ├── execution_contracts.py    # Shared routing/execution/response-policy contracts
+│   └── invocations.py   # @invoke / @stream request pipeline
+├── application/          ← Request-time use cases and ports
+│   ├── auth/             # Context and policy
+│   ├── delegation/       # Handoff, policy, worker
+│   ├── guardrails/       # Deterministic checks
+│   ├── orchestration/    # Agent assembly, routing, model selection
+│   ├── ports/            # Capability-specific protocols
+│   └── runtime/          # Identity, requests, streaming
+├── bootstrap/            ← Dependency composition root
+│   └── container.py
+├── config/               ← Environment settings
+│   └── settings.py
+├── contracts/            ← Typed cross-layer contracts and registries
+│   ├── subagents.py      # SubagentConfig dataclass, validation, loading
+│   ├── delegation.py     # Typed delegation contracts
+│   ├── responses.py      # Routing, execution, response contracts
 │   └── subagents.{env}.json      # Per-environment subagent registries
-└── shared/               ← Cross-cutting utilities
-    ├── settings.py               # AppSettings from env vars
-    ├── runtime_utils.py          # Identity resolution, MCP URL, stream normalization
-    ├── request_utils.py          # Request normalization, error extraction
-    └── logging_config.py         # Centralized logging setup
+└── infrastructure/       ← Databricks, messaging, observability, persistence adapters
+    ├── databricks/lakebase.py
+    ├── messaging/bus.py
+    ├── observability/{logging,tracing}.py
+    └── persistence/{memory,tasks}.py
 ```
 
 ## Layer Responsibilities
 
 | Layer | Responsibility | Depends On |
 |-------|---------------|------------|
-| **api** | HTTP lifecycle, request dispatch, dependency wiring | services, domain, shared |
-| **services** | Orchestration logic, policy enforcement, auth, events | domain, shared |
-| **domain** | Typed config models, validation, environment-scoped registry | shared |
-| **shared** | Settings, identity helpers, normalization utilities | (no internal deps) |
+| **api** | HTTP lifecycle and request dispatch | application, bootstrap |
+| **application** | Orchestration, policy, auth, guardrails, and request helpers | contracts, config, ports |
+| **bootstrap** | Dependency composition | application, infrastructure |
+| **contracts** | Typed execution, delegation, and subagent registry contracts | (no higher layers) |
+| **config** | Environment settings | (no higher layers) |
+| **infrastructure** | Databricks, messaging, tracing, and persistence adapters | application ports, contracts, config |
 
-Dependencies flow **downward only** — services never import from api, domain never imports from services.
+Dependencies flow inward: `api -> application -> contracts/config`; infrastructure implements application ports and bootstrap composes concrete dependencies.
 
 ## Request Pipeline
 
@@ -86,7 +85,7 @@ Request → Prepare → Connect → Execute → Finalize → Response
 
 ## Dependency Injection
 
-The composition root (`api/dependencies.py`) uses a frozen dataclass container pattern:
+The composition root (`bootstrap/container.py`) uses a frozen dataclass container pattern:
 
 ```
 AppDependencyContainer
@@ -190,7 +189,7 @@ Per-environment values are managed via Databricks Asset Bundle variables in `tar
 
 ## Related ADRs
 
-- [ADR 0001: Layered backend package structure](../adrs/0001-layered-backend-architecture.md)
+- [ADR 0001: Ownership-based backend architecture](../adrs/0001-ownership-based-backend-architecture.md)
 - [ADR 0002: Hybrid app plus OBO authorization](../adrs/0002-hybrid-auth-model.md)
 - [ADR 0003: Centralized dependency composition](../adrs/0003-centralized-dependency-composition.md)
 - [ADR 0004: Lifecycle message bus](../adrs/0004-lifecycle-message-bus.md)

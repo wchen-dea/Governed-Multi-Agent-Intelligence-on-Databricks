@@ -1,5 +1,5 @@
-from aiserver.domain.subagent_config import SubagentConfig
-from aiserver.services.route_planner import build_route_plan
+from aiserver.application.orchestration.routing import build_route_plan
+from aiserver.contracts.subagents import SubagentConfig
 
 
 def test_route_planner_selects_best_capability_match():

@@ -28,8 +28,8 @@ This skill does not cover:
 
 ## Files Typically Changed
 
-- `src/aiserver/services/guardrails_service.py`
-- `src/aiserver/services/policy_service.py`
+- `src/aiserver/application/guardrails/checks.py`
+- `src/aiserver/application/auth/policy.py`
 - `src/aiserver/domain/subagents.<target>.json`
 - `tests/test_guardrails_service.py`
 - `docs/governance/prompt-policy-controls.md`

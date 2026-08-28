@@ -1,4 +1,4 @@
-"""Keep evaluate_agent.py's test_cases in sync with the loaded subagent config.
+"""Keep the evaluation runner's test cases in sync with the loaded subagent config.
 
 If a test case's `expected_tool_calls`/`restricted_tools` reference a subagent
 name that doesn't exist, or a persona that isn't allowed to use that subagent,
@@ -7,8 +7,8 @@ the corresponding expectation can never be satisfied under current policy —
 have nothing to do with routing/model quality.
 """
 
-from aiserver.domain.subagent_config import SUBAGENTS
-from aiserver.evaluate_agent import test_cases
+from aiserver.contracts.subagents import SUBAGENTS
+from operations.evaluate_agent import test_cases
 
 _SUBAGENTS_BY_NAME = {subagent.name: subagent for subagent in SUBAGENTS}
 _SIMULATOR_KEYS = {"context", "goal", "simulation_guidelines", "persona", "expectations"}

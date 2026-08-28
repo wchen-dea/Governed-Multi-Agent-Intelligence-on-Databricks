@@ -36,6 +36,7 @@ sequenceDiagram
     participant POL as Policy Service
     participant OR as Orchestrator Agent
     participant TL as Tool Layer
+    participant DT as Delegation Task Bus
     participant GR as Guardrails Service
     participant MB as Message Bus
 
@@ -46,9 +47,14 @@ sequenceDiagram
     RA->>POL: Filter subagents by persona + auth
     POL-->>RA: Allowed/denied subagents
     RA-->>BE: RuntimeAuthContext
-    BE->>OR: Build Agent with allowed tools + MCP
-    OR->>TL: Native function or MCP tool call
-    TL-->>OR: Tool result
+    BE->>OR: Build route plan and agent with candidate tools + MCP
+    alt Direct tool or MCP execution
+        OR->>TL: Native function or MCP tool call
+        TL-->>OR: Tool result
+    else Approved native delegation
+        OR->>DT: delegate_to_agent submits named task
+        DT-->>OR: Synchronous task settlement result
+    end
     OR-->>BE: Response items
     BE->>BE: Buffer stream events and finalize source
     BE->>GR: Evaluate guardrails

@@ -6,21 +6,21 @@ This document captures detailed logical artifacts for engineering implementation
 
 ```mermaid
 flowchart TB
-    H[API Handlers — handlers.py] --> D[Dependency Container — dependencies.py]
-    D --> RA[Runtime Auth Service]
-    D --> OR[Orchestrator Service]
-    D --> PO[Policy Service]
-    D --> GR[Guardrails Service]
-    D --> MB[Message Bus]
-    D --> MR[Model Routing Service]
-    D --> DT[Agent Delegation Policy and Task Bus]
+    H[Invocation Handlers — invocations.py] --> D[Bootstrap Container — container.py]
+    D --> RA[Auth Context — application/auth/context.py]
+    D --> OR[Orchestration Agent — application/orchestration/agent.py]
+    D --> PO[Auth Policy — application/auth/policy.py]
+    D --> GR[Guardrail Checks — application/guardrails/checks.py]
+    D --> MB[Messaging Bus — infrastructure/messaging/bus.py]
+    D --> MR[Model Selection — application/orchestration/model.py]
+    D --> DT[Delegation Policy and Task Store]
     DT --> DW[Bounded Delegation Worker]
 
-    OR --> SC[Subagent Config — subagent_config.py]
+    OR --> SC[Subagent Contracts — contracts/subagents.py]
     OR --> TL[Tool Builders — serving_endpoint / app]
     OR --> MCP[MCP Server Builders — genie / mcp]
     OR --> LB[Lakebase Tools Builder — psycopg2 + OAuth credentials]
-    OR --> RP[Deterministic Route Planner — capability match or fallback]
+    OR --> RP[Deterministic Routing — capability match or fallback]
 
     SC --> S1[sales_insights_agent — Genie — analyst, manager]
     SC --> S2[product_index_assistant — AI Search MCP — analyst, manager]
@@ -98,7 +98,7 @@ flowchart TD
 
 ## Current Alignment
 
-Native `delegate_to_agent` handoffs are bounded app-auth tasks. Dev persists them in UC task/event tables, while the backend lifespan owns lease-based worker execution and redacted status lookup. Promotion remains blocked: `ToolCallCorrectness = 0.400 < 0.800`.
+Native `delegate_to_agent` handoffs are bounded app-auth tasks. Native handoffs synchronously settle their submitted task; the optional backend lifespan worker leases queued work and status lookup remains redacted. Tool-call accuracy is monitored but non-blocking while nested tool spans cannot be scored reliably.
 
 ## 5. Session and State Model
 
@@ -144,5 +144,5 @@ flowchart LR
     Eval --> KPI{KPI Thresholds Met?}
     KPI -- Yes --> Bundle[databricks bundle validate]
     Bundle --> Deploy[databricks bundle deploy -t dev]
-    KPI -- No --> Stop[Promotion Blocked current ToolCallCorrectness 0.400 below 0.800]
+    KPI -- No --> Stop[Promotion Blocked by auth correctness safety or groundedness]
 ```

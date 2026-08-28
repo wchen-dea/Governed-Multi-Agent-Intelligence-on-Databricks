@@ -95,7 +95,7 @@ Runtime skills playbooks:
 ## Semantic Data Dependencies
 
 The current implementation depends on business semantics and AI metadata across governed tools and indexes.
-Runtime integrations are environment-specific through `src/aiserver/domain/subagents.<target>.json`.
+Runtime integrations are environment-specific through `src/aiserver/contracts/subagents.<target>.json`.
 
 Current dev target examples:
 
@@ -180,7 +180,7 @@ The runtime uses a hybrid authorization model:
 - App Authorization: tools execute with the app service principal identity.
 - User Authorization (OBO): tools execute with the forwarded user access token.
 
-Subagent authorization is configured in target-specific files such as `src/aiserver/domain/subagents.dev.json` using `auth_mode`:
+Subagent authorization is configured in target-specific files such as `src/aiserver/contracts/subagents.dev.json` using `auth_mode`:
 
 - `auth_mode: app`
 - `auth_mode: obo`
@@ -190,7 +190,7 @@ Current defaults:
 - Genie Agent subagents default to `obo` when not explicitly set.
 - Non-Genie subagents default to `app` when not explicitly set.
 
-The backend loads an environment-specific file at startup and validates it with typed models in `src/aiserver/domain/subagent_config.py`.
+The backend loads an environment-specific file at startup and validates it with typed models in `src/aiserver/contracts/subagents.py`.
 Override the path with `SUBAGENTS_CONFIG_PATH`.
 
 If an OBO tool is selected and no forwarded token is present, the runtime raises a clear user-facing authorization error instead of falling back silently.
@@ -207,7 +207,7 @@ Lifecycle and policy events are emitted through the message bus. Backend selecti
 
 Optional async publishing mode is available to move bus writes off the request path:
 
-- `MESSAGE_BUS_ASYNC=true`
+- `MESSAGE_BUS_ASYNC=true` (requires `MESSAGE_BUS_FAIL_OPEN=true`)
 - `MESSAGE_BUS_ASYNC_QUEUE_SIZE=<int>`
 - `MESSAGE_BUS_ASYNC_DRAIN_TIMEOUT_SECONDS=<float>`
 
@@ -304,7 +304,7 @@ This builds versioned wheel and React payloads, clears prior generated remote wh
 - `MESSAGE_BUS_BACKEND`: `structured_logging` (default), `noop`, `kafka`, `rabbitmq`, or `uc_table`.
 - `MESSAGE_BUS_TOPIC`: topic name used by message bus backends (default `agent-lifecycle-events`).
 - `MESSAGE_BUS_FAIL_OPEN`: when `true`, fallback to structured logging if bus init fails.
-- `MESSAGE_BUS_ASYNC`: when `true`, publish bus events through an internal async queue worker.
+- `MESSAGE_BUS_ASYNC`: when `true`, publish bus events through an internal async queue worker; requires `MESSAGE_BUS_FAIL_OPEN=true`.
 - `MESSAGE_BUS_ASYNC_QUEUE_SIZE`: max async bus queue size before drop/error policy applies (default `1000`).
 - `MESSAGE_BUS_ASYNC_DRAIN_TIMEOUT_SECONDS`: shutdown join timeout for async bus worker (default `2.0`).
 - `KAFKA_BOOTSTRAP_SERVERS`: Kafka bootstrap servers (required for `MESSAGE_BUS_BACKEND=kafka`).
@@ -337,21 +337,21 @@ This builds versioned wheel and React payloads, clears prior generated remote wh
 MCP connect/probe performance controls:
 
 - `MCP_CONNECT_TIMEOUT_SECONDS`: timeout for MCP async context connection (default `10`).
-- `MCP_LIST_TOOLS_TIMEOUT_SECONDS`: timeout for MCP `list_tools` probe (default `10`).
+- `MCP_LIST_TOOLS_TIMEOUT_SECONDS`: timeout for MCP `list_tools` probe (default `30`).
 - `MCP_HEALTH_TTL_SECONDS`: cached healthy MCP status TTL in seconds (default `30`).
 - `MCP_HEALTH_FAILURE_TTL_SECONDS`: cached unhealthy MCP status TTL in seconds (default `10`).
 - `ORCHESTRATOR_INSTRUCTIONS_CACHE_SIZE`: max in-memory cached static instruction variants (default `128`).
 
 ## Runtime Status
 
-- Current package version: `0.1.7`.
+- Current package version: `1.0.0`.
 - Lakebase uses an OAuth credential minted from the Databricks Postgres credentials API; the app service principal needs a matching Lakebase OAuth role and `postgres` app resource grant.
 - The orchestrator selects a configured Databricks model by task type and records the selected model, task type, and reason in `routing.plan.selected` lifecycle metadata.
 - The UI renders `response.output_text.delta` events and source/tool badges. It does not render raw function, MCP, or tool-output events.
 - Local source deploys are lifecycle-gated, but bundle-managed resource changes still require a successful bundle apply.
 - Dev uses the UC-backed delegation task store with `agent_delegation_tasks` and `agent_delegation_events`; the backend lifespan starts a bounded worker and exposes payload-redacted status at `GET /delegations/{task_id}`.
 - The app deployment and durable-task round trip are verified. Direct authenticated endpoint probes still encounter the known platform `502` before backend responses are available.
-- The current Databricks-backed evaluation release gate remains blocked at tool-call accuracy `0.400 < 0.800`.
+- Auth correctness, safety, and groundedness block the evaluation release gate. Tool-call accuracy is monitored with `DataToolAttempt` and trace triage but remains non-blocking while MLflow cannot reliably score nested tool spans.
 
 ## Documentation
 
@@ -360,7 +360,7 @@ MCP connect/probe performance controls:
 - [docs/product/business-specs.md](docs/product/business-specs.md): business requirements, constraints, and success metrics.
 - [docs/architecture/runtime-technical-specs.md](docs/architecture/runtime-technical-specs.md): centralized technical implementation map and cross-space contracts.
 - [docs/quality/evaluation-spec.md](docs/quality/evaluation-spec.md): datasets, scorers, KPI thresholds, and release-gate rules.
-- [Model Matrix and Environment Recommendations](docs/quality/evaluation-spec.md#model-matrix-and-environment-recommendations): environment-specific model profile guidance for dev, qa, stg, and prd release planning.
+- [Proposed Model Experiment Matrix](docs/quality/evaluation-spec.md#proposed-model-experiment-matrix): environment-specific model profile guidance for dev, qa, stg, and prd release planning.
 - [docs/governance/prompt-policy-controls.md](docs/governance/prompt-policy-controls.md): prompt layering and deterministic policy/guardrail behavior.
 - [docs/architecture/tool-and-model-registry.md](docs/architecture/tool-and-model-registry.md): registry of active tools, endpoints, and Genie Agents.
 - [docs/governance/data-contracts-lineage.md](docs/governance/data-contracts-lineage.md): data contracts, classification, and lineage requirements.

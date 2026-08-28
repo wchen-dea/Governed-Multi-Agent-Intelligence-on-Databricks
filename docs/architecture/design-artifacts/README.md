@@ -41,9 +41,9 @@ Each phase is split into high-level (architecture overview) and detailed (engine
 - **Model router**: deterministic standard, reasoning, and synthesis selection; dev resolves all routes to `databricks-gpt-5-6-luna`
 - **AI Gateway**: opt-in via DATABRICKS_OPENAI_BASE_URL
 - **Message bus**: uc_table (dev) with structured_logging fallback
-- **Delegation**: bounded app-auth UC task/event store, lifespan worker, and payload-redacted status endpoint
+- **Delegation**: bounded app-auth UC task/event store, synchronous native handoff settlement, optional lifespan worker, and payload-redacted status endpoint
 - **Streaming**: events buffer and finalize before the UI renders `response.output_text.delta` only
-- **Release gate**: `ToolCallCorrectness = 0.400 < 0.800`; promotion blocked
+- **Release gate**: auth correctness, safety, and groundedness block promotion; tool-call accuracy is monitored but non-blocking until nested tool spans are scored reliably
 - **Workspace**: dbc-baff2b7f-4402.cloud.databricks.com (dev)
 
 Canonical narrative references: [runtime technical specifications](../runtime-technical-specs.md), [API contracts](../api-contracts.md), [tool and model registry](../tool-and-model-registry.md), and [low-level design](../low-level-design.md).

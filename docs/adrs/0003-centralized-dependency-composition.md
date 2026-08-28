@@ -1,4 +1,4 @@
-# ADR 0003: Centralize Dependency Composition in API Layer
+# ADR 0003: Centralize Dependency Composition in Bootstrap
 
 ## Status
 
@@ -10,7 +10,7 @@ As services gained protocol-based dependencies (runtime auth, orchestration, mes
 
 ## Decision
 
-Use `src/aiserver/api/dependencies.py` as the single composition root. This module builds three nested dependency containers and exposes a single entrypoint for handler consumption:
+Use `src/aiserver/bootstrap/container.py` as the single composition root. This module builds three nested dependency containers and exposes a single entrypoint for invocation handling:
 
 ```
 AppDependencyContainer
@@ -57,7 +57,7 @@ Handlers receive only `HandlerDependencies` — a flat, frozen dataclass of comp
 - Single, explicit place to wire all application dependencies.
 - Cleaner service modules focused on behavior rather than construction.
 - Better integration testing — dependency containers can be overridden at test boundaries.
-- Protocol-based contracts (in `interfaces.py`) decouple implementations from consumers.
+- Protocol-based contracts in `application/ports/` decouple implementations from consumers.
 
 ### Trade-offs
 
@@ -67,7 +67,7 @@ Handlers receive only `HandlerDependencies` — a flat, frozen dataclass of comp
 
 ## Implementation Notes
 
-- Composition root: [src/aiserver/api/dependencies.py](../../src/aiserver/api/dependencies.py) (`build_dependency_container`, `get_handler_dependencies`)
-- Protocol contracts: [src/aiserver/services/interfaces.py](../../src/aiserver/services/interfaces.py)
-- Handler consumption: [src/aiserver/api/handlers.py](../../src/aiserver/api/handlers.py) (`HANDLER_DEPS = get_handler_dependencies()`)
+- Composition root: [src/aiserver/bootstrap/container.py](../../src/aiserver/bootstrap/container.py) (`build_dependency_container`, `get_handler_dependencies`)
+- Protocol contracts: [src/aiserver/application/ports/](../../src/aiserver/application/ports)
+- Handler consumption: [src/aiserver/api/invocations.py](../../src/aiserver/api/invocations.py) (`HANDLER_DEPS = get_handler_dependencies()`)
 - All containers use frozen dataclasses — no runtime mutation after construction.

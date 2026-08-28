@@ -4,25 +4,25 @@ Consolidated view of how this project monitors the running agent system across f
 
 ## 1. Observability (Implemented)
 
-- **Runtime tracing:** every request produces a full MLflow trace (`mlflow.openai.autolog()` in [handlers.py](../../src/aiserver/api/handlers.py)) capturing the span tree (handler → orchestrator → tool calls), per-span latency, token counts, and request/response payloads. Full detail: [mlflow-guide.md](mlflow-guide.md) section 1.
+- **Runtime tracing:** every request produces a full MLflow trace (`mlflow.openai.autolog()` in [invocations.py](../../src/aiserver/api/invocations.py)) capturing the span tree (handler → orchestrator → tool calls), per-span latency, token counts, and request/response payloads. Full detail: [mlflow-guide.md](mlflow-guide.md) section 1.
 - **Lifecycle audit events:** routing, policy, and guardrail decisions are published as structured events through the injected `MessageBus` (structured logging, Kafka, RabbitMQ, or Unity Catalog table backend) — see [../adrs/0004-lifecycle-message-bus.md](../adrs/0004-lifecycle-message-bus.md) and [../adrs/0006-unity-catalog-audit-table-for-lifecycle-events.md](../adrs/0006-unity-catalog-audit-table-for-lifecycle-events.md).
-- **Trace metadata for routing decisions:** `mlflow.update_current_trace(metadata=...)` in `orchestrator_service.py` attaches routing/subagent/auth-mode metadata directly to the trace (see [agent-harness-engineering-guidelines.md](../governance/agent-harness-engineering-guidelines.md) Rule 8) — kept separate from model-visible prompt content.
+- **Trace metadata for routing decisions:** `mlflow.update_current_trace(metadata=...)` in [tracing.py](../../src/aiserver/infrastructure/observability/tracing.py) attaches routing/subagent/auth-mode metadata directly to the trace (see [agent-harness-engineering-guidelines.md](../governance/agent-harness-engineering-guidelines.md) Rule 8) — kept separate from model-visible prompt content.
 - **Monitoring signals defined:** request success/failure rate, tool invocation count and failure ratio, guardrail block ratio, stream/invoke latency p50/p95, MCP connect/probe timeouts, async message-bus queue pressure — see [cost-performance-budget.md](cost-performance-budget.md) "Monitoring Signals".
-- **Known transient failure mode (diagnosed 2026-08-27):** the `openai-agents` SDK re-lists MCP tools on every agent turn using a `client_session_timeout_seconds` read timeout that defaults to 20s if not explicitly set. A slow/cold Genie MCP endpoint can exceed this and raise an uncaught `McpError` mid-turn (invoke mode: 500; stream mode: graceful degraded message). Mitigated by explicitly setting `MCP_SESSION_TIMEOUT_SECONDS` (default `45`) when constructing MCP servers in `orchestrator_service.py`'s `build_mcp_servers`.
+- **Known transient failure mode (diagnosed 2026-08-27):** the `openai-agents` SDK re-lists MCP tools on every agent turn using a `client_session_timeout_seconds` read timeout that defaults to 20s if not explicitly set. A slow/cold Genie MCP endpoint can exceed this and raise an uncaught `McpError` mid-turn (invoke mode: 500; stream mode: graceful degraded message). Mitigated by explicitly setting `MCP_SESSION_TIMEOUT_SECONDS` (default `45`) when constructing MCP servers in [agent.py](../../src/aiserver/application/orchestration/agent.py)'s `build_mcp_servers`.
 
 **Gap:** signals are *defined* but there is no standing dashboard/alerting layer wired to them yet — today's routine is manual: open the MLflow Experiments UI and inspect traces. See [Possible Improvements](#possible-improvements-to-level-up).
 
 ## 2. Evaluation and Quality (Implemented, Partially Blocking)
 
 - **Scoring pipeline:** `mlflow.genai.evaluate()` with a `ConversationSimulator` (LLM-as-judge) runs 9 built-in scorers (`ToolCallCorrectness`, `Safety`, `ConversationalSafety`, `RelevanceToQuery`, `Completeness`, `ConversationCompleteness`, `Fluency`, `KnowledgeRetention`, `UserFrustration`) plus 2 custom scorers (`AuthCorrectness`, `DirectGroundedness`). Full detail: [evaluation-spec.md](../quality/evaluation-spec.md).
-- **Release gate:** `enforce_release_gate()` in `src/aiserver/evaluate_agent.py` blocks promotion when `auth_correctness` (≥0.90), `safety` (≥0.95), or `groundedness` (≥0.80) fall below threshold.
+- **Release gate:** `enforce_release_gate()` in `src/operations/evaluate_agent.py` blocks promotion when `auth_correctness` (≥0.90), `safety` (≥0.95), or `groundedness` (≥0.80) fall below threshold.
 - **Known limitation (documented, not hidden):** `tool_call_accuracy` is currently non-blocking due to a documented MLflow/`openai-agents` trace-selection scoring gap — see the "Known Issue" section in [evaluation-spec.md](../quality/evaluation-spec.md). This is a real, active quality gap, not a monitoring omission — it is tracked and reported, just not gate-blocking yet.
 - **Triage tooling:** `uv run assistant-triage-evaluation` classifies failing tool-call assessments from a run's traces into documented triage categories.
 
 ## 3. Safety and Guardrails (Implemented)
 
-- **Request-time policy** (`policy_service.py`): auth mode/identity checks, persona allow-list, requested-tool targeting, confidence threshold for sensitive data.
-- **Response-time guardrails** (`guardrails_service.py`): evidence requirement (citation enforcement when `requires_evidence: true`), unsafe-output pattern matching, low-confidence sensitive-output blocking. See [prompt-policy-controls.md](../governance/prompt-policy-controls.md).
+- **Request-time policy** ([policy.py](../../src/aiserver/application/auth/policy.py)): auth mode/identity checks, persona allow-list, requested-tool targeting, confidence threshold for sensitive data.
+- **Response-time guardrails** ([checks.py](../../src/aiserver/application/guardrails/checks.py)): evidence requirement (citation enforcement when `requires_evidence: true`), unsafe-output pattern matching, low-confidence sensitive-output blocking. See [prompt-policy-controls.md](../governance/prompt-policy-controls.md).
 - **Decision logging:** every policy/guardrail decision emits event metadata (result, reason code, subagent/tool name, context attributes) to the lifecycle audit trail.
 
 ## 4. Drift and Anomaly Detection (Not Implemented — Target-State Only)
@@ -31,7 +31,7 @@ This is the one dimension with a real gap between aspiration and implementation,
 
 - The enterprise reference material ([01-foundation-governance.md](../reference/01-foundation-governance.md) — Model Owner role; [03-security-risk-controls.md](../reference/03-security-risk-controls.md) — "Model, Retrieval, and Data Drift" risk row) describes drift monitoring, retrieval-quality degradation tracking, and cost-anomaly alerting as *required* enterprise controls.
 - **None of this is implemented in `src/` today.** There is no automated drift dashboard, no scheduled embedding/index staleness check beyond the documented `freshness_sla` metadata field, and no anomaly-detection job over token volume, latency, or business KPI movement.
-- The closest existing practice is **periodic manual post-release evaluation runs** (re-running `evaluate_agent.py` against the same KPI thresholds after a release) — this catches gross regressions but is not continuous drift monitoring and does not detect gradual degradation between releases.
+- The closest existing practice is **periodic manual post-release evaluation runs** (re-running `operations/evaluate_agent.py` against the same KPI thresholds after a release) — this catches gross regressions but is not continuous drift monitoring and does not detect gradual degradation between releases.
 - **Do not describe this project as having drift/anomaly monitoring** in a security review, business case, or CoE case charter (see [08-ai-coe-business-requirements-and-case-design-rules.md](../reference/08-ai-coe-business-requirements-and-case-design-rules.md)) without flagging this gap explicitly.
 
 ## 5. Token Cost and Performance (Implemented, Manual)

@@ -30,9 +30,9 @@ This skill does not cover:
 ## Files Typically Changed
 
 - `src/aiserver/domain/subagents.<target>.json`
-- `src/aiserver/services/orchestrator_service.py`
-- `src/aiserver/services/policy_service.py`
-- `src/aiserver/services/runtime_auth_service.py`
+- `src/aiserver/application/orchestration/agent.py`
+- `src/aiserver/application/auth/policy.py`
+- `src/aiserver/application/auth/context.py`
 - `docs/architecture/tool-and-model-registry.md`
 
 ## Workflow
