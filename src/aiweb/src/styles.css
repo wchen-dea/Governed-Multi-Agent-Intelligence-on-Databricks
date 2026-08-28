@@ -319,6 +319,44 @@ body {
   font-weight: 500;
   word-break: break-word;
 }
+.approval-actions {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.85rem;
+  border-top: 1px solid var(--line);
+  padding-top: 0.7rem;
+}
+.approval-actions > div:first-child {
+  display: grid;
+  gap: 0.2rem;
+}
+.approval-actions strong {
+  color: var(--red-dark);
+}
+.approval-actions span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.approval-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.approval-buttons button {
+  border: 1px solid var(--red);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--ink);
+  padding: 0.4rem 0.65rem;
+  cursor: pointer;
+}
+.approval-buttons button:first-child {
+  background: var(--red);
+  color: white;
+}
+.approval-buttons button:hover {
+  transform: translateY(-1px);
+}
 .thinking {
   color: var(--muted);
   display: flex;

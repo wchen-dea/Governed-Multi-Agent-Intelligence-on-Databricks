@@ -4,7 +4,7 @@ import {
   sourceBadgeLine,
   updateStreamHints,
 } from "./stream";
-import type { ChatMessage } from "./types";
+import type { ChatMessage, HumanApprovalState } from "./types";
 import type { GovernanceMetadata } from "./types";
 
 export interface SendChatOptions {
@@ -43,6 +43,56 @@ function metadataFromEvent(
     truncated: envelope.truncated === true,
     status:
       typeof envelope.status === "string" ? envelope.status : fallback.status,
+    approvalState:
+      envelope.approval_state && typeof envelope.approval_state === "object"
+        ? (envelope.approval_state as HumanApprovalState)
+        : fallback.approvalState,
+  };
+}
+
+export async function submitApprovalDecision(options: {
+  requestId: string;
+  agentName: string;
+  approver: string;
+  decision: "approved" | "rejected" | "more_info_requested";
+  reason: string;
+  notes: string;
+  token: string | null;
+}): Promise<HumanApprovalState> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (options.token)
+    headers[settings.forwardedAccessTokenHeader] = options.token;
+  const response = await fetch(
+    `${settings.backendUrl.replace(/\/invocations\/?$/, "")}/approval-decisions`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        request_id: options.requestId,
+        agent_name: options.agentName,
+        approver: options.approver,
+        decision: options.decision,
+        reason: options.reason,
+        notes: options.notes,
+      }),
+    },
+  );
+  if (!response.ok)
+    throw new Error(`Approval decision failed (HTTP ${response.status}).`);
+  const payload = (await response.json()) as {
+    approval?: Record<string, unknown>;
+  };
+  const approval = payload.approval;
+  if (!approval)
+    throw new Error("Approval response did not include a decision.");
+  return {
+    status: approval.status as HumanApprovalState["status"],
+    required: false,
+    approver: typeof approval.approver === "string" ? approval.approver : null,
+    decision: typeof approval.decision === "string" ? approval.decision : null,
+    reason: typeof approval.reason === "string" ? approval.reason : null,
   };
 }
 

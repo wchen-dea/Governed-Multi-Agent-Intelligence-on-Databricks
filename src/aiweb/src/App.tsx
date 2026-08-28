@@ -1,8 +1,12 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { sendChat, sessionStatusLine } from "./api";
+import { sendChat, sessionStatusLine, submitApprovalDecision } from "./api";
 import { maskToken, parsePersonaCommand, parseTokenCommand } from "./commands";
 import { settings } from "./config";
-import type { ChatMessage, GovernanceMetadata } from "./types";
+import type {
+  ChatMessage,
+  GovernanceMetadata,
+  HumanApprovalState,
+} from "./types";
 
 function newId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -189,6 +193,91 @@ function GovernancePanel({
         ) : null}
       </div>
     </details>
+  );
+}
+
+function ApprovalActions({
+  message,
+  token,
+  onDecision,
+}: {
+  message: ChatMessage;
+  token: string | null;
+  onDecision: (messageId: string, state: HumanApprovalState) => void;
+}): JSX.Element | null {
+  const [decisionInFlight, setDecisionInFlight] = useState<string | null>(null);
+  const [decisionError, setDecisionError] = useState<string | null>(null);
+  if (!message.approvalState || message.approvalState.status !== "pending")
+    return null;
+
+  async function decide(
+    decision: "approved" | "rejected" | "more_info_requested",
+  ): Promise<void> {
+    setDecisionInFlight(decision);
+    setDecisionError(null);
+    try {
+      const state = await submitApprovalDecision({
+        requestId: message.id,
+        agentName: "store-intervention-agent",
+        approver: "manager",
+        decision,
+        reason:
+          decision === "approved"
+            ? "Manager approved the proposed planning step."
+            : decision === "rejected"
+              ? "Manager rejected the proposed planning step."
+              : "Manager requested additional evidence before deciding.",
+        notes: "No operational dispatch is authorized by this UI action.",
+        token,
+      });
+      onDecision(message.id, state);
+    } catch (error) {
+      setDecisionError(
+        error instanceof Error
+          ? error.message
+          : "Approval decision could not be saved.",
+      );
+    } finally {
+      setDecisionInFlight(null);
+    }
+  }
+
+  return (
+    <section className="approval-actions" aria-label="Manager approval actions">
+      <div>
+        <strong>Manager approval required</strong>
+        <span>
+          {message.approvalState.reason ??
+            "Review this packet before any action."}
+        </span>
+      </div>
+      <div className="approval-buttons">
+        <button
+          type="button"
+          disabled={decisionInFlight !== null}
+          onClick={() => void decide("approved")}
+        >
+          {decisionInFlight === "approved" ? "Saving..." : "Approve planning"}
+        </button>
+        <button
+          type="button"
+          disabled={decisionInFlight !== null}
+          onClick={() => void decide("more_info_requested")}
+        >
+          {decisionInFlight === "more_info_requested"
+            ? "Saving..."
+            : "Request more info"}
+        </button>
+        <button
+          type="button"
+          disabled={decisionInFlight !== null}
+          onClick={() => void decide("rejected")}
+        >
+          {decisionInFlight === "rejected" ? "Saving..." : "Reject"}
+        </button>
+      </div>
+      {decisionError ? <span role="alert">{decisionError}</span> : null}
+    </section>
   );
 }
 
@@ -382,6 +471,7 @@ export default function App() {
                   routePlan: metadata.routePlan,
                   guardrailReasons: metadata.guardrailReasons,
                   truncated: metadata.truncated,
+                  approvalState: metadata.approvalState,
                 }
               : message,
           ),
@@ -425,6 +515,7 @@ export default function App() {
                 routePlan: result.metadata.routePlan,
                 guardrailReasons: result.metadata.guardrailReasons,
                 truncated: result.metadata.truncated,
+                approvalState: result.metadata.approvalState,
               }
             : msg,
         ),
@@ -617,6 +708,19 @@ export default function App() {
               renderMarkdown(message.content)
             )}
             <GovernancePanel message={message} />
+            <ApprovalActions
+              message={message}
+              token={token}
+              onDecision={(messageId, state) =>
+                setMessages((prev) =>
+                  prev.map((item) =>
+                    item.id === messageId
+                      ? { ...item, approvalState: state }
+                      : item,
+                  ),
+                )
+              }
+            />
           </article>
         ))}
       </main>

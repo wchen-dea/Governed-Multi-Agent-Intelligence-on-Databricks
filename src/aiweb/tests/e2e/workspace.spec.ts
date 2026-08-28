@@ -41,3 +41,56 @@ test("keeps the workspace usable on mobile", async ({ page }) => {
   await expect(page.getByRole("textbox", { name: "Message" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Send" })).toBeVisible();
 });
+
+test("shows manager actions for a pending HITL response", async ({ page }) => {
+  await page.route("**/approval-decisions", async (route) => {
+    const body = route.request().postDataJSON();
+    expect(body.decision).toBe("approved");
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        status: "ok",
+        approval: {
+          request_id: body.request_id,
+          agent_name: body.agent_name,
+          approver: body.approver,
+          decision: body.decision,
+          status: "approved",
+        },
+      }),
+    });
+  });
+  await page.route("**/invocations", async (route) => {
+    const events = [
+      { type: "response.output_text.delta", delta: "Review packet ready." },
+      {
+        type: "response.governance",
+        response_envelope: {
+          status: "succeeded",
+          truncated: false,
+          approval_state: {
+            status: "pending",
+            required: true,
+            approver: "manager",
+            reason: "Manager review is required before dispatch.",
+          },
+        },
+      },
+    ];
+    await route.fulfill({
+      status: 200,
+      contentType: "text/event-stream",
+      body: sse(events),
+    });
+  });
+
+  await page.goto("/");
+  await page.getByRole("textbox", { name: "Message" }).fill("Review HITL packet");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByRole("button", { name: "Approve planning" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Request more info" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Reject" })).toBeVisible();
+  await page.getByRole("button", { name: "Approve planning" }).click();
+  await expect(page.getByText("Review packet ready.")).toBeVisible();
+});
