@@ -66,6 +66,38 @@ APP_SP=$(databricks apps get store-intervention-agent --profile PROFILE --output
 
 The App must be `RUNNING` with an active successful deployment before it is registered in this repository.
 
+### Grant specialist data privileges
+
+The current specialist implementation uses Databricks SQL Statement Execution against the three tables configured in `src/hitl-agent/app.yaml`. Grant its App service principal only the warehouse and UC privileges required for those queries:
+
+```bash
+make grant-hitl-privileges APP_NAME=store-intervention-agent PROFILE=PROFILE
+```
+
+The helper resolves the specialist service principal and grants:
+
+- `CAN_USE` on the configured SQL warehouse
+- `USE_CATALOG` and `USE_SCHEMA` for `dt_dev_platinum.enterprise` and `dt_dev_gold.dwh`
+- `SELECT` on the revenue, CDI, and peer-set tables
+
+Review the generated grants first with:
+
+```bash
+DRY_RUN=true make grant-hitl-privileges APP_NAME=store-intervention-agent PROFILE=PROFILE
+```
+
+Override the current dev data sources when promoting to another environment:
+
+```bash
+HITL_WAREHOUSE_ID=<warehouse-id> \
+HITL_REVENUE_TABLE=<catalog>.<schema>.<table> \
+HITL_CDI_TABLE=<catalog>.<schema>.<table> \
+HITL_PEER_SET_TABLE=<catalog>.<schema>.<table> \
+make grant-hitl-privileges APP_NAME=store-intervention-agent PROFILE=PROFILE
+```
+
+The script does not grant `MODIFY`, `CREATE TABLE`, broad schema access, or operational dispatch permissions.
+
 For subsequent source updates, use the repository helper from the project root:
 
 ```bash

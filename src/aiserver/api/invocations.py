@@ -4,7 +4,7 @@ import asyncio
 import logging
 from collections.abc import AsyncGenerator
 from contextlib import AsyncExitStack
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Any, cast
 
 import mlflow
@@ -1024,6 +1024,13 @@ async def stream_handler(
 
             for event in finalized.buffered_events:
                 yield event
+            yield cast(
+                Any,
+                {
+                    "type": "response.governance",
+                    "response_envelope": asdict(finalized.envelope),
+                },
+            )
             if finalized.source_suffix:
                 yield cast(
                     Any,
