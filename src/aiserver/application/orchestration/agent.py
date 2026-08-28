@@ -9,23 +9,25 @@ from threading import Lock
 from time import monotonic
 from typing import Any, cast
 
-import mlflow
 from agents import Agent, function_tool
 from agents.exceptions import UserError
 from databricks_openai import AsyncDatabricksOpenAI
 from databricks_openai.agents import McpServer
 
-from aiserver.domain.execution_contracts import ToolExecutionResult
-from aiserver.domain.subagent_config import SubagentConfig
-from aiserver.services.interfaces import (
+from aiserver.application.ports.audit import (
+    MessageBus,
+    NoOpMessageBus,
+    TraceMetadataUpdater,
+    noop_trace_metadata,
+)
+from aiserver.application.ports.lakebase import LakebaseConnectionFactory
+from aiserver.application.ports.tools import (
     FunctionToolWrapper,
     McpServerFactory,
-    MessageBus,
-    TraceMetadataUpdater,
 )
-from aiserver.services.message_bus import NoOpMessageBus
-from aiserver.shared.lakebase_client import connect_lakebase
-from aiserver.shared.runtime_utils import RequestIdentityContext, build_mcp_url
+from aiserver.application.runtime.identity import RequestIdentityContext, build_mcp_url
+from aiserver.contracts.responses import ToolExecutionResult
+from aiserver.contracts.subagents import SubagentConfig
 
 logger = logging.getLogger(__name__)
 
@@ -61,9 +63,10 @@ _ORCHESTRATOR_INSTRUCTIONS_CACHE: dict[tuple[tuple[Any, ...], ...], str] = {}
 _ORCHESTRATOR_INSTRUCTIONS_CACHE_LOCK = Lock()
 
 
-def _update_trace_metadata(metadata: dict[str, str]) -> None:
-    """Write orchestration metadata to the active MLflow trace."""
-    mlflow.update_current_trace(metadata=metadata)
+def _missing_lakebase_connection(*args: Any, **kwargs: Any) -> Any:
+    """Reject Lakebase execution when bootstrap did not inject an adapter."""
+    del args, kwargs
+    raise RuntimeError("Lakebase connection adapter is not configured")
 
 
 def _cache_key_for_server(server: McpServer) -> str:
@@ -241,7 +244,8 @@ class OrchestratorDependencies:
         message_bus: Event sink for tool and MCP lifecycle signals.
     """
 
-    trace_metadata_updater: TraceMetadataUpdater = _update_trace_metadata
+    trace_metadata_updater: TraceMetadataUpdater = noop_trace_metadata
+    lakebase_connection_factory: LakebaseConnectionFactory = _missing_lakebase_connection
     function_tool_wrapper: FunctionToolWrapper = function_tool
     mcp_server_factory: McpServerFactory = McpServer
     message_bus: MessageBus = NoOpMessageBus()
@@ -425,22 +429,15 @@ def _format_lakebase_results(columns: list[str], rows: list[tuple]) -> str:
     return result
 
 
-def _get_lakebase_token(ws_client, cfg: SubagentConfig) -> str:
-    """Get an OAuth token for the configured Lakebase endpoint."""
-    from aiserver.shared.lakebase_client import get_lakebase_token
-
-    return get_lakebase_token(
-        ws_client,
-        project_id=cfg.project_id,
-        branch_id=cfg.branch_id,
-        endpoint_id=cfg.endpoint_id,
-    )
-
-
-def _execute_lakebase_query(ws_client, cfg: SubagentConfig, sql_query: str) -> str:
+def _execute_lakebase_query(
+    lakebase_connection_factory: LakebaseConnectionFactory,
+    ws_client: Any,
+    cfg: SubagentConfig,
+    sql_query: str,
+) -> str:
     """Execute a SQL query against Lakebase via psycopg2 with OAuth credentials."""
     try:
-        conn = connect_lakebase(
+        conn = lakebase_connection_factory(
             ws_client,
             project_id=cfg.project_id,
             branch_id=cfg.branch_id,
@@ -473,8 +470,10 @@ def _execute_lakebase_query(ws_client, cfg: SubagentConfig, sql_query: str) -> s
 def build_lakebase_delegation_executors(
     subagents: list[SubagentConfig],
     identity_ctx: RequestIdentityContext,
+    deps: OrchestratorDependencies | None = None,
 ) -> dict[str, Any]:
     """Build app-auth executors for explicitly delegated Lakebase tasks."""
+    dependencies = deps or OrchestratorDependencies()
     executors: dict[str, Any] = {}
     for subagent in subagents:
         if not subagent.is_lakebase or subagent.is_obo:
@@ -488,6 +487,7 @@ def build_lakebase_delegation_executors(
                 raise ValueError("delegation_requires_sql_query")
             result = await asyncio.to_thread(
                 _execute_lakebase_query,
+                dependencies.lakebase_connection_factory,
                 identity_ctx.app_workspace_client,
                 cfg,
                 sql_query,
@@ -561,7 +561,11 @@ def build_lakebase_tools(
                 )
                 try:
                     result = await asyncio.to_thread(
-                        _execute_lakebase_query, ws_client, cfg_param, sql_query
+                        _execute_lakebase_query,
+                        dependencies.lakebase_connection_factory,
+                        ws_client,
+                        cfg_param,
+                        sql_query,
                     )
                     dependencies.message_bus.publish(
                         "tool.call.succeeded",

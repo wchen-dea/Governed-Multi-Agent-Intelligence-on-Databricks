@@ -9,13 +9,13 @@ from typing import Any
 
 from databricks.sdk import WorkspaceClient
 
-from aiserver.domain.agent_messages import (
+from aiserver.config.settings import AppSettings
+from aiserver.contracts.delegation import (
     DelegationResult,
     DelegationTask,
     DelegationTaskRecord,
     utc_now,
 )
-from aiserver.shared.settings import AppSettings
 
 
 class InMemoryAgentTaskBus:
@@ -80,6 +80,43 @@ class InMemoryAgentTaskBus:
                 self._records[task_id] = updated
                 claimed.append(updated)
         return claimed
+
+    async def claim_task(
+        self,
+        task_id: str,
+        worker_id: str,
+        *,
+        lease_seconds: int = 60,
+        now: datetime | None = None,
+    ) -> DelegationTaskRecord | None:
+        """Lease one specific pending task for synchronous handoff execution."""
+        current = now or utc_now()
+        lease_expires_at = current + timedelta(seconds=max(lease_seconds, 1))
+        async with self._lock:
+            record = self._records.get(task_id)
+            if record is None:
+                return None
+            if record.task.expires_at and record.task.expires_at <= current:
+                self._records[task_id] = replace(
+                    record, status="expired", failure_code="task_expired"
+                )
+                return None
+            lease_expired = (
+                record.status in {"claimed", "running"}
+                and record.lease_expires_at is not None
+                and record.lease_expires_at <= current
+            )
+            if record.status != "pending" and not lease_expired:
+                return None
+            task = replace(record.task, attempt=record.task.attempt + 1)
+            updated = DelegationTaskRecord(
+                task=task,
+                status="claimed",
+                lease_owner=worker_id,
+                lease_expires_at=lease_expires_at,
+            )
+            self._records[task_id] = updated
+            return updated
 
     async def mark_running(self, task_id: str, worker_id: str) -> DelegationTaskRecord:
         """Mark a worker-owned lease as actively executing."""
@@ -230,6 +267,35 @@ class UcAgentTaskBus:
                 claimed.append(claimed_record)
                 await self._event(task_id, "delegation.task.claimed", {"worker_id": worker_id})
         return claimed
+
+    async def claim_task(
+        self,
+        task_id: str,
+        worker_id: str,
+        *,
+        lease_seconds: int = 60,
+        now: datetime | None = None,
+    ) -> DelegationTaskRecord | None:
+        """Atomically lease one named task for synchronous handoff execution."""
+        current = now or utc_now()
+        lease_until = current + timedelta(seconds=max(lease_seconds, 1))
+        await self._execute(
+            f"UPDATE {self._tasks_fqn} SET status = 'claimed', lease_owner = {_literal(worker_id)}, "
+            f"lease_expires_at = TIMESTAMP {_literal(lease_until.isoformat())}, "
+            f"updated_at = TIMESTAMP {_literal(current.isoformat())} "
+            f"WHERE task_id = {_literal(task_id)} AND (status = 'pending' OR "
+            f"(status IN ('claimed', 'running') AND lease_expires_at <= TIMESTAMP {_literal(current.isoformat())}))"
+        )
+        record = await self.get(task_id)
+        if record is None or record.lease_owner != worker_id or record.status != "claimed":
+            return None
+        task = replace(record.task, attempt=record.task.attempt + 1)
+        await self._execute(
+            f"UPDATE {self._tasks_fqn} SET task_payload = {_literal(json.dumps(_task_to_dict(task), default=str))} "
+            f"WHERE task_id = {_literal(task_id)} AND lease_owner = {_literal(worker_id)}"
+        )
+        await self._event(task_id, "delegation.task.claimed", {"worker_id": worker_id})
+        return replace(record, task=task, lease_expires_at=lease_until)
 
     async def mark_running(self, task_id: str, worker_id: str) -> DelegationTaskRecord:
         """Transition an owned claim into execution."""

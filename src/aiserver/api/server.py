@@ -14,13 +14,15 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from mlflow.genai.agent_server import AgentServer, setup_mlflow_git_based_version_tracking
 
-from aiserver.api.dependencies import get_app_dependency_container
-from aiserver.domain.subagent_config import SUBAGENTS
-from aiserver.services.agent_task_worker import AgentTaskWorker
-from aiserver.services.orchestrator_service import build_lakebase_delegation_executors
-from aiserver.shared.logging_config import configure_logging
-from aiserver.shared.runtime_utils import build_request_identity_context
-from aiserver.shared.settings import get_settings
+from aiserver.application.delegation.worker import AgentTaskWorker
+from aiserver.application.orchestration.agent import (
+    build_lakebase_delegation_executors,
+)
+from aiserver.application.runtime.identity import build_request_identity_context
+from aiserver.bootstrap.container import get_app_dependency_container
+from aiserver.config.settings import get_settings
+from aiserver.contracts.subagents import SUBAGENTS
+from aiserver.infrastructure.observability.logging import configure_logging
 
 load_dotenv(dotenv_path=Path(__file__).parent.parent.parent.parent / ".env", override=True)
 configure_logging(get_settings())
@@ -29,7 +31,7 @@ if not os.getenv("MLFLOW_EXPERIMENT_ID", "").strip():
     os.environ.pop("MLFLOW_EXPERIMENT_ID", None)
 
 # Ensure @invoke/@stream handlers are registered.
-import aiserver.api.handlers  # noqa: E402, F401
+import aiserver.api.invocations  # noqa: E402, F401
 
 agent_server = AgentServer("ResponsesAgent", enable_chat_proxy=True)
 app = agent_server.app
@@ -88,7 +90,11 @@ async def _start_delegation_worker() -> None:
     if not settings.agent_task_worker_enabled:
         return
     container = get_app_dependency_container()
-    executors = build_lakebase_delegation_executors(SUBAGENTS, build_request_identity_context())
+    executors = build_lakebase_delegation_executors(
+        SUBAGENTS,
+        build_request_identity_context(),
+        deps=container.orchestrator,
+    )
 
     async def execute(task):
         executor = executors.get(task.target_agent)
@@ -120,6 +126,14 @@ async def _stop_delegation_worker() -> None:
     _worker_task = None
 
 
+def _close_message_bus() -> None:
+    """Flush closeable lifecycle event adapters during graceful shutdown."""
+    message_bus = get_app_dependency_container().handlers.message_bus
+    close = getattr(message_bus, "close", None)
+    if callable(close):
+        close()
+
+
 @asynccontextmanager
 async def _lifespan(_: object) -> AsyncIterator[None]:
     """Preserve AgentServer lifecycle behavior while managing delegation work."""
@@ -129,6 +143,7 @@ async def _lifespan(_: object) -> AsyncIterator[None]:
             yield
         finally:
             await _stop_delegation_worker()
+            _close_message_bus()
 
 
 app.router.lifespan_context = _lifespan

@@ -69,7 +69,7 @@ Then verify CI/deployment environment variables are set for evaluation gate thre
 
 Model profile selection by environment is documented in:
 
-- [Model Matrix and Environment Recommendations](../quality/evaluation-spec.md#model-matrix-and-environment-recommendations)
+- [Proposed Model Experiment Matrix](../quality/evaluation-spec.md#proposed-model-experiment-matrix)
 
 Final pre-release checks:
 
@@ -215,7 +215,7 @@ Use this short checklist when onboarding or updating a Genie Agent backed by bus
 
 3. Register Genie Agent runtime configuration
 
-- Add or update the target entry in `src/aiserver/domain/subagents.<target>.json`.
+- Add or update the target entry in `src/aiserver/contracts/subagents.<target>.json`.
 - Verify `space_id`, `auth_mode`, classification metadata, and owner metadata.
 
 4. Grant and verify permissions
@@ -517,7 +517,7 @@ App URL: `https://multiagent-app-dev-4225037891036111.aws.databricksapps.com`
 
 **Fix:**
 
-- For Genie agents: set `requires_evidence: false` in `src/aiserver/domain/subagents.<target>.json`. Genie output is inherently grounded in SQL.
+- For Genie agents: set `requires_evidence: false` in `src/aiserver/contracts/subagents.<target>.json`. Genie output is inherently grounded in SQL.
 - For MCP/RAG agents: either set `requires_evidence: false`, or strengthen the system prompt to explicitly instruct: "append a bracketed citation like `[1]`" and "end with a `Source:` line."
 - Rebuild and redeploy after changes.
 
@@ -525,11 +525,11 @@ App URL: `https://multiagent-app-dev-4225037891036111.aws.databricksapps.com`
 
 **Symptom:** `{"detail": "Error code: 400 ... Function tools with reasoning_effort are not supported for gpt-5.6-luna in /v1/chat/completions."}`
 
-**Cause:** The openai-agents SDK API mode is set to `chat_completions` in `src/aiserver/api/handlers.py`, but the orchestrator model (e.g., `gpt-5.6-luna`) requires the `/v1/responses` endpoint for function tool support.
+**Cause:** The openai-agents SDK API mode is set to `chat_completions` in `src/aiserver/api/invocations.py`, but the orchestrator model (e.g., `gpt-5.6-luna`) requires the `/v1/responses` endpoint for function tool support.
 
 **Fix:**
 
-In `src/aiserver/api/handlers.py`, ensure:
+In `src/aiserver/api/invocations.py`, ensure:
 
 ```python
 set_default_openai_api("responses")
@@ -708,9 +708,9 @@ The fallback only deploys application source. It does not replace a failed bundl
    ```
    Look for a role with `auth_method: LAKEBASE_OAUTH_V1` and `identity_type: SERVICE_PRINCIPAL` — note its `postgres_role` value (the SP client ID).
 
-2. Set `pg_user` in `src/aiserver/domain/subagents.<target>.json` to the SP's `postgres_role` value (e.g., `718a84e4-78d1-4bb5-bca3-ddbc603c2dc6`).
+2. Set `pg_user` in `src/aiserver/contracts/subagents.<target>.json` to the SP's `postgres_role` value (e.g., `718a84e4-78d1-4bb5-bca3-ddbc603c2dc6`).
 
-3. Ensure `_get_lakebase_token()` in `orchestrator_service.py` calls `ws_client.config.authenticate()` (no arguments, returns dict).
+3. Ensure `get_lakebase_token()` in [lakebase.py](../../src/aiserver/infrastructure/databricks/lakebase.py) calls `ws_client.config.authenticate()` with no arguments and returns the authenticated header map.
 
 4. Rebuild and redeploy with `make upload-wheel TARGET=TARGET APP_NAME=APP_NAME PROFILE=PROFILE`.
 

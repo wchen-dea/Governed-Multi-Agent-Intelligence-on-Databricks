@@ -19,15 +19,16 @@ from mlflow.types.responses import (
     ResponsesAgentStreamEvent,
 )
 
-from aiserver.api.dependencies import get_handler_dependencies
-from aiserver.domain.execution_contracts import ResponseEnvelope
-from aiserver.domain.subagent_config import SUBAGENTS, SubagentConfig
-from aiserver.services.guardrails_service import truncate_response_text
-from aiserver.services.model_routing_service import select_model
-from aiserver.services.route_planner import build_route_plan
-from aiserver.shared.request_utils import extract_mcp_errors, to_messages
-from aiserver.shared.runtime_utils import get_session_id, process_agent_stream_events
-from aiserver.shared.settings import get_settings
+from aiserver.application.guardrails.checks import truncate_response_text
+from aiserver.application.orchestration.model import select_model
+from aiserver.application.orchestration.routing import build_route_plan
+from aiserver.application.runtime.identity import get_session_id
+from aiserver.application.runtime.requests import extract_mcp_errors, to_messages
+from aiserver.application.runtime.streaming import process_agent_stream_events
+from aiserver.bootstrap.container import get_handler_dependencies
+from aiserver.config.settings import get_settings
+from aiserver.contracts.responses import ResponseEnvelope
+from aiserver.contracts.subagents import SUBAGENTS, SubagentConfig
 
 SETTINGS = get_settings()
 HANDLER_DEPS = get_handler_dependencies()

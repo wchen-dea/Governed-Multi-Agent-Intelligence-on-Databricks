@@ -1,4 +1,4 @@
-from aiserver.api.handlers import (
+from aiserver.api.invocations import (
     _append_source_to_output_items,
     _event_has_tool_activity,
     _governed_source_suffix,
@@ -8,7 +8,7 @@ from aiserver.api.handlers import (
     _select_route_tools,
     _used_subagents_from_payloads,
 )
-from aiserver.domain.subagent_config import SubagentConfig
+from aiserver.contracts.subagents import SubagentConfig
 
 
 def test_guardrail_block_message_mentions_reason_and_remediation():

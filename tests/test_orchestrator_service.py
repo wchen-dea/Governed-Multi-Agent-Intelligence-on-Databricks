@@ -1,8 +1,7 @@
 import asyncio
 from types import SimpleNamespace
 
-from aiserver.domain.subagent_config import SubagentConfig
-from aiserver.services.orchestrator_service import (
+from aiserver.application.orchestration.agent import (
     OrchestratorDependencies,
     _lakebase_failure_result,
     build_mcp_servers,
@@ -10,6 +9,7 @@ from aiserver.services.orchestrator_service import (
     connect_healthy_mcp_servers,
     create_orchestrator_agent,
 )
+from aiserver.contracts.subagents import SubagentConfig
 
 
 def test_lakebase_failure_result_classifies_authorization_without_details():

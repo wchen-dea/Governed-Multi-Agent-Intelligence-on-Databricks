@@ -1,7 +1,7 @@
 """Tests for deterministic request model selection."""
 
-from aiserver.services.model_routing_service import select_model
-from aiserver.shared.settings import AppSettings
+from aiserver.application.orchestration.model import select_model
+from aiserver.config.settings import AppSettings
 
 
 def _settings(**overrides: object) -> AppSettings:

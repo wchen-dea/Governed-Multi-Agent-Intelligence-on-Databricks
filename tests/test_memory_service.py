@@ -2,12 +2,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from aiserver.services.memory_service import (
+from aiserver.config.settings import AppSettings
+from aiserver.infrastructure.persistence.memory import (
     LakebaseConversationMemory,
     NoopConversationMemory,
     default_conversation_memory,
 )
-from aiserver.shared.settings import AppSettings
 
 
 def _settings(**kwargs) -> AppSettings:
@@ -82,7 +82,7 @@ def memory_store():
 
 
 def _build_memory(memory_store, **overrides) -> LakebaseConversationMemory:
-    with patch("aiserver.services.memory_service.connect_lakebase") as connect_mock:
+    with patch("aiserver.infrastructure.persistence.memory.connect_lakebase") as connect_mock:
         connect_mock.side_effect = lambda *a, **k: _FakeConnection(memory_store)
         kwargs = {
             "project_id": "proj",
@@ -102,7 +102,7 @@ def _build_memory(memory_store, **overrides) -> LakebaseConversationMemory:
 
 def test_save_and_recall_turns(memory_store):
     memory = _build_memory(memory_store)
-    with patch("aiserver.services.memory_service.connect_lakebase") as connect_mock:
+    with patch("aiserver.infrastructure.persistence.memory.connect_lakebase") as connect_mock:
         connect_mock.side_effect = lambda *a, **k: _FakeConnection(memory_store)
         memory.save_turn("conv-1", "manager", "user", "hello")
         memory.save_turn("conv-1", "manager", "assistant", "hi there")
@@ -116,7 +116,7 @@ def test_save_and_recall_turns(memory_store):
 
 def test_save_and_get_persona_preference(memory_store):
     memory = _build_memory(memory_store)
-    with patch("aiserver.services.memory_service.connect_lakebase") as connect_mock:
+    with patch("aiserver.infrastructure.persistence.memory.connect_lakebase") as connect_mock:
         connect_mock.side_effect = lambda *a, **k: _FakeConnection(memory_store)
         memory.save_persona_preference("conv-1", "analyst")
         assert memory.get_persona_preference("conv-1") == "analyst"
@@ -141,7 +141,7 @@ def test_lakebase_memory_requires_connection_fields():
 
 def test_lakebase_memory_fail_open_swallows_errors(memory_store):
     memory = _build_memory(memory_store)
-    with patch("aiserver.services.memory_service.connect_lakebase") as connect_mock:
+    with patch("aiserver.infrastructure.persistence.memory.connect_lakebase") as connect_mock:
         connect_mock.side_effect = RuntimeError("connection refused")
         memory.save_turn("conv-1", "manager", "user", "hello")
         assert memory.recent_turns("conv-1", limit=10) == []

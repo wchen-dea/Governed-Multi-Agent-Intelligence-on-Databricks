@@ -26,7 +26,7 @@ Introduce a `MessageBus` protocol and publish lifecycle events across handlers, 
 
 - Backend selection: `MESSAGE_BUS_BACKEND` env var → `default_message_bus(settings)` factory.
 - Fail-open: when `MESSAGE_BUS_FAIL_OPEN=true` (default), backend construction failure falls back to `StructuredLoggingMessageBus`.
-- Async wrapper: when `MESSAGE_BUS_ASYNC=true`, wraps the chosen backend in `AsyncMessageBus` (background queue worker with configurable queue size and drain timeout).
+- Async wrapper: when `MESSAGE_BUS_ASYNC=true`, wraps the chosen backend in `AsyncMessageBus` (background queue worker with configurable queue size and drain timeout). Async delivery is intentionally fail-open, so this setting requires `MESSAGE_BUS_FAIL_OPEN=true`.
 - Event envelope: every event carries `event_id` (UUID), `event_type`, `ts` (ISO timestamp), `payload` (dict).
 
 ### Event types emitted
@@ -64,8 +64,8 @@ policy.subagent.decision (result: allow | deny)
 
 ## Implementation Notes
 
-- Protocol + all backends: [src/aiserver/services/message_bus.py](../../src/aiserver/services/message_bus.py)
-- Settings fields: `message_bus_backend`, `message_bus_topic`, `message_bus_fail_open`, `message_bus_async`, `message_bus_async_queue_size`, `message_bus_async_drain_timeout_seconds` in [src/aiserver/shared/settings.py](../../src/aiserver/shared/settings.py)
+- Protocol + all backends: [src/aiserver/application/ports/audit.py](../../src/aiserver/application/ports/audit.py) and [src/aiserver/infrastructure/messaging/bus.py](../../src/aiserver/infrastructure/messaging/bus.py)
+- Settings fields: `message_bus_backend`, `message_bus_topic`, `message_bus_fail_open`, `message_bus_async`, `message_bus_async_queue_size`, `message_bus_async_drain_timeout_seconds` in [src/aiserver/config/settings.py](../../src/aiserver/config/settings.py)
 - Current dev config: `MESSAGE_BUS_BACKEND=uc_table` (writes to `quickstart_catalog.multi_agent_schema.agent_lifecycle_events`)
-- Handler publishing: [src/aiserver/api/handlers.py](../../src/aiserver/api/handlers.py)
+- Handler publishing: [src/aiserver/api/invocations.py](../../src/aiserver/api/invocations.py)
 - Tests: [tests/test_message_bus_backends.py](../../tests/test_message_bus_backends.py), [tests/test_message_bus_integration.py](../../tests/test_message_bus_integration.py)

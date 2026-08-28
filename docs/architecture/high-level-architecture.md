@@ -13,7 +13,7 @@ This document covers high-level architecture only. See [low-level design](low-le
 - Dev deployment is live with React UI as the primary client.
 - Hosted runtime uses `uv run runtime-serve-app`.
 - Deployments may intermittently fail when Terraform provider registry is unreachable; versioned-wheel `make upload-wheel` is the source-only operational fallback and does not apply bundle resources or grants.
-- Deterministic route-plan unit tests pass, but promotion remains blocked: `ToolCallCorrectness = 0.400 < 0.800`.
+- Deterministic route-plan unit tests pass. Tool-call accuracy remains monitored but non-blocking while MLflow trace selection cannot score nested tool spans reliably.
 
 ## Main Content
 
@@ -159,24 +159,23 @@ flowchart TD
     UI -.optional x-forwarded-access-token.-> APP
     UI --> APP[Databricks App Endpoint]
     APP --> S[MLflow Agent Server ResponsesAgent]
-    S --> H[invoke_handler / stream_handler]
-    H --> C[Build Runtime Identity Context]
+    S --> H[invocations.py invoke_handler / stream_handler]
+    H --> C[Build Runtime Identity and Policy Context]
     C --> D{Subagent auth_mode}
     D -->|app| AID[Use App Identity Client]
     D -->|obo + token| OID[Use User OBO Identity Client]
     D -->|obo + no token| ERR[Mark Tool Unavailable or Raise Auth Error]
-    AID --> TOOLS[App-auth Tool Clients]
-    OID --> TOOLS
-    TOOLS --> O[Orchestrator Agent via Responses API]
-
-    O --> PLAN[Deterministic Route Plan]
-    PLAN --> G[Genie Sales Agent via MCP]
+    AID --> AVAIL[Policy-approved app-auth tools and MCP servers]
+    OID --> AVAIL
+    AVAIL --> PLAN[Deterministic Route Plan]
+    PLAN --> O[Construct Orchestrator Agent with candidate tools]
+    O --> G[Genie Sales Agent via MCP]
     O --> K[MCP AI Search product_index_assistant]
     O --> F[MCP AI Search flink_support_agent RAG]
     O --> CDI[Genie CDI Agent via MCP]
     O --> LB[Lakebase ODS Agent psycopg2]
-    O -->|native delegate_to_agent| DT[UC Delegation Task and Event Tables]
-    W[Bounded Lifespan Worker] --> DT
+    O -->|native delegate_to_agent: submit and settle| DT[UC Delegation Task and Event Tables]
+    W[Optional Bounded Lifespan Worker] -->|claim and process durable tasks| DT
 
     G --> M[MCP Genie Space sales]
     K --> R1[Vector Search dim_product_search_index]
@@ -213,7 +212,7 @@ If an `obo` tool is required but no forwarded token is available, the tool is ma
 
 The deterministic model router classifies requests as standard, reasoning, or synthesis before agent assembly. Dev currently resolves every class to `databricks-gpt-5-6-luna`; routing metadata is not proof of tool-call correctness.
 
-Approved app-auth handoffs use `delegate_to_agent`, persist bounded work in Unity Catalog task/event tables, and run through a lifespan-managed worker. `GET /delegations/{task_id}` returns payload-redacted status.
+Approved app-auth handoffs use `delegate_to_agent` and persist bounded work in Unity Catalog task/event tables. Native handoffs synchronously settle their submitted task; the optional lifespan-managed worker separately processes durable queued work. `GET /delegations/{task_id}` returns payload-redacted status.
 
 ### Lakebase OAuth Configuration
 
@@ -264,6 +263,8 @@ Supported message bus backends:
 Optional runtime mode:
 
 - `MESSAGE_BUS_ASYNC=true` to enqueue lifecycle events for background publishing
+
+Async publishing requires `MESSAGE_BUS_FAIL_OPEN=true`; the configured backend is selected per deployment rather than receiving a fan-out copy of every event.
 
 ### Environment Topology
 

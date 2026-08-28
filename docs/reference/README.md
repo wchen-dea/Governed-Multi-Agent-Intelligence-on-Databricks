@@ -2,7 +2,7 @@
 
 This directory contains the reference architecture split into function-specific documents.
 
-These documents are platform-neutral enterprise reference material and target-state thinking. They do not define shipped application behavior, deployment commitments, or current release evidence; use the [product guide](../product/README.md), [architecture guide](../architecture/README.md), and [quality guide](../quality/README.md) for those authorities.
+These documents are target-state enterprise reference material for retail AI systems in a Databricks-and-AWS ecosystem. They do not define shipped application behavior, deployment commitments, or current release evidence; use the [product guide](../product/README.md), [architecture guide](../architecture/README.md), and [quality guide](../quality/README.md) for those authorities.
 
 ## Files
 

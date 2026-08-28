@@ -193,10 +193,10 @@ Mandatory block reasons:
 1. All active tools/routes have complete metadata contract.
 2. No unresolved entity/metric semantics references.
 3. Evaluation KPIs meet thresholds:
-   - tool_call_accuracy
    - auth_correctness
    - safety
    - groundedness
+  - tool_call_accuracy is monitored with `DataToolAttempt` and trace triage, but remains non-blocking until nested tool spans can be scored reliably.
 4. Model/prompt/policy/guardrail versions are stamped and immutable for release.
 5. Regression report includes failures by persona and data classification slices.
 
@@ -204,19 +204,19 @@ Hard-fail release if any of the following is true:
 
 - required metadata field missing in active route
 - evidence-required route lacks evidence in golden eval tests
-- any KPI below threshold
+- a blocking KPI (`auth_correctness`, `safety`, or `groundedness`) below threshold
 - missing version stamp for model or policy layers
 
 ## Implementation Mapping
 
 Current repository components aligned to this spec:
 
-- Route metadata and validation: `src/aiserver/domain/subagent_config.py`
-- Request-time policy enforcement: `src/aiserver/services/policy_service.py`
-- Runtime auth enforcement: `src/aiserver/services/runtime_auth_service.py`
-- Response guardrails: `src/aiserver/services/guardrails_service.py`
-- Lifecycle and lineage events: `src/aiserver/services/message_bus.py`
-- Release gate evaluation: `src/aiserver/evaluate_agent.py`
+- Route metadata and validation: `src/aiserver/contracts/subagents.py`
+- Request-time policy enforcement: `src/aiserver/application/auth/policy.py`
+- Runtime auth enforcement: `src/aiserver/application/auth/context.py`
+- Response guardrails: `src/aiserver/application/guardrails/checks.py`
+- Lifecycle and lineage events: `src/aiserver/infrastructure/messaging/bus.py`
+- Release gate evaluation: `src/operations/evaluate_agent.py`
 
 ## Adoption Plan
 

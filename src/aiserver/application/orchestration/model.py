@@ -3,7 +3,7 @@
 import re
 from dataclasses import dataclass
 
-from aiserver.shared.settings import AppSettings
+from aiserver.config.settings import AppSettings
 
 
 @dataclass(frozen=True)

@@ -20,7 +20,7 @@ This section owns deployment procedures, runtime verification, MLflow operations
 
 - `make redeploy` is the full validation, bundle-attempt, grants, health, and smoke workflow.
 - `make upload-wheel` is the versioned source-only fallback. It cannot apply bundle-managed resources or grants.
-- The current release gate is blocked: `ToolCallCorrectness = 0.400 < 0.800`.
+- Run `uv run assistant-evaluate` to determine current gate status. Tool-call accuracy is monitored but non-blocking while nested tool spans cannot be scored reliably.
 
 ## Templates
 

@@ -4,8 +4,8 @@ import re
 import threading
 import time
 
-from aiserver.domain.execution_contracts import RoutePlan
-from aiserver.domain.subagent_config import SubagentConfig
+from aiserver.contracts.responses import RoutePlan
+from aiserver.contracts.subagents import SubagentConfig
 
 MIN_ROUTE_CONFIDENCE = 0.60
 ROUTE_STICKINESS_TTL_SECONDS = 600.0

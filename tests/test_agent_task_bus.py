@@ -4,14 +4,14 @@ import asyncio
 from datetime import timedelta
 from types import SimpleNamespace
 
-from aiserver.domain.agent_messages import DelegationTask, utc_now
-from aiserver.services.agent_task_bus import (
+from aiserver.config.settings import AppSettings
+from aiserver.contracts.delegation import DelegationTask, utc_now
+from aiserver.infrastructure.persistence.tasks import (
     InMemoryAgentTaskBus,
     UcAgentTaskBus,
     _record_from_row,
     default_agent_task_bus,
 )
-from aiserver.shared.settings import AppSettings
 
 
 class FakeStatementExecution:

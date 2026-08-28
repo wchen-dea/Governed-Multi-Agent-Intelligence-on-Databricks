@@ -35,8 +35,8 @@ selected blueprint patterns. Current implementation authority is the
 | Blueprint Section | Primary Repo Mapping |
 | --- | --- |
 | 2. Target Layered Architecture | `src/aiserver/`, `src/aiweb/src/`, `docs/architecture/high-level-architecture.md` |
-| 3. Core Architecture Components | `src/aiserver/domain/`, `src/aiserver/services/`, `src/aiserver/shared/` |
-| 4. Reference Workflow: Operational Investigation and Incident Decision | `src/aiserver/services/`, `tests/test_orchestrator_service.py`, `tests/test_api_handlers.py` |
+| 3. Core Architecture Components | `src/aiserver/application/`, `src/aiserver/config/`, `src/aiserver/contracts/`, `src/aiserver/infrastructure/` |
+| 4. Reference Workflow: Operational Investigation and Incident Decision | `src/aiserver/application/orchestration/`, `tests/test_orchestrator_service.py`, `tests/test_api_handlers.py` |
 | 6. Context Engineering and Relevance Scoring Design | `docs/governance/business-semantics-metadata.md`, `docs/governance/data-contracts-lineage.md` |
 | 7. Governance, Security, and Observability Model | `docs/governance/security-threat-model.md`, `tests/test_guardrails_service.py`, `tests/test_runtime_auth.py`, `tests/test_policy_service.py` |
 | 8. Skill Catalog and Reusable Capability Model | `src/aiserver/README.md`, `src/operations/discover_tools.py`, `docs/architecture/tool-and-model-registry.md` |

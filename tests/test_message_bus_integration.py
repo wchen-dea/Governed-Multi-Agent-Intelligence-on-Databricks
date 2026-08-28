@@ -2,13 +2,17 @@ from types import SimpleNamespace
 
 from mlflow.types.responses import ResponsesAgentRequest
 
-from aiserver.api.dependencies import build_dependency_container
-from aiserver.domain.subagent_config import SubagentConfig
-from aiserver.services.orchestrator_service import OrchestratorDependencies, build_subagent_tools
-from aiserver.services.runtime_auth_service import (
+from aiserver.application.auth.context import (
     RuntimeAuthDependencies,
     build_runtime_auth_context,
 )
+from aiserver.application.orchestration.agent import (
+    OrchestratorDependencies,
+    build_subagent_tools,
+)
+from aiserver.bootstrap import container as container_module
+from aiserver.bootstrap.container import build_dependency_container
+from aiserver.contracts.subagents import SubagentConfig
 
 
 class RecordingBus:
@@ -23,6 +27,21 @@ def test_dependency_container_shares_bus_across_services():
     container = build_dependency_container()
     assert container.orchestrator.message_bus is container.runtime_auth.message_bus
     assert container.runtime_auth.message_bus is container.handlers.message_bus
+
+
+def test_dependency_container_injects_shared_dependencies_into_lakebase_tools(monkeypatch):
+    captured = {}
+
+    def fake_lakebase_tools_builder(subagents, identity_ctx, deps=None):
+        captured["dependencies"] = deps
+        return []
+
+    monkeypatch.setattr(container_module, "build_lakebase_tools", fake_lakebase_tools_builder)
+    container = container_module.build_dependency_container()
+
+    container.runtime_auth.lakebase_tools_builder([], SimpleNamespace())
+
+    assert captured["dependencies"] is container.orchestrator
 
 
 def test_runtime_auth_publishes_context_events():

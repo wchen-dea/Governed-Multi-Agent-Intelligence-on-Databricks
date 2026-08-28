@@ -2,8 +2,8 @@
 
 from dataclasses import dataclass
 
-from aiserver.domain.agent_messages import DelegationTask
-from aiserver.domain.subagent_config import SubagentConfig
+from aiserver.contracts.delegation import DelegationTask
+from aiserver.contracts.subagents import SubagentConfig
 
 
 @dataclass(frozen=True)

@@ -1,9 +1,9 @@
-from aiserver.domain.subagent_config import SubagentConfig
-from aiserver.services.guardrails_service import (
+from aiserver.application.guardrails.checks import (
     evaluate_input_guardrails,
     evaluate_response_guardrails,
     truncate_response_text,
 )
+from aiserver.contracts.subagents import SubagentConfig
 
 
 def _governed_subagents() -> list[SubagentConfig]:

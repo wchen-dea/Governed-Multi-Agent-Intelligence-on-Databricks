@@ -10,8 +10,8 @@ This document covers low-level design and implementation details. See [high-leve
 
 ## Current Status
 
-- Runtime uses a layered backend package structure (`src/aiserver/api`, `src/aiserver/services`, `src/aiserver/domain`, `src/aiserver/shared`).
-- Dependency composition and protocol-driven DI are centralized in `src/aiserver/api/dependencies.py` and `src/aiserver/services/interfaces.py`.
+- Runtime uses an ownership-based backend package structure (`src/aiserver/api`, `src/aiserver/application`, `src/aiserver/bootstrap`, `src/aiserver/config`, `src/aiserver/contracts`, and `src/aiserver/infrastructure`).
+- Dependency composition and protocol-driven DI are centralized in `src/aiserver/bootstrap/container.py` and focused modules under `src/aiserver/application/ports/`.
 - Local and hosted-app startup resolves the bind port from `DATABRICKS_APP_PORT`/`PORT`/`CHAT_APP_PORT` in `src/aiserver/api/server.py` (`main()`, `_resolve_port()`), run via the `runtime-serve-app` entry point.
 
 ## Main Content
@@ -20,13 +20,13 @@ This document covers low-level design and implementation details. See [high-leve
 
 #### Backend Runtime
 
-- `src/aiserver/api/handlers.py`
+- `src/aiserver/api/invocations.py`
   - Defines `invoke_handler` and `stream_handler`
   - Builds orchestrator agent at request time
   - Connects healthy MCP servers per request
   - Converts request payloads into normalized messages
 
-- `src/aiserver/api/dependencies.py`
+- `src/aiserver/bootstrap/container.py`
   - Central composition root for API/service dependencies
   - Builds default dependency container for handlers, runtime auth, and orchestrator services
   - Provides single override point for environment-specific wiring
@@ -36,24 +36,24 @@ This document covers low-level design and implementation details. See [high-leve
   - Initializes `AgentServer("ResponsesAgent", enable_chat_proxy=True)`
   - Exposes root route and application startup
 
-- `src/aiserver/services/runtime_auth_service.py`
+- `src/aiserver/application/auth/context.py`
   - Builds request-scoped hybrid auth context (app + optional OBO user identity)
   - Applies request-time policy filtering before tool/MCP construction
   - Builds auth-aware subagent tools and MCP server definitions
   - Emits auth trace metadata for routing and tool execution
   - Accepts injectable typed dependencies for identity/session/trace/tool-server builders
 
-- `src/aiserver/services/policy_service.py`
+- `src/aiserver/application/auth/policy.py`
   - Builds policy context from request metadata (persona, requested tool, confidence)
   - Enforces policy decisions by auth mode, identity presence, persona, and data classification
   - Returns explicit allow/deny decisions with reason codes
 
-- `src/aiserver/services/guardrails_service.py`
+- `src/aiserver/application/guardrails/checks.py`
   - Applies deterministic response guardrails
   - Enforces evidence requirement for governed answers
   - Blocks unsafe output and low-confidence sensitive responses
 
-- `src/aiserver/services/orchestrator_service.py`
+- `src/aiserver/application/orchestration/agent.py`
   - Creates callable tools for configured subagents
   - Selects app vs OBO client per subagent tool call
   - Builds Genie MCP server list with auth-aware workspace client selection
@@ -61,37 +61,39 @@ This document covers low-level design and implementation details. See [high-leve
   - Connects MCP servers with parallel health checks and short TTL health caching
   - Supports injectable dependencies for trace updates, tool wrapping, and MCP server creation
 
-- `src/aiserver/services/interfaces.py`
+- `src/aiserver/application/ports/`
   - Defines protocol-based service interfaces for dependency injection
   - Standardizes contracts for auth-context and tool/server builder dependencies
 
-- `src/aiserver/services/message_bus.py`
+- `src/aiserver/infrastructure/messaging/bus.py`
   - Provides message bus implementations for lifecycle event publishing
   - Ships with no-op, structured-logging, Kafka, RabbitMQ, and UC audit-table bus implementations
   - Supports optional queue-backed async publish wrapper for request-path latency reduction
   - Serves as extension point for external queue/broker integrations
 
-- `src/aiserver/domain/subagent_config.py`
+- `src/aiserver/contracts/subagents.py`
   - Typed `SubagentConfig` dataclass
   - Validation for subagent type-specific required fields, optional `system_prompt`, and `auth_mode`
   - Loads and validates canonical `SUBAGENTS` from external JSON config
 
-- `src/aiserver/domain/subagents.<target>.json`
+- `src/aiserver/contracts/subagents.<target>.json`
   - Environment-specific subagent configuration data source (`dev`, `qa`, `stg`, `prd`)
   - Runtime can override path via `SUBAGENTS_CONFIG_PATH`
 
-- `src/aiserver/shared/request_utils.py`
+- `src/aiserver/application/runtime/requests.py`
   - Normalizes input items into plain role/content messages
   - Extracts MCP user-facing errors from exception structures
 
-- `src/aiserver/shared/runtime_utils.py`
+- `src/aiserver/application/runtime/identity.py`
   - Session ID extraction
   - Forwarded token extraction (`x-forwarded-access-token`)
   - Request identity context construction for hybrid auth
   - Workspace host and MCP URL construction
-  - Stream event normalization for stable item IDs
 
-- `src/aiserver/shared/logging_config.py`
+  - `src/aiserver/application/runtime/streaming.py`
+    - Stream event normalization for stable item IDs
+
+- `src/aiserver/infrastructure/observability/logging.py`
   - Centralized root logger configuration for backend entrypoints
   - Consistent level/format/date handling from runtime settings
   - Suppresses noisy MLflow autologging internals
@@ -108,10 +110,10 @@ This document covers low-level design and implementation details. See [high-leve
 - `src/aiweb/src/stream.ts`
   - Parses stream metadata and renders only finalized `response.output_text.delta` answer text
 
-- `src/aiserver/services/model_routing_service.py`
+- `src/aiserver/application/orchestration/model.py`
   - Selects configured Databricks model routes before orchestrator construction
 
-- `src/aiserver/services/agent_task_bus.py`, `agent_task_worker.py`, `agent_handoff_service.py`
+- `src/aiserver/infrastructure/persistence/tasks.py`, `src/aiserver/application/delegation/worker.py`, `src/aiserver/application/delegation/handoff.py`
   - Persist, lease, execute, and inspect bounded UC-backed app-auth delegation tasks
 
 - `src/aiweb/src/config.ts`
@@ -184,7 +186,7 @@ If an OBO tool is invoked without a forwarded token, the runtime returns a clear
 - `databricks.yml`: bundle root config, shared variables, includes, and the `multiagent_wheel` artifact (built via `uv build --wheel`)
 - `resources/multiagent_app.yml`: shared app defaults and baseline resource permissions
 - `resources/semantics_jobs.yml`: semantics-layer Databricks Jobs that build/refresh `dim_product_search_index`, `flink_support_index`, and `fct_cdi_trusted_expert_score_metric_view` from `src/semantics/`
-- `resources/evaluation_job.yml`: Databricks Job that runs `aiserver.evaluate_agent.evaluate()` on workspace compute (`src/evaluation/run_evaluation.py`) so the release-gate evaluation reaches MLflow tracking and Lakebase over the private network, followed by a `triage_evaluation` task that runs `assistant-triage-evaluation` against the same experiment regardless of gate outcome
+- `resources/evaluation_job.yml`: Databricks Job that runs `operations.evaluate_agent.evaluate()` on workspace compute (`src/evaluation/run_evaluation.py`) so the release-gate evaluation reaches MLflow tracking and Lakebase over the private network, followed by a `triage_evaluation` task that runs `assistant-triage-evaluation` against the same experiment regardless of gate outcome
 - `targets/*.yml`: target-specific host, state path, variables, and resource overrides
 
 ### Frequently Used Variables
@@ -256,11 +258,11 @@ Direct non-interactive Databricks Apps invocation tests should use:
 
 | File | Responsibility |
 | ---- | -------------- |
-| `src/aiserver/api/handlers.py` | Handler entrypoints and orchestration wiring |
-| `src/aiserver/services/orchestrator_service.py` | Tool/server construction and orchestrator assembly |
-| `src/aiserver/domain/subagent_config.py` | Typed subagent definitions and validation |
+| `src/aiserver/api/invocations.py` | Handler entrypoints and orchestration wiring |
+| `src/aiserver/application/orchestration/agent.py` | Tool/server construction and orchestrator assembly |
+| `src/aiserver/contracts/subagents.py` | Typed subagent definitions and validation |
 | `src/aiserver/api/server.py` | MLflow Agent Server bootstrap, hosted-port resolution |
-| `src/aiserver/services/memory_service.py` | No-op and Lakebase-backed conversation/persona memory |
+| `src/aiserver/infrastructure/persistence/memory.py` | No-op and Lakebase-backed conversation/persona memory |
 | `src/aiweb/src/App.tsx` | Primary chat UI and command flow |
 
 ## Related Docs

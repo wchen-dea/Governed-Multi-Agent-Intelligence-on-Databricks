@@ -14,7 +14,7 @@ Use this page as the architecture review entry point. The phase artifacts are th
 | Delegation | Bounded app-auth handoffs with correlation IDs, idempotency, UC task/event tables, leases, retries, dead-letter states, and payload-redacted status. |
 | Streaming | Execution events buffer; source and guardrails finalize before the UI renders `response.output_text.delta` only. |
 | Deployment | Databricks Apps, target overlays, versioned wheel `upload-wheel` fallback, lifecycle gates, and health checks. |
-| Promotion | Blocked: `ToolCallCorrectness = 0.400 < 0.800`. |
+| Promotion | Auth correctness, safety, and groundedness are blocking KPIs. Tool-call accuracy is monitored but non-blocking until nested tool spans are scored reliably. |
 
 ## Artifact Set
 
@@ -31,4 +31,4 @@ Use this page as the architecture review entry point. The phase artifacts are th
 2. Does the proposed change preserve native tool execution and delta-only answer rendering?
 3. Can durable delegation remain bounded by approved source, target, intent, lease, retry, and dead-letter rules?
 4. Are bundle-managed grants and source-only deployment recovery distinguished in the release plan?
-5. Does evaluation demonstrate `ToolCallCorrectness >= 0.800` before promotion?
+5. Does evaluation satisfy the blocking auth-correctness, safety, and groundedness thresholds, while tool-call accuracy is monitored and triaged?

@@ -12,19 +12,19 @@ For the aspirational, not-yet-implemented target-state pipeline (composite relev
 
 ### 1. Per-request instruction assembly
 
-- Source: `_build_base_orchestrator_instructions` in `src/aiserver/services/orchestrator_service.py`.
+- Source: `_build_base_orchestrator_instructions` in `src/aiserver/application/orchestration/agent.py`.
 - Rule: the orchestrator's context is built from the live subagent config set (name, classification, evidence flag, description, `system_prompt`), not a static prompt. When adding or removing a subagent, no separate orchestrator context update is needed — the instruction text regenerates automatically.
-- Cache key: `_subagent_instruction_signature` hashes the fields that affect instruction text. If you add a new field that should change routing behavior, add it to this signature or the cache will serve stale instructions.
+- Cache key: `_subagent_instruction_signature` hashes the fields that affect instruction text. If you add a field that should change instruction content, add it to this signature or the cache will serve stale instructions.
 
 ### 2. Sticky per-conversation routing
 
-- Source: `route_planner.py` (`_sticky_routes`, `ROUTE_STICKINESS_TTL_SECONDS`).
+- Source: `src/aiserver/application/orchestration/routing.py` (`_sticky_routes`, `ROUTE_STICKINESS_TTL_SECONDS`).
 - Rule: a confidently matched subagent is remembered per `conversation_id` for 10 minutes so weak-overlap follow-ups stay routed to the same tool instead of re-scoring every candidate. Do not widen this TTL casually — it trades context freshness for continuity; changes need an evaluation run to confirm no routing regression.
 - Rule: only store the minimal candidate identity (subagent name), never full conversation content, in the sticky-route cache.
 
 ### 3. Conversation/persona memory
 
-- Source: `memory_service.py` (no-op and Lakebase-backed implementations), consumed in `handlers.py` to fill in a remembered persona when none is supplied.
+- Source: `src/aiserver/infrastructure/persistence/memory.py` (no-op and Lakebase-backed implementations), consumed in `src/aiserver/api/invocations.py` to fill in a remembered persona when none is supplied.
 - Rule: memory is opt-in (`MEMORY_BACKEND=lakebase`, disabled by default) and persists to a dedicated `agent_memory` database, isolated from operational data (`lakebase_ods_agent`'s `operations` database). Never point conversation memory at a data-classification tier stricter than what the memory backend is provisioned for.
 - Rule: inject only the resolved persona/preference, not raw historical transcripts, unless a feature explicitly requires transcript replay and has been through a data-classification review.
 
@@ -36,7 +36,7 @@ For the aspirational, not-yet-implemented target-state pipeline (composite relev
 
 ### 5. Retrieval-grounded context with enforced provenance
 
-- Source: `flink_support_agent`, `product_index_assistant` prompts (AI Search MCP) + `guardrails_service.py`.
+- Source: `flink_support_agent`, `product_index_assistant` prompts (AI Search MCP) + `src/aiserver/application/guardrails/checks.py`.
 - Rule: any tool whose prompt instructs citation output must have `requires_evidence: true` so the guardrail deterministically rejects ungrounded output — do not rely on the prompt alone to guarantee provenance (see [prompt-engineering-guidelines.md](prompt-engineering-guidelines.md) consistency checklist).
 - Rule: for fuzzy/semantic retrieval (AI Search), require the model to state explicitly when only approximate matches were found rather than presenting them as exact.
 

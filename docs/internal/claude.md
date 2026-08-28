@@ -41,7 +41,7 @@ Use this default sequence unless you have a specific reason to skip steps:
 | `run-locally` | Local run, smoke tests, troubleshooting | healthy local app and `/invocations` checks |
 | `discover-tools` | Identify available Databricks resources | Genie IDs, endpoint names, integration inventory |
 | `create-tools` | Provision missing workspace resources | new Genie/endpoint/app resources to integrate |
-| `add-tools` | Add routing + resource permissions | updated `src/aiserver/domain/subagents.<target>.json` and `resources/multiagent_app.yml` |
+| `add-tools` | Add routing + resource permissions | updated `src/aiserver/contracts/subagents.<target>.json` and `resources/multiagent_app.yml` |
 | `modify-agent` | Change orchestration behavior | updated backend orchestration/request logic |
 | `deploy` | Validate, deploy, and restart by target | deployed app and runtime verification |
 | `runtime-routing` | Change orchestrator tool selection and policy-aware subagent targeting | updated route rules and route metadata |
@@ -122,7 +122,7 @@ Constraints: If app exists, bind instead of delete.
 
 ### add-tools
 
-- Update routing in `src/aiserver/domain/subagents.<target>.json`.
+- Update routing in `src/aiserver/contracts/subagents.<target>.json`.
 - Update app resource permissions in `resources/multiagent_app.yml`.
 - Supported subagent types:
   - `genie` requires `space_id`
@@ -134,13 +134,13 @@ Constraints: If app exists, bind instead of delete.
 ### modify-agent
 
 - Primary files:
-  - `src/aiserver/api/handlers.py`
-  - `src/aiserver/services/orchestrator_service.py`
-  - `src/aiserver/services/runtime_auth_service.py`
-  - `src/aiserver/domain/subagent_config.py`
-  - `src/aiserver/domain/subagents.dev.json` (and other target variants)
-  - `src/aiserver/shared/request_utils.py`
-  - `src/aiserver/shared/runtime_utils.py`
+  - `src/aiserver/api/invocations.py`
+  - `src/aiserver/application/orchestration/agent.py`
+  - `src/aiserver/application/auth/context.py`
+  - `src/aiserver/contracts/subagents.py`
+  - `src/aiserver/contracts/subagents.dev.json` (and other target variants)
+  - `src/aiserver/application/runtime/requests.py`
+  - `src/aiserver/application/runtime/identity.py`
 - Validate:
   - `python -m py_compile src/aiserver/*.py src/operations/*.py`
   - `uv run runtime-preflight`

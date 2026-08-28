@@ -5,13 +5,11 @@ forwarded-token handling, and stream event normalization used by the backend.
 """
 
 import logging
-from collections.abc import AsyncGenerator, AsyncIterator
 from dataclasses import dataclass
 
-from agents.result import StreamEvent
 from databricks.sdk import WorkspaceClient
 from mlflow.genai.agent_server import get_request_headers
-from mlflow.types.responses import ResponsesAgentRequest, ResponsesAgentStreamEvent
+from mlflow.types.responses import ResponsesAgentRequest
 
 FORWARDED_ACCESS_TOKEN_HEADER = "x-forwarded-access-token"
 logger = logging.getLogger(__name__)
@@ -99,28 +97,3 @@ def build_request_identity_context() -> RequestIdentityContext:
         user_workspace_client=user_workspace_client,
         forwarded_access_token=token,
     )
-
-
-async def process_agent_stream_events(
-    async_stream: AsyncIterator[StreamEvent],
-) -> AsyncGenerator[ResponsesAgentStreamEvent, None]:
-    """Normalize streamed item identifiers for downstream consumers."""
-    item_counter = 0
-    curr_item_id = f"item_{item_counter}"
-    async for event in async_stream:
-        if event.type == "raw_response_event":
-            event_data = event.data.model_dump()
-            if event_data["type"] == "response.output_item.added":
-                item_counter += 1
-                curr_item_id = f"item_{item_counter}"
-                event_data["item"]["id"] = curr_item_id
-            elif event_data.get("item") is not None and event_data["item"].get("id") is not None:
-                event_data["item"]["id"] = curr_item_id
-            elif event_data.get("item_id") is not None:
-                event_data["item_id"] = curr_item_id
-            yield event_data
-        elif event.type == "run_item_stream_event" and event.item.type == "tool_call_output_item":
-            yield ResponsesAgentStreamEvent(
-                type="response.output_item.done",
-                item=event.item.to_input_item(),
-            )

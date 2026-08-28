@@ -1,6 +1,6 @@
 # Request Execution Flow: Class Diagram
 
-These diagrams focus on request execution in `src/aiserver/api/handlers.py` using the staged-pipeline pattern.
+These diagrams focus on request execution in `src/aiserver/api/invocations.py` using the staged-pipeline pattern.
 They separate the invoke and stream pipeline views while showing the shared stages.
 
 ## Invoke Pipeline
@@ -22,15 +22,13 @@ class RequestStage {
     +request: ResponsesAgentRequest
     +runtime_auth: RuntimeAuthContext
     +messages: list
-    +input_guardrail: InputGuardrailResult
+    +conversation_id: str?
 }
 
 class ConnectedStage {
     +runtime_auth: RuntimeAuthContext
     +unavailable: list~str~
     +agent: Agent
-    +route_plan: RoutePlan
-    +route_plan: RoutePlan
 }
 
 class InvokeFinalizedStage {

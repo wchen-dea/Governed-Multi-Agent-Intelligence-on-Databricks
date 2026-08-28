@@ -13,8 +13,8 @@ from uuid import uuid4
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.sql import StatementParameterListItem
 
-from aiserver.services.interfaces import MessageBus
-from aiserver.shared.settings import AppSettings, get_settings
+from aiserver.application.ports.audit import MessageBus
+from aiserver.config.settings import AppSettings, get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -122,6 +122,9 @@ class AsyncMessageBus:
             # Worker will stop after queue drains.
             pass
         self._worker.join(timeout=self._drain_timeout_seconds)
+        close = getattr(self._inner, "close", None)
+        if callable(close):
+            close()
 
 
 class KafkaMessageBus:
@@ -174,6 +177,10 @@ class KafkaMessageBus:
             key=event_type.encode("utf-8"),
         )
         self._producer.poll(0)
+
+    def close(self) -> None:
+        """Flush buffered producer messages during application shutdown."""
+        self._producer.flush(10.0)
 
 
 class RabbitMQMessageBus:
@@ -510,6 +517,8 @@ def _maybe_wrap_async(bus: MessageBus, settings: AppSettings) -> MessageBus:
         return bus
     if isinstance(bus, NoOpMessageBus):
         return bus
+    if not settings.message_bus_fail_open:
+        raise ValueError("MESSAGE_BUS_ASYNC requires MESSAGE_BUS_FAIL_OPEN=true")
     return AsyncMessageBus(
         inner=bus,
         queue_size=settings.message_bus_async_queue_size,

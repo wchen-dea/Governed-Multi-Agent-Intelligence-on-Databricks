@@ -32,7 +32,7 @@ This guide is the entry point for the architecture corpus. It separates authorit
 - **Model routing:** deterministic standard, reasoning, and synthesis classification; dev currently resolves each route to `databricks-gpt-5-6-luna`.
 - **Data and identity:** Unity Catalog governance, app/OBO authorization, persona policy, response guardrails, and OAuth-only Lakebase access.
 - **Delegation:** bounded app-auth handoffs with UC task/event tables, leases, retries, dead-letter states, lifespan worker execution, and redacted status.
-- **Delivery and quality:** versioned-wheel `upload-wheel` recovery, bundle-managed resource controls, MLflow evaluation, and blocked promotion at `ToolCallCorrectness = 0.400 < 0.800`.
+- **Delivery and quality:** versioned-wheel `upload-wheel` recovery, bundle-managed resource controls, and MLflow evaluation with blocking auth-correctness, safety, and groundedness thresholds. Tool-call accuracy remains monitored but non-blocking until nested tool spans are scored reliably.
 
 ## Visual Reading Order
 

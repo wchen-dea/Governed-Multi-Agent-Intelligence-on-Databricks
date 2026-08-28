@@ -20,22 +20,27 @@ Primary entrypoint:
 
 - `src/aiserver/api/`
   - `server.py`: AgentServer bootstrap and app startup.
-  - `handlers.py`: `@invoke` and `@stream` request handlers.
-  - `dependencies.py`: dependency wiring for services.
-- `src/aiserver/services/`
-  - `orchestrator_service.py`: tool construction and orchestration behavior.
-  - `runtime_auth_service.py`: request-scoped auth context and policy-aware availability.
-  - `policy_service.py`: deterministic request-time policy checks.
-  - `guardrails_service.py`: deterministic response-time guardrail checks.
-  - `route_planner.py`: conservative pre-model route plans.
-  - `model_routing_service.py`: per-task-type model selection.
-  - `agent_handoff_service.py`: native agent handoffs exposed as function tools.
-  - `agent_delegation_policy_service.py`: deny-by-default agent-to-agent delegation policy.
-  - `agent_task_bus.py`: durable task bus (in-memory and UC Delta-backed implementations).
-  - `agent_task_worker.py`: bounded worker that executes delegated tasks.
-  - `message_bus.py`: structured logging, noop, Kafka, RabbitMQ, UC table backends.
-  - `memory_service.py`: no-op and Lakebase-backed conversation/persona memory backends.
-  - `interfaces.py`: service protocols for dependency injection.
+  - `invocations.py`: `@invoke` and `@stream` request handlers.
+- `src/aiserver/application/`
+  - `orchestration/`: tool construction, routing, model selection, and orchestrator assembly.
+  - `auth/`: request-scoped app/OBO authorization and deterministic policy checks.
+  - `delegation/`: native agent handoffs, delegation policy, and bounded task worker.
+  - `guardrails/`: deterministic request and response guardrail checks.
+  - `ports/`: protocols for message buses, memory, delegation tasks, and tracing.
+- `src/aiserver/infrastructure/`
+  - `messaging/`: structured logging, noop, Kafka, RabbitMQ, and UC table message-bus adapters.
+  - `observability/`: MLflow trace metadata adapter.
+  - `persistence/`: in-memory/UC Delta delegation task bus and Lakebase memory adapters.
+- `src/aiserver/bootstrap/`
+  - `container.py`: composition root that injects infrastructure adapters into application use cases.
+- `src/aiserver/config/`
+  - `settings.py`: dependency-neutral typed runtime settings.
+- `src/aiserver/contracts/`
+  - `subagents.py`: typed config model and validation.
+  - `delegation.py`: typed contracts for bounded agent-to-agent delegation.
+  - `responses.py`: typed contracts shared by routing, execution, and response policy layers.
+  - `subagents.<target>.json`: environment-specific subagent/tool registry config.
+- `src/operations/evaluate_agent.py`: release-gate evaluation runner.
 
 Supported subagent types:
   - `genie`: Genie Agent via MCP protocol.
@@ -43,18 +48,11 @@ Supported subagent types:
   - `app`: Databricks App via Responses API.
   - `mcp`: AI Search or generic MCP route.
   - `lakebase`: Lakebase PostgreSQL via psycopg2 with OAuth credentials.
-- `src/aiserver/domain/`
-  - `subagent_config.py`: typed config model and validation.
-  - `agent_messages.py`: typed contracts for bounded agent-to-agent delegation.
-  - `execution_contracts.py`: typed contracts shared by routing, execution, and response policy layers.
-  - `subagents.<target>.json`: environment-specific subagent/tool registry config.
-- `src/aiserver/shared/`
-  - `settings.py`: typed runtime settings.
-  - `runtime_utils.py`: auth/request helper utilities.
-  - `request_utils.py`: request normalization helpers.
-  - `logging_config.py`: backend logging configuration.
-  - `lakebase_client.py`: shared OAuth/psycopg2 connection helper for Lakebase Postgres.
-- `src/aiserver/evaluate_agent.py`: release-gate evaluation runner.
+
+The dependency direction is `api -> application -> contracts/config`.
+Infrastructure implements application ports, and `bootstrap` is the only composition root.
+See `docs/architecture/layered-agentic-architecture.md` for the full package map
+and enforced import rules.
 
 ## Local Run
 
@@ -78,19 +76,20 @@ Invoke endpoint:
 Use this workflow when iterating on orchestration logic:
 
 1. Start backend: `uv run runtime-serve-backend --reload`
-2. Modify handlers/services under `src/aiserver/api/` and `src/aiserver/services/`
+2. Modify API delivery under `src/aiserver/api/`, use cases and runtime helpers under `src/aiserver/application/`, adapters under `src/aiserver/infrastructure/`, or settings under `src/aiserver/config/`
 3. Run targeted tests: `uv run pytest -q`
 
 Most common edit locations:
 
-- `src/aiserver/api/handlers.py`: invoke/stream flow and guardrail enforcement.
-- `src/aiserver/services/runtime_auth_service.py`: auth context and tool availability.
-- `src/aiserver/services/policy_service.py`: deterministic policy checks.
-- `src/aiserver/services/orchestrator_service.py`: tool and MCP orchestration behavior.
+- `src/aiserver/api/invocations.py`: invoke/stream flow and guardrail enforcement.
+- `src/aiserver/application/auth/context.py`: auth context and tool availability.
+- `src/aiserver/application/auth/policy.py`: deterministic policy checks.
+- `src/aiserver/application/orchestration/agent.py`: tool and MCP orchestration behavior.
+- `src/aiserver/bootstrap/container.py`: default dependency wiring.
 
 Tip:
 
-- Keep `src/aiserver/domain/subagents.<target>.json` and runtime behavior aligned when adding/changing tools.
+- Keep `src/aiserver/contracts/subagents.<target>.json` and runtime behavior aligned when adding or changing tools.
 
 ## Key Environment Variables
 
@@ -106,6 +105,7 @@ Message bus:
 - `MESSAGE_BUS_BACKEND`: `structured_logging` (default), `noop`, `kafka`, `rabbitmq`, `uc_table`.
 - `MESSAGE_BUS_TOPIC`
 - `MESSAGE_BUS_FAIL_OPEN`
+- `MESSAGE_BUS_ASYNC`: enables background publishing and requires `MESSAGE_BUS_FAIL_OPEN=true`.
 - `KAFKA_BOOTSTRAP_SERVERS`, `KAFKA_CLIENT_ID`
 - `RABBITMQ_URL`
 - `UC_AUDIT_WAREHOUSE_ID`, `UC_AUDIT_CATALOG`, `UC_AUDIT_SCHEMA`, `UC_AUDIT_TABLE`

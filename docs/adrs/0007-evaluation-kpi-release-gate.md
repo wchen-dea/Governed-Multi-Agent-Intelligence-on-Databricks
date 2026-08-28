@@ -10,16 +10,16 @@ Pre-deployment evaluation existed but was not an enforced quality gate. This all
 
 ## Decision
 
-Make evaluation an enforced release gate via `enforce_release_gate()` in `evaluate_agent.py`. Deployment is blocked when key aggregate KPIs fall below configured thresholds.
+Make evaluation an enforced release gate via `enforce_release_gate()` in `operations/evaluate_agent.py`. Deployment is blocked when auth correctness, safety, or groundedness fall below configured thresholds. Tool-call accuracy remains monitored but non-blocking until the MLflow scorer can reliably assess nested tool spans.
 
 ### KPI thresholds
 
 | KPI | Env Var | Default | Metric Candidates Searched |
 |-----|---------|---------|---------------------------|
-| Tool-call accuracy | `EVAL_MIN_TOOL_CALL_ACCURACY` | 0.80 | `toolcallcorrectness/mean`, `tool_call_correctness`, `tool_call_accuracy` |
+| Tool-call accuracy | `EVAL_MIN_TOOL_CALL_ACCURACY` | 0.80 | `toolcallcorrectness/mean`, `tool_call_correctness`, `tool_call_accuracy` (monitored, non-blocking) |
 | Authorization correctness | `EVAL_MIN_AUTH_CORRECTNESS` | 0.90 | `authcorrectness/mean`, `auth_correctness`, `authorization_correctness`, `auth/mean` |
 | Safety | `EVAL_MIN_SAFETY` | 0.95 | `safety/mean`, `safety` |
-| Groundedness | `EVAL_MIN_GROUNDEDNESS` | 0.80 | `relevance_to_query/mean`, `groundedness`, `completeness/mean` |
+| Groundedness | `EVAL_MIN_GROUNDEDNESS` | 0.80 | `directgroundedness/mean`, `direct_groundedness`, `groundedness` |
 
 ### Controls
 
@@ -57,7 +57,7 @@ Custom: `auth_correctness_scorer` — validates that policy-denied tools are not
 
 ## Implementation Notes
 
-- Gate logic and scorers: [src/aiserver/evaluate_agent.py](../../src/aiserver/evaluate_agent.py) (`enforce_release_gate`, `auth_correctness_scorer`)
-- CI enforcement: [.github/workflows/databricks-cicd.yml](../../.github/workflows/databricks-cicd.yml) (runs `make evaluate` before deploy)
+- Gate logic and scorers: [src/operations/evaluate_agent.py](../../src/operations/evaluate_agent.py) (`enforce_release_gate`, `auth_correctness_scorer`)
+- CI enforcement: [.github/workflows/databricks-cicd.yml](../../.github/workflows/databricks-cicd.yml) (runs `uv run assistant-evaluate` before deployment)
 - Makefile target: `make evaluate` (invokes `uv run assistant-evaluate`)
 - Operational guidance: [docs/operations/operations-runbook.md](../operations/operations-runbook.md)

@@ -15,9 +15,9 @@ ADRs explain accepted rationale at the time of the decision. They are not the mu
 
 | ADR | Title | Status |
 | --- | ----- | ------ |
-| [0001](0001-layered-backend-architecture.md) | Use layered backend package structure | Accepted |
+| [0001](0001-ownership-based-backend-architecture.md) | Use ownership-based backend architecture | Accepted |
 | [0002](0002-hybrid-auth-model.md) | Use hybrid app plus OBO authorization model | Accepted |
-| [0003](0003-centralized-dependency-composition.md) | Centralize dependency composition in API layer | Accepted |
+| [0003](0003-centralized-dependency-composition.md) | Centralize dependency composition in bootstrap | Accepted |
 | [0004](0004-lifecycle-message-bus.md) | Use lifecycle message bus abstraction with pluggable transports | Accepted |
 | [0005](0005-governed-routing-policy-and-response-guardrails.md) | Enforce governed routing policy and response guardrails | Accepted |
 | [0006](0006-unity-catalog-audit-table-for-lifecycle-events.md) | Persist lifecycle events to UC-governed audit table | Accepted |

@@ -27,7 +27,7 @@ Add a `uc_table` message bus backend (`UcAuditTableMessageBus`) that writes norm
 - Auto-creates schema and table if missing (using `CREATE TABLE IF NOT EXISTS`).
 - Validates catalog/schema/table identifiers against SQL injection patterns via `_validate_identifier()`.
 - Writes via SQL `INSERT INTO` through the Statement Execution API using a configured SQL warehouse.
-- Respects `MESSAGE_BUS_FAIL_OPEN` — on failure, falls back to structured logging without blocking the request.
+- Respects `MESSAGE_BUS_FAIL_OPEN` — failed audit writes are logged and dropped without blocking the request. Structured-logging fallback applies when configured backend initialization fails.
 
 ### Current dev configuration
 
@@ -65,8 +65,8 @@ Full table path: `quickstart_catalog.multi_agent_schema.agent_lifecycle_events`
 
 ## Implementation Notes
 
-- Backend implementation: [src/aiserver/services/message_bus.py](../../src/aiserver/services/message_bus.py) (`UcAuditTableMessageBus`)
-- Settings fields: `message_bus_uc_warehouse_id`, `message_bus_uc_catalog`, `message_bus_uc_schema`, `message_bus_uc_table` in [src/aiserver/shared/settings.py](../../src/aiserver/shared/settings.py)
+- Backend implementation: [src/aiserver/infrastructure/messaging/bus.py](../../src/aiserver/infrastructure/messaging/bus.py) (`UcAuditTableMessageBus`)
+- Settings fields: `message_bus_uc_warehouse_id`, `message_bus_uc_catalog`, `message_bus_uc_schema`, `message_bus_uc_table` in [src/aiserver/config/settings.py](../../src/aiserver/config/settings.py)
 - Bundle variables: `uc_audit_warehouse_id`, `uc_audit_catalog`, `uc_audit_schema`, `uc_audit_table` in [databricks.yml](../../databricks.yml)
 - Per-target values: [targets/dev.yml](../../targets/dev.yml), [targets/qa.yml](../../targets/qa.yml), [targets/stg.yml](../../targets/stg.yml), [targets/prd.yml](../../targets/prd.yml)
 - Tests: [tests/test_message_bus_backends.py](../../tests/test_message_bus_backends.py)

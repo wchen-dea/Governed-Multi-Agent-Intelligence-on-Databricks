@@ -1,6 +1,6 @@
 # Databricks Evaluation Automation
 
-Databricks Job that runs `aiserver.evaluate_agent.evaluate()` on Databricks
+Databricks Job that runs `operations.evaluate_agent.evaluate()` on Databricks
 compute instead of a local shell. This avoids local network/tracing-latency
 failures because both the MLflow tracking server and Lakebase Postgres are
 reached over the workspace's private network rather than the public internet.
@@ -11,7 +11,7 @@ The job attaches the project wheel (built automatically by the bundle's
 `multiagent_wheel` artifact) as a cluster library, then runs
 [run_evaluation.py](run_evaluation.py), which sets the
 required environment variables from job parameters and calls
-`aiserver.evaluate_agent.evaluate()` directly — the same function `make
+`operations.evaluate_agent.evaluate()` directly — the same function `make
 evaluate` / `uv run assistant-evaluate` invoke locally.
 
 ## Run it
@@ -27,4 +27,4 @@ Override KPI thresholds or the experiment id per invocation with
 ## Related
 
 - [docs/quality/evaluation-spec.md](../../docs/quality/evaluation-spec.md): scorer definitions, KPI thresholds, and gate policy.
-- `src/aiserver/evaluate_agent.py`: evaluation logic and test cases run by this job.
+- `src/operations/evaluate_agent.py`: evaluation logic and test cases run by this job.

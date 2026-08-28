@@ -4,10 +4,13 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from aiserver.domain.agent_messages import DelegationResult, DelegationTask
-from aiserver.domain.subagent_config import SubagentConfig
-from aiserver.services.agent_delegation_policy_service import evaluate_delegation_policy
-from aiserver.services.interfaces import AgentTaskBus, MessageBus
+from aiserver.application.delegation.policy import (
+    evaluate_delegation_policy,
+)
+from aiserver.application.ports.audit import MessageBus
+from aiserver.application.ports.tasks import AgentTaskBus
+from aiserver.contracts.delegation import DelegationResult, DelegationTask
+from aiserver.contracts.subagents import SubagentConfig
 
 
 class AgentTaskWorker:
@@ -27,9 +30,13 @@ class AgentTaskWorker:
         self._executor = executor
         self._message_bus = message_bus
 
-    async def run_once(self) -> int:
-        """Process one available task and return the number of claimed tasks."""
-        claimed = await self._task_bus.claim(self._worker_id)
+    async def run_once(self, task_id: str | None = None) -> int:
+        """Process one named task or the next available task."""
+        if task_id is None:
+            claimed = await self._task_bus.claim(self._worker_id)
+        else:
+            record = await self._task_bus.claim_task(task_id, self._worker_id)
+            claimed = [record] if record is not None else []
         for record in claimed:
             task = record.task
             self._message_bus.publish(

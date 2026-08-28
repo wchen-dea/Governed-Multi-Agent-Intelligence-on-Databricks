@@ -10,9 +10,9 @@ from typing import Literal
 
 from mlflow.types.responses import ResponsesAgentRequest
 
-from aiserver.domain.subagent_config import SubagentConfig
-from aiserver.shared.runtime_utils import RequestIdentityContext
-from aiserver.shared.settings import get_settings
+from aiserver.application.runtime.identity import RequestIdentityContext
+from aiserver.config.settings import get_settings
+from aiserver.contracts.subagents import SubagentConfig
 
 
 @dataclass(frozen=True)

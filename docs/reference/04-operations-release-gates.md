@@ -1,5 +1,9 @@
 # Operations, Release, and Quality Gates
 
+These are target-state requirements. Current implementation status and known
+evaluation-gate limitations are documented in the
+[evaluation specification](../quality/evaluation-spec.md).
+
 ```mermaid
 flowchart LR
   A[Observability and Operations] --> B[CI/CD and MLOps]

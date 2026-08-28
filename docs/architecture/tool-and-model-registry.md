@@ -21,10 +21,10 @@ Provide an auditable and maintainable registry for runtime integrations and owne
 ## Configuration Source
 
 - Runtime subagent config is environment-specific:
-	- `src/aiserver/domain/subagents.dev.json`
-	- `src/aiserver/domain/subagents.qa.json`
-	- `src/aiserver/domain/subagents.stg.json`
-	- `src/aiserver/domain/subagents.prd.json`
+	- `src/aiserver/contracts/subagents.dev.json`
+	- `src/aiserver/contracts/subagents.qa.json`
+	- `src/aiserver/contracts/subagents.stg.json`
+	- `src/aiserver/contracts/subagents.prd.json`
 
 ## Semantics Layer Build Automation
 
@@ -46,7 +46,7 @@ Typical source pattern for Genie Agents:
 
 - Type: genie
 - Runtime name: `sales_insights_agent`
-- Space ID source: `src/aiserver/domain/subagents.dev.json`
+- Space ID source: `src/aiserver/contracts/subagents.dev.json`
 - Genie space created and owned by the Genie/analytics project; this project only registers the space id and routes to it via MCP.
 - Auth mode: app
 - Classification: confidential
@@ -83,7 +83,7 @@ Typical source pattern for Genie Agents:
 
 - Type: genie
 - Runtime name: `cdi_agent`
-- Space ID source: `src/aiserver/domain/subagents.dev.json`
+- Space ID source: `src/aiserver/contracts/subagents.dev.json`
 - Source: materialized view `quickstart_catalog.multi_agent_schema.fct_cdi_trusted_expert_score_metric_view`
 - Genie space created and owned by the Genie/analytics project; this project only registers the space id and routes to it via MCP.
 - Auth mode: app
@@ -107,7 +107,7 @@ Model selection is deterministic and recorded with `routing.plan.selected`; it c
 | reasoning | `databricks-gpt-5-6-luna` | appointments, orders, SQL, Flink, and troubleshooting |
 | synthesis | `databricks-gpt-5-6-luna` | analysis, comparisons, summaries, and recommendations |
 
-Promotion remains blocked until [ToolCallCorrectness](../quality/evaluation-spec.md) reaches `0.800`; the current measured value is `0.400`.
+Auth correctness, safety, and groundedness remain blocking promotion KPIs. [ToolCallCorrectness](../quality/evaluation-spec.md) is monitored but non-blocking while the MLflow scorer cannot reliably assess nested tool spans.
 
 ## Active Lakebase Agents (Dev)
 
@@ -139,7 +139,7 @@ Conversation/persona memory (`MEMORY_BACKEND=lakebase`) uses a separate Lakebase
 
 ## Maintenance Rules
 
-- Registry updates are required whenever any `src/aiserver/domain/subagents.<target>.json` changes.
+- Registry updates are required whenever any `src/aiserver/contracts/subagents.<target>.json` changes.
 - Deprecated entries must include migration guidance and removal timeline.
 - Runtime, bundle variables, and app permissions must remain consistent.
 

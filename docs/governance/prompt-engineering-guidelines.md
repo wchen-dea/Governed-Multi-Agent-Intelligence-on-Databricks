@@ -1,6 +1,6 @@
 # Prompt Engineering Guidelines
 
-Concrete, hands-on conventions for writing and reviewing `system_prompt` and `description` fields in `src/aiserver/domain/subagents.<target>.json`, and for editing orchestrator instructions in `src/aiserver/services/orchestrator_service.py`. For the layered prompt/policy model, see [prompt-policy-controls.md](prompt-policy-controls.md).
+Concrete, hands-on conventions for writing and reviewing `system_prompt` and `description` fields in `src/aiserver/contracts/subagents.<target>.json`, and for editing orchestrator instructions in `src/aiserver/application/orchestration/agent.py`. For the layered prompt/policy model, see [prompt-policy-controls.md](prompt-policy-controls.md).
 
 ## Scope
 
@@ -20,7 +20,7 @@ Concrete, hands-on conventions for writing and reviewing `system_prompt` and `de
 - Open with a role statement ("You are the ... analyst/assistant").
 - State the grounding source (Genie space, AI Search index, Lakebase database) so the model doesn't fabricate scope.
 - Give concrete output-shape rules: table format, column headers, units, disambiguation defaults (e.g., "use the latest available season unless specified").
-- For any tool where `requires_evidence: true`, explicitly instruct the model to append citations (`[1]` style) and end with a `Source:` line. The response guardrail (`guardrails_service.py`) blocks output lacking these markers when evidence is required — the prompt and the flag must agree.
+- For any tool where `requires_evidence: true`, explicitly instruct the model to append citations (`[1]` style) and end with a `Source:` line. The response guardrail (`src/aiserver/application/guardrails/checks.py`) blocks output lacking these markers when evidence is required — the prompt and the flag must agree.
 - For ranking/top-N questions, instruct the model to include the entity identifier (store ID, product ID, etc.) alongside the ranked metric so results can be cross-referenced by the orchestrator or a downstream tool call.
 - For tools prone to fuzzy/approximate matches (AI Search), instruct the model to verify exact-match requests and disclose when only approximate matches were found.
 - Keep ambiguity handling explicit: one clarifying question before broad/expensive analysis, not silent guessing.
@@ -38,7 +38,7 @@ Before merging a prompt/description change, verify:
 
 ## Orchestrator Base Instructions
 
-Changes to shared routing/evidence/delegation rules live in `_build_base_orchestrator_instructions` in `src/aiserver/services/orchestrator_service.py`. Guidelines:
+Changes to shared routing/evidence/delegation rules live in `_build_base_orchestrator_instructions` in `src/aiserver/application/orchestration/agent.py`. Guidelines:
 
 - Keep rules tool-agnostic; tool-specific behavior belongs in that subagent's `system_prompt`.
 - State call-count limits explicitly (e.g., "at most once per tool, except Lakebase schema discovery + data query").
@@ -50,8 +50,8 @@ Changes to shared routing/evidence/delegation rules live in `_build_base_orchest
 ## Validation After Any Prompt Change
 
 ```bash
-for f in src/aiserver/domain/subagents.*.json; do python3 -c "import json; json.load(open('$f'))"; done
-python -m py_compile src/aiserver/services/orchestrator_service.py
+for f in src/aiserver/contracts/subagents.*.json; do python3 -c "import json; json.load(open('$f'))"; done
+python -m py_compile src/aiserver/application/orchestration/agent.py
 uv run pytest tests/test_subagent_config.py tests/test_guardrails_service.py tests/test_evaluation_dataset_sync.py tests/test_orchestrator_service.py -q
 ```
 

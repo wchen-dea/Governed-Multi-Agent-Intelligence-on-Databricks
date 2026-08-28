@@ -20,8 +20,8 @@ from mlflow.genai.scorers import (
 from mlflow.genai.simulators import ConversationSimulator
 from mlflow.types.responses import ResponsesAgentRequest
 
-from aiserver.shared.logging_config import configure_logging
-from aiserver.shared.settings import get_settings
+from aiserver.config.settings import get_settings
+from aiserver.infrastructure.observability.logging import configure_logging
 
 # Load environment variables from .env when available.
 load_dotenv(dotenv_path=".env", override=True)
@@ -35,8 +35,8 @@ configure_logging(get_settings())
 os.environ["MLFLOW_ENABLE_ASYNC_TRACE_LOGGING"] = "false"
 
 # Import handlers so @invoke-registered functions are discoverable.
-import aiserver.api.handlers  # noqa: E402, F401
-from aiserver.domain.subagent_config import skipped_subagent_names  # noqa: E402
+import aiserver.api.invocations  # noqa: E402, F401
+from aiserver.contracts.subagents import skipped_subagent_names  # noqa: E402
 
 # Evaluation dataset.
 # Scorer documentation:

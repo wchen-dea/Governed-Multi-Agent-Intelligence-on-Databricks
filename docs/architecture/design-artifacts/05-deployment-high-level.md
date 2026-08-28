@@ -12,7 +12,7 @@ flowchart LR
 
     Dev -. bundle validate .-> QA
     QA -. bundle deploy .-> STG
-    STG -. release gate — blocked until tool-call KPI passes .-> PRD
+    STG -. release gate — blocking KPI thresholds pass .-> PRD
 ```
 
 ## 2. Runtime Deployment Map

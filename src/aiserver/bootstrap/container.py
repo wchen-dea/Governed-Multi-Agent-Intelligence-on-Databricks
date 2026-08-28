@@ -9,30 +9,36 @@ from typing import Any
 from databricks_openai import AsyncDatabricksOpenAI
 from mlflow.types.responses import ResponsesAgentRequest
 
-from aiserver.domain.subagent_config import SubagentConfig
-from aiserver.services.agent_task_bus import default_agent_task_bus
-from aiserver.services.guardrails_service import (
+from aiserver.application.auth.context import (
+    RuntimeAuthContext,
+    RuntimeAuthDependencies,
+    build_runtime_auth_context,
+)
+from aiserver.application.guardrails.checks import (
     GuardrailResult,
     InputGuardrailResult,
     evaluate_input_guardrails,
     evaluate_response_guardrails,
 )
-from aiserver.services.interfaces import AgentTaskBus, ConversationMemory, MessageBus
-from aiserver.services.memory_service import default_conversation_memory
-from aiserver.services.message_bus import default_message_bus
-from aiserver.services.orchestrator_service import (
+from aiserver.application.orchestration.agent import (
     OrchestratorDependencies,
+    build_lakebase_delegation_executors,
+    build_lakebase_tools,
     build_mcp_servers,
     build_subagent_tools,
     connect_healthy_mcp_servers,
     create_orchestrator_agent,
 )
-from aiserver.services.runtime_auth_service import (
-    RuntimeAuthContext,
-    RuntimeAuthDependencies,
-    build_runtime_auth_context,
-)
-from aiserver.shared.settings import get_settings
+from aiserver.application.ports.audit import MessageBus
+from aiserver.application.ports.memory import ConversationMemory
+from aiserver.application.ports.tasks import AgentTaskBus
+from aiserver.config.settings import get_settings
+from aiserver.contracts.subagents import SubagentConfig
+from aiserver.infrastructure.databricks.lakebase import connect_lakebase
+from aiserver.infrastructure.messaging.bus import default_message_bus
+from aiserver.infrastructure.observability.tracing import update_trace_metadata
+from aiserver.infrastructure.persistence.memory import default_conversation_memory
+from aiserver.infrastructure.persistence.tasks import default_agent_task_bus
 
 
 @dataclass(frozen=True)
@@ -70,7 +76,11 @@ def build_dependency_container() -> AppDependencyContainer:
     settings = get_settings()
     bus = default_message_bus(settings)
     memory = default_conversation_memory(settings)
-    orchestrator_deps = OrchestratorDependencies(message_bus=bus)
+    orchestrator_deps = OrchestratorDependencies(
+        message_bus=bus,
+        trace_metadata_updater=update_trace_metadata,
+        lakebase_connection_factory=connect_lakebase,
+    )
     delegation_task_bus = default_agent_task_bus(settings)
 
     runtime_auth_deps = RuntimeAuthDependencies(
@@ -85,8 +95,21 @@ def build_dependency_container() -> AppDependencyContainer:
             identity_ctx,
             deps=orchestrator_deps,
         ),
+        lakebase_tools_builder=lambda subagents, identity_ctx: build_lakebase_tools(
+            subagents,
+            identity_ctx,
+            deps=orchestrator_deps,
+        ),
+        lakebase_delegation_executors_builder=lambda subagents, identity_ctx: (
+            build_lakebase_delegation_executors(
+                subagents,
+                identity_ctx,
+                deps=orchestrator_deps,
+            )
+        ),
         message_bus=bus,
         delegation_task_bus=delegation_task_bus,
+        trace_metadata_updater=update_trace_metadata,
     )
 
     handler_deps = HandlerDependencies(

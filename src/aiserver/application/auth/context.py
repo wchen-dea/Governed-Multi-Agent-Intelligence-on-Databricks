@@ -7,47 +7,49 @@ subagent to either the shared app client or a user-scoped OBO client.
 from collections.abc import Callable
 from dataclasses import dataclass
 
-import mlflow
 from databricks_openai import AsyncDatabricksOpenAI
 from databricks_openai.agents import McpServer
 from mlflow.types.responses import ResponsesAgentRequest
 
-from aiserver.domain.subagent_config import SubagentConfig
-from aiserver.services.agent_handoff_service import build_delegation_tool
-from aiserver.services.interfaces import (
-    AgentTaskBus,
-    IdentityContextProvider,
-    LakebaseToolsBuilder,
-    McpServersBuilder,
-    MessageBus,
-    OboClientFactory,
-    SessionIdProvider,
-    SubagentToolsBuilder,
-    TraceMetadataUpdater,
-)
-from aiserver.services.message_bus import NoOpMessageBus
-from aiserver.services.orchestrator_service import (
-    build_lakebase_delegation_executors,
-    build_lakebase_tools,
-    build_mcp_servers,
-    build_subagent_tools,
-)
-from aiserver.services.policy_service import (
+from aiserver.application.auth.policy import (
     PolicyContext,
     PolicyDecision,
     build_policy_context,
     filter_subagents_by_policy,
 )
-from aiserver.shared.runtime_utils import (
+from aiserver.application.delegation.handoff import build_delegation_tool
+from aiserver.application.orchestration.agent import (
+    build_lakebase_delegation_executors,
+    build_lakebase_tools,
+    build_mcp_servers,
+    build_subagent_tools,
+)
+from aiserver.application.ports.audit import (
+    MessageBus,
+    NoOpMessageBus,
+    TraceMetadataUpdater,
+    noop_trace_metadata,
+)
+from aiserver.application.ports.auth import (
+    IdentityContextProvider,
+    OboClientFactory,
+    SessionIdProvider,
+)
+from aiserver.application.ports.lakebase import (
+    LakebaseDelegationExecutorsBuilder,
+    LakebaseToolsBuilder,
+)
+from aiserver.application.ports.tasks import AgentTaskBus
+from aiserver.application.ports.tools import (
+    McpServersBuilder,
+    SubagentToolsBuilder,
+)
+from aiserver.application.runtime.identity import (
     RequestIdentityContext,
     build_request_identity_context,
     get_session_id,
 )
-
-
-def _update_trace_metadata(metadata: dict[str, str]) -> None:
-    """Write authorization metadata to the active MLflow trace."""
-    mlflow.update_current_trace(metadata=metadata)
+from aiserver.contracts.subagents import SubagentConfig
 
 
 @dataclass(frozen=True)
@@ -97,11 +99,14 @@ class RuntimeAuthDependencies:
 
     identity_context_provider: IdentityContextProvider = build_request_identity_context
     session_id_provider: SessionIdProvider = get_session_id
-    trace_metadata_updater: TraceMetadataUpdater = _update_trace_metadata
+    trace_metadata_updater: TraceMetadataUpdater = noop_trace_metadata
     obo_client_factory: OboClientFactory = AsyncDatabricksOpenAI
     subagent_tools_builder: SubagentToolsBuilder = build_subagent_tools
     mcp_servers_builder: McpServersBuilder = build_mcp_servers
     lakebase_tools_builder: LakebaseToolsBuilder = build_lakebase_tools
+    lakebase_delegation_executors_builder: LakebaseDelegationExecutorsBuilder = (
+        build_lakebase_delegation_executors
+    )
     policy_context_builder: Callable[
         [ResponsesAgentRequest, RequestIdentityContext], PolicyContext
     ] = build_policy_context
@@ -220,7 +225,10 @@ def build_runtime_auth_context(
         delegation_tool = build_delegation_tool(
             task_bus=dependencies.delegation_task_bus,
             subagents=allowed_subagents,
-            executors=build_lakebase_delegation_executors(allowed_subagents, identity_ctx),
+            executors=dependencies.lakebase_delegation_executors_builder(
+                allowed_subagents,
+                identity_ctx,
+            ),
             message_bus=dependencies.message_bus,
             correlation_id=dependencies.session_id_provider(request) or "request",
         )

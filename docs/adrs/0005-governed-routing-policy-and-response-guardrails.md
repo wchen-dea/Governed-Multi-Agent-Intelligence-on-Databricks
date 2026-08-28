@@ -36,7 +36,7 @@ Post-execution evaluation using `evaluate_response_guardrails()`:
 | Unsafe output | `unsafe_output` | Response contains SSN, credit card, private key, API key, or password patterns |
 | Low confidence sensitive | `low_confidence_sensitive` | Hedging language detected for confidential/restricted data context |
 
-All allow/deny decisions are emitted as lifecycle events (`response.guardrail.passed`, `response.guardrail.blocked`).
+Policy allow/deny decisions are emitted as `policy.subagent.decision` events. Response guardrail outcomes are emitted as `response.guardrail.passed` or `response.guardrail.blocked` events.
 
 ### Current persona-agent matrix
 
@@ -71,9 +71,9 @@ All allow/deny decisions are emitted as lifecycle events (`response.guardrail.pa
 
 ## Implementation Notes
 
-- Policy service: [src/aiserver/services/policy_service.py](../../src/aiserver/services/policy_service.py) (`PolicyContext`, `PolicyDecision`, `filter_subagents_by_policy`)
-- Guardrails service: [src/aiserver/services/guardrails_service.py](../../src/aiserver/services/guardrails_service.py) (`GuardrailResult`, `evaluate_response_guardrails`)
-- Runtime integration: [src/aiserver/services/runtime_auth_service.py](../../src/aiserver/services/runtime_auth_service.py) (`build_runtime_auth_context`)
-- Handler enforcement: [src/aiserver/api/handlers.py](../../src/aiserver/api/handlers.py) (`_finalize_invoke_stage`, `_finalize_stream_stage`)
-- Persona config: `allowed_personas` field in [src/aiserver/domain/subagents.dev.json](../../src/aiserver/domain/subagents.dev.json)
+- Policy service: [src/aiserver/application/auth/policy.py](../../src/aiserver/application/auth/policy.py) (`PolicyContext`, `PolicyDecision`, `filter_subagents_by_policy`)
+- Guardrails service: [src/aiserver/application/guardrails/checks.py](../../src/aiserver/application/guardrails/checks.py) (`GuardrailResult`, `evaluate_response_guardrails`)
+- Runtime integration: [src/aiserver/application/auth/context.py](../../src/aiserver/application/auth/context.py) (`build_runtime_auth_context`)
+- Handler enforcement: [src/aiserver/api/invocations.py](../../src/aiserver/api/invocations.py) (`_finalize_invoke_stage`, `_finalize_stream_stage`)
+- Persona config: `allowed_personas` field in [src/aiserver/contracts/subagents.dev.json](../../src/aiserver/contracts/subagents.dev.json)
 - Tests: [tests/test_policy_service.py](../../tests/test_policy_service.py), [tests/test_guardrails_service.py](../../tests/test_guardrails_service.py)

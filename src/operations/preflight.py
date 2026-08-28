@@ -126,7 +126,7 @@ def check_health(base_url: str) -> bool:
         req = urllib.request.Request(f"{base_url}/health")
         with urllib.request.urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read())
-            return data.get("status") == "healthy"
+            return data.get("status") in {"healthy", "ok"}
     except Exception as e:
         print(f"  Health check failed: {e}")
         return False

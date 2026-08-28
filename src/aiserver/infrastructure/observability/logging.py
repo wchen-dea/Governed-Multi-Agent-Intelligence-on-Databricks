@@ -2,7 +2,7 @@
 
 import logging
 
-from aiserver.shared.settings import AppSettings
+from aiserver.config.settings import AppSettings
 
 _CONFIGURED = False
 

@@ -71,7 +71,7 @@ Foundation model endpoints (e.g., `databricks-claude-sonnet-4`, `databricks-gpt-
 
 ## Implementation Notes
 
-- Client construction with base URL override: [src/aiserver/api/handlers.py](../../src/aiserver/api/handlers.py) (`_build_openai_client`)
-- Settings: [src/aiserver/shared/settings.py](../../src/aiserver/shared/settings.py) (`openai_base_url`, `openai_timeout_seconds`)
+- Client construction with base URL override: [src/aiserver/api/invocations.py](../../src/aiserver/api/invocations.py) (`_build_openai_client`)
+- Settings: [src/aiserver/config/settings.py](../../src/aiserver/config/settings.py) (`openai_base_url`, `openai_timeout_seconds`)
 - Bundle variables: [databricks.yml](../../databricks.yml) (`openai_base_url`, `openai_timeout_seconds`)
 - Per-target values: [targets/dev.yml](../../targets/dev.yml) (currently `openai_base_url=""` — direct to model serving)

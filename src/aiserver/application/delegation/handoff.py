@@ -5,10 +5,11 @@ from typing import Any
 
 from agents import function_tool
 
-from aiserver.domain.agent_messages import DelegationTask
-from aiserver.domain.subagent_config import SubagentConfig
-from aiserver.services.agent_task_worker import AgentTaskWorker
-from aiserver.services.interfaces import AgentTaskBus, MessageBus
+from aiserver.application.delegation.worker import AgentTaskWorker
+from aiserver.application.ports.audit import MessageBus
+from aiserver.application.ports.tasks import AgentTaskBus
+from aiserver.contracts.delegation import DelegationTask
+from aiserver.contracts.subagents import SubagentConfig
 
 DelegationExecutor = Callable[[dict[str, Any]], Awaitable[dict[str, Any]]]
 
@@ -48,7 +49,7 @@ async def execute_delegation(
         executor=execute,
         message_bus=message_bus,
     )
-    await worker.run_once()
+    await worker.run_once(record.task.task_id)
     final_record = await task_bus.get(record.task.task_id)
     if final_record is None:
         return "DELEGATION_FAILED category=execution. Delegated task state was not found."

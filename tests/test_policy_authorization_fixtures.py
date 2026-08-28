@@ -4,8 +4,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from aiserver.domain.subagent_config import SubagentConfig
-from aiserver.services.policy_service import filter_subagents_by_policy
+from aiserver.application.auth.policy import filter_subagents_by_policy
+from aiserver.contracts.subagents import SubagentConfig
 
 
 def _subagents() -> list[SubagentConfig]:
