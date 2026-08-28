@@ -816,6 +816,9 @@ def _governed_source_suffix_with_fallback(
     if governed and _event_has_tool_activity(payloads):
         return "\n\nSource: tool-backed governed response."
 
+    if governed:
+        return "\n\nSource: governed response; source metadata was unavailable in the final output item."
+
     return ""
 
 

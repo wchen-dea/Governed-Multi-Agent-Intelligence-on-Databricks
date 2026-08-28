@@ -117,6 +117,28 @@ def test_governed_source_suffix_fallback_for_tool_activity_without_named_subagen
     assert suffix == "\n\nSource: tool-backed governed response."
 
 
+def test_governed_source_suffix_fallback_for_unlabelled_invoke_output():
+    sales_agent = SubagentConfig(
+        name="sales_insights_agent",
+        kind="genie",
+        auth_mode="obo",
+        data_classification="confidential",
+        owner="sales-analytics",
+        freshness_sla="15m",
+        allowed_personas=("manager",),
+        requires_evidence=True,
+        space_id="space-1",
+        description="sales",
+    )
+
+    suffix = _governed_source_suffix_with_fallback(
+        [{"role": "assistant", "content": "Draft governed answer."}],
+        [sales_agent],
+    )
+
+    assert suffix.startswith("\n\nSource: governed response;")
+
+
 def test_event_has_tool_activity_detects_generic_tool_event_shapes():
     payloads = [
         {
