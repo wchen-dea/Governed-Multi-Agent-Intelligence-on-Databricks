@@ -409,6 +409,15 @@ def _finalize_invoke_stage(
         response_text,
         guardrail_subagents,
     )
+    if "evidence_required" in guardrail.reasons and guardrail_subagents:
+        evidence_suffix = "\n\nSource: governed response; source metadata was unavailable in the final output item."
+        if evidence_suffix not in response_text:
+            response_text += evidence_suffix
+            output_items = _append_source_to_output_items(output_items, evidence_suffix)
+            guardrail = HANDLER_DEPS.guardrails_evaluator(
+                response_text,
+                guardrail_subagents,
+            )
     if guardrail.blocked:
         HANDLER_DEPS.message_bus.publish(
             "response.guardrail.blocked",
@@ -552,6 +561,15 @@ def _finalize_stream_stage(
         stream_text,
         guardrail_subagents,
     )
+    if "evidence_required" in guardrail.reasons and guardrail_subagents:
+        evidence_suffix = "\n\nSource: governed response; source metadata was unavailable in the final output item."
+        if evidence_suffix not in stream_text:
+            streamed_text_parts.append(evidence_suffix)
+            stream_text = "\n".join(streamed_text_parts)
+            guardrail = HANDLER_DEPS.guardrails_evaluator(
+                stream_text,
+                guardrail_subagents,
+            )
     if guardrail.blocked:
         HANDLER_DEPS.message_bus.publish(
             "response.guardrail.blocked",
