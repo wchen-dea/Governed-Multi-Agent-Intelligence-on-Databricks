@@ -114,7 +114,7 @@ def _has_citation(text: str) -> bool:
     """
     return bool(
         re.search(r"\[[0-9]+\]", text)
-        or re.search(r"\bsource:\b", text, flags=re.IGNORECASE)
+        or re.search(r"\bsource\s*:", text, flags=re.IGNORECASE)
         or re.search(r"\bcitation:\b", text, flags=re.IGNORECASE)
     )
 
