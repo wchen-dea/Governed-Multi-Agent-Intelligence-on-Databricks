@@ -7,15 +7,13 @@ command:
   - "8000"
 
 env:
-  - name: DATABRICKS_HOST
-    description: Workspace URL for SDK calls (auto-populated at runtime)
-  - name: DATABRICKS_TOKEN
-    description: Service principal token (auto-populated at runtime)
   - name: REVENUE_TABLE
-    value: "dt_dev_platinum.enterprise.sales_daily_store_performance"
+    value: "dt_dev_platinum.enterprise.store_sales_performance"
   - name: CDI_TABLE
     value: "dt_dev_gold.dwh.fct_cdi_daily"
   - name: PEER_SET_TABLE
     value: "dt_dev_gold.dwh.brg_store_cluster_membership_group"
+  - name: SQL_WAREHOUSE_ID
+    value: "b20f70f71c2f52e2"
   - name: TREND_WINDOW_DAYS
     value: "90"

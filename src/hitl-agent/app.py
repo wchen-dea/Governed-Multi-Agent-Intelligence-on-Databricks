@@ -111,7 +111,7 @@ def _execute_sql(sql: str) -> list[dict[str, Any]]:
     resp = w.statement_execution.execute_statement(
         statement=sql,
         warehouse_id=warehouse_id,
-        wait_timeout="120s",
+        wait_timeout="50s",
     )
     if resp.status.state != StatementState.SUCCEEDED:
         raise HTTPException(
@@ -330,8 +330,7 @@ Data freshness: Within 24h of query execution (governed by source pipeline SLA)
 
 
 @app.post("/responses", response_model=ResponsesResponse)
-@app.post("/v1/responses", response_model=ResponsesResponse)
-@app.post("/responses", response_model=ResponsesResponse, include_in_schema=False)
+@app.post("/v1/responses", response_model=ResponsesResponse, include_in_schema=False)
 async def create_response(req: ResponsesRequest) -> ResponsesResponse:
     """Responses API-compatible endpoint.
 
