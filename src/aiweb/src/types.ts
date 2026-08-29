@@ -11,6 +11,21 @@ export interface ChatMessage {
   guardrailReasons?: string[];
   unavailableTools?: string[];
   truncated?: boolean;
+  approvalState?: HumanApprovalState;
+}
+
+export interface HumanApprovalState {
+  status:
+    | "not_required"
+    | "pending"
+    | "approved"
+    | "rejected"
+    | "more_info_requested"
+    | "expired";
+  required: boolean;
+  approver?: string | null;
+  decision?: string | null;
+  reason?: string | null;
 }
 
 export interface RoutePlan {
@@ -28,6 +43,7 @@ export interface GovernanceMetadata {
   unavailableTools: string[];
   truncated: boolean;
   status?: string;
+  approvalState?: HumanApprovalState;
 }
 
 export interface StreamHints {

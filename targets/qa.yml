@@ -46,6 +46,11 @@ targets:
       # Example: Unity Catalog schema name, e.g. "observability"
       uc_audit_schema: "<QA-UC-AUDIT-SCHEMA>"
       uc_audit_table: agent_lifecycle_events
+      approval_backend: uc_table
+      approval_warehouse_id: "<QA-UC-AUDIT-WAREHOUSE-ID>"
+      approval_catalog: "<QA-UC-AUDIT-CATALOG>"
+      approval_schema: "<QA-UC-AUDIT-SCHEMA>"
+      approval_table: agent_approval_decisions
     resources:
       apps:
         multiagent-app:

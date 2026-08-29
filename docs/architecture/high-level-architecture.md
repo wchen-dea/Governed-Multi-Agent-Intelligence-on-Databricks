@@ -45,6 +45,7 @@ Runtime stack:
 - Governed policy and response-guardrail enforcement for sensitive routes
 - Deterministic capability-based route planning with policy-approved fallback
 - Typed response envelopes and normalized tool execution metadata for audit and UI inspection
+- Human-in-the-loop approval boundary for store intervention recommendations, with durable manager decisions in Unity Catalog
 
 ### Major Components
 
@@ -53,6 +54,7 @@ Runtime stack:
 - Orchestration layer: tool selection and response composition
 - Integration layer: MCP + serving endpoint + Lakebase PostgreSQL calls
 - Data and semantic layer: Genie Agent space, enterprise data assets
+- Approval and audit layer: pending decision envelopes, manager decision API, and UC Delta approval records
 
 ### Frameworks and Platform Stack
 
@@ -192,6 +194,11 @@ flowchart TD
     BUF --> R[Finalize Source and Guardrails]
     R --> DELTA[response.output_text.delta]
     DELTA --> UI
+    R -->|requires_human_approval| PACKET[Pending intervention packet]
+    PACKET --> UI
+    UI -->|POST /approval-decisions| DECIDE[Manager decision]
+    DECIDE --> APPROVALS[UC Delta agent_approval_decisions]
+    APPROVALS -->|decision lookup| DECIDE
     UI -->|payload-redacted GET /delegations task status| APP
     UI --> U
 
@@ -200,6 +207,10 @@ flowchart TD
 ```
 
 ### Authorization Routing
+
+### Human Approval Boundary
+
+The `store-intervention-agent` can analyze revenue and CDI signals and prepare an evidence-backed packet, but it cannot authorize operational dispatch. The response is marked pending when manager approval is required. A manager decision is submitted through `/approval-decisions` and persisted in the UC approval table; any future dispatcher must validate that record independently before acting. See [Human-in-the-loop approval](../governance/human-in-the-loop.md).
 
 The orchestrator uses subagent-level auth configuration (`auth_mode`) to decide execution identity:
 

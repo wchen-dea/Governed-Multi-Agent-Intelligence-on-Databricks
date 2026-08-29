@@ -1,5 +1,7 @@
 from aiserver.api.invocations import (
+    _append_approval_message_to_output_items,
     _append_source_to_output_items,
+    _approval_state_for_subagents,
     _event_has_tool_activity,
     _governed_source_suffix,
     _governed_source_suffix_with_fallback,
@@ -17,6 +19,35 @@ def test_guardrail_block_message_mentions_reason_and_remediation():
     assert "evidence_required" in message
     assert "[1]" in message
     assert "Source:" in message
+
+
+def test_approval_state_requires_manager_signoff_for_intervention_agent():
+    intervention = SubagentConfig(
+        name="store-intervention-agent",
+        kind="app",
+        endpoint="store-intervention-agent",
+        description="review store intervention before action",
+        auth_mode="app",
+        data_classification="confidential",
+        owner="sales-operations",
+        freshness_sla="15m",
+        allowed_personas=("manager",),
+        requires_evidence=True,
+        requires_human_approval=True,
+    )
+
+    approval = _approval_state_for_subagents([intervention])
+
+    assert approval.required is True
+    assert approval.status == "pending"
+    assert "approval" in (approval.reason or "").lower()
+
+    updated = _append_approval_message_to_output_items(
+        [{"role": "assistant", "content": "Store 123 has strong revenue but declining CDI."}],
+        approval,
+    )
+
+    assert "approval" in updated[-1]["content"].lower()
 
 
 def test_governed_source_suffix_uses_detected_tool_metadata():
@@ -86,11 +117,44 @@ def test_governed_source_suffix_fallback_for_tool_activity_without_named_subagen
     assert suffix == "\n\nSource: tool-backed governed response."
 
 
+def test_governed_source_suffix_fallback_for_unlabelled_invoke_output():
+    sales_agent = SubagentConfig(
+        name="sales_insights_agent",
+        kind="genie",
+        auth_mode="obo",
+        data_classification="confidential",
+        owner="sales-analytics",
+        freshness_sla="15m",
+        allowed_personas=("manager",),
+        requires_evidence=True,
+        space_id="space-1",
+        description="sales",
+    )
+
+    suffix = _governed_source_suffix_with_fallback(
+        [{"role": "assistant", "content": "Draft governed answer."}],
+        [sales_agent],
+    )
+
+    assert suffix.startswith("\n\nSource: governed response;")
+
+
 def test_event_has_tool_activity_detects_generic_tool_event_shapes():
     payloads = [
         {
             "type": "response.some_mcp_event",
             "item": {"type": "mcp_call"},
+        }
+    ]
+
+    assert _event_has_tool_activity(payloads) is True
+
+
+def test_event_has_tool_activity_detects_responses_function_call_output():
+    payloads = [
+        {
+            "type": "response.output_item.done",
+            "item": {"type": "function_call_output"},
         }
     ]
 

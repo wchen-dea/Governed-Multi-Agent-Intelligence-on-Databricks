@@ -23,6 +23,7 @@ This platform operationalizes the AI patterns enterprises need now:
 - **Deliberate capability selection:** task-aware routing records the Databricks model selected for standard, reasoning, and synthesis work.
 - **Bounded multi-agent coordination:** typed delegation uses correlation IDs, idempotency, leases, retries, dead-letter states, and Unity Catalog Delta task/event tables.
 - **Production evidence:** lifecycle audit events, MLflow tracing, quality KPIs, release gates, and redacted delegation status replace opaque agent behavior.
+- **Human-controlled action:** store-intervention recommendations produce an evidence-backed manager approval packet and remain non-dispatchable until an explicit decision is durably recorded.
 - **Platform-grade delivery:** Databricks Apps, DAB overlays, versioned wheels, lifecycle gates, health checks, and source-only recovery support repeatable releases.
 
 The operating principle is simple: use agents where tools add verified value, preserve enterprise controls where data and identity matter, and promote only what can be measured.
@@ -61,6 +62,7 @@ Beyond the Databricks platform features above, this project implements these AI 
 - Multi-agent delegation with typed contracts: bounded async agent-to-agent task handoff with correlation IDs, idempotency keys, leases, retries, and dead-letter states.
 - LLM-as-judge evaluation: `ToolCallCorrectness`, `Safety`, and `ConversationalSafety` scorers plus custom `AuthCorrectness` and `DirectGroundedness` (evidence-marker-based) scorers.
 - Deterministic response guardrails: evidence/citation enforcement and unsafe-pattern/low-confidence blocking applied post-generation, independent of the LLM judge path.
+- Human-in-the-loop controls: manager-only store intervention review with pending, approved, rejected, and more-information states backed by a UC Delta approval table.
 - Persona-based policy authorization: governed routing that filters candidate subagents by persona, auth mode, and data classification before tool execution.
 - Streaming agent responses: token/tool-event streaming with mid-stream guardrail finalization for the chat UI.
 - RAG (retrieval-augmented generation): AI Search/Vector Search-backed retrieval for product knowledge and Flink support troubleshooting, with citation-grounded answers.
@@ -91,6 +93,10 @@ Runtime skills playbooks:
 - [runtime-guardrails](.claude/skills/runtime-guardrails/SKILL.md): evidence/citation enforcement and blocked-output controls.
 - [runtime-auth-obo](.claude/skills/runtime-auth-obo/SKILL.md): app-vs-obo auth-mode enforcement and forwarded-token requirements.
 - [runtime-audit-observability](.claude/skills/runtime-audit-observability/SKILL.md): lifecycle event auditing, UC audit persistence, and backend observability checks.
+
+HITL workflow details:
+
+- [Human-in-the-loop approval](docs/governance/human-in-the-loop.md): canonical workflow, query examples, API contract, persistence settings, and operational verification.
 
 ## Semantic Data Dependencies
 
@@ -233,13 +239,15 @@ High-level request path:
 3. MLflow Agent Server dispatches invoke or stream handlers.
 4. Orchestrator selects tools and specialist agents.
 5. Tools query Genie Agent MCP routes, AI Search MCP indexes, or serving endpoints.
-6. Unified response is returned to the client.
+6. Governed responses are finalized with evidence, guardrail state, and a pending approval state when required.
+7. For store interventions, a manager decision is recorded through the approval API before any future operational dispatcher can act.
 
 For architecture diagrams, see [docs/architecture/high-level-architecture.md](docs/architecture/high-level-architecture.md).
 
 ## Project Layout
 
 - [src/aiserver/](src/aiserver): orchestrator runtime, handlers, request normalization, server startup
+- [src/hitl-agent/](src/hitl-agent): deployed `store-intervention-agent` specialist source and App configuration
 - [src/aiserver/README.md](src/aiserver/README.md): backend-focused setup, runtime behavior, and operations guide
 - [src/aiweb/](src/aiweb): primary React UI (TypeScript) client for chat, commands, and stream rendering
 - [src/aiweb/README.md](src/aiweb/README.md): React UI setup, build, and local run guide
@@ -314,6 +322,12 @@ This builds versioned wheel and React payloads, clears prior generated remote wh
 - `UC_AUDIT_CATALOG`: Unity Catalog catalog where audit events table is stored.
 - `UC_AUDIT_SCHEMA`: Unity Catalog schema where audit events table is stored.
 - `UC_AUDIT_TABLE`: Unity Catalog audit table name (default `agent_lifecycle_events`).
+- `APPROVAL_BACKEND`: approval persistence backend, `memory` or `uc_table` (default `memory`; use `uc_table` for deployed workflows).
+- `APPROVAL_WAREHOUSE_ID`: SQL warehouse used by the UC approval repository.
+- `APPROVAL_CATALOG`: Unity Catalog catalog for approval decisions.
+- `APPROVAL_SCHEMA`: Unity Catalog schema for approval decisions.
+- `APPROVAL_TABLE`: approval Delta table name (default `agent_approval_decisions`).
+- `APPROVAL_FAIL_OPEN`: whether approval writes may fail open (default `false`; keep false for production).
 - `DATABRICKS_OPENAI_BASE_URL`: optional Databricks OpenAI base URL override (for example Unity AI Gateway URL).
 - `DATABRICKS_OPENAI_TIMEOUT_SECONDS`: optional timeout in seconds for Databricks OpenAI calls (`0` keeps SDK defaults).
 - `MODEL_ROUTING_ENABLED`: enable deterministic task-type model selection (default `true`).
@@ -333,6 +347,15 @@ This builds versioned wheel and React payloads, clears prior generated remote wh
 - `AGENT_TASK_EVENT_TABLE`: task event table name (default `agent_delegation_events`).
 - `AGENT_TASK_WORKER_ENABLED`: starts the backend delegation worker when `true`.
 - `AGENT_TASK_WORKER_POLL_SECONDS`: idle polling interval for the delegation worker (default `1.0`).
+
+For the store intervention workflow, start with the [HITL approval guide](docs/governance/human-in-the-loop.md). It documents the discovery query, evidence requirement, approval states, API calls, UC persistence, and post-deployment verification.
+
+Update the specialist App source or its data privileges with:
+
+```bash
+make update-hitl APP_NAME=store-intervention-agent PROFILE=DEFAULT
+make grant-hitl-privileges APP_NAME=store-intervention-agent PROFILE=DEFAULT
+```
 
 MCP connect/probe performance controls:
 

@@ -1,8 +1,12 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { sendChat, sessionStatusLine } from "./api";
+import { sendChat, sessionStatusLine, submitApprovalDecision } from "./api";
 import { maskToken, parsePersonaCommand, parseTokenCommand } from "./commands";
 import { settings } from "./config";
-import type { ChatMessage, GovernanceMetadata } from "./types";
+import type {
+  ChatMessage,
+  GovernanceMetadata,
+  HumanApprovalState,
+} from "./types";
 
 function newId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -35,7 +39,13 @@ function isThemeValue(value: string | null): value is ThemeValue {
   return THEMES.some((theme) => theme.value === value);
 }
 
-const STARTER_GROUPS = ["Business", "Operations", "Insight", "Commands"] as const;
+const STARTER_GROUPS = [
+  "Business",
+  "Operations",
+  "Insight",
+  "HITL",
+  "Commands",
+] as const;
 
 type StarterGroup = (typeof STARTER_GROUPS)[number];
 
@@ -44,7 +54,10 @@ const STARTERS: { group: StarterGroup; text: string }[] = [
   { group: "Commands", text: "/persona analyst" },
   { group: "Commands", text: "/persona operator" },
   { group: "Commands", text: "/persona engineer" },
-  { group: "Business", text: "What are the top 5 stores by revenue for the current season?" },
+  {
+    group: "Business",
+    text: "What are the top 5 stores by revenue for the current season?",
+  },
   {
     group: "Business",
     text: "Look up product details for brand code 'MICH' and list matching article types.",
@@ -71,7 +84,11 @@ const STARTERS: { group: StarterGroup; text: string }[] = [
   },
   {
     group: "Insight",
-    text: "Which stores have appointment demand outpacing their sales ranking, suggesting an opportunity to convert more service visits into purchases?",
+    text: "Using the 2025-08-30 to 2026-04-30 time window, which stores are showing strong sales but below-average CDI scores—where we may be performing well on revenue but falling short on customer experience?",
+  },
+  {
+    group: "HITL",
+    text: "Find stores with strong revenue but declining CDI scores, compare each store with its peers and recent trend, prepare an evidence-backed customer-experience intervention packet, and pause for manager approval before any operational dispatch.",
   },
 ];
 
@@ -176,6 +193,91 @@ function GovernancePanel({
         ) : null}
       </div>
     </details>
+  );
+}
+
+function ApprovalActions({
+  message,
+  token,
+  onDecision,
+}: {
+  message: ChatMessage;
+  token: string | null;
+  onDecision: (messageId: string, state: HumanApprovalState) => void;
+}): JSX.Element | null {
+  const [decisionInFlight, setDecisionInFlight] = useState<string | null>(null);
+  const [decisionError, setDecisionError] = useState<string | null>(null);
+  if (!message.approvalState || message.approvalState.status !== "pending")
+    return null;
+
+  async function decide(
+    decision: "approved" | "rejected" | "more_info_requested",
+  ): Promise<void> {
+    setDecisionInFlight(decision);
+    setDecisionError(null);
+    try {
+      const state = await submitApprovalDecision({
+        requestId: message.id,
+        agentName: "store-intervention-agent",
+        approver: "manager",
+        decision,
+        reason:
+          decision === "approved"
+            ? "Manager approved the proposed planning step."
+            : decision === "rejected"
+              ? "Manager rejected the proposed planning step."
+              : "Manager requested additional evidence before deciding.",
+        notes: "No operational dispatch is authorized by this UI action.",
+        token,
+      });
+      onDecision(message.id, state);
+    } catch (error) {
+      setDecisionError(
+        error instanceof Error
+          ? error.message
+          : "Approval decision could not be saved.",
+      );
+    } finally {
+      setDecisionInFlight(null);
+    }
+  }
+
+  return (
+    <section className="approval-actions" aria-label="Manager approval actions">
+      <div>
+        <strong>Manager approval required</strong>
+        <span>
+          {message.approvalState.reason ??
+            "Review this packet before any action."}
+        </span>
+      </div>
+      <div className="approval-buttons">
+        <button
+          type="button"
+          disabled={decisionInFlight !== null}
+          onClick={() => void decide("approved")}
+        >
+          {decisionInFlight === "approved" ? "Saving..." : "Approve planning"}
+        </button>
+        <button
+          type="button"
+          disabled={decisionInFlight !== null}
+          onClick={() => void decide("more_info_requested")}
+        >
+          {decisionInFlight === "more_info_requested"
+            ? "Saving..."
+            : "Request more info"}
+        </button>
+        <button
+          type="button"
+          disabled={decisionInFlight !== null}
+          onClick={() => void decide("rejected")}
+        >
+          {decisionInFlight === "rejected" ? "Saving..." : "Reject"}
+        </button>
+      </div>
+      {decisionError ? <span role="alert">{decisionError}</span> : null}
+    </section>
   );
 }
 
@@ -369,6 +471,7 @@ export default function App() {
                   routePlan: metadata.routePlan,
                   guardrailReasons: metadata.guardrailReasons,
                   truncated: metadata.truncated,
+                  approvalState: metadata.approvalState,
                 }
               : message,
           ),
@@ -412,6 +515,7 @@ export default function App() {
                 routePlan: result.metadata.routePlan,
                 guardrailReasons: result.metadata.guardrailReasons,
                 truncated: result.metadata.truncated,
+                approvalState: result.metadata.approvalState,
               }
             : msg,
         ),
@@ -604,6 +708,19 @@ export default function App() {
               renderMarkdown(message.content)
             )}
             <GovernancePanel message={message} />
+            <ApprovalActions
+              message={message}
+              token={token}
+              onDecision={(messageId, state) =>
+                setMessages((prev) =>
+                  prev.map((item) =>
+                    item.id === messageId
+                      ? { ...item, approvalState: state }
+                      : item,
+                  ),
+                )
+              }
+            />
           </article>
         ))}
       </main>

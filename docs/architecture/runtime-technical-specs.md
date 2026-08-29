@@ -79,6 +79,7 @@ Primary implementation:
   - requires_evidence
 - Request-time policy enforcement runs before tool execution.
 - Policy decisions produce explicit allow or deny reason codes.
+- The `store-intervention-agent` is manager-only and requires both evidence and human approval before operational action can be recommended.
 
 Primary implementation:
 
@@ -94,6 +95,7 @@ Primary implementation:
 - Guardrail decisions emit pass and block lifecycle events.
 - Input guardrails run before runtime authorization and emit `request.guardrail.blocked` with stable reason codes.
 - Response budgets are configured with `MAX_INPUT_CHARS` and `MAX_RESPONSE_CHARS`.
+- Governed function-call output events are recognized for deterministic source fallback before evidence evaluation.
 
 Primary implementation:
 
@@ -108,6 +110,7 @@ Primary implementation:
 - Optional async queue-backed message-bus publishing is available to reduce request-path event I/O overhead.
 - UC-governed persistence is implemented through a uc_table backend.
 - Tool success/failure events include normalized status, latency, attempt count, auth mode, and error code.
+- Approval decisions persist through an `ApprovalRepository`; the UC implementation stores them in a Delta table keyed by `request_id` and is fail-closed by default.
 
 Supported backends:
 
@@ -154,11 +157,29 @@ Primary implementation:
 - src/aiserver/application/delegation/handoff.py
 - src/aiserver/application/delegation/policy.py
 
-## 9. Deployment and Environment Specification
+## 9. Human-in-the-Loop Approval Specification
+
+- The orchestrator may analyze governed revenue and CDI data and prepare an intervention packet.
+- Response finalization appends a pending manager-review notice when the selected subagent requires approval.
+- `POST /approval-decisions` records `approved`, `rejected`, or `more_info_requested` decisions.
+- `GET /approval-decisions/{request_id}` retrieves the persisted decision.
+- Development uses the in-memory repository only when explicitly configured; deployed dev uses the UC table backend.
+- The approval repository creates `agent_approval_decisions` as a Unity Catalog Delta table and merges by `request_id`.
+- Approval recording and operational dispatch are separate control boundaries; this repository does not dispatch the action.
+
+Primary implementation:
+
+- src/aiserver/contracts/responses.py
+- src/aiserver/application/ports/audit.py
+- src/aiserver/infrastructure/persistence/approvals.py
+- src/aiserver/api/server.py
+
+## 10. Deployment and Environment Specification
 
 - Deployment is target-based with dev, qa, stg, and prd overlays.
 - Shared resource configuration is centralized and target overrides are explicit.
 - Environment variables configure runtime behavior for auth, bus backends, UC audit sink, and release gates.
+- Environment variables configure the approval backend and its UC Delta table.
 - Process concurrency tuning is supported through a backend Uvicorn worker env control (`BACKEND_UVICORN_WORKERS`).
 - Operational fallback deployment path is documented for registry outage scenarios.
 
@@ -172,14 +193,14 @@ Primary implementation:
 - targets/prd.yml
 - docs/operations/operations-runbook.md
 
-## 10. Validation Specification
+## 11. Validation Specification
 
 - Unit and integration tests cover subagent config, runtime auth, policy, message bus, and guardrails.
 - Compile checks and preflight runtime checks are used for end-to-end local validation.
 - Bundle validation is used to verify deploy-time configuration integrity.
 - App resource validation includes Lakebase Autoscaling `branch`, `database`, and `CAN_CONNECT_AND_CREATE` fields.
 
-## 11. Evaluation Readiness
+## 12. Evaluation Readiness
 
 - Deterministic route-plan tests pass for sales, product, Flink, CDI, and Lakebase intents.
 - Tool-call accuracy is monitored but non-blocking while the MLflow scorer cannot reliably assess nested tool spans.

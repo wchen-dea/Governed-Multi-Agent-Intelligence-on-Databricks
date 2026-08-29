@@ -52,6 +52,20 @@
     "description": "Customer Delight Indicator analytics via Genie Agent. Use this for CDI scores, promoter/detractor metrics, store-level satisfaction analysis, top/bottom-N store rankings, and rolling vs non-rolling period comparisons."
   },
   {
+    "name": "store-intervention-agent",
+    "type": "app",
+    "auth_mode": "app",
+    "data_classification": "confidential",
+    "owner": "sales-operations",
+    "freshness_sla": "15m",
+    "allowed_personas": ["manager"],
+    "requires_evidence": true,
+    "requires_human_approval": true,
+    "endpoint": "store-intervention-agent",
+    "system_prompt": "You are the Store Intervention decision agent. Review store-level revenue and customer delight signals, identify a material business risk or opportunity, and prepare a concise human-review packet before any operational action is suggested. Do not recommend dispatch, escalation, or intervention until the packet has been explicitly approved by a human manager. If a store shows strong sales but declining CDI or customer sentiment, call out the risk, compare against peer/rolling trend, present evidence, and stop with a pending approval state instead of acting autonomously.",
+    "description": "Review revenue-vs-experience store risk and prepare a manager approval packet before recommending operational action. Use this for high-impact store interventions, risk escalations, and business decisions that require human signoff."
+  },
+  {
     "name": "lakebase_ods_agent",
     "type": "lakebase",
     "auth_mode": "app",

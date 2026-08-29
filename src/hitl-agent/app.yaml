@@ -1,0 +1,19 @@
+command:
+  - uvicorn
+  - app:app
+  - --host
+  - 0.0.0.0
+  - --port
+  - "8000"
+
+env:
+  - name: REVENUE_TABLE
+    value: "dt_dev_platinum.enterprise.store_sales_performance"
+  - name: CDI_TABLE
+    value: "dt_dev_gold.dwh.fct_cdi_daily"
+  - name: PEER_SET_TABLE
+    value: "dt_dev_gold.dwh.brg_store_cluster_membership_group"
+  - name: SQL_WAREHOUSE_ID
+    value: "b20f70f71c2f52e2"
+  - name: TREND_WINDOW_DAYS
+    value: "90"

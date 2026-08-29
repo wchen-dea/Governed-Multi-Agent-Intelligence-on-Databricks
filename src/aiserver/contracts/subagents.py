@@ -53,6 +53,7 @@ class SubagentConfig:
     freshness_sla: str | None = None
     allowed_personas: tuple[str, ...] = ()
     requires_evidence: bool = False
+    requires_human_approval: bool = False
     can_delegate_to: tuple[str, ...] = ()
     accepts_delegations_from: tuple[str, ...] = ()
     allowed_task_intents: tuple[str, ...] = ()
@@ -194,6 +195,7 @@ class SubagentConfig:
                 freshness_sla=freshness_sla,
                 allowed_personas=tuple(allowed_personas_raw),
                 requires_evidence=bool(value["requires_evidence"]),
+                requires_human_approval=bool(value.get("requires_human_approval", False)),
                 can_delegate_to=delegation_values["can_delegate_to"],
                 accepts_delegations_from=delegation_values["accepts_delegations_from"],
                 allowed_task_intents=delegation_values["allowed_task_intents"],

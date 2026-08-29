@@ -214,6 +214,30 @@ def test_parse_subagents_accepts_governance_metadata():
     assert subagents[0].requires_evidence is True
 
 
+def test_parse_subagents_accepts_human_approval_agent():
+    subagents = parse_subagents(
+        [
+            {
+                "name": "store-intervention-agent",
+                "type": "app",
+                "description": "review store interventions before action",
+                "endpoint": "store-intervention-agent",
+                "data_classification": "confidential",
+                "owner": "sales-operations",
+                "freshness_sla": "15m",
+                "allowed_personas": ["manager"],
+                "requires_evidence": True,
+                "requires_human_approval": True,
+            }
+        ]
+    )
+
+    assert len(subagents) == 1
+    assert subagents[0].name == "store-intervention-agent"
+    assert subagents[0].allowed_personas == ("manager",)
+    assert subagents[0].requires_human_approval is True
+
+
 def test_parse_subagents_accepts_mcp_subagent():
     subagents = parse_subagents(
         [

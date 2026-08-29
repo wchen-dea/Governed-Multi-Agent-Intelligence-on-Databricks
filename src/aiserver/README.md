@@ -90,6 +90,7 @@ Most common edit locations:
 Tip:
 
 - Keep `src/aiserver/contracts/subagents.<target>.json` and runtime behavior aligned when adding or changing tools.
+- The active store intervention specialist source is in `src/hitl-agent/`; use `make update-hitl` to deploy source changes and `make grant-hitl-privileges` to refresh its least-privilege data access.
 
 ## Key Environment Variables
 
@@ -109,6 +110,7 @@ Message bus:
 - `KAFKA_BOOTSTRAP_SERVERS`, `KAFKA_CLIENT_ID`
 - `RABBITMQ_URL`
 - `UC_AUDIT_WAREHOUSE_ID`, `UC_AUDIT_CATALOG`, `UC_AUDIT_SCHEMA`, `UC_AUDIT_TABLE`
+- `APPROVAL_BACKEND`, `APPROVAL_WAREHOUSE_ID`, `APPROVAL_CATALOG`, `APPROVAL_SCHEMA`, `APPROVAL_TABLE`, `APPROVAL_FAIL_OPEN`
 
 Conversation memory (disabled by default; persists conversation content when enabled — review data classification before turning it on):
 

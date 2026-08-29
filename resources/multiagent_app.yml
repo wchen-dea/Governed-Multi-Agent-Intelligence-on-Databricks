@@ -84,6 +84,16 @@ resources:
           value: ${var.uc_audit_schema}
         - name: UC_AUDIT_TABLE
           value: ${var.uc_audit_table}
+        - name: APPROVAL_BACKEND
+          value: ${var.approval_backend}
+        - name: APPROVAL_WAREHOUSE_ID
+          value: ${var.approval_warehouse_id}
+        - name: APPROVAL_CATALOG
+          value: ${var.approval_catalog}
+        - name: APPROVAL_SCHEMA
+          value: ${var.approval_schema}
+        - name: APPROVAL_TABLE
+          value: ${var.approval_table}
         - name: AGENT_TASK_BACKEND
           value: ${var.agent_task_backend}
         - name: AGENT_TASK_WAREHOUSE_ID

@@ -91,9 +91,31 @@ Typical source pattern for Genie Agents:
 - Owner: customer-experience
 - Status: active
 
+## Active Approval Agent (Dev)
+
+### store-intervention-agent
+
+- Type: app
+- Runtime name: `store-intervention-agent`
+- Endpoint: `store-intervention-agent`
+- Auth mode: app
+- Allowed persona: manager
+- Classification: confidential
+- Owner: sales-operations
+- Evidence: required; responses must contain a citation or `Source:` line
+- Human approval: required before any operational recommendation or dispatch
+- Persistence: `APPROVAL_BACKEND=uc_table` in dev, table `quickstart_catalog.multi_agent_schema.agent_approval_decisions`
+- Specialist source: `src/hitl-agent/` (update with `make update-hitl`)
+- Specialist privileges: `make grant-hitl-privileges` grants warehouse `CAN_USE`, UC catalog/schema use, and table-level `SELECT`
+- Status: active
+
+This agent prepares an approval packet from revenue and CDI signals. It is not a dispatch executor. See [Human-in-the-loop approval](../governance/human-in-the-loop.md).
+
+The App specialist is deployed as the existing Databricks App `store-intervention-agent`; its source is exported under `src/hitl-agent/`. Follow the [creation procedure](../governance/human-in-the-loop.md#create-store-intervention-agent) for a new environment and use the update/grant helpers for ongoing changes.
+
 ## Other Environments
 
-- QA/STG/PRD define the same 5 subagents as dev (`sales_insights_agent`, `product_index_assistant`, `flink_support_agent`, `cdi_agent`, `lakebase_ods_agent`), aligned in shape and `auth_mode`/`requires_evidence` settings.
+- QA/STG/PRD define the same 6 subagents as dev (`sales_insights_agent`, `product_index_assistant`, `flink_support_agent`, `cdi_agent`, `store-intervention-agent`, `lakebase_ods_agent`), aligned in shape and `auth_mode`/`requires_evidence` settings.
 - `cdi_agent.space_id` and `lakebase_ods_agent`'s Lakebase connection fields (`project_id`, `branch_id`, `endpoint_id`, `database`, `pg_host`, `pg_user`) remain placeholders in QA/STG/PRD until those resources are provisioned per environment.
 - Entries with placeholder identifiers are skipped at runtime until concrete IDs are configured.
 

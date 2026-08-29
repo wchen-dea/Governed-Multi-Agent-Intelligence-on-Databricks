@@ -23,6 +23,12 @@ Separate model instruction strategy from hard policy enforcement and define safe
 - Source: frontend message handling and content rendering modules
 - Responsibility: user-facing framing and source hints
 
+### Human-in-the-Loop Instructions
+
+- Source: `store-intervention-agent` configuration in `src/aiserver/contracts/subagents.<target>.json`
+- Responsibility: analyze revenue-versus-CDI risk, produce an evidence-backed manager packet, and stop at `pending` approval before any operational recommendation or dispatch.
+- The prompt must not claim approval, dispatch an action, or treat a model-generated recommendation as authorization.
+
 ## Policy Layers
 
 ### Request-Time Policy
@@ -42,6 +48,7 @@ Separate model instruction strategy from hard policy enforcement and define safe
   - unsafe output patterns
   - low-confidence sensitive output
 - A subagent's `requires_evidence` flag must match its `system_prompt` citation mandate (see [prompt-engineering-guidelines.md](prompt-engineering-guidelines.md)); a mismatch either silently skips enforcement or blocks output the prompt never asked for citations on.
+- A subagent's `requires_human_approval` flag must match its prompt and runtime `approval_state` behavior. Approval records are submitted through `POST /approval-decisions` and are not dispatch commands.
 
 ## Decision Logging
 
@@ -51,6 +58,8 @@ All policy decisions must emit event metadata with:
 - reason code
 - subagent or tool name
 - context attributes (persona, confidence, identity flag)
+
+For approval-required workflows, include the request ID, agent name, store ID when available, approval status, and decision outcome in the audit trail. Do not persist credentials or raw tool payloads in approval records.
 
 ## Change Control
 

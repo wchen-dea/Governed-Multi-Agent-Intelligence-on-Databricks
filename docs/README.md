@@ -54,6 +54,7 @@ Use this index to navigate project documentation by purpose:
 - [architecture/runtime-technical-specs.md](architecture/runtime-technical-specs.md): centralized technical implementation specification.
 - [quality/evaluation-spec.md](quality/evaluation-spec.md): datasets, scorers, KPI thresholds, and release-gate behavior.
 - [governance/prompt-policy-controls.md](governance/prompt-policy-controls.md): prompt layering, deterministic policy checks, and guardrail controls.
+- [governance/human-in-the-loop.md](governance/human-in-the-loop.md): implemented manager approval workflow, decision API, durable persistence, and dispatch boundary.
 - [governance/prompt-engineering-guidelines.md](governance/prompt-engineering-guidelines.md): hands-on conventions for writing and reviewing subagent `system_prompt`/`description` fields and orchestrator instructions.
 - [governance/context-engineering-guidelines.md](governance/context-engineering-guidelines.md): conventions for what context to assemble, retrieve, remember, and discard (routing instructions, sticky routing, memory, retrieval).
 - [governance/agent-harness-engineering-guidelines.md](governance/agent-harness-engineering-guidelines.md): conventions for request pipeline, execution contracts, delegation bounds, model selection, and lifecycle observability.
@@ -87,18 +88,19 @@ Use this index to navigate project documentation by purpose:
 6. [governance/data-contracts-lineage.md](governance/data-contracts-lineage.md)
 7. [governance/business-semantics-metadata.md](governance/business-semantics-metadata.md)
 8. [governance/prompt-policy-controls.md](governance/prompt-policy-controls.md)
-9. [quality/evaluation-spec.md](quality/evaluation-spec.md)
-10. [governance/security-threat-model.md](governance/security-threat-model.md)
-11. [operations/cost-performance-budget.md](operations/cost-performance-budget.md)
-12. [operations/mlflow-rollout-checklist.md](operations/mlflow-rollout-checklist.md)
-13. [operations/mlflow-rollout-tracker.md](operations/mlflow-rollout-tracker.md)
-14. [architecture/api-contracts.md](architecture/api-contracts.md)
-15. [architecture/low-level-design.md](architecture/low-level-design.md)
-16. [architecture/design-artifacts/README.md](architecture/design-artifacts/README.md)
-17. [operations/operations-runbook.md](operations/operations-runbook.md)
-18. [operations/postmortem-template.md](operations/postmortem-template.md)
-19. [internal/claude.md](internal/claude.md)
-20. [adrs/README.md](adrs/README.md)
+9. [governance/human-in-the-loop.md](governance/human-in-the-loop.md)
+10. [quality/evaluation-spec.md](quality/evaluation-spec.md)
+11. [governance/security-threat-model.md](governance/security-threat-model.md)
+12. [operations/cost-performance-budget.md](operations/cost-performance-budget.md)
+13. [operations/mlflow-rollout-checklist.md](operations/mlflow-rollout-checklist.md)
+14. [operations/mlflow-rollout-tracker.md](operations/mlflow-rollout-tracker.md)
+15. [architecture/api-contracts.md](architecture/api-contracts.md)
+16. [architecture/low-level-design.md](architecture/low-level-design.md)
+17. [architecture/design-artifacts/README.md](architecture/design-artifacts/README.md)
+18. [operations/operations-runbook.md](operations/operations-runbook.md)
+19. [operations/postmortem-template.md](operations/postmortem-template.md)
+20. [internal/claude.md](internal/claude.md)
+21. [adrs/README.md](adrs/README.md)
 
 ## Quick Config Snippets
 

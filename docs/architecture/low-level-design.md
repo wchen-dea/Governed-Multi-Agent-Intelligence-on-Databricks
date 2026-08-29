@@ -71,6 +71,14 @@ This document covers low-level design and implementation details. See [high-leve
   - Supports optional queue-backed async publish wrapper for request-path latency reduction
   - Serves as extension point for external queue/broker integrations
 
+- `src/aiserver/infrastructure/persistence/approvals.py`
+  - Provides in-memory development and UC Delta approval repositories
+  - Creates the configured approval table and upserts decisions by request ID
+  - Reads persisted decisions for the approval-status API
+
+- `src/aiserver/application/ports/audit.py`
+  - Defines the `ApprovalRepository` protocol used by the API without coupling it to SQL
+
 - `src/aiserver/contracts/subagents.py`
   - Typed `SubagentConfig` dataclass
   - Validation for subagent type-specific required fields, optional `system_prompt`, and `auth_mode`
@@ -151,7 +159,10 @@ Reference diagram: [request execution pipeline](design-artifacts/07-request-exec
 5. Orchestrator agent is created with available tools.
 6. Runner executes model/tool loop while tool lifecycle bus events are emitted.
 7. Stream execution buffers events; source metadata and guardrails finalize before user-visible text is released.
-8. The UI renders `response.output_text.delta` only; tool events remain metadata.
+8. If an approval-required subagent participated, finalization appends evidence/source metadata and a pending manager-review notice before guardrails run.
+9. The UI renders `response.output_text.delta` only; tool events remain metadata.
+10. A manager submits a decision through `/approval-decisions`; the repository persists it before returning success.
+11. Any future operational dispatcher independently reads and validates the approval record before acting.
 
 ## Tool Routing Model
 
@@ -167,6 +178,8 @@ Supported auth modes:
 
 - `app`: use app identity for tool calls.
 - `obo`: use user identity from forwarded request token.
+
+The `store-intervention-agent` is app-authenticated and available only to the manager persona. It is an analysis and approval-packet generator, not an autonomous dispatch worker.
 
 Default auth mode behavior:
 
@@ -201,6 +214,11 @@ If an OBO tool is invoked without a forwarded token, the runtime returns a clear
 - `memory_backend`
 - `target_app_name`
 - `mlflow_experiment_id`
+- `approval_backend`
+- `approval_warehouse_id`
+- `approval_catalog`
+- `approval_schema`
+- `approval_table`
 
 ### Runtime Environment Variables
 
@@ -234,6 +252,12 @@ Used by local and hosted startup:
 - `UC_AUDIT_CATALOG`
 - `UC_AUDIT_SCHEMA`
 - `UC_AUDIT_TABLE`
+- `APPROVAL_BACKEND`
+- `APPROVAL_WAREHOUSE_ID`
+- `APPROVAL_CATALOG`
+- `APPROVAL_SCHEMA`
+- `APPROVAL_TABLE`
+- `APPROVAL_FAIL_OPEN`
 - `EVAL_MIN_TOOL_CALL_ACCURACY`
 - `EVAL_MIN_AUTH_CORRECTNESS`
 - `EVAL_MIN_SAFETY`
