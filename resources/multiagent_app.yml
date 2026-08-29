@@ -160,3 +160,7 @@ resources:
           branch: projects/${var.lakebase_project_id}/branches/${var.lakebase_branch_id}
           database: projects/${var.lakebase_project_id}/branches/${var.lakebase_branch_id}/databases/${var.lakebase_database}
           permission: 'CAN_CONNECT_AND_CREATE'
+      - name: 'hitl_app_agent'
+        app:
+          name: ${var.hitl_app_name}
+          permission: CAN_USE

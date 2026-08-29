@@ -178,9 +178,9 @@ Expected health fields:
 The GitHub Actions deployment pipeline (`.github/workflows/databricks-cicd.yml`) is aligned to this runbook:
 
 - **`pr-ci` job** (pull requests): `uv run pytest -q` → `uv run assistant-evaluate` → `make build-app-source` → `make validate TARGET=<pr-base-branch>`.
-- **`deploy` job** (push to `dev`/`qa`/`stg`/`prd` or manual dispatch): `uv run pytest -q` → `uv run assistant-evaluate` → `make redeploy TARGET=<target> APP_NAME=<app-name>` → resolve HITL bundle variables → `make update-hitl APP_NAME=<hitl-app-name>` → `make grant-hitl-privileges APP_NAME=<hitl-app-name>`.
+- **`deploy` job** (push to `dev`/`qa`/`stg`/`prd` or manual dispatch): `uv run pytest -q` → `uv run assistant-evaluate` → resolve HITL bundle variables → `make redeploy-source-only TARGET=<target> APP_NAME=<app-name>` → `make update-hitl APP_NAME=<hitl-app-name>` → `make grant-hitl-privileges APP_NAME=<hitl-app-name>`.
 
-`make redeploy` is a single composite target that runs `build-app-source`, `validate`, `bundle-deploy-optional`, `import`, `deploy`, `grants`, `health`, and `smoke` in sequence (see [Makefile](../../Makefile)).
+`make redeploy` is a full release target that runs `build-app-source`, `validate`, `bundle-deploy-optional`, `import`, `deploy`, `grants`, `health`, and `smoke` in sequence (see [Makefile](../../Makefile)). CI uses `make redeploy-source-only` so app source updates preserve existing service principals and avoid a duplicate DAB-managed HITL deployment in the same job.
 
 For an operator-driven source-only recovery, use `make upload-wheel` instead of `make redeploy`.
 

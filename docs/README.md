@@ -7,6 +7,7 @@ This guide separates current implementation authority from operating procedures,
 | Need | Authoritative location |
 | --- | --- |
 | Current runtime behavior | [Architecture guide](architecture/README.md) and [runtime technical specifications](architecture/runtime-technical-specs.md) |
+| Current solution overview | [AI architecture current solution](ai-architecture-current-solution.md) |
 | API and stream behavior | [API contracts](architecture/api-contracts.md) |
 | Active tools, models, and integration routes | [Tool and model registry](architecture/tool-and-model-registry.md) |
 | Deployment and incident procedures | [Operations guide](operations/README.md) |
@@ -46,6 +47,7 @@ Use this index to navigate project documentation by purpose:
 
 - [product/README.md](product/README.md): business outcomes, scope, and current capability boundary.
 - [product/agent-usage-guide.md](product/agent-usage-guide.md): what each agent is best at, perfect-match query types, and composite/freshness guidance for end users.
+- [ai-architecture-current-solution.md](ai-architecture-current-solution.md): consolidated current implementation architecture, runtime flow, deployment, HITL, model routing, and evaluation posture.
 - [architecture/README.md](architecture/README.md): architecture reading paths, authority map, and current control planes.
 - [governance/README.md](governance/README.md): policy, data, semantic, and security ownership.
 - [operations/README.md](operations/README.md): deployment, verification, MLflow, scripts, and incident paths.
@@ -81,26 +83,27 @@ Use this index to navigate project documentation by purpose:
 ## Recommended Read Order
 
 1. [architecture/README.md](architecture/README.md)
-2. [architecture/high-level-architecture.md](architecture/high-level-architecture.md)
-3. [product/business-specs.md](product/business-specs.md)
-4. [architecture/runtime-technical-specs.md](architecture/runtime-technical-specs.md)
-5. [architecture/tool-and-model-registry.md](architecture/tool-and-model-registry.md)
-6. [governance/data-contracts-lineage.md](governance/data-contracts-lineage.md)
-7. [governance/business-semantics-metadata.md](governance/business-semantics-metadata.md)
-8. [governance/prompt-policy-controls.md](governance/prompt-policy-controls.md)
-9. [governance/human-in-the-loop.md](governance/human-in-the-loop.md)
-10. [quality/evaluation-spec.md](quality/evaluation-spec.md)
-11. [governance/security-threat-model.md](governance/security-threat-model.md)
-12. [operations/cost-performance-budget.md](operations/cost-performance-budget.md)
-13. [operations/mlflow-rollout-checklist.md](operations/mlflow-rollout-checklist.md)
-14. [operations/mlflow-rollout-tracker.md](operations/mlflow-rollout-tracker.md)
-15. [architecture/api-contracts.md](architecture/api-contracts.md)
-16. [architecture/low-level-design.md](architecture/low-level-design.md)
-17. [architecture/design-artifacts/README.md](architecture/design-artifacts/README.md)
-18. [operations/operations-runbook.md](operations/operations-runbook.md)
-19. [operations/postmortem-template.md](operations/postmortem-template.md)
-20. [internal/claude.md](internal/claude.md)
-21. [adrs/README.md](adrs/README.md)
+2. [ai-architecture-current-solution.md](ai-architecture-current-solution.md)
+3. [architecture/high-level-architecture.md](architecture/high-level-architecture.md)
+4. [product/business-specs.md](product/business-specs.md)
+5. [architecture/runtime-technical-specs.md](architecture/runtime-technical-specs.md)
+6. [architecture/tool-and-model-registry.md](architecture/tool-and-model-registry.md)
+7. [governance/data-contracts-lineage.md](governance/data-contracts-lineage.md)
+8. [governance/business-semantics-metadata.md](governance/business-semantics-metadata.md)
+9. [governance/prompt-policy-controls.md](governance/prompt-policy-controls.md)
+10. [governance/human-in-the-loop.md](governance/human-in-the-loop.md)
+11. [quality/evaluation-spec.md](quality/evaluation-spec.md)
+12. [governance/security-threat-model.md](governance/security-threat-model.md)
+13. [operations/cost-performance-budget.md](operations/cost-performance-budget.md)
+14. [operations/mlflow-rollout-checklist.md](operations/mlflow-rollout-checklist.md)
+15. [operations/mlflow-rollout-tracker.md](operations/mlflow-rollout-tracker.md)
+16. [architecture/api-contracts.md](architecture/api-contracts.md)
+17. [architecture/low-level-design.md](architecture/low-level-design.md)
+18. [architecture/design-artifacts/README.md](architecture/design-artifacts/README.md)
+19. [operations/operations-runbook.md](operations/operations-runbook.md)
+20. [operations/postmortem-template.md](operations/postmortem-template.md)
+21. [internal/claude.md](internal/claude.md)
+22. [adrs/README.md](adrs/README.md)
 
 ## Quick Config Snippets
 

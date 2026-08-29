@@ -44,11 +44,52 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y curl unzip jq make
 
+      - name: Install Databricks CLI
+        run: curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+
       - name: Install uv
         run: pip install uv
 
       - name: Sync dependencies
         run: uv sync
+
+      - name: Resolve PR target Databricks credentials
+        env:
+          TARGET: ${{ github.base_ref }}
+          DATABRICKS_HOST_DEV: ${{ secrets.DATABRICKS_HOST_DEV }}
+          DATABRICKS_CLIENT_ID_DEV: ${{ secrets.DATABRICKS_CLIENT_ID_DEV }}
+          DATABRICKS_CLIENT_SECRET_DEV: ${{ secrets.DATABRICKS_CLIENT_SECRET_DEV }}
+          DATABRICKS_HOST_QA: ${{ secrets.DATABRICKS_HOST_QA }}
+          DATABRICKS_CLIENT_ID_QA: ${{ secrets.DATABRICKS_CLIENT_ID_QA }}
+          DATABRICKS_CLIENT_SECRET_QA: ${{ secrets.DATABRICKS_CLIENT_SECRET_QA }}
+          DATABRICKS_HOST_STG: ${{ secrets.DATABRICKS_HOST_STG }}
+          DATABRICKS_CLIENT_ID_STG: ${{ secrets.DATABRICKS_CLIENT_ID_STG }}
+          DATABRICKS_CLIENT_SECRET_STG: ${{ secrets.DATABRICKS_CLIENT_SECRET_STG }}
+          DATABRICKS_HOST_PRD: ${{ secrets.DATABRICKS_HOST_PRD }}
+          DATABRICKS_CLIENT_ID_PRD: ${{ secrets.DATABRICKS_CLIENT_ID_PRD }}
+          DATABRICKS_CLIENT_SECRET_PRD: ${{ secrets.DATABRICKS_CLIENT_SECRET_PRD }}
+        run: |
+          set -euo pipefail
+
+          case "$TARGET" in
+            dev|qa|stg|prd) ;;
+            *)
+              echo "Unsupported target: $TARGET" >&2
+              exit 1
+              ;;
+          esac
+
+          TARGET_UPPER="$(echo "$TARGET" | tr '[:lower:]' '[:upper:]')"
+          for key in DATABRICKS_HOST DATABRICKS_CLIENT_ID DATABRICKS_CLIENT_SECRET; do
+            eval "value=\${${key}_${TARGET_UPPER}:-}"
+            if [ -z "$value" ]; then
+              echo "Missing required secret: ${key}_${TARGET_UPPER}" >&2
+              exit 1
+            fi
+            echo "${key}=$value" >> "$GITHUB_ENV"
+          done
+          echo "DATABRICKS_AUTH_TYPE=oauth-m2m" >> "$GITHUB_ENV"
+          echo "$HOME/.databricks/bin" >> "$GITHUB_PATH"
 
       - name: Run tests
         run: uv run pytest -q
@@ -70,7 +111,7 @@ jobs:
       - name: Validate bundle for PR base target
         env:
           TARGET: ${{ github.base_ref }}
-        run: make validate TARGET="$TARGET"
+        run: make validate TARGET="$TARGET" PROFILE=
 
   deploy:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
@@ -157,18 +198,28 @@ jobs:
       - name: Resolve bundle app variables
         run: |
           set -euo pipefail
-          BUNDLE_JSON="$(databricks bundle validate -t "$TARGET" --profile DEFAULT --output json)"
+          BUNDLE_JSON="$(databricks bundle validate -t "$TARGET" --output json)"
 
           value_for() {
             printf '%s' "$BUNDLE_JSON" | jq -r ".variables.$1.value // .variables.$1.default // \"\""
           }
 
-          echo "HITL_APP_NAME=$(value_for hitl_app_name)" >> "$GITHUB_ENV"
-          echo "HITL_WAREHOUSE_ID=$(value_for hitl_sql_warehouse_id)" >> "$GITHUB_ENV"
-          echo "HITL_REVENUE_TABLE=$(value_for hitl_revenue_table)" >> "$GITHUB_ENV"
-          echo "HITL_CDI_TABLE=$(value_for hitl_cdi_table)" >> "$GITHUB_ENV"
-          echo "HITL_PEER_SET_TABLE=$(value_for hitl_peer_set_table)" >> "$GITHUB_ENV"
-          echo "HITL_STORE_DIMENSION_TABLE=$(value_for hitl_store_dimension_table)" >> "$GITHUB_ENV"
+          export_if_concrete() {
+            name="$1"
+            value="$2"
+            case "$value" in
+              ""|\<*\>) return ;;
+            esac
+            echo "$name=$value" >> "$GITHUB_ENV"
+          }
+
+          export_if_concrete HITL_APP_NAME "$(value_for hitl_app_name)"
+          export_if_concrete HITL_WAREHOUSE_ID "$(value_for hitl_sql_warehouse_id)"
+          export_if_concrete HITL_REVENUE_TABLE "$(value_for hitl_revenue_table)"
+          export_if_concrete HITL_CDI_TABLE "$(value_for hitl_cdi_table)"
+          export_if_concrete HITL_PEER_SET_TABLE "$(value_for hitl_peer_set_table)"
+          export_if_concrete HITL_STORE_DIMENSION_TABLE "$(value_for hitl_store_dimension_table)"
+          export_if_concrete HITL_TREND_WINDOW_DAYS "$(value_for hitl_trend_window_days)"
 
       - name: Run tests
         run: uv run pytest -q
@@ -184,17 +235,17 @@ jobs:
           EVAL_SIMULATOR_USER_MODEL: "databricks:/databricks-claude-sonnet-5"
         run: uv run assistant-evaluate
 
-      - name: Full redeploy
+      - name: Source-only redeploy main app
         run: |
           set -euo pipefail
-          make redeploy TARGET="$TARGET" APP_NAME="$APP_NAME" PROFILE=DEFAULT
+          make redeploy-source-only TARGET="$TARGET" APP_NAME="$APP_NAME" PROFILE=
 
       - name: Deploy HITL specialist app
         run: |
           set -euo pipefail
-          make update-hitl APP_NAME="$HITL_APP_NAME" PROFILE=DEFAULT
+          make update-hitl APP_NAME="$HITL_APP_NAME" TARGET="$TARGET" PROFILE=
 
       - name: Grant HITL specialist privileges
         run: |
           set -euo pipefail
-          ORCHESTRATOR_APP_NAME="$APP_NAME" make grant-hitl-privileges APP_NAME="$HITL_APP_NAME" PROFILE=DEFAULT
+          ORCHESTRATOR_APP_NAME="$APP_NAME" make grant-hitl-privileges APP_NAME="$HITL_APP_NAME" TARGET="$TARGET" PROFILE=

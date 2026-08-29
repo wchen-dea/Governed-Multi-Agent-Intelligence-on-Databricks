@@ -172,7 +172,7 @@ Both identities are resolved per-request in `RuntimeAuthContext`. Tools and MCP 
 
 ## Configuration
 
-All runtime behavior is driven by environment variables (see `shared/settings.py`):
+All runtime behavior is driven by environment variables (see [settings.py](../../src/aiserver/config/settings.py)):
 
 | Variable | Purpose |
 | --- | --- |

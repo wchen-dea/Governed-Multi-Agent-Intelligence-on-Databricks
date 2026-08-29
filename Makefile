@@ -1,10 +1,11 @@
 SHELL := /bin/sh
 
-.PHONY: help test lint lint-markdown format runtime-core assistant-tools evaluate evaluate-strict triage-evaluation build-app-source update-hitl grant-hitl-privileges upload-wheel validate wait-stable bundle-deploy bundle-deploy-optional import ensure-running stop deploy grants redeploy health smoke smoke-governance query-dev logs status
+.PHONY: help test lint lint-markdown format runtime-core assistant-tools evaluate evaluate-strict triage-evaluation build-app-source update-hitl grant-hitl-privileges upload-wheel validate wait-stable bundle-deploy bundle-deploy-optional import ensure-running stop deploy grants redeploy redeploy-source-only health smoke smoke-governance query-dev logs status
 
 PROFILE ?= DEFAULT
 TARGET ?= dev
 APP_NAME ?= multiagent-app-$(TARGET)
+PROFILE_ARG = $(if $(strip $(PROFILE)),--profile "$(PROFILE)",)
 APP_START_MAX_ATTEMPTS ?= 30
 APP_START_POLL_SECONDS ?= 2
 APP_STABLE_MAX_ATTEMPTS ?= 60
@@ -16,7 +17,7 @@ PERMISSIONS_DRY_RUN ?= false
 QUERY ?= ping
 QUERY_PERSONA ?= manager
 
-APP_GET_JSON = databricks apps get "$(APP_NAME)" --profile "$(PROFILE)" --output json
+APP_GET_JSON = databricks apps get "$(APP_NAME)" $(PROFILE_ARG) --output json
 
 help:
 	@printf "Local dev Databricks app workflow\n\n"
@@ -34,6 +35,7 @@ help:
 	@printf "  make update-hitl       Create missing HITL App or update existing App without changing its SP\n"
 	@printf "  make grant-hitl-privileges Grant least-privilege access to HITL source tables\n"
 	@printf "  make upload-wheel      Create missing app or update existing app from wheel payload without Terraform\n"
+	@printf "  make redeploy-source-only Build, deploy, grant, health-check, and smoke-test without bundle apply\n"
 	@printf "  make validate          Validate Databricks bundle for TARGET\n"
 	@printf "  make wait-stable       Wait for App compute to be ACTIVE or STOPPED\n"
 	@printf "  make bundle-deploy     Try bundle deploy for TARGET (may fail on Terraform registry)\n"
@@ -92,7 +94,7 @@ grant-hitl-privileges:
 upload-wheel: build-app-source validate import deploy ensure-running health
 
 validate:
-	databricks bundle validate -t "$(TARGET)" --profile "$(PROFILE)"
+	databricks bundle validate -t "$(TARGET)" $(PROFILE_ARG)
 
 wait-stable:
 	@printf "Waiting for app %s compute to become stable...\n" "$(APP_NAME)"; \
@@ -116,11 +118,11 @@ wait-stable:
 	exit 1
 
 bundle-deploy: wait-stable
-	@databricks bundle deploy -t "$(TARGET)" --profile "$(PROFILE)" || \
+	@databricks bundle deploy -t "$(TARGET)" $(PROFILE_ARG) || \
 		(printf "bundle deploy failed; use make redeploy for the Terraform-free fallback path\n" && exit 1)
 
 bundle-deploy-optional: wait-stable
-	@databricks bundle deploy -t "$(TARGET)" --profile "$(PROFILE)" || \
+	@databricks bundle deploy -t "$(TARGET)" $(PROFILE_ARG) || \
 		printf "bundle deploy failed; continuing with Terraform-free fallback path (import -> deploy -> permissions -> health -> smoke)\n"
 
 import: build-app-source
@@ -128,7 +130,7 @@ import: build-app-source
 	APP_SRC="$$(printf "%s" "$$APP_JSON" | jq -r '.default_source_code_path')"; \
 	if [ -z "$$APP_SRC" ] || [ "$$APP_SRC" = "null" ]; then \
 		printf "default_source_code_path is unset for $(APP_NAME) (deployment record reset); deriving path from bundle validate...\n" >&2; \
-		WS_FILE_PATH="$$(databricks bundle validate -t "$(TARGET)" --profile "$(PROFILE)" --output json | jq -r '.workspace.file_path')"; \
+		WS_FILE_PATH="$$(databricks bundle validate -t "$(TARGET)" $(PROFILE_ARG) --output json | jq -r '.workspace.file_path')"; \
 		if [ -z "$$WS_FILE_PATH" ] || [ "$$WS_FILE_PATH" = "null" ]; then \
 			printf "Could not derive app source path for $(APP_NAME) from bundle validate either\n" >&2; \
 			exit 1; \
@@ -136,12 +138,12 @@ import: build-app-source
 		APP_SRC="$$WS_FILE_PATH/.databricks_app_source"; \
 		printf "Derived app source path: %s\n" "$$APP_SRC" >&2; \
 	fi; \
-	databricks workspace delete "$$APP_SRC/wheels" --recursive --profile "$(PROFILE)" >/dev/null 2>&1 || true; \
-	databricks workspace import-dir .databricks_app_source "$$APP_SRC" --overwrite --profile "$(PROFILE)"
+	databricks workspace delete "$$APP_SRC/wheels" --recursive $(PROFILE_ARG) >/dev/null 2>&1 || true; \
+	databricks workspace import-dir .databricks_app_source "$$APP_SRC" --overwrite $(PROFILE_ARG)
 
 ensure-running:
 	@printf "Ensuring app %s is RUNNING...\n" "$(APP_NAME)"; \
-	databricks apps start "$(APP_NAME)" --profile "$(PROFILE)" >/dev/null 2>&1 || true; \
+	databricks apps start "$(APP_NAME)" $(PROFILE_ARG) >/dev/null 2>&1 || true; \
 	APP_STATE=""; \
 	ATTEMPT=0; \
 	while [ $$ATTEMPT -lt "$(APP_START_MAX_ATTEMPTS)" ]; do \
@@ -158,7 +160,7 @@ ensure-running:
 	exit 1
 
 stop:
-	@databricks apps stop "$(APP_NAME)" --profile "$(PROFILE)" >/dev/null 2>&1 || true; \
+	@databricks apps stop "$(APP_NAME)" $(PROFILE_ARG) >/dev/null 2>&1 || true; \
 	APP_STATE="$$($(APP_GET_JSON) | jq -r '.app_status.state')"; \
 	COMPUTE_STATE="$$($(APP_GET_JSON) | jq -r '.compute_status.state')"; \
 	printf "app=%s\ncompute=%s\n" "$$APP_STATE" "$$COMPUTE_STATE"; \
@@ -185,7 +187,7 @@ deploy: wait-stable
 	ATTEMPT=0; \
 	if [ -z "$$APP_SRC" ] || [ "$$APP_SRC" = "null" ]; then \
 		printf "default_source_code_path is unset for $(APP_NAME) (deployment record reset); deriving path from bundle validate...\n" >&2; \
-		WS_FILE_PATH="$$(databricks bundle validate -t "$(TARGET)" --profile "$(PROFILE)" --output json | jq -r '.workspace.file_path')"; \
+		WS_FILE_PATH="$$(databricks bundle validate -t "$(TARGET)" $(PROFILE_ARG) --output json | jq -r '.workspace.file_path')"; \
 		if [ -z "$$WS_FILE_PATH" ] || [ "$$WS_FILE_PATH" = "null" ]; then \
 			printf "Could not derive app source path for $(APP_NAME) from bundle validate either\n" >&2; \
 			exit 1; \
@@ -196,7 +198,7 @@ deploy: wait-stable
 	fi; \
 	if [ "$$APP_EXISTS" = "false" ]; then \
 		printf "App %s does not exist; creating it once from source path: %s\n" "$(APP_NAME)" "$$APP_SRC"; \
-		databricks apps create "$(APP_NAME)" --profile "$(PROFILE)" --source-code-path "$$APP_SRC" --description "Multi-agent orchestrator that queries governed agents and tools"; \
+		databricks apps create "$(APP_NAME)" $(PROFILE_ARG) --source-code-path "$$APP_SRC" --description "Multi-agent orchestrator that queries governed agents and tools"; \
 		APP_JSON="$$($(APP_GET_JSON))"; \
 		DEPLOY_STATE="$$(printf "%s" "$$APP_JSON" | jq -r '.active_deployment.status.state // "NONE"')"; \
 	fi; \
@@ -212,7 +214,7 @@ deploy: wait-stable
 		exit 1; \
 	fi; \
 	printf "Deploying app %s from source path: %s\n" "$(APP_NAME)" "$$APP_SRC"; \
-	databricks apps deploy "$(APP_NAME)" --profile "$(PROFILE)" --source-code-path "$$APP_SRC" --mode SNAPSHOT; \
+	databricks apps deploy "$(APP_NAME)" $(PROFILE_ARG) --source-code-path "$$APP_SRC" --mode SNAPSHOT; \
 	AFTER_JSON="$$($(APP_GET_JSON))"; \
 	AFTER_SP="$$(printf "%s" "$$AFTER_JSON" | jq -r '.service_principal_client_id // empty')"; \
 	if [ "$$APP_EXISTS" = "true" ] && [ -n "$$BEFORE_SP" ] && [ "$$BEFORE_SP" != "$$AFTER_SP" ]; then \
@@ -229,10 +231,12 @@ grants:
 	uv run python src/operations/grant_app_runtime_permissions.py \
 		--app-name "$(APP_NAME)" \
 		--target "$(TARGET)" \
-		--profile "$(PROFILE)" \
+		$(if $(strip $(PROFILE)),--profile "$(PROFILE)",) \
 		$$FLAGS
 
 redeploy: build-app-source validate bundle-deploy-optional import deploy grants health smoke
+
+redeploy-source-only: upload-wheel grants smoke
 
 health:
 	@APP_JSON="$$($(APP_GET_JSON))"; \
@@ -304,7 +308,7 @@ query-dev:
 		printf "Could not resolve app URL for $(APP_NAME)\n" >&2; \
 		exit 1; \
 	fi; \
-	TOKEN="$$(databricks auth token --profile "$(PROFILE)" --output json | jq -r '.access_token')"; \
+	TOKEN="$$(databricks auth token $(PROFILE_ARG) --output json | jq -r '.access_token')"; \
 	if [ -z "$$TOKEN" ] || [ "$$TOKEN" = "null" ]; then \
 		printf "Could not resolve access token from databricks auth token for profile $(PROFILE)\n" >&2; \
 		exit 1; \
@@ -325,4 +329,4 @@ status:
 	$(APP_GET_JSON)
 
 logs:
-	databricks apps logs "$(APP_NAME)" --tail-lines 120 --profile "$(PROFILE)"
+	databricks apps logs "$(APP_NAME)" --tail-lines 120 $(PROFILE_ARG)

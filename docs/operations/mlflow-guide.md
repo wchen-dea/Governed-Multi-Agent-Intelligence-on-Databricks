@@ -106,7 +106,7 @@ https://dbc-baff2b7f-4402.cloud.databricks.com/ml/experiments/3025644123415124
 
 In the Experiments UI:
 - **Runs tab** → select the `agent-quality-evaluation` run → view logged params, KPI metrics, and `gate.release_passed`
-- **Evaluation tab** (inside the run) → per-conversation scorer breakdown table with 11 scorers
+- **Evaluation tab** (inside the run) → per-conversation scorer breakdown table with 12 scorers
 
 ### Current failure baseline
 
