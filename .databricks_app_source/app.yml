@@ -56,6 +56,14 @@ env:
   value: multi_agent_schema
 - name: APPROVAL_TABLE
   value: agent_approval_decisions
+- name: APPROVAL_DELEGATION_ENABLED
+  value: 'true'
+- name: APPROVAL_DELEGATION_SOURCE_AGENT
+  value: approval-api
+- name: APPROVAL_DELEGATION_TARGET_AGENT
+  value: store-intervention-agent
+- name: APPROVAL_DELEGATION_INTENT
+  value: store_intervention_planning
 - name: AGENT_TASK_BACKEND
   value: uc_table
 - name: AGENT_TASK_WAREHOUSE_ID
