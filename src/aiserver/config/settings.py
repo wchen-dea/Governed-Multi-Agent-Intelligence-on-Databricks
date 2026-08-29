@@ -12,8 +12,8 @@ class AppSettings:
     orchestrator_model: str = "databricks-gpt-5-6-luna"
     model_routing_enabled: bool = True
     model_routing_default_model: str = "databricks-gpt-5-6-luna"
-    model_routing_reasoning_model: str = "databricks-gpt-5-6-luna"
-    model_routing_quality_model: str = "databricks-gpt-5-6-luna"
+    model_routing_reasoning_model: str = "databricks-claude-sonnet-5"
+    model_routing_quality_model: str = "databricks-claude-sonnet-5"
     openai_base_url: str = ""
     openai_timeout_seconds: float = 0.0
     log_level: str = "INFO"
@@ -97,10 +97,10 @@ def get_settings() -> AppSettings:
             os.getenv("ORCHESTRATOR_MODEL", "databricks-gpt-5-6-luna"),
         ),
         model_routing_reasoning_model=os.getenv(
-            "MODEL_ROUTING_REASONING_MODEL", "databricks-gpt-5-6-luna"
+            "MODEL_ROUTING_REASONING_MODEL", "databricks-claude-sonnet-5"
         ),
         model_routing_quality_model=os.getenv(
-            "MODEL_ROUTING_QUALITY_MODEL", "databricks-gpt-5-6-luna"
+            "MODEL_ROUTING_QUALITY_MODEL", "databricks-claude-sonnet-5"
         ),
         openai_base_url=os.getenv("DATABRICKS_OPENAI_BASE_URL", ""),
         openai_timeout_seconds=_env_float("DATABRICKS_OPENAI_TIMEOUT_SECONDS", 0.0),

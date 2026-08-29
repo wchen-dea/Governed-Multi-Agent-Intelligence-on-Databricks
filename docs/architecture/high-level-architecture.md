@@ -221,7 +221,7 @@ If an `obo` tool is required but no forwarded token is available, the tool is ma
 
 ### Model and Delegation Control Plan
 
-The deterministic model router classifies requests as standard, reasoning, or synthesis before agent assembly. Dev currently resolves every class to `databricks-gpt-5-6-luna`; routing metadata is not proof of tool-call correctness.
+The deterministic model router classifies requests as standard, reasoning, or synthesis before agent assembly. Dev uses `databricks-gpt-5-6-luna` for standard turns and `databricks-claude-sonnet-5` for reasoning/synthesis turns; routing metadata is not proof of tool-call correctness.
 
 Approved app-auth handoffs use `delegate_to_agent` and persist bounded work in Unity Catalog task/event tables. Native handoffs synchronously settle their submitted task; the optional lifespan-managed worker separately processes durable queued work. `GET /delegations/{task_id}` returns payload-redacted status.
 

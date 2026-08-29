@@ -46,7 +46,8 @@ For target values:
 
 - Confirm target (`dev` / `qa` / `stg` / `prd`) and CLI profile.
 - Confirm target variables in `targets/*.yml` are correct.
-- Confirm the target's HITL App, `hitl-app-agent` in dev, exists or is bound to DAB resource `hitl-store-intervention-app`, is running, and grants the orchestrator service principal `CAN_USE`; follow the [HITL specialist creation procedure](../governance/human-in-the-loop.md#create-store-intervention-agent) when onboarding it.
+- Confirm the target's HITL App, `hitl-app-agent` in dev, exists or is bound to DAB resource `hitl-app-agent`, is running, and grants the orchestrator service principal `CAN_USE`; follow the [HITL specialist creation procedure](../governance/human-in-the-loop.md#create-store-intervention-agent) when onboarding it.
+- Use `make update-hitl APP_NAME=<hitl-app-name> PROFILE=<profile>` for source-only HITL deploys; it creates the App only when missing and otherwise verifies the existing service principal is preserved.
 - Confirm the HITL App service principal has the current SQL warehouse, UC schema, and table `SELECT` grants; run `make grant-hitl-privileges` after changing its data sources.
 - Confirm the app service principal has a Lakebase OAuth role and the app has the target `postgres` resource grant.
 - Confirm no pending manual hotfix state in the target app.
@@ -143,7 +144,7 @@ Use this procedure when `bundle deploy` fails due to Terraform provider registry
 make upload-wheel TARGET=TARGET APP_NAME=APP_NAME PROFILE=PROFILE
 ```
 
-`upload-wheel` runs `ensure-running`, builds the wheel and React payload, removes generated remote wheels, imports the source, deploys it, and checks health. It does not apply bundle-managed app resources or grants.
+`upload-wheel` builds the wheel and React payload, removes generated remote wheels, imports the source, creates the app only when it is missing, deploys updates to the existing app otherwise, verifies the service principal did not change on update, and checks health. It does not apply bundle-managed app resources or grants.
 
 For a full release attempt with validation, optional bundle apply, grants, health, and smoke checks, use:
 
@@ -155,7 +156,7 @@ make redeploy TARGET=TARGET APP_NAME=APP_NAME PROFILE=PROFILE
 
 In some environments, relying on bundle runtime commands may use a reduced source payload (for example, only bundle resource files), which can fail startup with errors such as missing command or missing modules.
 
-When this occurs, use `make upload-wheel` to deploy the complete app-source payload. It creates a versioned wheel, uploads it under the app source path, and deploys the resulting snapshot:
+When this occurs, use `make upload-wheel` to deploy the complete app-source payload. It creates a versioned wheel, uploads it under the app source path, creates the app only when missing, and otherwise deploys the resulting snapshot to the existing app without changing its service principal:
 
 ```bash
 make upload-wheel TARGET=TARGET APP_NAME=APP_NAME PROFILE=PROFILE

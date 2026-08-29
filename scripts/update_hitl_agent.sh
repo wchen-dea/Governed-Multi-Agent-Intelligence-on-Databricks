@@ -19,8 +19,29 @@ printf "Local source: %s\n" "$SOURCE_DIR"
 printf "Workspace source: %s\n" "$WORKSPACE_PATH"
 
 databricks workspace import-dir "$SOURCE_DIR" "$WORKSPACE_PATH" --overwrite --profile "$PROFILE"
+
+APP_EXISTS=false
+BEFORE_SP=""
+if APP_JSON="$(databricks apps get "$APP_NAME" --profile "$PROFILE" --output json 2>/dev/null)"; then
+    APP_EXISTS=true
+    BEFORE_SP="$(printf '%s' "$APP_JSON" | jq -r '.service_principal_client_id // empty')"
+    printf "Existing App found; deploying update-only snapshot to preserve service principal.\n"
+else
+    printf "App %s does not exist; creating it once from imported source.\n" "$APP_NAME"
+    databricks apps create "$APP_NAME" \
+        --profile "$PROFILE" \
+        --source-code-path "$WORKSPACE_PATH" \
+        --description "HITL specialist that prepares governed store intervention packets"
+fi
+
 databricks apps deploy "$APP_NAME" --profile "$PROFILE" --source-code-path "$WORKSPACE_PATH"
 
 printf "Verifying deployment...\n"
-databricks apps get "$APP_NAME" --profile "$PROFILE" --output json \
-    | jq '{name,app_status,compute_status,active_deployment:{deployment_id:.active_deployment.deployment_id,status:.active_deployment.status}}'
+AFTER_JSON="$(databricks apps get "$APP_NAME" --profile "$PROFILE" --output json)"
+AFTER_SP="$(printf '%s' "$AFTER_JSON" | jq -r '.service_principal_client_id // empty')"
+if [ "$APP_EXISTS" = "true" ] && [ -n "$BEFORE_SP" ] && [ "$BEFORE_SP" != "$AFTER_SP" ]; then
+    printf "App service principal changed unexpectedly: before=%s after=%s\n" "$BEFORE_SP" "$AFTER_SP" >&2
+    exit 1
+fi
+printf '%s' "$AFTER_JSON" \
+    | jq '{name,service_principal_client_id,app_status,compute_status,active_deployment:{deployment_id:.active_deployment.deployment_id,status:.active_deployment.status}}'

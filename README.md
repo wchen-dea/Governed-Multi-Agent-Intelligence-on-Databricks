@@ -304,7 +304,7 @@ For a source-only deployment that does not contact Terraform Registry, run:
 make upload-wheel TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT
 ```
 
-This builds versioned wheel and React payloads, clears prior generated remote wheels, uploads the payload, deploys it through the Databricks Apps API, and checks health. It does not apply bundle-managed resource grants.
+This builds versioned wheel and React payloads, clears prior generated remote wheels, uploads the payload, creates the app only when it is missing, otherwise updates the existing app without changing its service principal, deploys through the Databricks Apps API, and checks health. It does not apply bundle-managed resource grants.
 
 ## Runtime Environment Variables
 
@@ -353,7 +353,7 @@ This builds versioned wheel and React payloads, clears prior generated remote wh
 
 For the store intervention workflow, start with the [HITL approval guide](docs/governance/human-in-the-loop.md). It documents the discovery query, evidence requirement, approval states, API calls, UC persistence, and post-deployment verification.
 
-The specialist App is also declared in DAB as `hitl-store-intervention-app`; set `hitl_app_name`, `hitl_sql_warehouse_id`, and the `hitl_*_table` variables in the target overlay before bundle deployment.
+The specialist App is also declared in DAB as `hitl-app-agent`; set `hitl_app_name`, `hitl_sql_warehouse_id`, and the `hitl_*_table` variables in the target overlay before bundle deployment.
 
 Update the specialist App source or its data privileges with:
 

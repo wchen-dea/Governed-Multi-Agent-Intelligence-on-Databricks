@@ -38,7 +38,7 @@ Each phase is split into high-level (architecture overview) and detailed (engine
 
 - **5 subagents**: sales_insights (Genie), cdi (Genie), product_index (AI Search MCP), flink_support (AI Search MCP), lakebase_ods (Lakebase)
 - **4 personas**: manager (all), analyst (sales + product + lakebase), operator (flink), engineer (flink + lakebase)
-- **Model router**: deterministic standard, reasoning, and synthesis selection; dev resolves all routes to `databricks-gpt-5-6-luna`
+- **Model router**: deterministic standard, reasoning, and synthesis selection; dev uses `databricks-gpt-5-6-luna` for standard turns and `databricks-claude-sonnet-5` for reasoning/synthesis turns
 - **AI Gateway**: opt-in via DATABRICKS_OPENAI_BASE_URL
 - **Message bus**: uc_table (dev) with structured_logging fallback
 - **Delegation**: bounded app-auth UC task/event store, synchronous native handoff settlement, optional lifespan worker, and payload-redacted status endpoint

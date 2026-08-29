@@ -24,14 +24,14 @@ Primary implementation:
 | Task type | Default dev model | Examples |
 | --- | --- | --- |
 | standard | `databricks-gpt-5-6-luna` | product lookups and ordinary conversational requests |
-| reasoning | `databricks-gpt-5-6-luna` | appointments, orders, SQL, Flink, streaming, debugging, and troubleshooting |
-| synthesis | `databricks-gpt-5-6-luna` | analysis, comparison, executive summaries, recommendations, and plans |
+| reasoning | `databricks-claude-sonnet-5` | appointments, orders, SQL, Flink, streaming, debugging, and troubleshooting |
+| synthesis | `databricks-claude-sonnet-5` | analysis, comparison, executive summaries, recommendations, and plans |
 
-Dev keeps all task classes on the verified balanced model. Promote a task route to another Databricks model only after a successful live invocation and evaluation run for that route.
+Dev uses the balanced GPT route for standard turns and the Sonnet route for reasoning and synthesis turns. Promote or change a task route only after a successful live invocation and evaluation run for that route.
 
 Set `MODEL_ROUTING_ENABLED=false` to retain `ORCHESTRATOR_MODEL` for every task. Configure individual routes through `MODEL_ROUTING_DEFAULT_MODEL`, `MODEL_ROUTING_REASONING_MODEL`, and `MODEL_ROUTING_QUALITY_MODEL`.
 
-With routing enabled, dev currently resolves standard, reasoning, and synthesis tasks to `databricks-gpt-5-6-luna`. Model-route metadata is not proof of tool-call correctness.
+With routing enabled, dev records the selected model per request in routing lifecycle metadata. Model-route metadata is not proof of tool-call correctness.
 - src/aiweb/src/App.tsx
 - src/aiweb/src/api.ts
 - src/aiserver/api/server.py (mounts the built UI in-process; no separate proxy server)

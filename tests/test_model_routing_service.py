@@ -21,14 +21,14 @@ def test_operational_query_uses_reasoning_model():
     selection = select_model("List open appointments and current order status", _settings())
 
     assert selection.task_type == "reasoning"
-    assert selection.model == "databricks-gpt-5-6-luna"
+    assert selection.model == "databricks-claude-sonnet-5"
 
 
 def test_analysis_request_uses_quality_model():
     selection = select_model("Create an executive analysis and recommendation", _settings())
 
     assert selection.task_type == "synthesis"
-    assert selection.model == "databricks-gpt-5-6-luna"
+    assert selection.model == "databricks-claude-sonnet-5"
 
 
 def test_disabled_model_routing_keeps_orchestrator_model():

@@ -30,11 +30,11 @@ fi
 
 grant_object() {
     object_type="$1"
-    full_name="$2"
+    object_full_name="$2"
     privilege="$3"
-    run databricks grants update "$object_type" "$full_name" --profile "$PROFILE" \
+    run databricks grants update "$object_type" "$object_full_name" --profile "$PROFILE" \
         --json "{\"changes\":[{\"principal\":\"$SP_CLIENT_ID\",\"add\":[\"$privilege\"]}]}"
-    printf "Granted %s on %s %s\n" "$privilege" "$object_type" "$full_name"
+    printf "Granted %s on %s %s\n" "$privilege" "$object_type" "$object_full_name"
 }
 
 grant_warehouse() {
@@ -43,19 +43,29 @@ grant_warehouse() {
     printf "Granted CAN_USE on warehouse %s\n" "$WAREHOUSE_ID"
 }
 
+grant_table_with_usage() {
+    table_full_name="$1"
+    table_catalog="${table_full_name%%.*}"
+    table_rest="${table_full_name#*.}"
+    table_schema="${table_rest%%.*}"
+    if [ -z "$table_catalog" ] || [ -z "$table_schema" ] || [ "$table_catalog" = "$table_full_name" ] || [ "$table_schema" = "$table_rest" ]; then
+        printf "Invalid fully qualified table name: %s\n" "$table_full_name" >&2
+        exit 1
+    fi
+    grant_object catalog "$table_catalog" USE_CATALOG
+    grant_object schema "$table_catalog.$table_schema" USE_SCHEMA
+    grant_object table "$table_full_name" SELECT
+}
+
 printf "HITL App: %s\n" "$APP_NAME"
 printf "Service principal: %s\n" "$SP_CLIENT_ID"
 printf "Profile: %s\n" "$PROFILE"
 
 grant_warehouse
-grant_object catalog dt_dev_platinum USE_CATALOG
-grant_object schema dt_dev_platinum.enterprise USE_SCHEMA
-grant_object table "$REVENUE_TABLE" SELECT
-grant_object catalog dt_dev_gold USE_CATALOG
-grant_object schema dt_dev_gold.dwh USE_SCHEMA
-grant_object table "$CDI_TABLE" SELECT
-grant_object table "$PEER_SET_TABLE" SELECT
-grant_object table "$STORE_DIMENSION_TABLE" SELECT
+grant_table_with_usage "$REVENUE_TABLE"
+grant_table_with_usage "$CDI_TABLE"
+grant_table_with_usage "$PEER_SET_TABLE"
+grant_table_with_usage "$STORE_DIMENSION_TABLE"
 
 printf "HITL specialist privilege update completed%s.\n" \
     "$(if [ "$DRY_RUN" = "true" ]; then printf ' (dry run)'; fi)"

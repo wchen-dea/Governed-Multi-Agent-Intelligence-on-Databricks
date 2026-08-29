@@ -16,7 +16,7 @@ The workflow is handled by `store-intervention-agent`, which is configured for t
 
 ## Create `store-intervention-agent`
 
-`store-intervention-agent` is a Databricks App specialist. Its source is maintained locally in `src/hitl-agent/` and is declared in the bundle as `resources.apps.hitl-store-intervention-app` in `resources/hitl_app.yml`. Create or bind it once per environment, then keep its App name aligned with `hitl_app_name` and the orchestrator subagent endpoint.
+`store-intervention-agent` is a Databricks App specialist. Its source is maintained locally in `src/hitl-agent/` and is declared in the bundle as `resources.apps.hitl-app-agent` in `resources/hitl_app.yml`. Create or bind it once per environment, then keep its App name aligned with `hitl_app_name` and the orchestrator subagent endpoint.
 
 ### 1. Define the specialist contract
 
@@ -51,7 +51,7 @@ Use the organization-approved Databricks Apps creation path. In dev the App is n
 If the App already exists, bind it to the DAB resource key before deploying:
 
 ```bash
-databricks bundle deployment bind hitl-store-intervention-app hitl-app-agent \
+databricks bundle deployment bind hitl-app-agent hitl-app-agent \
   --target dev \
   --profile PROFILE \
   --auto-approve
@@ -63,13 +63,13 @@ Deploy it with the rest of the bundle:
 databricks bundle deploy -t dev --profile PROFILE
 ```
 
-For manual source-only refreshes, deploy it with the Databricks CLI:
+For manual source-only refreshes, deploy it with the repository helper:
 
 ```bash
-databricks apps deploy hitl-app-agent \
-  --profile PROFILE \
-  --source-code-path /path/to/hitl-app-agent
+make update-hitl APP_NAME=hitl-app-agent PROFILE=PROFILE
 ```
+
+The helper imports `src/hitl-agent`, creates the App only when it does not already exist, and otherwise performs an update-only `databricks apps deploy` against the existing App. On update, it verifies the App service principal client ID did not change.
 
 Confirm the deployment and capture the App service principal:
 
@@ -133,7 +133,7 @@ For subsequent source updates, use the repository helper from the project root:
 make update-hitl APP_NAME=hitl-app-agent PROFILE=PROFILE
 ```
 
-The helper imports `src/hitl-agent` into the current user's workspace path, deploys the existing App from that workspace source, and prints the resulting deployment status. Override the defaults when needed:
+The helper imports `src/hitl-agent` into the current user's workspace path, creates or updates the App from that workspace source, and prints the resulting deployment status. Override the defaults when needed:
 
 ```bash
 HITL_SOURCE_DIR=/path/to/source \

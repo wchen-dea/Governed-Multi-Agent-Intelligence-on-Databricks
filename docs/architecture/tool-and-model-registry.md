@@ -126,8 +126,8 @@ Model selection is deterministic and recorded with `routing.plan.selected`; it c
 | Task type | Configured model | Examples |
 | --- | --- | --- |
 | standard | `databricks-gpt-5-6-luna` | product lookups and ordinary conversation |
-| reasoning | `databricks-gpt-5-6-luna` | appointments, orders, SQL, Flink, and troubleshooting |
-| synthesis | `databricks-gpt-5-6-luna` | analysis, comparisons, summaries, and recommendations |
+| reasoning | `databricks-claude-sonnet-5` | appointments, orders, SQL, Flink, and troubleshooting |
+| synthesis | `databricks-claude-sonnet-5` | analysis, comparisons, summaries, and recommendations |
 
 Auth correctness, safety, and groundedness remain blocking promotion KPIs. [ToolCallCorrectness](../quality/evaluation-spec.md) is monitored but non-blocking while the MLflow scorer cannot reliably assess nested tool spans.
 

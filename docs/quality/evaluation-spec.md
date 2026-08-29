@@ -144,7 +144,7 @@ CI pipeline enforcement:
 
 ## Proposed Model Experiment Matrix
 
-The following profiles are an experiment and promotion plan, not active target configuration. Current dev model routing resolves standard, reasoning, and synthesis to `databricks-gpt-5-6-luna` unless target environment variables explicitly override it.
+The following profiles are an experiment and promotion plan. Current dev model routing uses `databricks-gpt-5-6-luna` for standard turns and `databricks-claude-sonnet-5` for reasoning/synthesis turns unless target environment variables explicitly override it.
 
 The project supports model selection at three layers:
 

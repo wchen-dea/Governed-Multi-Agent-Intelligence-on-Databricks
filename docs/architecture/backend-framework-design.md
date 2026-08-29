@@ -177,7 +177,7 @@ All runtime behavior is driven by environment variables (see `shared/settings.py
 | Variable | Purpose |
 |----------|---------|
 | `ORCHESTRATOR_MODEL` | Target-configured foundation model for the orchestrator |
-| `MODEL_ROUTING_*` | Deterministic standard, reasoning, and synthesis model routes; dev currently resolves all three to `databricks-gpt-5-6-luna` |
+| `MODEL_ROUTING_*` | Deterministic standard, reasoning, and synthesis model routes; dev uses `databricks-gpt-5-6-luna` for standard turns and `databricks-claude-sonnet-5` for reasoning/synthesis turns |
 | `AGENT_TASK_*` | UC delegation task store and bounded worker configuration |
 | `DATABRICKS_OPENAI_BASE_URL` | Optional AI Gateway override URL |
 | `DATABRICKS_OPENAI_TIMEOUT_SECONDS` | Client timeout for gateway-routed calls |

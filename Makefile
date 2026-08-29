@@ -31,9 +31,9 @@ help:
 	@printf "  make evaluate-strict   Run evaluation with all KPI gates required\n"
 	@printf "  make triage-evaluation Classify a failing evaluation run's tool-call assessments (RUN_ID or EXPERIMENT_ID)\n"
 	@printf "  make build-app-source  Build wheel + React UI app source payload\n"
-	@printf "  make update-hitl       Sync and deploy src/hitl-agent to the specialist App\n"
+	@printf "  make update-hitl       Create missing HITL App or update existing App without changing its SP\n"
 	@printf "  make grant-hitl-privileges Grant least-privilege access to HITL source tables\n"
-	@printf "  make upload-wheel      Build, upload, deploy, and health-check the app payload without Terraform\n"
+	@printf "  make upload-wheel      Create missing app or update existing app from wheel payload without Terraform\n"
 	@printf "  make validate          Validate Databricks bundle for TARGET\n"
 	@printf "  make wait-stable       Wait for App compute to be ACTIVE or STOPPED\n"
 	@printf "  make bundle-deploy     Try bundle deploy for TARGET (may fail on Terraform registry)\n"
@@ -89,7 +89,7 @@ update-hitl:
 grant-hitl-privileges:
 	./scripts/grant_hitl_agent_privileges.sh
 
-upload-wheel: ensure-running import deploy health
+upload-wheel: build-app-source validate import deploy ensure-running health
 
 validate:
 	databricks bundle validate -t "$(TARGET)" --profile "$(PROFILE)"
@@ -98,7 +98,11 @@ wait-stable:
 	@printf "Waiting for app %s compute to become stable...\n" "$(APP_NAME)"; \
 	ATTEMPT=0; \
 	while [ $$ATTEMPT -lt "$(APP_STABLE_MAX_ATTEMPTS)" ]; do \
-		APP_JSON="$$($(APP_GET_JSON))"; \
+		APP_JSON="$$($(APP_GET_JSON) 2>/dev/null || true)"; \
+		if [ -z "$$APP_JSON" ]; then \
+			printf "App %s does not exist yet; skipping stable wait before create.\n" "$(APP_NAME)"; \
+			exit 0; \
+		fi; \
 		COMPUTE_STATE="$$(printf "%s" "$$APP_JSON" | jq -r '.compute_status.state // "UNKNOWN"')"; \
 		APP_STATE="$$(printf "%s" "$$APP_JSON" | jq -r '.app_status.state // "UNKNOWN"')"; \
 		printf "  stable-check attempt=%s/%s app=%s compute=%s\n" "$$((ATTEMPT + 1))" "$(APP_STABLE_MAX_ATTEMPTS)" "$$APP_STATE" "$$COMPUTE_STATE"; \
@@ -120,7 +124,7 @@ bundle-deploy-optional: wait-stable
 		printf "bundle deploy failed; continuing with Terraform-free fallback path (import -> deploy -> permissions -> health -> smoke)\n"
 
 import: build-app-source
-	@APP_JSON="$$($(APP_GET_JSON))"; \
+	@APP_JSON="$$($(APP_GET_JSON) 2>/dev/null || true)"; \
 	APP_SRC="$$(printf "%s" "$$APP_JSON" | jq -r '.default_source_code_path')"; \
 	if [ -z "$$APP_SRC" ] || [ "$$APP_SRC" = "null" ]; then \
 		printf "default_source_code_path is unset for $(APP_NAME) (deployment record reset); deriving path from bundle validate...\n" >&2; \
@@ -164,10 +168,20 @@ stop:
 	fi
 
 deploy: wait-stable
-	@APP_JSON="$$($(APP_GET_JSON))"; \
-	APP_SRC="$$(printf "%s" "$$APP_JSON" | jq -r '.default_source_code_path')"; \
-	APP_STATE="$$(printf "%s" "$$APP_JSON" | jq -r '.app_status.state // "UNKNOWN"')"; \
-	DEPLOY_STATE="$$(printf "%s" "$$APP_JSON" | jq -r '.active_deployment.status.state // "NONE"')"; \
+	@APP_EXISTS=true; \
+	BEFORE_SP=""; \
+	APP_JSON="$$($(APP_GET_JSON) 2>/dev/null || true)"; \
+	if [ -z "$$APP_JSON" ]; then \
+		APP_EXISTS=false; \
+		APP_SRC=""; \
+		APP_STATE="MISSING"; \
+		DEPLOY_STATE="NONE"; \
+	else \
+		BEFORE_SP="$$(printf "%s" "$$APP_JSON" | jq -r '.service_principal_client_id // empty')"; \
+		APP_SRC="$$(printf "%s" "$$APP_JSON" | jq -r '.default_source_code_path')"; \
+		APP_STATE="$$(printf "%s" "$$APP_JSON" | jq -r '.app_status.state // "UNKNOWN"')"; \
+		DEPLOY_STATE="$$(printf "%s" "$$APP_JSON" | jq -r '.active_deployment.status.state // "NONE"')"; \
+	fi; \
 	ATTEMPT=0; \
 	if [ -z "$$APP_SRC" ] || [ "$$APP_SRC" = "null" ]; then \
 		printf "default_source_code_path is unset for $(APP_NAME) (deployment record reset); deriving path from bundle validate...\n" >&2; \
@@ -179,6 +193,12 @@ deploy: wait-stable
 		APP_SRC="$$WS_FILE_PATH/.databricks_app_source"; \
 		printf "Derived app source path: %s\n" "$$APP_SRC" >&2; \
 		DEPLOY_STATE="NONE"; \
+	fi; \
+	if [ "$$APP_EXISTS" = "false" ]; then \
+		printf "App %s does not exist; creating it once from source path: %s\n" "$(APP_NAME)" "$$APP_SRC"; \
+		databricks apps create "$(APP_NAME)" --profile "$(PROFILE)" --source-code-path "$$APP_SRC" --description "Multi-agent orchestrator that queries governed agents and tools"; \
+		APP_JSON="$$($(APP_GET_JSON))"; \
+		DEPLOY_STATE="$$(printf "%s" "$$APP_JSON" | jq -r '.active_deployment.status.state // "NONE"')"; \
 	fi; \
 	while [ "$$DEPLOY_STATE" = "IN_PROGRESS" ] && [ $$ATTEMPT -lt "$(APP_DEPLOY_MAX_ATTEMPTS)" ]; do \
 		printf "Waiting for active deployment lock to clear: attempt=%s/%s state=%s\n" "$$((ATTEMPT + 1))" "$(APP_DEPLOY_MAX_ATTEMPTS)" "$$DEPLOY_STATE"; \
@@ -192,7 +212,14 @@ deploy: wait-stable
 		exit 1; \
 	fi; \
 	printf "Deploying app %s from source path: %s\n" "$(APP_NAME)" "$$APP_SRC"; \
-	databricks apps deploy "$(APP_NAME)" --profile "$(PROFILE)" --source-code-path "$$APP_SRC" --mode SNAPSHOT
+	databricks apps deploy "$(APP_NAME)" --profile "$(PROFILE)" --source-code-path "$$APP_SRC" --mode SNAPSHOT; \
+	AFTER_JSON="$$($(APP_GET_JSON))"; \
+	AFTER_SP="$$(printf "%s" "$$AFTER_JSON" | jq -r '.service_principal_client_id // empty')"; \
+	if [ "$$APP_EXISTS" = "true" ] && [ -n "$$BEFORE_SP" ] && [ "$$BEFORE_SP" != "$$AFTER_SP" ]; then \
+		printf "App service principal changed unexpectedly: before=%s after=%s\n" "$$BEFORE_SP" "$$AFTER_SP" >&2; \
+		exit 1; \
+	fi; \
+	printf "App service principal: %s\n" "$$AFTER_SP"
 
 grants:
 	@set -e; \
