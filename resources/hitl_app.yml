@@ -9,6 +9,8 @@ resources:
       config:
         command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
         env:
+        - name: HITL_ENV
+          value: ${bundle.target}
         - name: REVENUE_TABLE
           value: ${var.hitl_revenue_table}
         - name: CDI_TABLE

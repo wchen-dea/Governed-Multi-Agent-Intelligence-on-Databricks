@@ -11,10 +11,10 @@ targets:
       app_name: multiagent-app-stg
       hitl_app_name: store-intervention-agent-stg
       hitl_sql_warehouse_id: "<STG-HITL-SQL-WAREHOUSE-ID>"
-      hitl_revenue_table: "<STG-PLATINUM-CATALOG>.<STG-ENTERPRISE-SCHEMA>.<STG-REVENUE-TABLE>"
-      hitl_cdi_table: "<STG-GOLD-CATALOG>.<STG-DWH-SCHEMA>.<STG-CDI-TABLE>"
-      hitl_peer_set_table: "<STG-GOLD-CATALOG>.<STG-DWH-SCHEMA>.<STG-PEER-SET-TABLE>"
-      hitl_store_dimension_table: "<STG-GOLD-CATALOG>.<STG-DWH-SCHEMA>.<STG-STORE-DIMENSION-TABLE>"
+      hitl_revenue_table: "dt_stg_platinum.enterprise.store_sales_performance"
+      hitl_cdi_table: "dt_stg_gold.dwh.fct_cdi_daily"
+      hitl_peer_set_table: "dt_stg_gold.dwh.brg_store_cluster_membership_group"
+      hitl_store_dimension_table: "dt_stg_gold.dwh.dim_store_active"
       hitl_trend_window_days: "90"
       openai_base_url: ""
       openai_timeout_seconds: "0"

@@ -4,12 +4,14 @@ set -eu
 
 APP_NAME="${APP_NAME:-hitl-app-agent}"
 PROFILE="${PROFILE:-DEFAULT}"
+TARGET="${TARGET:-dev}"
+HITL_ENV="${HITL_ENV:-$TARGET}"
 DRY_RUN="${DRY_RUN:-false}"
 WAREHOUSE_ID="${HITL_WAREHOUSE_ID:-b20f70f71c2f52e2}"
-REVENUE_TABLE="${HITL_REVENUE_TABLE:-dt_dev_platinum.enterprise.store_sales_performance}"
-CDI_TABLE="${HITL_CDI_TABLE:-dt_dev_gold.dwh.fct_cdi_daily}"
-PEER_SET_TABLE="${HITL_PEER_SET_TABLE:-dt_dev_gold.dwh.brg_store_cluster_membership_group}"
-STORE_DIMENSION_TABLE="${HITL_STORE_DIMENSION_TABLE:-dt_dev_gold.dwh.dim_store_active}"
+REVENUE_TABLE="${HITL_REVENUE_TABLE:-dt_${HITL_ENV}_platinum.enterprise.store_sales_performance}"
+CDI_TABLE="${HITL_CDI_TABLE:-dt_${HITL_ENV}_gold.dwh.fct_cdi_daily}"
+PEER_SET_TABLE="${HITL_PEER_SET_TABLE:-dt_${HITL_ENV}_gold.dwh.brg_store_cluster_membership_group}"
+STORE_DIMENSION_TABLE="${HITL_STORE_DIMENSION_TABLE:-dt_${HITL_ENV}_gold.dwh.dim_store_active}"
 ORCHESTRATOR_APP_NAME="${ORCHESTRATOR_APP_NAME:-}"
 
 if [ "$DRY_RUN" = "true" ]; then
@@ -22,8 +24,11 @@ else
     }
 fi
 
-APP_JSON="$(databricks apps get "$APP_NAME" --profile "$PROFILE" --output json)"
+APP_JSON="$(databricks apps get "$APP_NAME" --profile "$PROFILE" --output json 2>/dev/null || true)"
 SP_CLIENT_ID="$(printf '%s' "$APP_JSON" | jq -r '.service_principal_client_id // empty')"
+if [ -z "$SP_CLIENT_ID" ] && [ "$DRY_RUN" = "true" ]; then
+    SP_CLIENT_ID="dry-run-app-service-principal"
+fi
 if [ -z "$SP_CLIENT_ID" ]; then
     printf "Could not resolve service principal for App %s\n" "$APP_NAME" >&2
     exit 1
@@ -48,8 +53,11 @@ grant_orchestrator_can_use() {
     if [ -z "$ORCHESTRATOR_APP_NAME" ]; then
         return
     fi
-    orchestrator_json="$(databricks apps get "$ORCHESTRATOR_APP_NAME" --profile "$PROFILE" --output json)"
+    orchestrator_json="$(databricks apps get "$ORCHESTRATOR_APP_NAME" --profile "$PROFILE" --output json 2>/dev/null || true)"
     orchestrator_sp="$(printf '%s' "$orchestrator_json" | jq -r '.service_principal_client_id // empty')"
+    if [ -z "$orchestrator_sp" ] && [ "$DRY_RUN" = "true" ]; then
+        orchestrator_sp="dry-run-orchestrator-service-principal"
+    fi
     if [ -z "$orchestrator_sp" ]; then
         printf "Could not resolve service principal for orchestrator App %s\n" "$ORCHESTRATOR_APP_NAME" >&2
         exit 1

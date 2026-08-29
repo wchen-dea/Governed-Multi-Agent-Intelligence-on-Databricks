@@ -112,6 +112,8 @@ HITL_STORE_DIMENSION_TABLE=<catalog>.<schema>.<table> \
 make grant-hitl-privileges APP_NAME=hitl-app-agent PROFILE=PROFILE
 ```
 
+If explicit `HITL_*_TABLE` values are omitted, the helper derives conventional defaults from `TARGET` or `HITL_ENV`, for example `TARGET=qa` maps to `dt_qa_platinum.enterprise.store_sales_performance` and `dt_qa_gold.dwh.*`.
+
 The script does not grant `MODIFY`, `CREATE TABLE`, broad schema access, or operational dispatch permissions.
 
 ### Post-approval follow-up task

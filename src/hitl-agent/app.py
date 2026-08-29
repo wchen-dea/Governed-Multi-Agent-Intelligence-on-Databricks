@@ -44,20 +44,30 @@ w = WorkspaceClient()
 # The SQL warehouse ID used to execute analytical queries.
 # Set via app environment or default to the first available serverless warehouse.
 SQL_WAREHOUSE_ID = os.getenv("SQL_WAREHOUSE_ID", "")
+APP_ENV = os.getenv("HITL_ENV", os.getenv("APP_ENV", "dev")).strip().lower() or "dev"
+
+
+def _default_source_table(layer: str, schema: str, table: str) -> str:
+    """Build the conventional environment-scoped UC source table name."""
+    return f"dt_{APP_ENV}_{layer}.{schema}.{table}"
 
 # Approved data source tables (fully qualified Unity Catalog names).
 # Replace these placeholders with your actual catalog.schema.table references.
 REVENUE_TABLE = os.getenv(
-    "REVENUE_TABLE", "catalog.schema.store_revenue_daily"
+    "REVENUE_TABLE",
+    _default_source_table("platinum", "enterprise", "store_sales_performance"),
 )
 CDI_TABLE = os.getenv(
-    "CDI_TABLE", "catalog.schema.store_cdi_scores"
+    "CDI_TABLE",
+    _default_source_table("gold", "dwh", "fct_cdi_daily"),
 )
 PEER_SET_TABLE = os.getenv(
-    "PEER_SET_TABLE", "catalog.schema.store_peer_sets"
+    "PEER_SET_TABLE",
+    _default_source_table("gold", "dwh", "brg_store_cluster_membership_group"),
 )
 STORE_DIMENSION_TABLE = os.getenv(
-    "STORE_DIMENSION_TABLE", "catalog.schema.store_dimension"
+    "STORE_DIMENSION_TABLE",
+    _default_source_table("gold", "dwh", "dim_store_active"),
 )
 
 # Rolling window for trend analysis (days)
