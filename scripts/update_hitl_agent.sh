@@ -2,10 +2,10 @@
 
 set -eu
 
-APP_NAME="${APP_NAME:-store-intervention-agent}"
+APP_NAME="${APP_NAME:-hitl-app-agent}"
 PROFILE="${PROFILE:-DEFAULT}"
 SOURCE_DIR="${HITL_SOURCE_DIR:-$(pwd)/src/hitl-agent}"
-WORKSPACE_PATH="${HITL_WORKSPACE_PATH:-/Workspace/Users/$(databricks current-user me --profile "$PROFILE" --output json | jq -r '.userName')/store-intervention-agent}"
+WORKSPACE_PATH="${HITL_WORKSPACE_PATH:-/Workspace/Users/$(databricks current-user me --profile "$PROFILE" --output json | jq -r '.userName')/hitl-app-agent}"
 
 if [ ! -f "$SOURCE_DIR/app.py" ] || [ ! -f "$SOURCE_DIR/app.yaml" ] || [ ! -f "$SOURCE_DIR/requirements.txt" ]; then
     printf "HITL source directory is incomplete: %s\n" "$SOURCE_DIR" >&2

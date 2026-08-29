@@ -5,7 +5,6 @@ command:
   - 0.0.0.0
   - --port
   - "8000"
-
 env:
   - name: REVENUE_TABLE
     value: "dt_dev_platinum.enterprise.store_sales_performance"
@@ -13,7 +12,34 @@ env:
     value: "dt_dev_gold.dwh.fct_cdi_daily"
   - name: PEER_SET_TABLE
     value: "dt_dev_gold.dwh.brg_store_cluster_membership_group"
+  - name: STORE_DIMENSION_TABLE
+    value: "dt_dev_gold.dwh.dim_store_active"
   - name: SQL_WAREHOUSE_ID
     value: "b20f70f71c2f52e2"
   - name: TREND_WINDOW_DAYS
     value: "90"
+resources:
+  - name: hitl_sql_warehouse
+    sql_warehouse:
+      sql_warehouse_id: "b20f70f71c2f52e2"
+      permission: CAN_USE
+  - name: platinum_revenue_source
+    uc_securable:
+      securable_full_name: "dt_dev_platinum.enterprise.store_sales_performance"
+      securable_type: TABLE
+      permission: SELECT
+  - name: gold_cdi_source
+    uc_securable:
+      securable_full_name: "dt_dev_gold.dwh.fct_cdi_daily"
+      securable_type: TABLE
+      permission: SELECT
+  - name: gold_peer_set_source
+    uc_securable:
+      securable_full_name: "dt_dev_gold.dwh.brg_store_cluster_membership_group"
+      securable_type: TABLE
+      permission: SELECT
+  - name: gold_store_dimension_source
+    uc_securable:
+      securable_full_name: "dt_dev_gold.dwh.dim_store_active"
+      securable_type: TABLE
+      permission: SELECT

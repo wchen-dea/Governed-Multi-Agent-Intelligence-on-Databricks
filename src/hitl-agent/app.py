@@ -13,15 +13,15 @@ Contract guarantees:
 
 from __future__ import annotations
 
+import datetime as dt
 import os
 import uuid
-import datetime as dt
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.sql import StatementState
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
 
 # ---------------------------------------------------------------------------
 # App bootstrap
@@ -55,6 +55,9 @@ CDI_TABLE = os.getenv(
 )
 PEER_SET_TABLE = os.getenv(
     "PEER_SET_TABLE", "catalog.schema.store_peer_sets"
+)
+STORE_DIMENSION_TABLE = os.getenv(
+    "STORE_DIMENSION_TABLE", "catalog.schema.store_dimension"
 )
 
 # Rolling window for trend analysis (days)
@@ -113,10 +116,21 @@ def _execute_sql(sql: str) -> list[dict[str, Any]]:
         warehouse_id=warehouse_id,
         wait_timeout="50s",
     )
+    if resp.status is None:
+        raise HTTPException(
+            status_code=502,
+            detail="SQL execution did not return statement status.",
+        )
     if resp.status.state != StatementState.SUCCEEDED:
         raise HTTPException(
             status_code=502,
             detail=f"SQL execution failed: {resp.status.error}",
+        )
+
+    if resp.manifest is None or resp.manifest.schema is None or resp.manifest.schema.columns is None:
+        raise HTTPException(
+            status_code=502,
+            detail="SQL execution did not return result schema.",
         )
 
     columns = [col.name for col in resp.manifest.schema.columns]
@@ -205,7 +219,7 @@ def _get_peer_comparison(store_code: str) -> dict[str, Any]:
 
     The peer model uses brg_store_cluster_membership_group which maps
     store_cluster_membership_group_identifier -> store_cluster_dimension_identifier.
-    We join through dim_store to resolve store_code to its cluster, then
+    We join through the configured store dimension table to resolve store_code to its cluster, then
     compute peer-group averages for revenue and CDI.
     """
     sql = f"""
@@ -214,7 +228,7 @@ def _get_peer_comparison(store_code: str) -> dict[str, Any]:
         SELECT DISTINCT
             brg.store_cluster_dimension_identifier AS cluster_id
         FROM {PEER_SET_TABLE} brg
-        JOIN dt_dev_gold.dwh.dim_store_active ds
+        JOIN {STORE_DIMENSION_TABLE} ds
             ON brg.store_cluster_membership_group_identifier = ds.store_cluster_membership_group_identifier
         WHERE ds.store_code = '{store_code}'
     ),
@@ -222,7 +236,7 @@ def _get_peer_comparison(store_code: str) -> dict[str, Any]:
         -- All stores in the same cluster(s)
         SELECT DISTINCT ds.store_code AS peer_store_code
         FROM {PEER_SET_TABLE} brg
-        JOIN dt_dev_gold.dwh.dim_store_active ds
+        JOIN {STORE_DIMENSION_TABLE} ds
             ON brg.store_cluster_membership_group_identifier = ds.store_cluster_membership_group_identifier
         WHERE brg.store_cluster_dimension_identifier IN (SELECT cluster_id FROM target_cluster)
           AND ds.store_code != '{store_code}'
@@ -302,7 +316,7 @@ customer delight is worsening — a pattern that historically precedes revenue c
 if unaddressed.
 
 ## Evidence
-Source: {REVENUE_TABLE}, {CDI_TABLE}, {PEER_SET_TABLE}
+Source: {REVENUE_TABLE}, {CDI_TABLE}, {PEER_SET_TABLE}, {STORE_DIMENSION_TABLE}
 Query timestamp: {query_ts}
 Data freshness: Within 24h of query execution (governed by source pipeline SLA)
 

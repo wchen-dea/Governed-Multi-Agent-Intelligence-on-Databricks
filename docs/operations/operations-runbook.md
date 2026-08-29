@@ -46,8 +46,8 @@ For target values:
 
 - Confirm target (`dev` / `qa` / `stg` / `prd`) and CLI profile.
 - Confirm target variables in `targets/*.yml` are correct.
-- Confirm the target's `store-intervention-agent` App exists, is running, and grants the orchestrator service principal `CAN_USE`; follow the [HITL specialist creation procedure](../governance/human-in-the-loop.md#create-store-intervention-agent) when onboarding it.
-- Confirm the `store-intervention-agent` service principal has the current SQL warehouse, UC schema, and table `SELECT` grants; run `make grant-hitl-privileges` after changing its data sources.
+- Confirm the target's HITL App, `hitl-app-agent` in dev, exists or is bound to DAB resource `hitl-store-intervention-app`, is running, and grants the orchestrator service principal `CAN_USE`; follow the [HITL specialist creation procedure](../governance/human-in-the-loop.md#create-store-intervention-agent) when onboarding it.
+- Confirm the HITL App service principal has the current SQL warehouse, UC schema, and table `SELECT` grants; run `make grant-hitl-privileges` after changing its data sources.
 - Confirm the app service principal has a Lakebase OAuth role and the app has the target `postgres` resource grant.
 - Confirm no pending manual hotfix state in the target app.
 
@@ -68,6 +68,9 @@ For the implemented store-intervention HITL flow, also ensure the target contain
 - `approval_catalog: <target catalog>`
 - `approval_schema: <target schema>`
 - `approval_table: agent_approval_decisions` (or approved override)
+- `hitl_app_name: <target store intervention app name>`
+- `hitl_sql_warehouse_id: <target warehouse id>`
+- `hitl_revenue_table`, `hitl_cdi_table`, `hitl_peer_set_table`, and `hitl_store_dimension_table` pointing at approved target sources
 
 The app identity needs permission to create/use the configured approval schema and table through the SQL warehouse. Do not promote `approval_backend: memory` to a production target; it loses decisions on process restart.
 
@@ -89,7 +92,7 @@ Final pre-release checks:
 - Run `uv run pytest -q`
 - Run `uv run assistant-evaluate`
 - Confirm no placeholder values remain in target config files.
-- Confirm the external `store-intervention-agent` App name is valid for the target and is not a deleted or unrelated App.
+- Confirm the external HITL App name is valid for the target and is not a deleted or unrelated App.
 
 ### Standard Deployment
 

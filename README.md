@@ -255,6 +255,7 @@ For architecture diagrams, see [docs/architecture/high-level-architecture.md](do
 - [src/aiweb/README.md](src/aiweb/README.md): React UI setup, build, and local run guide
 - [src/operations/](src/operations): quickstart, preflight, local start, discovery, and permission helpers
 - [resources/multiagent_app.yml](resources/multiagent_app.yml): shared Databricks app resource definition
+- [resources/hitl_app.yml](resources/hitl_app.yml): DAB-managed `store-intervention-agent` specialist App resource
 - [targets/](targets): target-specific deployment overlays
 - [databricks.yml](databricks.yml): DAB bundle root configuration
 - [docs/README.md](docs/README.md): architecture, design, and runbook documentation index
@@ -352,11 +353,13 @@ This builds versioned wheel and React payloads, clears prior generated remote wh
 
 For the store intervention workflow, start with the [HITL approval guide](docs/governance/human-in-the-loop.md). It documents the discovery query, evidence requirement, approval states, API calls, UC persistence, and post-deployment verification.
 
+The specialist App is also declared in DAB as `hitl-store-intervention-app`; set `hitl_app_name`, `hitl_sql_warehouse_id`, and the `hitl_*_table` variables in the target overlay before bundle deployment.
+
 Update the specialist App source or its data privileges with:
 
 ```bash
-make update-hitl APP_NAME=store-intervention-agent PROFILE=DEFAULT
-make grant-hitl-privileges APP_NAME=store-intervention-agent PROFILE=DEFAULT
+make update-hitl APP_NAME=hitl-app-agent PROFILE=DEFAULT
+make grant-hitl-privileges APP_NAME=hitl-app-agent PROFILE=DEFAULT
 ```
 
 MCP connect/probe performance controls:

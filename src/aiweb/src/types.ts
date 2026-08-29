@@ -39,6 +39,20 @@ export interface HumanApprovalState {
   approver?: string | null;
   decision?: string | null;
   reason?: string | null;
+  delegation?: DelegationStatus | null;
+}
+
+export interface DelegationStatus {
+  task_id: string;
+  correlation_id?: string;
+  source_agent?: string;
+  target_agent?: string;
+  intent?: string;
+  status?: string;
+  attempt?: number;
+  max_attempts?: number;
+  failure_code?: string | null;
+  completed?: boolean;
 }
 
 export interface RoutePlan {

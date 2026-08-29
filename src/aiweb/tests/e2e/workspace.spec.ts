@@ -59,6 +59,15 @@ test("shows manager actions for a pending HITL response", async ({ page }) => {
           decision: body.decision,
           status: "approved",
         },
+        delegation: {
+          task_id: "task-approved-123",
+          correlation_id: body.request_id,
+          source_agent: "approval-api",
+          target_agent: "store-intervention-agent",
+          intent: "store_intervention_planning",
+          status: "pending",
+          completed: false,
+        },
       }),
     });
   });
@@ -99,4 +108,5 @@ test("shows manager actions for a pending HITL response", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Reject" })).toBeVisible();
   await page.getByRole("button", { name: "Approve planning" }).click();
   await expect(page.getByText("Review packet ready.")).toBeVisible();
+  await expect(page.getByText(/Follow-up task: task-approved-123/)).toBeVisible();
 });

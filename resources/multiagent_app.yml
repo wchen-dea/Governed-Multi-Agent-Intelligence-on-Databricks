@@ -17,7 +17,7 @@ resources:
       # compute_size: MEDIUM
       # git_repository:
       #   provider: gitHub
-      #   url: https://github.com/wchen-dea/Multi-Agent-App-On-Databricks
+      #   url: https://github.com/wchen-dea/Governed-Multi-Agent-On-Databricks
       # git_source:
       #   branch: main
       #   source_code_path: .
@@ -94,6 +94,14 @@ resources:
           value: ${var.approval_schema}
         - name: APPROVAL_TABLE
           value: ${var.approval_table}
+        - name: APPROVAL_DELEGATION_ENABLED
+          value: ${var.approval_delegation_enabled}
+        - name: APPROVAL_DELEGATION_SOURCE_AGENT
+          value: ${var.approval_delegation_source_agent}
+        - name: APPROVAL_DELEGATION_TARGET_AGENT
+          value: ${var.approval_delegation_target_agent}
+        - name: APPROVAL_DELEGATION_INTENT
+          value: ${var.approval_delegation_intent}
         - name: AGENT_TASK_BACKEND
           value: ${var.agent_task_backend}
         - name: AGENT_TASK_WAREHOUSE_ID

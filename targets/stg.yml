@@ -9,6 +9,13 @@ targets:
       state_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}/state
     variables:
       app_name: multiagent-app-stg
+      hitl_app_name: store-intervention-agent-stg
+      hitl_sql_warehouse_id: "<STG-HITL-SQL-WAREHOUSE-ID>"
+      hitl_revenue_table: "<STG-PLATINUM-CATALOG>.<STG-ENTERPRISE-SCHEMA>.<STG-REVENUE-TABLE>"
+      hitl_cdi_table: "<STG-GOLD-CATALOG>.<STG-DWH-SCHEMA>.<STG-CDI-TABLE>"
+      hitl_peer_set_table: "<STG-GOLD-CATALOG>.<STG-DWH-SCHEMA>.<STG-PEER-SET-TABLE>"
+      hitl_store_dimension_table: "<STG-GOLD-CATALOG>.<STG-DWH-SCHEMA>.<STG-STORE-DIMENSION-TABLE>"
+      hitl_trend_window_days: "90"
       openai_base_url: ""
       openai_timeout_seconds: "0"
       subagents_config_path: ""

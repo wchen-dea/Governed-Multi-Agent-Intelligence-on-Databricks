@@ -60,10 +60,32 @@ def test_explicit_approval_decision_contract_round_trip():
     assert body["status"] == "ok"
     assert body["approval"]["decision"] == "approved"
     assert body["approval"]["approver"] == "sam.manager"
+    assert body["delegation"]["correlation_id"] == "req-123"
+    assert body["delegation"]["target_agent"] == "store-intervention-agent"
+    assert body["delegation"]["intent"] == "store_intervention_planning"
+    assert body["delegation"]["status"] == "pending"
 
     record = ApprovalDecisionRecord.from_payload(body["approval"])
     assert record.decision == "approved"
     assert record.status == "approved"
+
+
+def test_rejected_approval_does_not_create_delegation_task():
+    approval = ApprovalDecisionRequest(
+        request_id="req-rejected-123",
+        agent_name="store-intervention-agent",
+        approver="sam.manager",
+        decision="rejected",
+        reason="Insufficient evidence for intervention.",
+    )
+
+    with TestClient(app) as client:
+        response = client.post("/approval-decisions", json=approval.to_payload())
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["approval"]["decision"] == "rejected"
+    assert body["delegation"] is None
 
 
 def test_direct_groundedness_requires_freshness_metadata():

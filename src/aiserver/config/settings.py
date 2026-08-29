@@ -60,6 +60,10 @@ class AppSettings:
     approval_schema: str = ""
     approval_table: str = "agent_approval_decisions"
     approval_fail_open: bool = False
+    approval_delegation_enabled: bool = True
+    approval_delegation_source_agent: str = "approval-api"
+    approval_delegation_target_agent: str = "store-intervention-agent"
+    approval_delegation_intent: str = "store_intervention_planning"
 
 
 @lru_cache(maxsize=1)
@@ -154,4 +158,15 @@ def get_settings() -> AppSettings:
         approval_table=os.getenv("APPROVAL_TABLE", "agent_approval_decisions"),
         approval_fail_open=os.getenv("APPROVAL_FAIL_OPEN", "false").lower()
         in {"1", "true", "yes", "on"},
+        approval_delegation_enabled=os.getenv("APPROVAL_DELEGATION_ENABLED", "true").lower()
+        in {"1", "true", "yes", "on"},
+        approval_delegation_source_agent=os.getenv(
+            "APPROVAL_DELEGATION_SOURCE_AGENT", "approval-api"
+        ),
+        approval_delegation_target_agent=os.getenv(
+            "APPROVAL_DELEGATION_TARGET_AGENT", "store-intervention-agent"
+        ),
+        approval_delegation_intent=os.getenv(
+            "APPROVAL_DELEGATION_INTENT", "store_intervention_planning"
+        ),
     )

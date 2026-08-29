@@ -207,8 +207,29 @@ function ApprovalActions({
 }): JSX.Element | null {
   const [decisionInFlight, setDecisionInFlight] = useState<string | null>(null);
   const [decisionError, setDecisionError] = useState<string | null>(null);
-  if (!message.approvalState || message.approvalState.status !== "pending")
+  if (!message.approvalState) {
     return null;
+  }
+
+  if (message.approvalState.status !== "pending") {
+    const delegation = message.approvalState.delegation;
+    return (
+      <section
+        className="approval-actions"
+        aria-label="Manager approval status"
+      >
+        <div>
+          <strong>Manager decision recorded</strong>
+          <span>
+            Status: {message.approvalState.status}
+            {delegation
+              ? ` | Follow-up task: ${delegation.task_id} (${delegation.status ?? "pending"})`
+              : ""}
+          </span>
+        </div>
+      </section>
+    );
+  }
 
   async function decide(
     decision: "approved" | "rejected" | "more_info_requested",

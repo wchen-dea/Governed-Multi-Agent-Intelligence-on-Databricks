@@ -1,0 +1,48 @@
+resources:
+  apps:
+    hitl-app-agent:
+      name: ${var.hitl_app_name}
+      description: "HITL specialist that prepares governed store intervention packets"
+      user_api_scopes:
+      - sql
+      source_code_path: ../src/hitl-agent
+      config:
+        command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+        env:
+        - name: REVENUE_TABLE
+          value: ${var.hitl_revenue_table}
+        - name: CDI_TABLE
+          value: ${var.hitl_cdi_table}
+        - name: PEER_SET_TABLE
+          value: ${var.hitl_peer_set_table}
+        - name: STORE_DIMENSION_TABLE
+          value: ${var.hitl_store_dimension_table}
+        - name: SQL_WAREHOUSE_ID
+          value: ${var.hitl_sql_warehouse_id}
+        - name: TREND_WINDOW_DAYS
+          value: ${var.hitl_trend_window_days}
+      resources:
+      - name: hitl_sql_warehouse
+        sql_warehouse:
+          id: ${var.hitl_sql_warehouse_id}
+          permission: CAN_USE
+      - name: platinum_revenue_source
+        uc_securable:
+          securable_full_name: ${var.hitl_revenue_table}
+          securable_type: TABLE
+          permission: SELECT
+      - name: gold_cdi_source
+        uc_securable:
+          securable_full_name: ${var.hitl_cdi_table}
+          securable_type: TABLE
+          permission: SELECT
+      - name: gold_peer_set_source
+        uc_securable:
+          securable_full_name: ${var.hitl_peer_set_table}
+          securable_type: TABLE
+          permission: SELECT
+      - name: gold_store_dimension_source
+        uc_securable:
+          securable_full_name: ${var.hitl_store_dimension_table}
+          securable_type: TABLE
+          permission: SELECT

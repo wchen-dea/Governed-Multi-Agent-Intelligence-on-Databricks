@@ -2,13 +2,14 @@
 
 set -eu
 
-APP_NAME="${APP_NAME:-store-intervention-agent}"
+APP_NAME="${APP_NAME:-hitl-app-agent}"
 PROFILE="${PROFILE:-DEFAULT}"
 DRY_RUN="${DRY_RUN:-false}"
 WAREHOUSE_ID="${HITL_WAREHOUSE_ID:-b20f70f71c2f52e2}"
 REVENUE_TABLE="${HITL_REVENUE_TABLE:-dt_dev_platinum.enterprise.store_sales_performance}"
 CDI_TABLE="${HITL_CDI_TABLE:-dt_dev_gold.dwh.fct_cdi_daily}"
 PEER_SET_TABLE="${HITL_PEER_SET_TABLE:-dt_dev_gold.dwh.brg_store_cluster_membership_group}"
+STORE_DIMENSION_TABLE="${HITL_STORE_DIMENSION_TABLE:-dt_dev_gold.dwh.dim_store_active}"
 
 if [ "$DRY_RUN" = "true" ]; then
     run() {
@@ -54,6 +55,7 @@ grant_object catalog dt_dev_gold USE_CATALOG
 grant_object schema dt_dev_gold.dwh USE_SCHEMA
 grant_object table "$CDI_TABLE" SELECT
 grant_object table "$PEER_SET_TABLE" SELECT
+grant_object table "$STORE_DIMENSION_TABLE" SELECT
 
 printf "HITL specialist privilege update completed%s.\n" \
     "$(if [ "$DRY_RUN" = "true" ]; then printf ' (dry run)'; fi)"

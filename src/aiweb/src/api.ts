@@ -92,6 +92,7 @@ export async function submitApprovalDecision(options: {
     throw new Error(`Approval decision failed (HTTP ${response.status}).`);
   const payload = (await response.json()) as {
     approval?: Record<string, unknown>;
+    delegation?: Record<string, unknown> | null;
   };
   const approval = payload.approval;
   if (!approval)
@@ -102,6 +103,37 @@ export async function submitApprovalDecision(options: {
     approver: typeof approval.approver === "string" ? approval.approver : null,
     decision: typeof approval.decision === "string" ? approval.decision : null,
     reason: typeof approval.reason === "string" ? approval.reason : null,
+    delegation:
+      payload.delegation && typeof payload.delegation.task_id === "string"
+        ? {
+            task_id: payload.delegation.task_id,
+            correlation_id:
+              typeof payload.delegation.correlation_id === "string"
+                ? payload.delegation.correlation_id
+                : undefined,
+            source_agent:
+              typeof payload.delegation.source_agent === "string"
+                ? payload.delegation.source_agent
+                : undefined,
+            target_agent:
+              typeof payload.delegation.target_agent === "string"
+                ? payload.delegation.target_agent
+                : undefined,
+            intent:
+              typeof payload.delegation.intent === "string"
+                ? payload.delegation.intent
+                : undefined,
+            status:
+              typeof payload.delegation.status === "string"
+                ? payload.delegation.status
+                : undefined,
+            failure_code:
+              typeof payload.delegation.failure_code === "string"
+                ? payload.delegation.failure_code
+                : null,
+            completed: payload.delegation.completed === true,
+          }
+        : null,
   };
 }
 

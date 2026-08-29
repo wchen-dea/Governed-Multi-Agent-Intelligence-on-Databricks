@@ -15,6 +15,27 @@ artifacts:
 variables:
   app_name:
     description: Databricks app name for the current environment
+  hitl_app_name:
+    description: Databricks HITL specialist app name for the current environment
+    default: hitl-app-agent
+  hitl_sql_warehouse_id:
+    description: SQL warehouse used by the HITL specialist App for source queries
+    default: ""
+  hitl_revenue_table:
+    description: Platinum-layer revenue source table for the HITL specialist App
+    default: ""
+  hitl_cdi_table:
+    description: Gold-layer CDI source table for the HITL specialist App
+    default: ""
+  hitl_peer_set_table:
+    description: Gold-layer peer-set source table for the HITL specialist App
+    default: ""
+  hitl_store_dimension_table:
+    description: Gold-layer store dimension source table for the HITL specialist App
+    default: ""
+  hitl_trend_window_days:
+    description: Rolling window in days for HITL trend analysis
+    default: "90"
   mlflow_experiment_id:
     description: MLflow experiment ID for tracing/evaluation in the current environment
   mlflow_tracking_uri:
@@ -173,6 +194,18 @@ variables:
   approval_table:
     description: Unity Catalog table for approval decisions
     default: agent_approval_decisions
+  approval_delegation_enabled:
+    description: Whether approved HITL decisions create durable follow-up delegation tasks
+    default: "true"
+  approval_delegation_source_agent:
+    description: Source agent recorded on approved HITL follow-up tasks
+    default: approval-api
+  approval_delegation_target_agent:
+    description: Target agent for approved HITL follow-up tasks
+    default: store-intervention-agent
+  approval_delegation_intent:
+    description: Intent recorded on approved HITL follow-up tasks
+    default: store_intervention_planning
   agent_task_backend:
     description: Delegation task backend (memory or uc_table)
     default: memory
