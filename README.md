@@ -57,6 +57,7 @@ Supporting platform infrastructure:
 Beyond the Databricks platform features above, this project implements these AI engineering techniques:
 
 - OpenAI Agents SDK (`openai-agents`): agent orchestration runtime (`Agent`, `Runner.run`/`Runner.run_streamed`, native function-calling tools).
+- OpenAI-compatible Responses API contract: Databricks Foundation Model API and specialist serving-endpoint calls use one stable model/tool-call contract, with structured run metadata captured for audit and evaluation.
 - Model Context Protocol (MCP): standardized tool-calling protocol for Genie and AI Search integrations, with health-checked, TTL-cached server connections.
 - Task-aware model routing: deterministic selection between standard/reasoning/synthesis Databricks models per request, recorded via `routing.plan.selected` lifecycle events.
 - Multi-agent delegation with typed contracts: bounded async agent-to-agent task handoff with correlation IDs, idempotency keys, leases, retries, and dead-letter states.
@@ -65,6 +66,7 @@ Beyond the Databricks platform features above, this project implements these AI 
 - Human-in-the-loop controls: manager-only store intervention review with pending, approved, rejected, and more-information states backed by a UC Delta approval table.
 - Persona-based policy authorization: governed routing that filters candidate subagents by persona, auth mode, and data classification before tool execution.
 - Streaming agent responses: token/tool-event streaming with mid-stream guardrail finalization for the chat UI.
+- Structured response governance metadata: response envelopes record route plans, OpenAI run ids, selected models, selected tools, unavailable tool details, guardrail outcomes, source metadata, and approval state.
 - RAG (retrieval-augmented generation): AI Search/Vector Search-backed retrieval for product knowledge and Flink support troubleshooting, with citation-grounded answers.
 
 ## Team Onboarding: Project Skills and Capabilities

@@ -38,6 +38,21 @@ class ToolExecutionResult:
 
 
 @dataclass(frozen=True)
+class OpenAIAgentRunMetadata:
+    """Describe one OpenAI-compatible agent run for audit and evaluation."""
+
+    run_id: str = ""
+    api: str = "responses"
+    model: str = ""
+    model_task_type: str = ""
+    model_reason: str = ""
+    candidate_subagents: tuple[str, ...] = ()
+    selected_tool_names: tuple[str, ...] = ()
+    unavailable_tool_details: tuple[str, ...] = ()
+    ai_gateway_enabled: bool = False
+
+
+@dataclass(frozen=True)
 class HumanApprovalState:
     """Describe the review gate for business-impacting or action-oriented responses."""
 
@@ -113,6 +128,7 @@ class ResponseEnvelope:
     truncated: bool = False
     route_plan: RoutePlan = field(default_factory=RoutePlan)
     tool_results: tuple[ToolExecutionResult, ...] = ()
+    openai_run: OpenAIAgentRunMetadata = field(default_factory=OpenAIAgentRunMetadata)
     guardrail_reasons: tuple[str, ...] = ()
     source_metadata: tuple[str, ...] = ()
     approval_state: HumanApprovalState = field(default_factory=HumanApprovalState)

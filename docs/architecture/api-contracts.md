@@ -35,6 +35,7 @@ Optional headers:
 - On success: response output item list
 - On block/failure: typed error response with user-safe detail
 - Lifecycle success events include a typed response envelope with status, answer length, truncation state, guardrail reasons, and source metadata.
+- OpenAI-compatible agent execution metadata is carried through lifecycle events and stream governance events without changing the public assistant text contract.
 
 ## Stream Contract
 
@@ -53,6 +54,7 @@ The internal response envelope contains:
 | `truncated` | Whether the configured response budget was exceeded |
 | `route_plan` | Candidate tools, route reason, confidence, and evidence requirement |
 | `tool_results` | Normalized tool execution outcomes |
+| `openai_run` | Run id, Responses API marker, selected model, task type, route candidates, selected tools, unavailable tools, and AI Gateway routing flag |
 | `guardrail_reasons` | Stable input or output policy reason codes |
 | `source_metadata` | Source or freshness metadata used for governed answers |
 | `approval_state` | Human-review requirement, approver role, decision status, and reason |

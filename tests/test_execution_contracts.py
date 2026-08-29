@@ -2,8 +2,9 @@ from fastapi.testclient import TestClient
 
 from aiserver.api.server import app
 from aiserver.contracts.responses import (
-    ApprovalDecisionRequest,
     ApprovalDecisionRecord,
+    ApprovalDecisionRequest,
+    OpenAIAgentRunMetadata,
     ResponseEnvelope,
     RoutePlan,
 )
@@ -16,11 +17,24 @@ def test_response_envelope_is_typed_and_serializable():
         answer_chars=100,
         truncated=True,
         route_plan=RoutePlan(candidates=("sales",), reason="capability_match"),
+        openai_run=OpenAIAgentRunMetadata(
+            run_id="run-123",
+            model="databricks-gpt-5-6-luna",
+            model_task_type="reasoning",
+            model_reason="task_type_match",
+            candidate_subagents=("sales",),
+            selected_tool_names=("Genie:sales",),
+            unavailable_tool_details=("Genie:cdi unavailable",),
+            ai_gateway_enabled=True,
+        ),
     )
 
     assert envelope.status == "truncated"
     assert envelope.route_plan.candidates == ("sales",)
     assert envelope.__dict__["truncated"] is True
+    assert envelope.openai_run.api == "responses"
+    assert envelope.openai_run.run_id == "run-123"
+    assert envelope.openai_run.selected_tool_names == ("Genie:sales",)
 
 
 def test_explicit_approval_decision_contract_round_trip():

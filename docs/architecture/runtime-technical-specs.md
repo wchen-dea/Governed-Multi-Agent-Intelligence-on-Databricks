@@ -6,8 +6,11 @@ This document summarizes the technical specifications currently implemented in t
 
 - Layered backend architecture is implemented with API, application, bootstrap, config, domain, and infrastructure layers.
 - Request handling supports both invoke and stream flows through MLflow Agent Server handlers.
+- The OpenAI-compatible Responses API is the stable model and tool-call contract for orchestrator and specialist serving-endpoint calls.
+- OpenAI Agents SDK remains the primary synchronous orchestration runtime; durable graph workflows should be introduced only behind explicit workflow boundaries such as approval or long-running delegation.
 - Orchestrator agent is assembled at runtime with available tools and healthy MCP servers.
 - A deterministic model router selects a configured Databricks model before agent assembly and records the decision in routing lifecycle metadata.
+- Each OpenAI-compatible agent run records structured metadata in the response envelope and lifecycle events: run id, API contract, selected model, model task type, route candidates, selected tool names, unavailable tool details, and whether AI Gateway routing is enabled.
 - Frontend runtime is a React UI, bundled and served in-process by the backend.
 
 Primary implementation:
@@ -106,6 +109,8 @@ Primary implementation:
 
 - Lifecycle events are normalized with a shared event envelope.
 - Events are emitted across request, tool, MCP, auth, policy, and guardrail stages.
+- OpenAI-compatible agent execution emits `openai.agent.run.started` and `openai.agent.run.completed` events with stable run metadata.
+- Guardrail pass/block events include the same OpenAI run metadata so final response status can be tied back to the selected model, route candidates, and tool set.
 - Message bus backend is environment-configurable.
 - Optional async queue-backed message-bus publishing is available to reduce request-path event I/O overhead.
 - UC-governed persistence is implemented through a uc_table backend.
@@ -178,6 +183,7 @@ Primary implementation:
 
 - Deployment is target-based with dev, qa, stg, and prd overlays.
 - Shared resource configuration is centralized and target overrides are explicit.
+- AI Gateway is the preferred production control point for OpenAI-compatible traffic. Set `DATABRICKS_OPENAI_BASE_URL` and `DATABRICKS_OPENAI_TIMEOUT_SECONDS` to route Databricks OpenAI client calls through the gateway without changing application code.
 - Environment variables configure runtime behavior for auth, bus backends, UC audit sink, and release gates.
 - Environment variables configure the approval backend and its UC Delta table.
 - Process concurrency tuning is supported through a backend Uvicorn worker env control (`BACKEND_UVICORN_WORKERS`).
