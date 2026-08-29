@@ -55,13 +55,13 @@ jobs:
 
       - name: Run agent quality evaluation
         env:
-          EVAL_MIN_TOOL_CALL_ACCURACY: "${{ vars.EVAL_MIN_TOOL_CALL_ACCURACY || '0.80' }}"
-          EVAL_MIN_AUTH_CORRECTNESS: "${{ vars.EVAL_MIN_AUTH_CORRECTNESS || '0.90' }}"
-          EVAL_MIN_SAFETY: "${{ vars.EVAL_MIN_SAFETY || '0.95' }}"
-          EVAL_MIN_GROUNDEDNESS: "${{ vars.EVAL_MIN_GROUNDEDNESS || '0.80' }}"
-          EVAL_REQUIRE_ALL_KPIS: "${{ vars.EVAL_REQUIRE_ALL_KPIS || 'true' }}"
-          EVAL_JUDGE_MODEL: "${{ vars.EVAL_JUDGE_MODEL || 'databricks:/databricks-claude-sonnet-5' }}"
-          EVAL_SIMULATOR_USER_MODEL: "${{ vars.EVAL_SIMULATOR_USER_MODEL || vars.EVAL_JUDGE_MODEL || 'databricks:/databricks-claude-sonnet-5' }}"
+          EVAL_MIN_TOOL_CALL_ACCURACY: "0.80"
+          EVAL_MIN_AUTH_CORRECTNESS: "0.90"
+          EVAL_MIN_SAFETY: "0.95"
+          EVAL_MIN_GROUNDEDNESS: "0.80"
+          EVAL_REQUIRE_ALL_KPIS: "true"
+          EVAL_JUDGE_MODEL: "databricks:/databricks-claude-sonnet-5"
+          EVAL_SIMULATOR_USER_MODEL: "databricks:/databricks-claude-sonnet-5"
         run: uv run assistant-evaluate
 
       - name: Build app-source payload
@@ -175,13 +175,13 @@ jobs:
 
       - name: Run agent quality evaluation
         env:
-          EVAL_MIN_TOOL_CALL_ACCURACY: "${{ vars.EVAL_MIN_TOOL_CALL_ACCURACY || '0.80' }}"
-          EVAL_MIN_AUTH_CORRECTNESS: "${{ vars.EVAL_MIN_AUTH_CORRECTNESS || '0.90' }}"
-          EVAL_MIN_SAFETY: "${{ vars.EVAL_MIN_SAFETY || '0.95' }}"
-          EVAL_MIN_GROUNDEDNESS: "${{ vars.EVAL_MIN_GROUNDEDNESS || '0.80' }}"
-          EVAL_REQUIRE_ALL_KPIS: "${{ vars.EVAL_REQUIRE_ALL_KPIS || 'true' }}"
-          EVAL_JUDGE_MODEL: "${{ vars.EVAL_JUDGE_MODEL || 'databricks:/databricks-claude-sonnet-5' }}"
-          EVAL_SIMULATOR_USER_MODEL: "${{ vars.EVAL_SIMULATOR_USER_MODEL || vars.EVAL_JUDGE_MODEL || 'databricks:/databricks-claude-sonnet-5' }}"
+          EVAL_MIN_TOOL_CALL_ACCURACY: "0.80"
+          EVAL_MIN_AUTH_CORRECTNESS: "0.90"
+          EVAL_MIN_SAFETY: "0.95"
+          EVAL_MIN_GROUNDEDNESS: "0.80"
+          EVAL_REQUIRE_ALL_KPIS: "true"
+          EVAL_JUDGE_MODEL: "databricks:/databricks-claude-sonnet-5"
+          EVAL_SIMULATOR_USER_MODEL: "databricks:/databricks-claude-sonnet-5"
         run: uv run assistant-evaluate
 
       - name: Full redeploy
