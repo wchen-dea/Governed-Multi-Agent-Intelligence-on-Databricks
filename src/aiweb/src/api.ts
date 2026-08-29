@@ -4,7 +4,11 @@ import {
   sourceBadgeLine,
   updateStreamHints,
 } from "./stream";
-import type { ChatMessage, HumanApprovalState } from "./types";
+import type {
+  ChatMessage,
+  HumanApprovalState,
+  OpenAIAgentRunMetadata,
+} from "./types";
 import type { GovernanceMetadata } from "./types";
 
 export interface SendChatOptions {
@@ -33,6 +37,7 @@ function metadataFromEvent(
   const envelope = (event.response_envelope ?? event.governance) as
     Record<string, unknown> | undefined;
   if (!envelope || typeof envelope !== "object") return fallback;
+  const openaiRun = envelope.openai_run;
   return {
     ...fallback,
     guardrailReasons: Array.isArray(envelope.guardrail_reasons)
@@ -47,6 +52,10 @@ function metadataFromEvent(
       envelope.approval_state && typeof envelope.approval_state === "object"
         ? (envelope.approval_state as HumanApprovalState)
         : fallback.approvalState,
+    openaiRun:
+      openaiRun && typeof openaiRun === "object"
+        ? (openaiRun as OpenAIAgentRunMetadata)
+        : fallback.openaiRun,
   };
 }
 

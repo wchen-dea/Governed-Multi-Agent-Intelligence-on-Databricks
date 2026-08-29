@@ -46,6 +46,7 @@ test("shows manager actions for a pending HITL response", async ({ page }) => {
   await page.route("**/approval-decisions", async (route) => {
     const body = route.request().postDataJSON();
     expect(body.decision).toBe("approved");
+    expect(body.request_id).toBe("run-hitl-123");
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -69,6 +70,11 @@ test("shows manager actions for a pending HITL response", async ({ page }) => {
         response_envelope: {
           status: "succeeded",
           truncated: false,
+          openai_run: {
+            run_id: "run-hitl-123",
+            api: "responses",
+            model: "databricks-gpt-5-6-luna",
+          },
           approval_state: {
             status: "pending",
             required: true,

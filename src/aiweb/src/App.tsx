@@ -216,8 +216,9 @@ function ApprovalActions({
     setDecisionInFlight(decision);
     setDecisionError(null);
     try {
+      const requestId = message.openaiRun?.run_id || message.id;
       const state = await submitApprovalDecision({
-        requestId: message.id,
+        requestId,
         agentName: "store-intervention-agent",
         approver: "manager",
         decision,
@@ -471,6 +472,7 @@ export default function App() {
                   routePlan: metadata.routePlan,
                   guardrailReasons: metadata.guardrailReasons,
                   truncated: metadata.truncated,
+                  openaiRun: metadata.openaiRun,
                   approvalState: metadata.approvalState,
                 }
               : message,
@@ -515,6 +517,7 @@ export default function App() {
                 routePlan: result.metadata.routePlan,
                 guardrailReasons: result.metadata.guardrailReasons,
                 truncated: result.metadata.truncated,
+                openaiRun: result.metadata.openaiRun,
                 approvalState: result.metadata.approvalState,
               }
             : msg,
