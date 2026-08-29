@@ -97,7 +97,7 @@ Typical source pattern for Genie Agents:
 
 - Type: app
 - Runtime name: `store-intervention-agent`
-- Endpoint: `store-intervention-agent`
+- Endpoint: `hitl-app-agent` in dev; target-specific via `src/aiserver/contracts/subagents.<target>.json`
 - Auth mode: app
 - Allowed persona: manager
 - Classification: confidential

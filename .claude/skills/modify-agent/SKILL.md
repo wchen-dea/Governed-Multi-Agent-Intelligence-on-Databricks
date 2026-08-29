@@ -7,23 +7,26 @@ description: "Modify orchestrator behavior, subagent routing, and request handli
 
 ## Primary Files (This Repo)
 
-- `backend/api/handlers.py`: invoke/stream handlers and request orchestration wiring
-- `backend/services/orchestrator_service.py`: tool/server construction and orchestrator creation
-- `backend/services/runtime_auth_service.py`: request-scoped hybrid auth context and trace metadata
-- `backend/domain/subagent_config.py`: typed subagent definitions and config loading/validation
-- `backend/domain/subagents.<target>.json`: environment-specific subagent routing configuration
-- `backend/shared/request_utils.py`: request normalization and MCP error extraction
-- `backend/shared/runtime_utils.py`: runtime helpers (workspace host, ids, stream normalization)
+- `src/aiserver/api/invocations.py`: invoke/stream handlers and request orchestration pipeline
+- `src/aiserver/api/server.py`: MLflow Agent Server bootstrap, app routes, and lifespan hooks
+- `src/aiserver/application/orchestration/agent.py`: tool/server construction and orchestrator creation
+- `src/aiserver/application/auth/context.py`: request-scoped hybrid auth context and trace metadata
+- `src/aiserver/application/auth/policy.py`: persona, auth-mode, and classification policy checks
+- `src/aiserver/contracts/subagents.py`: typed subagent definitions and config loading/validation
+- `src/aiserver/contracts/subagents.<target>.json`: environment-specific subagent routing configuration
+- `src/aiserver/application/runtime/requests.py`: request normalization and MCP error extraction
+- `src/aiserver/application/runtime/identity.py`: workspace host, app identity, and OBO identity helpers
+- `src/aiserver/application/runtime/streaming.py`: stream event normalization
 
 ## Common Changes
 
 Change orchestrator behavior:
 
-- Update prompts/model/orchestration logic in `backend/services/orchestrator_service.py`.
+- Update prompts/model/orchestration logic in `src/aiserver/application/orchestration/agent.py` and `src/aiserver/application/orchestration/model.py`.
 
 Add or edit subagents:
 
-- Update entries in `backend/domain/subagents.<target>.json`.
+- Update entries in `src/aiserver/contracts/subagents.<target>.json`.
 - Supported types: `genie`, `serving_endpoint`, `app`, `mcp`, `lakebase`.
 - Required fields:
   - `genie`: `space_id`
@@ -32,12 +35,12 @@ Add or edit subagents:
 
 Adjust request/response shaping:
 
-- `backend/shared/request_utils.py` for input normalization and surfaced errors.
+- `src/aiserver/application/runtime/requests.py` for input normalization and surfaced errors.
 
 ## Validate After Changes
 
 ```bash
-python -m py_compile backend/**/*.py scripts/*.py frontend/*.py
+python -m compileall -q src/aiserver src/operations scripts
 uv run runtime-preflight
 uv run runtime-serve-app
 ```

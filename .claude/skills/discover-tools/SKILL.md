@@ -29,4 +29,4 @@ uv run assistant-discover-tools --format json --output tools.json
 
 ## Next Step in This Repo
 
-Update subagent configuration in `backend/domain/subagents.<target>.json` and required app resource grants in `resources/multiagent_app.yml`, then deploy.
+Update subagent configuration in `src/aiserver/contracts/subagents.<target>.json` and required app resource grants in `resources/multiagent_app.yml`, then deploy.

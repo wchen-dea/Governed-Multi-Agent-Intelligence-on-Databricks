@@ -30,7 +30,7 @@ uv run assistant-discover-tools --profile <profile>
 - App specialist: app name
 
 4. Wire resources into project config:
-- `backend/domain/subagents.<target>.json`
+- `src/aiserver/contracts/subagents.<target>.json`
 - `targets/<env>.yml` variables
 - `resources/multiagent_app.yml` app resource permissions
 

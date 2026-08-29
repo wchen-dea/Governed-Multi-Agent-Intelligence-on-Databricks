@@ -9,7 +9,7 @@ This project routes tools through typed subagent config plus Databricks app reso
 
 ## Step 1: Add Routing Configuration
 
-Edit `backend/domain/subagents.<target>.json`:
+Edit `src/aiserver/contracts/subagents.<target>.json`:
 
 ```python
 {
