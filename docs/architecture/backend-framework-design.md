@@ -39,13 +39,13 @@ src/aiserver/
 ## Layer Responsibilities
 
 | Layer | Responsibility | Depends On |
-|-------|---------------|------------|
+| --- | --- | --- |
 | **api** | HTTP lifecycle and request dispatch | application, bootstrap |
-| **application** | Orchestration, policy, auth, guardrails, and request helpers | contracts, config, ports |
+| **application** | Use-case services: orchestration, policy/auth decisions, guardrails, delegation, runtime request helpers, and port definitions | contracts, config |
 | **bootstrap** | Dependency composition | application, infrastructure |
 | **contracts** | Typed execution, delegation, and subagent registry contracts | (no higher layers) |
 | **config** | Environment settings | (no higher layers) |
-| **infrastructure** | Databricks, messaging, tracing, and persistence adapters | application ports, contracts, config |
+| **infrastructure** | Adapter implementations for Databricks APIs, message bus backends, tracing, and persistence | application port interfaces, contracts, config |
 
 Dependencies flow inward: `api -> application -> contracts/config`; infrastructure implements application ports and bootstrap composes concrete dependencies.
 
@@ -99,7 +99,7 @@ Services are composed at import time via `build_dependency_container()`. Handler
 ## Subagent Types
 
 | Type | Protocol | Auth Modes | Example |
-|------|----------|-----------|---------|
+| --- | --- | --- | --- |
 | `genie` | Databricks Genie MCP | app, obo | Sales Insights, CDI Metrics |
 | `mcp` | Databricks AI Search MCP | app, obo | Product Index, Flink Support |
 | `lakebase` | PostgreSQL (psycopg2 + OAuth) | app | Lakebase ODS |
@@ -113,7 +113,7 @@ Each subagent is defined in `subagents.{env}.json` with typed metadata: auth mod
 Request-time policy rules (evaluated per subagent before tool assembly):
 
 | Rule | Blocks When |
-|------|------------|
+| --- | --- |
 | `persona_required` | No persona set and subagent has persona restrictions |
 | `persona_not_allowed` | Active persona not in subagent's `allowed_personas` |
 | `obo_identity_required` | `auth_mode=obo` but no forwarded token present |
@@ -127,7 +127,7 @@ Denied subagents are excluded from tool assembly and reported as unavailable.
 Post-execution checks before returning content:
 
 | Check | Blocks When |
-|-------|------------|
+| --- | --- |
 | Evidence required | `requires_evidence=true` subagent contributed but response lacks `[1]`, `Source:`, or `Citation:` |
 | Unsafe patterns | Response contains SSN, credit card, private key, API key, or password patterns |
 | Low-confidence sensitive | Hedging language detected for confidential/restricted data context |
@@ -162,7 +162,7 @@ Both identities are resolved per-request in `RuntimeAuthContext`. Tools and MCP 
 ## Key Dependencies
 
 | Package | Purpose |
-|---------|---------|
+| --- | --- |
 | `openai-agents` | Agent orchestration (Runner, Agent, tools, streaming) |
 | `databricks-openai` | `AsyncDatabricksOpenAI` client for model serving |
 | `databricks-agents` | Genie/MCP integration, deployment utilities |
@@ -175,7 +175,7 @@ Both identities are resolved per-request in `RuntimeAuthContext`. Tools and MCP 
 All runtime behavior is driven by environment variables (see `shared/settings.py`):
 
 | Variable | Purpose |
-|----------|---------|
+| --- | --- |
 | `ORCHESTRATOR_MODEL` | Target-configured foundation model for the orchestrator |
 | `MODEL_ROUTING_*` | Deterministic standard, reasoning, and synthesis model routes; dev uses `databricks-gpt-5-6-luna` for standard turns and `databricks-claude-sonnet-5` for reasoning/synthesis turns |
 | `AGENT_TASK_*` | UC delegation task store and bounded worker configuration |

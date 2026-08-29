@@ -10,6 +10,7 @@ REVENUE_TABLE="${HITL_REVENUE_TABLE:-dt_dev_platinum.enterprise.store_sales_perf
 CDI_TABLE="${HITL_CDI_TABLE:-dt_dev_gold.dwh.fct_cdi_daily}"
 PEER_SET_TABLE="${HITL_PEER_SET_TABLE:-dt_dev_gold.dwh.brg_store_cluster_membership_group}"
 STORE_DIMENSION_TABLE="${HITL_STORE_DIMENSION_TABLE:-dt_dev_gold.dwh.dim_store_active}"
+ORCHESTRATOR_APP_NAME="${ORCHESTRATOR_APP_NAME:-}"
 
 if [ "$DRY_RUN" = "true" ]; then
     run() {
@@ -43,6 +44,22 @@ grant_warehouse() {
     printf "Granted CAN_USE on warehouse %s\n" "$WAREHOUSE_ID"
 }
 
+grant_orchestrator_can_use() {
+    if [ -z "$ORCHESTRATOR_APP_NAME" ]; then
+        return
+    fi
+    orchestrator_json="$(databricks apps get "$ORCHESTRATOR_APP_NAME" --profile "$PROFILE" --output json)"
+    orchestrator_sp="$(printf '%s' "$orchestrator_json" | jq -r '.service_principal_client_id // empty')"
+    if [ -z "$orchestrator_sp" ]; then
+        printf "Could not resolve service principal for orchestrator App %s\n" "$ORCHESTRATOR_APP_NAME" >&2
+        exit 1
+    fi
+    run databricks apps update-permissions "$APP_NAME" --profile "$PROFILE" \
+        --service-principal "$orchestrator_sp" \
+        --permission-level CAN_USE
+    printf "Granted orchestrator App %s CAN_USE on HITL App %s\n" "$ORCHESTRATOR_APP_NAME" "$APP_NAME"
+}
+
 grant_table_with_usage() {
     table_full_name="$1"
     table_catalog="${table_full_name%%.*}"
@@ -66,6 +83,7 @@ grant_table_with_usage "$REVENUE_TABLE"
 grant_table_with_usage "$CDI_TABLE"
 grant_table_with_usage "$PEER_SET_TABLE"
 grant_table_with_usage "$STORE_DIMENSION_TABLE"
+grant_orchestrator_can_use
 
 printf "HITL specialist privilege update completed%s.\n" \
     "$(if [ "$DRY_RUN" = "true" ]; then printf ' (dry run)'; fi)"

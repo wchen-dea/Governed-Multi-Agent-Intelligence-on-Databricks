@@ -152,6 +152,22 @@ jobs:
       - name: Verify Databricks CLI
         run: databricks --version
 
+      - name: Resolve bundle app variables
+        run: |
+          set -euo pipefail
+          BUNDLE_JSON="$(databricks bundle validate -t "$TARGET" --profile DEFAULT --output json)"
+
+          value_for() {
+            printf '%s' "$BUNDLE_JSON" | jq -r ".variables.$1.value // .variables.$1.default // \"\""
+          }
+
+          echo "HITL_APP_NAME=$(value_for hitl_app_name)" >> "$GITHUB_ENV"
+          echo "HITL_WAREHOUSE_ID=$(value_for hitl_sql_warehouse_id)" >> "$GITHUB_ENV"
+          echo "HITL_REVENUE_TABLE=$(value_for hitl_revenue_table)" >> "$GITHUB_ENV"
+          echo "HITL_CDI_TABLE=$(value_for hitl_cdi_table)" >> "$GITHUB_ENV"
+          echo "HITL_PEER_SET_TABLE=$(value_for hitl_peer_set_table)" >> "$GITHUB_ENV"
+          echo "HITL_STORE_DIMENSION_TABLE=$(value_for hitl_store_dimension_table)" >> "$GITHUB_ENV"
+
       - name: Run tests
         run: uv run pytest -q
 
@@ -167,4 +183,14 @@ jobs:
       - name: Full redeploy
         run: |
           set -euo pipefail
-          make redeploy TARGET="$TARGET" APP_NAME="$APP_NAME"
+          make redeploy TARGET="$TARGET" APP_NAME="$APP_NAME" PROFILE=DEFAULT
+
+      - name: Deploy HITL specialist app
+        run: |
+          set -euo pipefail
+          make update-hitl APP_NAME="$HITL_APP_NAME" PROFILE=DEFAULT
+
+      - name: Grant HITL specialist privileges
+        run: |
+          set -euo pipefail
+          ORCHESTRATOR_APP_NAME="$APP_NAME" make grant-hitl-privileges APP_NAME="$HITL_APP_NAME" PROFILE=DEFAULT

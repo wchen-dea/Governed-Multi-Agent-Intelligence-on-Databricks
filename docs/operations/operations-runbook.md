@@ -178,11 +178,13 @@ Expected health fields:
 The GitHub Actions deployment pipeline (`.github/workflows/databricks-cicd.yml`) is aligned to this runbook:
 
 - **`pr-ci` job** (pull requests): `uv run pytest -q` → `uv run assistant-evaluate` → `make build-app-source` → `make validate TARGET=<pr-base-branch>`.
-- **`deploy` job** (push to `dev`/`qa`/`stg`/`prd` or manual dispatch): `uv run pytest -q` → `uv run assistant-evaluate` → `make redeploy TARGET=<target> APP_NAME=<app-name>`.
+- **`deploy` job** (push to `dev`/`qa`/`stg`/`prd` or manual dispatch): `uv run pytest -q` → `uv run assistant-evaluate` → `make redeploy TARGET=<target> APP_NAME=<app-name>` → resolve HITL bundle variables → `make update-hitl APP_NAME=<hitl-app-name>` → `make grant-hitl-privileges APP_NAME=<hitl-app-name>`.
 
 `make redeploy` is a single composite target that runs `build-app-source`, `validate`, `bundle-deploy-optional`, `import`, `deploy`, `grants`, `health`, and `smoke` in sequence (see [Makefile](../../Makefile)).
 
 For an operator-driven source-only recovery, use `make upload-wheel` instead of `make redeploy`.
+
+`make update-hitl` creates the specialist App only when it is missing. When the App already exists, it performs an update-only deploy and verifies the service principal client ID is unchanged.
 
 This keeps repository state clean (no committed wheel binaries) while ensuring each CI run deploys a fresh wheel artifact.
 
