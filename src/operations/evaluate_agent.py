@@ -38,6 +38,18 @@ os.environ["MLFLOW_ENABLE_ASYNC_TRACE_LOGGING"] = "false"
 import aiserver.api.invocations  # noqa: E402, F401
 from aiserver.contracts.subagents import skipped_subagent_names  # noqa: E402
 
+DEFAULT_EVAL_JUDGE_MODEL = "databricks:/databricks-claude-sonnet-5"
+
+
+def eval_judge_model() -> str:
+    """Return the model used by MLflow LLM-judge scorers."""
+    return os.getenv("EVAL_JUDGE_MODEL", DEFAULT_EVAL_JUDGE_MODEL).strip() or DEFAULT_EVAL_JUDGE_MODEL
+
+
+def eval_simulator_user_model() -> str:
+    """Return the model used by ConversationSimulator to generate user turns."""
+    return os.getenv("EVAL_SIMULATOR_USER_MODEL", eval_judge_model()).strip() or eval_judge_model()
+
 # Evaluation dataset.
 # Scorer documentation:
 # https://docs.databricks.com/aws/en/mlflow3/genai/eval-monitor/concepts/scorers
@@ -350,7 +362,7 @@ def direct_groundedness_scorer(
 simulator = ConversationSimulator(
     test_cases=test_cases,
     max_turns=5,
-    user_model="databricks:/databricks-claude-sonnet-5",
+    user_model=eval_simulator_user_model(),
 )
 
 # Retrieve the invoke function registered by the @invoke decorator.
@@ -411,16 +423,18 @@ def evaluate():
         mlflow.flush_trace_async_logging()
 
 
+JUDGE_MODEL = eval_judge_model()
+
 SCORERS = [
-    Completeness(),
-    ConversationCompleteness(),
-    ConversationalSafety(),
-    KnowledgeRetention(),
-    UserFrustration(),
-    Fluency(),
-    RelevanceToQuery(),
-    Safety(),
-    ToolCallCorrectness(),
+    Completeness(model=JUDGE_MODEL),
+    ConversationCompleteness(model=JUDGE_MODEL),
+    ConversationalSafety(model=JUDGE_MODEL),
+    KnowledgeRetention(model=JUDGE_MODEL),
+    UserFrustration(model=JUDGE_MODEL),
+    Fluency(model=JUDGE_MODEL),
+    RelevanceToQuery(model=JUDGE_MODEL),
+    Safety(model=JUDGE_MODEL),
+    ToolCallCorrectness(model=JUDGE_MODEL),
     auth_correctness_scorer,
     direct_groundedness_scorer,
     data_tool_attempt_scorer,
@@ -491,6 +505,7 @@ def _log_evaluation_metadata() -> None:
             "evaluation.test_case_count": len(test_cases),
             "evaluation.max_turns": simulator.max_turns,
             "evaluation.user_model": simulator.user_model,
+            "evaluation.judge_model": JUDGE_MODEL,
             "evaluation.scorer_count": len(SCORERS),
             "gate.min_tool_call_accuracy": _threshold("EVAL_MIN_TOOL_CALL_ACCURACY", 0.8),
             "gate.min_auth_correctness": _threshold("EVAL_MIN_AUTH_CORRECTNESS", 0.9),

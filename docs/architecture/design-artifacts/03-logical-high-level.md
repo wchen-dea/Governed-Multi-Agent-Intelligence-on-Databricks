@@ -107,4 +107,4 @@ flowchart LR
 
 ## Current Alignment
 
-The logical runtime adds deterministic model routing before agent construction; dev currently resolves standard, reasoning, and synthesis routes to `databricks-gpt-5-6-luna`. Streams buffer and finalize before the browser renders `response.output_text.delta` only. See [API contracts](../api-contracts.md) for the client-visible contract.
+The logical runtime adds deterministic model routing before agent construction; dev uses `databricks-gpt-5-6-luna` for standard turns and `databricks-claude-sonnet-5` for reasoning/synthesis turns. Streams buffer and finalize before the browser renders `response.output_text.delta` only. See [API contracts](../api-contracts.md) for the client-visible contract.

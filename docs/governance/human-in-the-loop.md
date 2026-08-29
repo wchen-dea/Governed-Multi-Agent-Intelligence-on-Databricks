@@ -16,7 +16,7 @@ The workflow is handled by `store-intervention-agent`, which is configured for t
 
 ## Create `store-intervention-agent`
 
-`store-intervention-agent` is an active Databricks App specialist. Its source is maintained locally in `src/hitl-agent/` and deployed separately from this orchestrator bundle. Create it once per environment, then register its App name in this repository.
+`store-intervention-agent` is a Databricks App specialist. Its source is maintained locally in `src/hitl-agent/` and is declared in the bundle as `resources.apps.hitl-app-agent` in `resources/hitl_app.yml`. Create or bind it once per environment, then keep its App name aligned with `hitl_app_name` and the orchestrator subagent endpoint.
 
 ### 1. Define the specialist contract
 
@@ -46,44 +46,59 @@ The App must not accept an `approved` value from model text as authorization. Au
 
 ### 2. Create and deploy the App
 
-Use the organization-approved Databricks Apps creation path, naming the App exactly `store-intervention-agent`. The source must include the specialist's Responses API server and its dependency/configuration files.
+Use the organization-approved Databricks Apps creation path. In dev the App is named `hitl-app-agent`; other targets should set `hitl_app_name` in `targets/<target>.yml`. The source must include the specialist's Responses API server and its dependency/configuration files.
 
-After the App source is available, deploy it with the Databricks CLI:
+If the App already exists, bind it to the DAB resource key before deploying:
 
 ```bash
-databricks apps deploy store-intervention-agent \
+databricks bundle deployment bind hitl-app-agent hitl-app-agent \
+  --target dev \
   --profile PROFILE \
-  --source-code-path /path/to/store-intervention-agent
+  --auto-approve
 ```
+
+Deploy it with the rest of the bundle:
+
+```bash
+databricks bundle deploy -t dev --profile PROFILE
+```
+
+For manual source-only refreshes, deploy it with the repository helper:
+
+```bash
+make update-hitl APP_NAME=hitl-app-agent PROFILE=PROFILE
+```
+
+The helper imports `src/hitl-agent`, creates the App only when it does not already exist, and otherwise performs an update-only `databricks apps deploy` against the existing App. On update, it verifies the App service principal client ID did not change.
 
 Confirm the deployment and capture the App service principal:
 
 ```bash
-databricks apps get store-intervention-agent --profile PROFILE --output json
-APP_SP=$(databricks apps get store-intervention-agent --profile PROFILE --output json \
+databricks apps get hitl-app-agent --profile PROFILE --output json
+APP_SP=$(databricks apps get hitl-app-agent --profile PROFILE --output json \
   | jq -r '.service_principal_name // .service_principal_client_id')
 ```
 
-The App must be `RUNNING` with an active successful deployment before it is registered in this repository. The current dev App is `store-intervention-agent`, and its deployed source is the workspace path `/Workspace/Users/paul.chen@discounttire.com/store-intervention-agent`.
+The App must be `RUNNING` with an active successful deployment before it is registered in the orchestrator subagent configuration. The current dev App is `hitl-app-agent`.
 
 ### Grant specialist data privileges
 
-The current specialist implementation uses Databricks SQL Statement Execution against the three tables configured in `src/hitl-agent/app.yaml`. Grant its App service principal only the warehouse and UC privileges required for those queries:
+The current specialist implementation uses Databricks SQL Statement Execution against the gold and platinum tables configured in `src/hitl-agent/app.yaml`. Grant its App service principal only the warehouse and UC privileges required for those queries:
 
 ```bash
-make grant-hitl-privileges APP_NAME=store-intervention-agent PROFILE=PROFILE
+make grant-hitl-privileges APP_NAME=hitl-app-agent PROFILE=PROFILE
 ```
 
 The helper resolves the specialist service principal and grants:
 
 - `CAN_USE` on the configured SQL warehouse
-- `USE_CATALOG` and `USE_SCHEMA` for `dt_dev_platinum.enterprise` and `dt_dev_gold.dwh`
-- `SELECT` on the revenue, CDI, and peer-set tables
+- `USE_CATALOG` and `USE_SCHEMA` for the configured environment's platinum and gold source schemas, such as `dt_${TARGET}_platinum.enterprise` and `dt_${TARGET}_gold.dwh`
+- `SELECT` on the platinum revenue table and gold CDI, peer-set, and store-dimension tables
 
 Review the generated grants first with:
 
 ```bash
-DRY_RUN=true make grant-hitl-privileges APP_NAME=store-intervention-agent PROFILE=PROFILE
+DRY_RUN=true make grant-hitl-privileges APP_NAME=hitl-app-agent PROFILE=PROFILE
 ```
 
 Override the current dev data sources when promoting to another environment:
@@ -93,26 +108,42 @@ HITL_WAREHOUSE_ID=<warehouse-id> \
 HITL_REVENUE_TABLE=<catalog>.<schema>.<table> \
 HITL_CDI_TABLE=<catalog>.<schema>.<table> \
 HITL_PEER_SET_TABLE=<catalog>.<schema>.<table> \
-make grant-hitl-privileges APP_NAME=store-intervention-agent PROFILE=PROFILE
+HITL_STORE_DIMENSION_TABLE=<catalog>.<schema>.<table> \
+make grant-hitl-privileges APP_NAME=hitl-app-agent PROFILE=PROFILE
 ```
 
+If explicit `HITL_*_TABLE` values are omitted, the helper derives conventional defaults from `TARGET` or `HITL_ENV`, for example `TARGET=qa` maps to `dt_qa_platinum.enterprise.store_sales_performance` and `dt_qa_gold.dwh.*`.
+
 The script does not grant `MODIFY`, `CREATE TABLE`, broad schema access, or operational dispatch permissions.
+
+### Post-approval follow-up task
+
+When a manager submits an approval decision through `POST /approval-decisions`, the runtime persists the decision first. If and only if `decision=approved`, the approval API then creates an idempotent, durable delegation task with:
+
+- Source agent: `approval-api`
+- Target agent: `store-intervention-agent`
+- Intent: `store_intervention_planning`
+- Payload flags: `planning_only=true`, `dispatch_authorized=false`
+
+The approval response includes the created delegation task summary so the UI can display the follow-up task id. `rejected` and `more_info_requested` decisions do not create delegation tasks. The follow-up task is a planning record only; it is not an operational dispatch authorization.
+
+Operators can disable or retarget this behavior with `APPROVAL_DELEGATION_ENABLED`, `APPROVAL_DELEGATION_SOURCE_AGENT`, `APPROVAL_DELEGATION_TARGET_AGENT`, and `APPROVAL_DELEGATION_INTENT`. The target subagent must explicitly accept the source and intent in `src/aiserver/contracts/subagents.<target>.json` or the API rejects the follow-up task before submitting it.
 
 For subsequent source updates, use the repository helper from the project root:
 
 ```bash
-make update-hitl APP_NAME=store-intervention-agent PROFILE=PROFILE
+make update-hitl APP_NAME=hitl-app-agent PROFILE=PROFILE
 ```
 
-The helper imports `src/hitl-agent` into the current user's workspace path, deploys the existing App from that workspace source, and prints the resulting deployment status. Override the defaults when needed:
+The helper imports `src/hitl-agent` into the current user's workspace path, creates or updates the App from that workspace source, and prints the resulting deployment status. Override the defaults when needed:
 
 ```bash
 HITL_SOURCE_DIR=/path/to/source \
-HITL_WORKSPACE_PATH=/Workspace/Users/owner/store-intervention-agent \
-make update-hitl APP_NAME=store-intervention-agent PROFILE=PROFILE
+HITL_WORKSPACE_PATH=/Workspace/Users/owner/hitl-app-agent \
+make update-hitl APP_NAME=hitl-app-agent PROFILE=PROFILE
 ```
 
-The script requires `app.py`, `app.yaml`, and `requirements.txt` in the source directory. It does not create the App, alter App permissions, or change the orchestrator registry.
+The script requires `app.py`, `app.yaml`, and `requirements.txt` in the source directory. It creates the App only when missing, updates existing Apps in place, verifies the service principal is preserved on update, and does not change the orchestrator registry.
 
 ### 3. Grant the orchestrator access
 
@@ -126,7 +157,7 @@ ORCH_SP=$(databricks apps get multiagent-app-dev --profile PROFILE --output json
 Use the Databricks Apps permission command supported by the installed CLI version:
 
 ```bash
-databricks apps update-permissions store-intervention-agent \
+databricks apps update-permissions hitl-app-agent \
   --profile PROFILE \
   --service-principal "$ORCH_SP" \
   --permission-level CAN_USE
@@ -146,7 +177,7 @@ For each target, update `src/aiserver/contracts/subagents.<target>.json` with:
   "allowed_personas": ["manager"],
   "requires_evidence": true,
   "requires_human_approval": true,
-  "endpoint": "store-intervention-agent"
+  "endpoint": "hitl-app-agent"
 }
 ```
 
@@ -175,13 +206,13 @@ make query-dev \
   QUERY='Find stores with strong revenue but declining CDI scores, compare each store with its peers and recent trend, prepare an evidence-backed customer-experience intervention packet, and pause for manager approval before any operational dispatch.'
 ```
 
-A successful verification must show qualifying stores or a clear no-match result, evidence/source metadata, `approval_state.status=pending`, and no operational dispatch. If the result says `App with name store-intervention-agent does not exist`, the App creation, naming, deployment, or permission step is incomplete.
+A successful verification must show qualifying stores or a clear no-match result, evidence/source metadata, `approval_state.status=pending`, and no operational dispatch. If the result says `App with name hitl-app-agent does not exist`, the App creation, naming, deployment, or permission step is incomplete.
 
 ### 6. Promote by environment
 
-Repeat the App creation and least-privilege grants for QA, staging, and production, or use the organization-approved promotion mechanism if the App supports environment isolation. Replace target placeholders before promotion and keep each App's data resources in the same environment boundary as the orchestrator.
+Repeat the App binding/creation and least-privilege grants for QA, staging, and production, or use the organization-approved promotion mechanism if the App supports environment isolation. Replace target placeholders before promotion and keep each App's data resources in the same environment boundary as the orchestrator.
 
-The orchestrator bundle does not create or deploy this external specialist App automatically. It validates and deploys the orchestrator configuration only.
+The bundle declares the specialist App as `resources.apps.hitl-app-agent`; `make update-hitl` remains the source-only helper for targeted HITL updates outside a full bundle deployment.
 
 ## Decision Boundary
 
@@ -295,6 +326,10 @@ Approval records use the `ApprovalRepository` application port. The configured b
 | `APPROVAL_CATALOG` | UC catalog for the approval table | empty |
 | `APPROVAL_SCHEMA` | UC schema for the approval table | empty |
 | `APPROVAL_TABLE` | Delta table name | `agent_approval_decisions` |
+| `APPROVAL_DELEGATION_ENABLED` | Whether approved decisions create a durable planning task | `true` |
+| `APPROVAL_DELEGATION_SOURCE_AGENT` | Source agent recorded on approved follow-up tasks | `approval-api` |
+| `APPROVAL_DELEGATION_TARGET_AGENT` | Target agent for approved follow-up tasks | `store-intervention-agent` |
+| `APPROVAL_DELEGATION_INTENT` | Intent recorded on approved follow-up tasks | `store_intervention_planning` |
 | `APPROVAL_FAIL_OPEN` | Whether a persistence failure may return the record without durable storage | `false` |
 
 `APPROVAL_BACKEND=uc_table` creates the configured schema and Delta table if needed, then upserts decisions by `request_id`. The UC repository is fail-closed by default so a successful approval response is not returned when the durable write fails.

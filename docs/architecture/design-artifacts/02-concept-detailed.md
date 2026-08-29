@@ -7,7 +7,7 @@ This document captures detailed concept artifacts that shape implementation boun
 ```mermaid
 flowchart LR
     subgraph InScope[In Scope]
-        S1[Multi-agent orchestration — 5 subagents]
+        S1[Multi-agent orchestration — 6 subagents]
         S2[Persona-based policy + response guardrails]
         S3[Lifecycle event bus — UC audit table]
         S4[Evaluation KPI release gate]

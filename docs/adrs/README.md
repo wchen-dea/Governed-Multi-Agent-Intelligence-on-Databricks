@@ -24,3 +24,4 @@ ADRs explain accepted rationale at the time of the decision. They are not the mu
 | [0007](0007-evaluation-kpi-release-gate.md) | Block release when evaluation KPIs are below thresholds | Accepted |
 | [0008](0008-custom-orchestrator-vs-databricks-supervisor-agent.md) | Keep custom orchestrator as primary runtime over Databricks Supervisor Agent | Accepted |
 | [0009](0009-unity-ai-gateway-for-llm-traffic.md) | Route orchestrator LLM traffic through Unity AI Gateway | Accepted |
+| [0010](0010-environment-aware-model-routing.md) | Use environment-aware model routing | Accepted |

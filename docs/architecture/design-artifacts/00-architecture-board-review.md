@@ -9,7 +9,7 @@ Use this page as the architecture review entry point. The phase artifacts are th
 | Control plane | Current implementation state |
 | --- | --- |
 | Tool execution | Native function and MCP calls; the UI does not render pseudo-tool content. |
-| Model routing | Deterministic standard, reasoning, and synthesis routes; dev resolves all routes to `databricks-gpt-5-6-luna`. |
+| Model routing | Deterministic standard, reasoning, and synthesis routes; dev uses `databricks-gpt-5-6-luna` for standard turns and `databricks-claude-sonnet-5` for reasoning/synthesis turns. |
 | Data governance | Unity Catalog, persona policy, app/OBO authorization, output guardrails, and OAuth-only Lakebase access. |
 | Delegation | Bounded app-auth handoffs with correlation IDs, idempotency, UC task/event tables, leases, retries, dead-letter states, and payload-redacted status. |
 | Streaming | Execution events buffer; source and guardrails finalize before the UI renders `response.output_text.delta` only. |

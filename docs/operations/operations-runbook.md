@@ -46,8 +46,9 @@ For target values:
 
 - Confirm target (`dev` / `qa` / `stg` / `prd`) and CLI profile.
 - Confirm target variables in `targets/*.yml` are correct.
-- Confirm the target's `store-intervention-agent` App exists, is running, and grants the orchestrator service principal `CAN_USE`; follow the [HITL specialist creation procedure](../governance/human-in-the-loop.md#create-store-intervention-agent) when onboarding it.
-- Confirm the `store-intervention-agent` service principal has the current SQL warehouse, UC schema, and table `SELECT` grants; run `make grant-hitl-privileges` after changing its data sources.
+- Confirm the target's HITL App, `hitl-app-agent` in dev, exists or is bound to DAB resource `hitl-app-agent`, is running, and grants the orchestrator service principal `CAN_USE`; follow the [HITL specialist creation procedure](../governance/human-in-the-loop.md#create-store-intervention-agent) when onboarding it.
+- Use `make update-hitl APP_NAME=<hitl-app-name> PROFILE=<profile>` for source-only HITL deploys; it creates the App only when missing and otherwise verifies the existing service principal is preserved.
+- Confirm the HITL App service principal has the current SQL warehouse, UC schema, and table `SELECT` grants; run `make grant-hitl-privileges` after changing its data sources.
 - Confirm the app service principal has a Lakebase OAuth role and the app has the target `postgres` resource grant.
 - Confirm no pending manual hotfix state in the target app.
 
@@ -68,6 +69,9 @@ For the implemented store-intervention HITL flow, also ensure the target contain
 - `approval_catalog: <target catalog>`
 - `approval_schema: <target schema>`
 - `approval_table: agent_approval_decisions` (or approved override)
+- `hitl_app_name: <target store intervention app name>`
+- `hitl_sql_warehouse_id: <target warehouse id>`
+- `hitl_revenue_table`, `hitl_cdi_table`, `hitl_peer_set_table`, and `hitl_store_dimension_table` pointing at approved target sources
 
 The app identity needs permission to create/use the configured approval schema and table through the SQL warehouse. Do not promote `approval_backend: memory` to a production target; it loses decisions on process restart.
 
@@ -89,7 +93,7 @@ Final pre-release checks:
 - Run `uv run pytest -q`
 - Run `uv run assistant-evaluate`
 - Confirm no placeholder values remain in target config files.
-- Confirm the external `store-intervention-agent` App name is valid for the target and is not a deleted or unrelated App.
+- Confirm the external HITL App name is valid for the target and is not a deleted or unrelated App.
 
 ### Standard Deployment
 
@@ -140,7 +144,7 @@ Use this procedure when `bundle deploy` fails due to Terraform provider registry
 make upload-wheel TARGET=TARGET APP_NAME=APP_NAME PROFILE=PROFILE
 ```
 
-`upload-wheel` runs `ensure-running`, builds the wheel and React payload, removes generated remote wheels, imports the source, deploys it, and checks health. It does not apply bundle-managed app resources or grants.
+`upload-wheel` builds the wheel and React payload, removes generated remote wheels, imports the source, creates the app only when it is missing, deploys updates to the existing app otherwise, verifies the service principal did not change on update, and checks health. It does not apply bundle-managed app resources or grants.
 
 For a full release attempt with validation, optional bundle apply, grants, health, and smoke checks, use:
 
@@ -152,7 +156,7 @@ make redeploy TARGET=TARGET APP_NAME=APP_NAME PROFILE=PROFILE
 
 In some environments, relying on bundle runtime commands may use a reduced source payload (for example, only bundle resource files), which can fail startup with errors such as missing command or missing modules.
 
-When this occurs, use `make upload-wheel` to deploy the complete app-source payload. It creates a versioned wheel, uploads it under the app source path, and deploys the resulting snapshot:
+When this occurs, use `make upload-wheel` to deploy the complete app-source payload. It creates a versioned wheel, uploads it under the app source path, creates the app only when missing, and otherwise deploys the resulting snapshot to the existing app without changing its service principal:
 
 ```bash
 make upload-wheel TARGET=TARGET APP_NAME=APP_NAME PROFILE=PROFILE
@@ -174,11 +178,13 @@ Expected health fields:
 The GitHub Actions deployment pipeline (`.github/workflows/databricks-cicd.yml`) is aligned to this runbook:
 
 - **`pr-ci` job** (pull requests): `uv run pytest -q` → `uv run assistant-evaluate` → `make build-app-source` → `make validate TARGET=<pr-base-branch>`.
-- **`deploy` job** (push to `dev`/`qa`/`stg`/`prd` or manual dispatch): `uv run pytest -q` → `uv run assistant-evaluate` → `make redeploy TARGET=<target> APP_NAME=<app-name>`.
+- **`deploy` job** (push to `dev`/`qa`/`stg`/`prd` or manual dispatch): `uv run pytest -q` → `uv run assistant-evaluate` → resolve HITL bundle variables → `make redeploy-source-only TARGET=<target> APP_NAME=<app-name>` → `make update-hitl APP_NAME=<hitl-app-name>` → `make grant-hitl-privileges APP_NAME=<hitl-app-name>`.
 
-`make redeploy` is a single composite target that runs `build-app-source`, `validate`, `bundle-deploy-optional`, `import`, `deploy`, `grants`, `health`, and `smoke` in sequence (see [Makefile](../../Makefile)).
+`make redeploy` is a full release target that runs `build-app-source`, `validate`, `bundle-deploy-optional`, `import`, `deploy`, `grants`, `health`, and `smoke` in sequence (see [Makefile](../../Makefile)). CI uses `make redeploy-source-only` so app source updates preserve existing service principals and avoid a duplicate DAB-managed HITL deployment in the same job.
 
 For an operator-driven source-only recovery, use `make upload-wheel` instead of `make redeploy`.
+
+`make update-hitl` creates the specialist App only when it is missing. When the App already exists, it performs an update-only deploy and verifies the service principal client ID is unchanged.
 
 This keeps repository state clean (no committed wheel binaries) while ensuring each CI run deploys a fresh wheel artifact.
 

@@ -6,6 +6,7 @@ from collections.abc import AsyncGenerator
 from contextlib import AsyncExitStack
 from dataclasses import asdict, dataclass
 from typing import Any, cast
+from uuid import uuid4
 
 import mlflow
 from agents import Runner, set_default_openai_api, set_default_openai_client
@@ -27,7 +28,12 @@ from aiserver.application.runtime.requests import extract_mcp_errors, to_message
 from aiserver.application.runtime.streaming import process_agent_stream_events
 from aiserver.bootstrap.container import get_handler_dependencies
 from aiserver.config.settings import get_settings
-from aiserver.contracts.responses import HumanApprovalState, ResponseEnvelope
+from aiserver.contracts.responses import (
+    HumanApprovalState,
+    OpenAIAgentRunMetadata,
+    ResponseEnvelope,
+    RoutePlan,
+)
 from aiserver.contracts.subagents import SUBAGENTS, SubagentConfig
 
 SETTINGS = get_settings()
@@ -74,6 +80,8 @@ class ConnectedStage:
 
     runtime_auth: Any
     unavailable: list[str]
+    route_plan: RoutePlan
+    openai_run: OpenAIAgentRunMetadata
     agent: Any
 
 
@@ -260,6 +268,11 @@ def _select_route_tools(
     return selected
 
 
+def _tool_name(tool: Any) -> str:
+    """Return a stable display name for an OpenAI function or MCP tool handle."""
+    return str(getattr(tool, "name", getattr(tool, "__name__", ""))).strip()
+
+
 async def _connect_request_stage(
     stack: AsyncExitStack,
     prepared: RequestStage,
@@ -304,6 +317,27 @@ async def _connect_request_stage(
         route_plan.reason,
     )
     model_selection = select_model(question, SETTINGS)
+    selected_tool_names = tuple(
+        sorted(
+            name
+            for name in (
+                *(_tool_name(tool) for tool in candidate_tools),
+                *(str(getattr(server, "name", "")).strip() for server in servers),
+            )
+            if name
+        )
+    )
+    openai_run = OpenAIAgentRunMetadata(
+        run_id=str(uuid4()),
+        model=model_selection.model,
+        model_task_type=model_selection.task_type,
+        model_reason=model_selection.reason,
+        model_rationale=model_selection.rationale,
+        candidate_subagents=tuple(route_plan.candidates),
+        selected_tool_names=selected_tool_names,
+        unavailable_tool_details=tuple(unavailable),
+        ai_gateway_enabled=bool(SETTINGS.openai_base_url.strip()),
+    )
     agent = HANDLER_DEPS.orchestrator_factory(
         model_selection.model,
         route_candidates,
@@ -321,11 +355,21 @@ async def _connect_request_stage(
             "model": model_selection.model,
             "model_task_type": model_selection.task_type,
             "model_reason": model_selection.reason,
+            "model_rationale": model_selection.rationale,
+            "selected_tool_names": list(selected_tool_names),
+            "openai_api": openai_run.api,
+            "ai_gateway_enabled": openai_run.ai_gateway_enabled,
         },
+    )
+    HANDLER_DEPS.message_bus.publish(
+        "openai.agent.run.started",
+        asdict(openai_run),
     )
     return ConnectedStage(
         runtime_auth=prepared.runtime_auth,
         unavailable=unavailable,
+        route_plan=route_plan,
+        openai_run=openai_run,
         agent=agent,
     )
 
@@ -424,7 +468,20 @@ def _finalize_invoke_stage(
             {
                 "reasons": list(guardrail.reasons),
                 "truncated": truncated,
+                "openai_run": asdict(connected.openai_run),
             },
+        )
+        _publish_openai_run_completed(
+            ResponseEnvelope(
+                status="blocked",
+                answer_chars=len(response_text),
+                truncated=truncated,
+                route_plan=connected.route_plan,
+                openai_run=connected.openai_run,
+                guardrail_reasons=guardrail.reasons,
+                source_metadata=(source_suffix,) if source_suffix else (),
+                approval_state=approval_state,
+            )
         )
         raise UserError("Response blocked by guardrails: " + ", ".join(guardrail.reasons))
     HANDLER_DEPS.message_bus.publish(
@@ -432,6 +489,7 @@ def _finalize_invoke_stage(
         {
             "reasons": list(guardrail.reasons),
             "truncated": truncated,
+            "openai_run": asdict(connected.openai_run),
         },
     )
     return InvokeFinalizedStage(
@@ -441,6 +499,8 @@ def _finalize_invoke_stage(
             status="truncated" if truncated else "succeeded",
             answer_chars=len(response_text),
             truncated=truncated,
+            route_plan=connected.route_plan,
+            openai_run=connected.openai_run,
             guardrail_reasons=guardrail.reasons,
             source_metadata=(source_suffix,) if source_suffix else (),
             approval_state=approval_state,
@@ -577,6 +637,7 @@ def _finalize_stream_stage(
                 "reasons": list(guardrail.reasons),
                 "mode": "stream",
                 "truncated": truncated,
+                "openai_run": asdict(connected.openai_run),
             },
         )
     else:
@@ -586,6 +647,7 @@ def _finalize_stream_stage(
                 "reasons": list(guardrail.reasons),
                 "mode": "stream",
                 "truncated": truncated,
+                "openai_run": asdict(connected.openai_run),
             },
         )
 
@@ -600,6 +662,8 @@ def _finalize_stream_stage(
             status="blocked" if guardrail.blocked else ("truncated" if truncated else "succeeded"),
             answer_chars=len(stream_text),
             truncated=truncated,
+            route_plan=connected.route_plan,
+            openai_run=connected.openai_run,
             guardrail_reasons=guardrail.reasons,
             source_metadata=(source_suffix,) if source_suffix else (),
             approval_state=approval_state,
@@ -711,6 +775,11 @@ def _guardrail_block_message(reasons: tuple[str, ...]) -> str:
         f"({reason_list}). For `evidence_required`, ask the agent to include a citation "
         "such as `[1]` or an explicit `Source:` line."
     )
+
+
+def _user_error_failure_reason(exc: UserError) -> str:
+    """Classify user-facing runtime errors for lifecycle audit events."""
+    return "guardrail" if "guardrail" in str(exc).lower() else "authorization"
 
 
 def _candidate_tool_names(data: dict[str, Any]) -> list[str]:
@@ -894,6 +963,19 @@ def _append_source_to_output_items(
     return output_items
 
 
+def _publish_openai_run_completed(envelope: ResponseEnvelope) -> None:
+    """Publish final OpenAI-compatible run metadata with response policy outcome."""
+    HANDLER_DEPS.message_bus.publish(
+        "openai.agent.run.completed",
+        {
+            **asdict(envelope.openai_run),
+            "status": envelope.status,
+            "guardrail_reasons": list(envelope.guardrail_reasons),
+            "answer_chars": envelope.answer_chars,
+        },
+    )
+
+
 def _truncate_output_items(
     output_items: list[dict[str, Any]],
     *,
@@ -953,16 +1035,17 @@ async def invoke_handler(request: ResponsesAgentRequest) -> ResponsesAgentRespon
                     "output_items": len(result.new_items),
                     "unavailable_tools": len(finalized.unavailable),
                     "unavailable_tool_details": finalized.unavailable,
-                    "response_envelope": finalized.envelope.__dict__,
+                    "response_envelope": asdict(finalized.envelope),
                 },
             )
+            _publish_openai_run_completed(finalized.envelope)
             return ResponsesAgentResponse(output=cast(Any, finalized.output_items))
     except UserError as e:
         HANDLER_DEPS.message_bus.publish(
             "request.invoke.failed",
             {
                 "error_type": type(e).__name__,
-                "reason": "authorization",
+                "reason": _user_error_failure_reason(e),
             },
         )
         logger.warning("Authorization error during invoke: %s", e)
@@ -1013,6 +1096,7 @@ async def stream_handler(
                         "delta": _guardrail_block_message(finalized.guardrail_reasons),
                     },
                 )
+                _publish_openai_run_completed(finalized.envelope)
                 HANDLER_DEPS.message_bus.publish(
                     "request.stream.failed",
                     {
@@ -1052,9 +1136,10 @@ async def stream_handler(
                     "events_streamed": finalized.event_count,
                     "unavailable_tools": len(finalized.unavailable),
                     "unavailable_tool_details": finalized.unavailable,
-                    "response_envelope": finalized.envelope.__dict__,
+                    "response_envelope": asdict(finalized.envelope),
                 },
             )
+            _publish_openai_run_completed(finalized.envelope)
     except UserError as e:
         HANDLER_DEPS.message_bus.publish(
             "request.stream.failed",

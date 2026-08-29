@@ -46,6 +46,7 @@ test("shows manager actions for a pending HITL response", async ({ page }) => {
   await page.route("**/approval-decisions", async (route) => {
     const body = route.request().postDataJSON();
     expect(body.decision).toBe("approved");
+    expect(body.request_id).toBe("run-hitl-123");
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -58,6 +59,15 @@ test("shows manager actions for a pending HITL response", async ({ page }) => {
           decision: body.decision,
           status: "approved",
         },
+        delegation: {
+          task_id: "task-approved-123",
+          correlation_id: body.request_id,
+          source_agent: "approval-api",
+          target_agent: "store-intervention-agent",
+          intent: "store_intervention_planning",
+          status: "pending",
+          completed: false,
+        },
       }),
     });
   });
@@ -69,6 +79,11 @@ test("shows manager actions for a pending HITL response", async ({ page }) => {
         response_envelope: {
           status: "succeeded",
           truncated: false,
+          openai_run: {
+            run_id: "run-hitl-123",
+            api: "responses",
+            model: "databricks-gpt-5-6-luna",
+          },
           approval_state: {
             status: "pending",
             required: true,
@@ -93,4 +108,5 @@ test("shows manager actions for a pending HITL response", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Reject" })).toBeVisible();
   await page.getByRole("button", { name: "Approve planning" }).click();
   await expect(page.getByText("Review packet ready.")).toBeVisible();
+  await expect(page.getByText(/Follow-up task: task-approved-123/)).toBeVisible();
 });

@@ -7,6 +7,7 @@ import sys
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Literal, cast
 
 from dotenv import load_dotenv
 from fastapi import HTTPException
@@ -14,16 +15,17 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from mlflow.genai.agent_server import AgentServer, setup_mlflow_git_based_version_tracking
 
-from aiserver.application.ports.audit import ApprovalRepository
-from aiserver.contracts.responses import ApprovalDecisionRecord, ApprovalDecisionRequest
-
+from aiserver.application.delegation.policy import evaluate_delegation_policy
 from aiserver.application.delegation.worker import AgentTaskWorker
 from aiserver.application.orchestration.agent import (
     build_lakebase_delegation_executors,
 )
+from aiserver.application.ports.audit import ApprovalRepository
 from aiserver.application.runtime.identity import build_request_identity_context
 from aiserver.bootstrap.container import get_app_dependency_container
 from aiserver.config.settings import get_settings
+from aiserver.contracts.delegation import DelegationTask
+from aiserver.contracts.responses import ApprovalDecisionRecord, ApprovalDecisionRequest
 from aiserver.contracts.subagents import SUBAGENTS
 from aiserver.infrastructure.observability.logging import configure_logging
 from aiserver.infrastructure.persistence.approvals import default_approval_repository
@@ -62,6 +64,13 @@ def health():
 
 
 _APPROVAL_REPOSITORY: ApprovalRepository = default_approval_repository()
+ApprovalDecisionValue = Literal["approved", "rejected", "more_info_requested"]
+
+
+def _optional_payload_str(payload: dict[str, object], key: str) -> str | None:
+    """Return a string payload value, treating missing values as null."""
+    value = payload.get(key)
+    return value if isinstance(value, str) else None
 
 
 def _delegation_status_payload(record) -> dict[str, object]:
@@ -81,22 +90,99 @@ def _delegation_status_payload(record) -> dict[str, object]:
     }
 
 
+def _approval_payload(record: ApprovalDecisionRecord) -> dict[str, object]:
+    """Return the public approval response payload."""
+    return {
+        "request_id": record.request_id,
+        "agent_name": record.agent_name,
+        "store_id": record.store_id,
+        "approver": record.approver,
+        "decision": record.decision,
+        "reason": record.reason,
+        "notes": record.notes,
+        "status": record.status,
+    }
+
+
+def _post_approval_task(record: ApprovalDecisionRecord) -> DelegationTask:
+    """Build the durable planning task created after manager approval."""
+    settings = get_settings()
+    return DelegationTask(
+        source_agent=settings.approval_delegation_source_agent,
+        target_agent=settings.approval_delegation_target_agent,
+        intent=settings.approval_delegation_intent,
+        payload={
+            "approval_request_id": record.request_id,
+            "agent_name": record.agent_name,
+            "store_id": record.store_id,
+            "approver": record.approver,
+            "approval_reason": record.reason,
+            "approval_notes": record.notes,
+            "planning_only": True,
+            "dispatch_authorized": False,
+        },
+        correlation_id=record.request_id,
+        idempotency_key=(
+            f"approval:{record.request_id}:{settings.approval_delegation_target_agent}:"
+            f"{settings.approval_delegation_intent}"
+        ),
+        data_classification="confidential",
+        auth_mode="app",
+    )
+
+
+async def _submit_post_approval_task(
+    record: ApprovalDecisionRecord,
+) -> dict[str, object] | None:
+    """Create a durable planning-only delegation task after approval."""
+    settings = get_settings()
+    if record.decision != "approved" or not settings.approval_delegation_enabled:
+        return None
+
+    task = _post_approval_task(record)
+    decision = evaluate_delegation_policy(task, SUBAGENTS)
+    if not decision.allowed:
+        get_app_dependency_container().handlers.message_bus.publish(
+            "approval.delegation.rejected",
+            {
+                "request_id": record.request_id,
+                "target_agent": task.target_agent,
+                "intent": task.intent,
+                "reason_code": decision.reason_code,
+            },
+        )
+        raise HTTPException(
+            status_code=409,
+            detail=f"Approved follow-up task rejected by delegation policy: {decision.reason_code}",
+        )
+
+    task_record = await get_app_dependency_container().delegation_task_bus.submit(task)
+    payload = _delegation_status_payload(task_record)
+    get_app_dependency_container().handlers.message_bus.publish(
+        "approval.delegation.created",
+        payload,
+    )
+    return payload
+
+
 @app.post("/approval-decisions")
 async def submit_approval_decision(payload: dict[str, object]) -> dict[str, object]:
     """Record a manager decision for a pending approval workflow."""
+    raw_decision = str(payload.get("decision", "approved"))
+    if raw_decision not in {"approved", "rejected", "more_info_requested"}:
+        raise HTTPException(status_code=400, detail="unsupported approval decision")
+    decision = cast(ApprovalDecisionValue, raw_decision)
     request = ApprovalDecisionRequest(
         request_id=str(payload.get("request_id", "")),
         agent_name=str(payload.get("agent_name", "")),
-        store_id=payload.get("store_id"),
-        approver=payload.get("approver"),
-        decision=str(payload.get("decision", "approved")),
-        reason=payload.get("reason"),
-        notes=payload.get("notes"),
+        store_id=_optional_payload_str(payload, "store_id"),
+        approver=_optional_payload_str(payload, "approver"),
+        decision=decision,
+        reason=_optional_payload_str(payload, "reason"),
+        notes=_optional_payload_str(payload, "notes"),
     )
     if not request.request_id or not request.agent_name:
         raise HTTPException(status_code=400, detail="request_id and agent_name are required")
-    if request.decision not in {"approved", "rejected", "more_info_requested"}:
-        raise HTTPException(status_code=400, detail="unsupported approval decision")
 
     record = ApprovalDecisionRecord(
         request_id=request.request_id,
@@ -106,21 +192,14 @@ async def submit_approval_decision(payload: dict[str, object]) -> dict[str, obje
         decision=request.decision,
         reason=request.reason,
         notes=request.notes,
-        status=request.decision if request.decision in {"approved", "rejected", "more_info_requested"} else "pending",
+        status=request.decision,
     )
     _APPROVAL_REPOSITORY.save(record)
+    delegation = await _submit_post_approval_task(record)
     return {
         "status": "ok",
-        "approval": {
-            "request_id": record.request_id,
-            "agent_name": record.agent_name,
-            "store_id": record.store_id,
-            "approver": record.approver,
-            "decision": record.decision,
-            "reason": record.reason,
-            "notes": record.notes,
-            "status": record.status,
-        },
+        "approval": _approval_payload(record),
+        "delegation": delegation,
     }
 
 
@@ -132,16 +211,7 @@ async def get_approval_decision(request_id: str) -> dict[str, object]:
         raise HTTPException(status_code=404, detail="Approval decision not found")
     return {
         "status": "ok",
-        "approval": {
-            "request_id": record.request_id,
-            "agent_name": record.agent_name,
-            "store_id": record.store_id,
-            "approver": record.approver,
-            "decision": record.decision,
-            "reason": record.reason,
-            "notes": record.notes,
-            "status": record.status,
-        },
+        "approval": _approval_payload(record),
     }
 
 
@@ -166,6 +236,17 @@ async def _start_delegation_worker() -> None:
         build_request_identity_context(),
         deps=container.orchestrator,
     )
+    settings = get_settings()
+    if settings.approval_delegation_enabled:
+        async def execute_post_approval_planning(payload: dict[str, object]) -> dict[str, object]:
+            return {
+                "result": "approved_planning_task_recorded",
+                "approval_request_id": payload.get("approval_request_id"),
+                "planning_only": True,
+                "dispatch_authorized": False,
+            }
+
+        executors[settings.approval_delegation_target_agent] = execute_post_approval_planning
 
     async def execute(task):
         executor = executors.get(task.target_agent)

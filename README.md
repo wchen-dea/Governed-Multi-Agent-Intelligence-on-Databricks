@@ -57,6 +57,7 @@ Supporting platform infrastructure:
 Beyond the Databricks platform features above, this project implements these AI engineering techniques:
 
 - OpenAI Agents SDK (`openai-agents`): agent orchestration runtime (`Agent`, `Runner.run`/`Runner.run_streamed`, native function-calling tools).
+- OpenAI-compatible Responses API contract: Databricks Foundation Model API and specialist serving-endpoint calls use one stable model/tool-call contract, with structured run metadata captured for audit and evaluation.
 - Model Context Protocol (MCP): standardized tool-calling protocol for Genie and AI Search integrations, with health-checked, TTL-cached server connections.
 - Task-aware model routing: deterministic selection between standard/reasoning/synthesis Databricks models per request, recorded via `routing.plan.selected` lifecycle events.
 - Multi-agent delegation with typed contracts: bounded async agent-to-agent task handoff with correlation IDs, idempotency keys, leases, retries, and dead-letter states.
@@ -65,6 +66,7 @@ Beyond the Databricks platform features above, this project implements these AI 
 - Human-in-the-loop controls: manager-only store intervention review with pending, approved, rejected, and more-information states backed by a UC Delta approval table.
 - Persona-based policy authorization: governed routing that filters candidate subagents by persona, auth mode, and data classification before tool execution.
 - Streaming agent responses: token/tool-event streaming with mid-stream guardrail finalization for the chat UI.
+- Structured response governance metadata: response envelopes record route plans, OpenAI run ids, selected models, selected tools, unavailable tool details, guardrail outcomes, source metadata, and approval state.
 - RAG (retrieval-augmented generation): AI Search/Vector Search-backed retrieval for product knowledge and Flink support troubleshooting, with citation-grounded answers.
 
 ## Team Onboarding: Project Skills and Capabilities
@@ -253,6 +255,7 @@ For architecture diagrams, see [docs/architecture/high-level-architecture.md](do
 - [src/aiweb/README.md](src/aiweb/README.md): React UI setup, build, and local run guide
 - [src/operations/](src/operations): quickstart, preflight, local start, discovery, and permission helpers
 - [resources/multiagent_app.yml](resources/multiagent_app.yml): shared Databricks app resource definition
+- [resources/hitl_app.yml](resources/hitl_app.yml): DAB-managed `store-intervention-agent` specialist App resource
 - [targets/](targets): target-specific deployment overlays
 - [databricks.yml](databricks.yml): DAB bundle root configuration
 - [docs/README.md](docs/README.md): architecture, design, and runbook documentation index
@@ -301,7 +304,7 @@ For a source-only deployment that does not contact Terraform Registry, run:
 make upload-wheel TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT
 ```
 
-This builds versioned wheel and React payloads, clears prior generated remote wheels, uploads the payload, deploys it through the Databricks Apps API, and checks health. It does not apply bundle-managed resource grants.
+This builds versioned wheel and React payloads, clears prior generated remote wheels, uploads the payload, creates the app only when it is missing, otherwise updates the existing app without changing its service principal, deploys through the Databricks Apps API, and checks health. It does not apply bundle-managed resource grants.
 
 ## Runtime Environment Variables
 
@@ -339,6 +342,8 @@ This builds versioned wheel and React payloads, clears prior generated remote wh
 - `EVAL_MIN_SAFETY`: release-gate threshold for safety KPI (default `0.95`).
 - `EVAL_MIN_GROUNDEDNESS`: release-gate threshold for groundedness KPI (default `0.80`).
 - `EVAL_REQUIRE_ALL_KPIS`: when `true`, fail release gate if any KPI metric is missing.
+- `EVAL_JUDGE_MODEL`: model URI used by MLflow built-in LLM judge scorers (default `databricks:/databricks-claude-sonnet-5`).
+- `EVAL_SIMULATOR_USER_MODEL`: model URI used by `ConversationSimulator` to generate simulated user turns (defaults to `EVAL_JUDGE_MODEL`).
 - `AGENT_TASK_BACKEND`: delegation task backend; `memory` by default and `uc_table` for durable Delta-backed tasks.
 - `AGENT_TASK_WAREHOUSE_ID`: SQL warehouse used by the UC task backend.
 - `AGENT_TASK_CATALOG`: Unity Catalog catalog for durable delegation tables.
@@ -350,11 +355,13 @@ This builds versioned wheel and React payloads, clears prior generated remote wh
 
 For the store intervention workflow, start with the [HITL approval guide](docs/governance/human-in-the-loop.md). It documents the discovery query, evidence requirement, approval states, API calls, UC persistence, and post-deployment verification.
 
+The specialist App is also declared in DAB as `hitl-app-agent`; set `hitl_app_name`, `hitl_sql_warehouse_id`, and the `hitl_*_table` variables in the target overlay before bundle deployment.
+
 Update the specialist App source or its data privileges with:
 
 ```bash
-make update-hitl APP_NAME=store-intervention-agent PROFILE=DEFAULT
-make grant-hitl-privileges APP_NAME=store-intervention-agent PROFILE=DEFAULT
+make update-hitl APP_NAME=hitl-app-agent PROFILE=DEFAULT
+make grant-hitl-privileges APP_NAME=hitl-app-agent PROFILE=DEFAULT
 ```
 
 MCP connect/probe performance controls:

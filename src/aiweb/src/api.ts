@@ -4,7 +4,11 @@ import {
   sourceBadgeLine,
   updateStreamHints,
 } from "./stream";
-import type { ChatMessage, HumanApprovalState } from "./types";
+import type {
+  ChatMessage,
+  HumanApprovalState,
+  OpenAIAgentRunMetadata,
+} from "./types";
 import type { GovernanceMetadata } from "./types";
 
 export interface SendChatOptions {
@@ -33,6 +37,7 @@ function metadataFromEvent(
   const envelope = (event.response_envelope ?? event.governance) as
     Record<string, unknown> | undefined;
   if (!envelope || typeof envelope !== "object") return fallback;
+  const openaiRun = envelope.openai_run;
   return {
     ...fallback,
     guardrailReasons: Array.isArray(envelope.guardrail_reasons)
@@ -47,6 +52,10 @@ function metadataFromEvent(
       envelope.approval_state && typeof envelope.approval_state === "object"
         ? (envelope.approval_state as HumanApprovalState)
         : fallback.approvalState,
+    openaiRun:
+      openaiRun && typeof openaiRun === "object"
+        ? (openaiRun as OpenAIAgentRunMetadata)
+        : fallback.openaiRun,
   };
 }
 
@@ -83,6 +92,7 @@ export async function submitApprovalDecision(options: {
     throw new Error(`Approval decision failed (HTTP ${response.status}).`);
   const payload = (await response.json()) as {
     approval?: Record<string, unknown>;
+    delegation?: Record<string, unknown> | null;
   };
   const approval = payload.approval;
   if (!approval)
@@ -93,6 +103,37 @@ export async function submitApprovalDecision(options: {
     approver: typeof approval.approver === "string" ? approval.approver : null,
     decision: typeof approval.decision === "string" ? approval.decision : null,
     reason: typeof approval.reason === "string" ? approval.reason : null,
+    delegation:
+      payload.delegation && typeof payload.delegation.task_id === "string"
+        ? {
+            task_id: payload.delegation.task_id,
+            correlation_id:
+              typeof payload.delegation.correlation_id === "string"
+                ? payload.delegation.correlation_id
+                : undefined,
+            source_agent:
+              typeof payload.delegation.source_agent === "string"
+                ? payload.delegation.source_agent
+                : undefined,
+            target_agent:
+              typeof payload.delegation.target_agent === "string"
+                ? payload.delegation.target_agent
+                : undefined,
+            intent:
+              typeof payload.delegation.intent === "string"
+                ? payload.delegation.intent
+                : undefined,
+            status:
+              typeof payload.delegation.status === "string"
+                ? payload.delegation.status
+                : undefined,
+            failure_code:
+              typeof payload.delegation.failure_code === "string"
+                ? payload.delegation.failure_code
+                : null,
+            completed: payload.delegation.completed === true,
+          }
+        : null,
   };
 }
 

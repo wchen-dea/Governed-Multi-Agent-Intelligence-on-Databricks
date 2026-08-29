@@ -9,7 +9,7 @@ Accepted
 The project runs a custom multi-agent orchestrator in Databricks Apps using the OpenAI Agents SDK (`openai-agents`) with:
 
 - Staged pipeline execution (`Runner.run` / `Runner.run_streamed`)
-- 5 subagents: 2 Genie MCP, 2 AI Search MCP, 1 Lakebase PostgreSQL
+- 6 subagents: 2 Genie MCP, 2 AI Search MCP, 1 Databricks App HITL specialist, 1 Lakebase PostgreSQL
 - Persona-based policy enforcement with 4 personas (manager, analyst, operator, engineer)
 - Hybrid app/OBO authorization
 - Response guardrails with source attribution
@@ -26,7 +26,7 @@ Adopt Supervisor Agent selectively for standardized, lower-risk use cases where 
 ### Comparison
 
 | Dimension | Custom Orchestrator (current) | Databricks Supervisor Agent |
-|-----------|-------------------------------|----------------------------|
+| --- | --- | --- |
 | Routing control | Full — per-subagent policy rules, persona matrix | Platform-managed — less granular |
 | Auth model | Hybrid app + OBO per subagent | Platform-managed identity |
 | Guardrails | Custom evidence/safety/PII checks + AI Gateway | Platform guardrails only |
@@ -62,5 +62,5 @@ Adopt Supervisor Agent selectively for standardized, lower-risk use cases where 
 - Pipeline execution: [src/aiserver/api/invocations.py](../../src/aiserver/api/invocations.py) (staged pipeline using `Runner.run` / `Runner.run_streamed`)
 - Runtime auth and policy: [src/aiserver/application/auth/context.py](../../src/aiserver/application/auth/context.py), [src/aiserver/application/auth/policy.py](../../src/aiserver/application/auth/policy.py)
 - Guardrails: [src/aiserver/application/guardrails/checks.py](../../src/aiserver/application/guardrails/checks.py)
-- Subagent registry: [src/aiserver/contracts/subagents.dev.json](../../src/aiserver/contracts/subagents.dev.json) (5 subagents, per-persona access)
+- Subagent registry: [src/aiserver/contracts/subagents.dev.json](../../src/aiserver/contracts/subagents.dev.json) (6 subagents, per-persona access)
 - Deployment: [Makefile](../../Makefile) (`make deploy`, `make redeploy`), [docs/operations/operations-runbook.md](../operations/operations-runbook.md)

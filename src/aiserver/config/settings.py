@@ -12,8 +12,8 @@ class AppSettings:
     orchestrator_model: str = "databricks-gpt-5-6-luna"
     model_routing_enabled: bool = True
     model_routing_default_model: str = "databricks-gpt-5-6-luna"
-    model_routing_reasoning_model: str = "databricks-gpt-5-6-luna"
-    model_routing_quality_model: str = "databricks-gpt-5-6-luna"
+    model_routing_reasoning_model: str = "databricks-claude-sonnet-5"
+    model_routing_quality_model: str = "databricks-claude-sonnet-5"
     openai_base_url: str = ""
     openai_timeout_seconds: float = 0.0
     log_level: str = "INFO"
@@ -60,6 +60,10 @@ class AppSettings:
     approval_schema: str = ""
     approval_table: str = "agent_approval_decisions"
     approval_fail_open: bool = False
+    approval_delegation_enabled: bool = True
+    approval_delegation_source_agent: str = "approval-api"
+    approval_delegation_target_agent: str = "store-intervention-agent"
+    approval_delegation_intent: str = "store_intervention_planning"
 
 
 @lru_cache(maxsize=1)
@@ -93,10 +97,10 @@ def get_settings() -> AppSettings:
             os.getenv("ORCHESTRATOR_MODEL", "databricks-gpt-5-6-luna"),
         ),
         model_routing_reasoning_model=os.getenv(
-            "MODEL_ROUTING_REASONING_MODEL", "databricks-gpt-5-6-luna"
+            "MODEL_ROUTING_REASONING_MODEL", "databricks-claude-sonnet-5"
         ),
         model_routing_quality_model=os.getenv(
-            "MODEL_ROUTING_QUALITY_MODEL", "databricks-gpt-5-6-luna"
+            "MODEL_ROUTING_QUALITY_MODEL", "databricks-claude-sonnet-5"
         ),
         openai_base_url=os.getenv("DATABRICKS_OPENAI_BASE_URL", ""),
         openai_timeout_seconds=_env_float("DATABRICKS_OPENAI_TIMEOUT_SECONDS", 0.0),
@@ -154,4 +158,15 @@ def get_settings() -> AppSettings:
         approval_table=os.getenv("APPROVAL_TABLE", "agent_approval_decisions"),
         approval_fail_open=os.getenv("APPROVAL_FAIL_OPEN", "false").lower()
         in {"1", "true", "yes", "on"},
+        approval_delegation_enabled=os.getenv("APPROVAL_DELEGATION_ENABLED", "true").lower()
+        in {"1", "true", "yes", "on"},
+        approval_delegation_source_agent=os.getenv(
+            "APPROVAL_DELEGATION_SOURCE_AGENT", "approval-api"
+        ),
+        approval_delegation_target_agent=os.getenv(
+            "APPROVAL_DELEGATION_TARGET_AGENT", "store-intervention-agent"
+        ),
+        approval_delegation_intent=os.getenv(
+            "APPROVAL_DELEGATION_INTENT", "store_intervention_planning"
+        ),
     )

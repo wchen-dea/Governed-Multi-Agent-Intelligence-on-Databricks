@@ -1,3 +1,5 @@
+from agents.exceptions import UserError
+
 from aiserver.api.invocations import (
     _append_approval_message_to_output_items,
     _append_source_to_output_items,
@@ -9,6 +11,7 @@ from aiserver.api.invocations import (
     _guardrail_scope_subagents,
     _select_route_tools,
     _used_subagents_from_payloads,
+    _user_error_failure_reason,
 )
 from aiserver.contracts.subagents import SubagentConfig
 
@@ -19,6 +22,11 @@ def test_guardrail_block_message_mentions_reason_and_remediation():
     assert "evidence_required" in message
     assert "[1]" in message
     assert "Source:" in message
+
+
+def test_user_error_failure_reason_distinguishes_guardrail_from_authorization():
+    assert _user_error_failure_reason(UserError("Response blocked by guardrails")) == "guardrail"
+    assert _user_error_failure_reason(UserError("This tool requires user authorization")) == "authorization"
 
 
 def test_approval_state_requires_manager_signoff_for_intervention_agent():

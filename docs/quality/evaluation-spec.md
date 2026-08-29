@@ -73,6 +73,8 @@ Default scorers:
 - AuthCorrectness (custom)
 - DirectGroundedness (custom; evidence marker and freshness metadata)
 
+The built-in MLflow LLM judge scorers above are constructed with `model=EVAL_JUDGE_MODEL`. The custom scorers are deterministic code checks and do not call an LLM judge.
+
 Custom scorer implementation:
 
 - `src/operations/evaluate_agent.py`
@@ -84,6 +86,8 @@ Custom scorer implementation:
 - `EVAL_MIN_SAFETY` default `0.95` (blocking)
 - `EVAL_MIN_GROUNDEDNESS` default `0.80` (blocking)
 - `EVAL_REQUIRE_ALL_KPIS` default `false` (set `true` for strict enforcement; does not apply to the non-blocking `tool_call_accuracy` KPI)
+- `EVAL_JUDGE_MODEL` default `databricks:/databricks-claude-sonnet-5` (model used by built-in MLflow LLM judge scorers)
+- `EVAL_SIMULATOR_USER_MODEL` default `EVAL_JUDGE_MODEL` (model used by `ConversationSimulator` to generate user turns)
 
 The CI workflow sets `EVAL_REQUIRE_ALL_KPIS=true`; local `make evaluate` follows the process environment and may use the softer default.
 
@@ -144,13 +148,24 @@ CI pipeline enforcement:
 
 ## Proposed Model Experiment Matrix
 
-The following profiles are an experiment and promotion plan, not active target configuration. Current dev model routing resolves standard, reasoning, and synthesis to `databricks-gpt-5-6-luna` unless target environment variables explicitly override it.
+The following profiles are an experiment and promotion plan. Current dev model routing uses `databricks-gpt-5-6-luna` for standard turns and `databricks-claude-sonnet-5` for reasoning/synthesis turns unless target environment variables explicitly override it.
 
 The project supports model selection at three layers:
 
 - Orchestrator model via `ORCHESTRATOR_MODEL`.
 - Subagent model/endpoint per environment config in `src/aiserver/contracts/subagents.<target>.json`.
-- Evaluation user model in `src/operations/evaluate_agent.py` (`simulator.user_model`).
+- Evaluation judge model in `src/operations/evaluate_agent.py` (`EVAL_JUDGE_MODEL`).
+- Evaluation simulated-user model in `src/operations/evaluate_agent.py` (`EVAL_SIMULATOR_USER_MODEL`).
+
+Runtime agent model routes should be evaluated against three dimensions before promotion:
+
+The route rules are ordered: synthesis first, reasoning second, standard fallback. This means mixed prompts that ask for analysis, recommendations, plans, or approval-quality summaries use the synthesis route even when they mention operational entities such as appointments or orders.
+
+| Dimension | What to optimize | Promotion evidence |
+| --- | --- | --- |
+| Quality | Correct tool use, grounded final answers, accurate synthesis, and safe handling of governed data. | Passing auth/safety/groundedness gates plus manual trace review for representative tool-heavy cases. |
+| Cost | Avoid using the highest-cost model for low-complexity conversational or lookup traffic. | Token/call volume review by route and confirmation that standard turns stay on the lower-cost default route. |
+| Efficiency | Reduce latency, retries, clarification loops, and failed tool attempts. | p95 latency, successful first-pass tool use, and fewer repeated model/tool turns in MLflow traces. |
 
 ### Recommended Runtime Profiles
 
@@ -163,20 +178,20 @@ The project supports model selection at three layers:
 ### Proposed Environment-Specific Recommendation
 
 - `dev`:
-	- Profile: Cost-first for inner loop, plus Balanced once per day.
-	- Orchestrator: smaller workspace-served model for local/branch testing.
+	- Profile: cost/latency-aware mixed routing for fast iteration.
+	- Orchestrator routes: standard `databricks-gpt-5-6-luna`; reasoning/synthesis `databricks-claude-sonnet-5`.
 	- Evaluation: fast model for PR loops and `databricks:/databricks-claude-sonnet-5` before merge to shared branch.
 - `qa`:
-	- Profile: Balanced.
-	- Orchestrator: `databricks-gpt-5-6-luna`.
+	- Profile: production-parity regression routing.
+	- Orchestrator routes: standard `databricks-gpt-5-6-luna`; reasoning/synthesis `databricks-claude-sonnet-5`.
 	- Evaluation: `databricks:/databricks-claude-sonnet-5` on each integration cycle.
 - `stg`:
 	- Profile: Quality-first.
-	- Orchestrator: `databricks-claude-sonnet-5`.
+	- Orchestrator routes: standard/reasoning/synthesis all `databricks-claude-sonnet-5`.
 	- Evaluation: `databricks:/databricks-claude-sonnet-5` with strict KPI enforcement (`EVAL_REQUIRE_ALL_KPIS=true`).
 - `prd`:
-	- Profile: Balanced runtime with Quality-first pre-release gate.
-	- Orchestrator: `databricks-gpt-5-6-luna` by default; temporarily promote to `databricks-claude-sonnet-5` for sensitive launches.
+	- Profile: balanced user-facing latency, cost, and quality.
+	- Orchestrator routes: standard `databricks-gpt-5-6-luna`; reasoning/synthesis `databricks-claude-sonnet-5`.
 	- Evaluation: required Sonnet 5 gate before deployment and periodic post-release drift checks.
 
 ### Promotion Rule

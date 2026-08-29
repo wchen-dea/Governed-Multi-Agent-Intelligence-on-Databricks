@@ -6,8 +6,11 @@ This document summarizes the technical specifications currently implemented in t
 
 - Layered backend architecture is implemented with API, application, bootstrap, config, domain, and infrastructure layers.
 - Request handling supports both invoke and stream flows through MLflow Agent Server handlers.
+- The OpenAI-compatible Responses API is the stable model and tool-call contract for orchestrator and specialist serving-endpoint calls.
+- OpenAI Agents SDK remains the primary synchronous orchestration runtime; durable graph workflows should be introduced only behind explicit workflow boundaries such as approval or long-running delegation.
 - Orchestrator agent is assembled at runtime with available tools and healthy MCP servers.
 - A deterministic model router selects a configured Databricks model before agent assembly and records the decision in routing lifecycle metadata.
+- Each OpenAI-compatible agent run records structured metadata in the response envelope and lifecycle events: run id, API contract, selected model, model task type, route candidates, selected tool names, unavailable tool details, and whether AI Gateway routing is enabled.
 - Frontend runtime is a React UI, bundled and served in-process by the backend.
 
 Primary implementation:
@@ -21,14 +24,33 @@ Primary implementation:
 | Task type | Default dev model | Examples |
 | --- | --- | --- |
 | standard | `databricks-gpt-5-6-luna` | product lookups and ordinary conversational requests |
-| reasoning | `databricks-gpt-5-6-luna` | appointments, orders, SQL, Flink, streaming, debugging, and troubleshooting |
-| synthesis | `databricks-gpt-5-6-luna` | analysis, comparison, executive summaries, recommendations, and plans |
+| reasoning | `databricks-claude-sonnet-5` | appointments, orders, SQL, Flink, streaming, debugging, and troubleshooting |
+| synthesis | `databricks-claude-sonnet-5` | analysis, comparison, executive summaries, recommendations, and plans |
 
-Dev keeps all task classes on the verified balanced model. Promote a task route to another Databricks model only after a successful live invocation and evaluation run for that route.
+Dev uses the balanced GPT route for standard turns and the Sonnet route for reasoning and synthesis turns. Promote or change a task route only after a successful live invocation and evaluation run for that route.
+
+Model routing uses one ordered deterministic rule set. Synthesis terms are evaluated before reasoning terms, so mixed prompts such as "analyze appointment trends and recommend a plan" choose the synthesis route. This favors quality for recommendations and approval-oriented summaries while keeping ordinary lookup traffic on the standard route.
+
+Target overlays may choose different model sets because each environment has a different service-level posture:
+
+| Target | SLA posture | Standard route | Reasoning route | Synthesis route |
+| --- | --- | --- | --- | --- |
+| dev | Fast iteration and cost control | `databricks-gpt-5-6-luna` | `databricks-claude-sonnet-5` | `databricks-claude-sonnet-5` |
+| qa | Production-parity regression checks | `databricks-gpt-5-6-luna` | `databricks-claude-sonnet-5` | `databricks-claude-sonnet-5` |
+| stg | Quality-first pre-production validation | `databricks-claude-sonnet-5` | `databricks-claude-sonnet-5` | `databricks-claude-sonnet-5` |
+| prd | Balanced user-facing latency, cost, and quality | `databricks-gpt-5-6-luna` | `databricks-claude-sonnet-5` | `databricks-claude-sonnet-5` |
+
+Model selection balances three operating goals:
+
+| Route | Quality rationale | Cost rationale | Efficiency rationale |
+| --- | --- | --- | --- |
+| standard | Use a capable general model for simple lookups and normal conversation where tool grounding carries much of the answer quality. | Avoid spending premium reasoning tokens on low-complexity turns. | Keep latency predictable for high-frequency chat and lookup requests. |
+| reasoning | Use the stronger reasoning route for SQL, operational troubleshooting, schema interpretation, and multi-step support paths. | Accept higher per-call cost when better planning can reduce retries, failed tool use, and manual triage. | Prefer fewer, more accurate turns for incidents and operational workflows. |
+| synthesis | Use the stronger synthesis route for executive analysis, comparisons, plans, recommendations, and governed summaries. | Spend more only where output quality materially affects business review or approval decisions. | Produce higher-quality summaries in one pass instead of requiring repeated refinement. |
 
 Set `MODEL_ROUTING_ENABLED=false` to retain `ORCHESTRATOR_MODEL` for every task. Configure individual routes through `MODEL_ROUTING_DEFAULT_MODEL`, `MODEL_ROUTING_REASONING_MODEL`, and `MODEL_ROUTING_QUALITY_MODEL`.
 
-With routing enabled, dev currently resolves standard, reasoning, and synthesis tasks to `databricks-gpt-5-6-luna`. Model-route metadata is not proof of tool-call correctness.
+With routing enabled, dev records the selected model per request in routing lifecycle metadata. Model-route metadata is not proof of tool-call correctness.
 - src/aiweb/src/App.tsx
 - src/aiweb/src/api.ts
 - src/aiserver/api/server.py (mounts the built UI in-process; no separate proxy server)
@@ -106,6 +128,8 @@ Primary implementation:
 
 - Lifecycle events are normalized with a shared event envelope.
 - Events are emitted across request, tool, MCP, auth, policy, and guardrail stages.
+- OpenAI-compatible agent execution emits `openai.agent.run.started` and `openai.agent.run.completed` events with stable run metadata.
+- Guardrail pass/block events include the same OpenAI run metadata so final response status can be tied back to the selected model, route candidates, and tool set.
 - Message bus backend is environment-configurable.
 - Optional async queue-backed message-bus publishing is available to reduce request-path event I/O overhead.
 - UC-governed persistence is implemented through a uc_table backend.
@@ -178,6 +202,7 @@ Primary implementation:
 
 - Deployment is target-based with dev, qa, stg, and prd overlays.
 - Shared resource configuration is centralized and target overrides are explicit.
+- AI Gateway is the preferred production control point for OpenAI-compatible traffic. Set `DATABRICKS_OPENAI_BASE_URL` and `DATABRICKS_OPENAI_TIMEOUT_SECONDS` to route Databricks OpenAI client calls through the gateway without changing application code.
 - Environment variables configure runtime behavior for auth, bus backends, UC audit sink, and release gates.
 - Environment variables configure the approval backend and its UC Delta table.
 - Process concurrency tuning is supported through a backend Uvicorn worker env control (`BACKEND_UVICORN_WORKERS`).

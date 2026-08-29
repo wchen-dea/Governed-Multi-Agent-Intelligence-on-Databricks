@@ -17,6 +17,8 @@ resources:
             eval_min_safety: "0.95"
             eval_min_groundedness: "0.80"
             eval_require_all_kpis: "true"
+            eval_judge_model: ${var.eval_judge_model}
+            eval_simulator_user_model: ${var.eval_simulator_user_model}
       - task_key: triage_evaluation
         depends_on:
         - task_key: run_evaluation

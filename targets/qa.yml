@@ -9,8 +9,19 @@ targets:
       state_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}/state
     variables:
       app_name: multiagent-app-qa
+      hitl_app_name: store-intervention-agent-qa
+      hitl_sql_warehouse_id: "<QA-HITL-SQL-WAREHOUSE-ID>"
+      hitl_revenue_table: "dt_qa_platinum.enterprise.store_sales_performance"
+      hitl_cdi_table: "dt_qa_gold.dwh.fct_cdi_daily"
+      hitl_peer_set_table: "dt_qa_gold.dwh.brg_store_cluster_membership_group"
+      hitl_store_dimension_table: "dt_qa_gold.dwh.dim_store_active"
+      hitl_trend_window_days: "90"
       openai_base_url: ""
       openai_timeout_seconds: "0"
+      model_routing_enabled: "true"
+      model_routing_default_model: databricks-gpt-5-6-luna
+      model_routing_reasoning_model: databricks-claude-sonnet-5
+      model_routing_quality_model: databricks-claude-sonnet-5
       subagents_config_path: ""
       # MLflow owner: experiment used for traces and eval in QA.
       # Example: "1234567890123456" (numeric experiment id as string)

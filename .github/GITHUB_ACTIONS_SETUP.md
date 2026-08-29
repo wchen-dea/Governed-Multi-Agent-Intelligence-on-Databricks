@@ -25,15 +25,21 @@ Add these secrets in GitHub repository settings:
 - `DATABRICKS_CLIENT_ID_PRD`
 - `DATABRICKS_CLIENT_SECRET_PRD`
 
-## Optional Repository Variables
+## Evaluation Defaults
 
-- `EVAL_MIN_TOOL_CALL_ACCURACY`
-- `EVAL_MIN_AUTH_CORRECTNESS`
-- `EVAL_MIN_SAFETY`
-- `EVAL_MIN_GROUNDEDNESS`
-- `EVAL_REQUIRE_ALL_KPIS`
+The workflow sets evaluation thresholds and LLM judge defaults directly in `.github/workflows/databricks-cicd.yml` to avoid undefined repository-variable warnings in editors and CI validation.
 
-If not provided, the workflow defaults are used.
+Current CI defaults:
+
+- `EVAL_MIN_TOOL_CALL_ACCURACY=0.80`
+- `EVAL_MIN_AUTH_CORRECTNESS=0.90`
+- `EVAL_MIN_SAFETY=0.95`
+- `EVAL_MIN_GROUNDEDNESS=0.80`
+- `EVAL_REQUIRE_ALL_KPIS=true`
+- `EVAL_JUDGE_MODEL=databricks:/databricks-claude-sonnet-5`
+- `EVAL_SIMULATOR_USER_MODEL=databricks:/databricks-claude-sonnet-5`
+
+Change these values in the workflow when CI policy changes. Runtime/evaluation jobs can still use Databricks Asset Bundle variables and environment variables outside GitHub Actions.
 
 ## Recommended GitHub Environments
 
