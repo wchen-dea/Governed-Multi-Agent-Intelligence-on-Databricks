@@ -247,6 +247,7 @@ For architecture diagrams, see [docs/architecture/high-level-architecture.md](do
 ## Project Layout
 
 - [src/aiserver/](src/aiserver): orchestrator runtime, handlers, request normalization, server startup
+- [src/hitl-agent/](src/hitl-agent): deployed `store-intervention-agent` specialist source and App configuration
 - [src/aiserver/README.md](src/aiserver/README.md): backend-focused setup, runtime behavior, and operations guide
 - [src/aiweb/](src/aiweb): primary React UI (TypeScript) client for chat, commands, and stream rendering
 - [src/aiweb/README.md](src/aiweb/README.md): React UI setup, build, and local run guide
@@ -348,6 +349,13 @@ This builds versioned wheel and React payloads, clears prior generated remote wh
 - `AGENT_TASK_WORKER_POLL_SECONDS`: idle polling interval for the delegation worker (default `1.0`).
 
 For the store intervention workflow, start with the [HITL approval guide](docs/governance/human-in-the-loop.md). It documents the discovery query, evidence requirement, approval states, API calls, UC persistence, and post-deployment verification.
+
+Update the specialist App source or its data privileges with:
+
+```bash
+make update-hitl APP_NAME=store-intervention-agent PROFILE=DEFAULT
+make grant-hitl-privileges APP_NAME=store-intervention-agent PROFILE=DEFAULT
+```
 
 MCP connect/probe performance controls:
 

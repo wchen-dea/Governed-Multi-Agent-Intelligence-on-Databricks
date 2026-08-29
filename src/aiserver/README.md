@@ -90,6 +90,7 @@ Most common edit locations:
 Tip:
 
 - Keep `src/aiserver/contracts/subagents.<target>.json` and runtime behavior aligned when adding or changing tools.
+- The active store intervention specialist source is in `src/hitl-agent/`; use `make update-hitl` to deploy source changes and `make grant-hitl-privileges` to refresh its least-privilege data access.
 
 ## Key Environment Variables
 

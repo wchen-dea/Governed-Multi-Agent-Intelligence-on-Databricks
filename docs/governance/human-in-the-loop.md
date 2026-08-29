@@ -6,7 +6,7 @@ Define the implemented human-in-the-loop (HITL) workflow for business-impacting 
 
 ## Current Use Case
 
-The first implemented HITL use case is the store intervention workflow:
+The first implemented HITL use case is the active `store-intervention-agent` workflow:
 
 > Find stores with strong revenue but declining CDI scores, compare each store with its peers and recent trend, prepare an evidence-backed customer-experience intervention packet, and pause for manager approval before any operational dispatch.
 
@@ -16,7 +16,7 @@ The workflow is handled by `store-intervention-agent`, which is configured for t
 
 ## Create `store-intervention-agent`
 
-`store-intervention-agent` is configured as a Databricks App specialist, not as a resource created by this orchestrator bundle. Create the specialist once per environment, then register its App name in this repository.
+`store-intervention-agent` is an active Databricks App specialist. Its source is maintained locally in `src/hitl-agent/` and deployed separately from this orchestrator bundle. Create it once per environment, then register its App name in this repository.
 
 ### 1. Define the specialist contract
 
@@ -64,7 +64,7 @@ APP_SP=$(databricks apps get store-intervention-agent --profile PROFILE --output
   | jq -r '.service_principal_name // .service_principal_client_id')
 ```
 
-The App must be `RUNNING` with an active successful deployment before it is registered in this repository.
+The App must be `RUNNING` with an active successful deployment before it is registered in this repository. The current dev App is `store-intervention-agent`, and its deployed source is the workspace path `/Workspace/Users/paul.chen@discounttire.com/store-intervention-agent`.
 
 ### Grant specialist data privileges
 

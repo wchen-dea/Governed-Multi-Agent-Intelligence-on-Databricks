@@ -47,6 +47,7 @@ For target values:
 - Confirm target (`dev` / `qa` / `stg` / `prd`) and CLI profile.
 - Confirm target variables in `targets/*.yml` are correct.
 - Confirm the target's `store-intervention-agent` App exists, is running, and grants the orchestrator service principal `CAN_USE`; follow the [HITL specialist creation procedure](../governance/human-in-the-loop.md#create-store-intervention-agent) when onboarding it.
+- Confirm the `store-intervention-agent` service principal has the current SQL warehouse, UC schema, and table `SELECT` grants; run `make grant-hitl-privileges` after changing its data sources.
 - Confirm the app service principal has a Lakebase OAuth role and the app has the target `postgres` resource grant.
 - Confirm no pending manual hotfix state in the target app.
 
