@@ -92,7 +92,7 @@ make grant-hitl-privileges APP_NAME=hitl-app-agent PROFILE=PROFILE
 The helper resolves the specialist service principal and grants:
 
 - `CAN_USE` on the configured SQL warehouse
-- `USE_CATALOG` and `USE_SCHEMA` for `dt_dev_platinum.enterprise` and `dt_dev_gold.dwh`
+- `USE_CATALOG` and `USE_SCHEMA` for the configured environment's platinum and gold source schemas, such as `dt_${TARGET}_platinum.enterprise` and `dt_${TARGET}_gold.dwh`
 - `SELECT` on the platinum revenue table and gold CDI, peer-set, and store-dimension tables
 
 Review the generated grants first with:
@@ -143,7 +143,7 @@ HITL_WORKSPACE_PATH=/Workspace/Users/owner/hitl-app-agent \
 make update-hitl APP_NAME=hitl-app-agent PROFILE=PROFILE
 ```
 
-The script requires `app.py`, `app.yaml`, and `requirements.txt` in the source directory. It does not create the App, alter App permissions, or change the orchestrator registry.
+The script requires `app.py`, `app.yaml`, and `requirements.txt` in the source directory. It creates the App only when missing, updates existing Apps in place, verifies the service principal is preserved on update, and does not change the orchestrator registry.
 
 ### 3. Grant the orchestrator access
 
@@ -210,9 +210,9 @@ A successful verification must show qualifying stores or a clear no-match result
 
 ### 6. Promote by environment
 
-Repeat the App creation and least-privilege grants for QA, staging, and production, or use the organization-approved promotion mechanism if the App supports environment isolation. Replace target placeholders before promotion and keep each App's data resources in the same environment boundary as the orchestrator.
+Repeat the App binding/creation and least-privilege grants for QA, staging, and production, or use the organization-approved promotion mechanism if the App supports environment isolation. Replace target placeholders before promotion and keep each App's data resources in the same environment boundary as the orchestrator.
 
-The orchestrator bundle does not create or deploy this external specialist App automatically. It validates and deploys the orchestrator configuration only.
+The bundle declares the specialist App as `resources.apps.hitl-app-agent`; `make update-hitl` remains the source-only helper for targeted HITL updates outside a full bundle deployment.
 
 ## Decision Boundary
 

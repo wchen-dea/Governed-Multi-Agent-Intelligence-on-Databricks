@@ -370,7 +370,7 @@ AgentTaskWorker --> AgentTaskBus
 DelegationHandoffModule --> AgentTaskBus
 ```
 
-## 6. Subagent Registry (dev environment)
+## 6. Subagent Registry
 
 ```mermaid
 classDiagram
@@ -381,57 +381,31 @@ class SubagentRegistry {
     +load_subagents() list~SubagentConfig~
 }
 
-class sales_insights_agent {
-    kind = genie
-    auth_mode = app
-    classification = confidential
-    personas = manager
-    space_id = 01f159f5...
-    freshness_sla = 15m
+class GenieAgents {
+    sales_insights_agent
+    cdi_agent
 }
 
-class product_index_assistant {
-    kind = mcp
-    auth_mode = app
-    classification = internal
-    personas = analyst, manager, engineer
-    mcp_url = /api/2.0/mcp/vector-search/.../dim_product_search_index
-    freshness_sla = 24h
+class SearchAgents {
+    product_index_assistant
+    flink_support_agent
 }
 
-class flink_support_agent {
-    kind = mcp
-    auth_mode = app
-    classification = internal
-    personas = operator, manager, engineer
-    mcp_url = /api/2.0/mcp/ai-search/.../flink_support_index
-    freshness_sla = 24h
+class AppAgents {
+    store-intervention-agent
 }
 
-class cdi_agent {
-    kind = genie
-    auth_mode = app
-    classification = confidential
-    personas = manager
-    space_id = 01f19b2a...
-    freshness_sla = 4h
+class LakebaseAgents {
+    lakebase_ods_agent
 }
 
-class lakebase_ods_agent {
-    kind = lakebase
-    auth_mode = app
-    classification = confidential
-    personas = analyst, manager, engineer
-    database = operations
-    freshness_sla = 1h
-}
-
-SubagentRegistry --> sales_insights_agent
-SubagentRegistry --> product_index_assistant
-SubagentRegistry --> flink_support_agent
-SubagentRegistry --> cdi_agent
-SubagentRegistry --> lakebase_ods_agent
+SubagentRegistry --> GenieAgents
+SubagentRegistry --> SearchAgents
+SubagentRegistry --> AppAgents
+SubagentRegistry --> LakebaseAgents
 ```
+
+The concrete per-environment registry lives in `src/aiserver/contracts/subagents.<target>.json`. Dev currently defines six logical subagents: two Genie MCP routes, two AI Search MCP routes, one Databricks App HITL specialist, and one Lakebase PostgreSQL route. Environment-specific identifiers such as Genie space IDs, Databricks App endpoints, and Lakebase connection fields are maintained in the target registry files rather than this diagram.
 
 ## Notes
 

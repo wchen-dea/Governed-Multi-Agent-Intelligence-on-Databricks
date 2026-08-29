@@ -15,7 +15,7 @@ Each phase is split into high-level (architecture overview) and detailed (engine
 ## Artifact Inventory
 
 | # | File | Focus |
-|---|------|-------|
+| --- | --- | --- |
 | 00 | [00-architecture-board-review.md](00-architecture-board-review.md) | Review index, implementation status, and canonical links |
 | 01 | [01-concept-high-level.md](01-concept-high-level.md) | Business capabilities, actors, system context |
 | 02 | [02-concept-detailed.md](02-concept-detailed.md) | Scope map, persona-agent matrix, trust boundaries |
@@ -29,14 +29,14 @@ Each phase is split into high-level (architecture overview) and detailed (engine
 ## Coverage Matrix
 
 | Phase | High Level | Detailed |
-|-------|-----------|----------|
+| --- | --- | --- |
 | Concept | Business capabilities, actor/persona map, system context, value flow | Scope map, persona-agent access matrix, trust boundaries + risks |
 | Logical | Container diagram, end-to-end request flow, data lineage, identity flow | Backend components, policy decision tree, prompt layering, failure/recovery, evaluation gate |
 | Deployment | Environment topology, runtime deployment map, subagent resource mapping | Network/security topology, CI/CD pipeline, observability architecture, HA/recovery |
 
 ## Current Implementation Facts
 
-- **5 subagents**: sales_insights (Genie), cdi (Genie), product_index (AI Search MCP), flink_support (AI Search MCP), lakebase_ods (Lakebase)
+- **6 subagents**: sales_insights (Genie), cdi (Genie), product_index (AI Search MCP), flink_support (AI Search MCP), store-intervention-agent (Databricks App HITL), lakebase_ods (Lakebase)
 - **4 personas**: manager (all), analyst (sales + product + lakebase), operator (flink), engineer (flink + lakebase)
 - **Model router**: deterministic standard, reasoning, and synthesis selection; dev uses `databricks-gpt-5-6-luna` for standard turns and `databricks-claude-sonnet-5` for reasoning/synthesis turns
 - **AI Gateway**: opt-in via DATABRICKS_OPENAI_BASE_URL

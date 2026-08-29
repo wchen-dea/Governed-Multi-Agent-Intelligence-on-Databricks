@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-The orchestrator routes across 5 subagents with different data classifications (`internal`, `confidential`), persona restrictions, and governance requirements. Without explicit policy and response controls, the system risks over-broad tool access, weak justification quality, and unsafe disclosure patterns.
+The orchestrator routes across 6 subagents with different data classifications (`internal`, `confidential`), persona restrictions, and governance requirements. Without explicit policy and response controls, the system risks over-broad tool access, weak justification quality, and unsafe disclosure patterns.
 
 ## Decision
 
@@ -17,7 +17,7 @@ Introduce two deterministic enforcement layers:
 Per-subagent evaluation using `filter_subagents_by_policy()`. Rules applied in order:
 
 | Rule | Reason Code | Blocks When |
-|------|-------------|------------|
+| --- | --- | --- |
 | Explicit tool routing miss | `tool_not_requested` | Request names a specific tool that doesn't match this subagent |
 | Persona required | `persona_required` | No persona set and subagent restricts by `allowed_personas` |
 | Persona not allowed | `persona_not_allowed` | Active persona not in subagent's `allowed_personas` |
@@ -31,7 +31,7 @@ Denied subagents are excluded from tool assembly and reported as `unavailable_au
 Post-execution evaluation using `evaluate_response_guardrails()`:
 
 | Check | Reason Code | Blocks When |
-|-------|-------------|------------|
+| --- | --- | --- |
 | Evidence required | `evidence_required` | `requires_evidence=true` subagent contributed but response lacks `[N]`, `Source:`, or `Citation:` |
 | Unsafe output | `unsafe_output` | Response contains SSN, credit card, private key, API key, or password patterns |
 | Low confidence sensitive | `low_confidence_sensitive` | Hedging language detected for confidential/restricted data context |
@@ -41,8 +41,8 @@ Policy allow/deny decisions are emitted as `policy.subagent.decision` events. Re
 ### Current persona-agent matrix
 
 | Persona | Accessible Agents |
-|---------|-------------------|
-| manager | all 5 agents |
+| --- | --- |
+| manager | all 6 agents |
 | analyst | sales_insights_agent, product_index_assistant, lakebase_ods_agent |
 | operator | flink_support_agent |
 | engineer | flink_support_agent, lakebase_ods_agent |
