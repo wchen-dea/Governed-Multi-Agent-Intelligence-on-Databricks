@@ -233,3 +233,9 @@ variables:
   app_telemetry_traces_table:
     description: Unity Catalog table for Databricks Apps telemetry traces
     default: quickstart_catalog.multi_agent_schema.app_traces
+  eval_judge_model:
+    description: Model URI used by MLflow built-in LLM judge scorers
+    default: databricks:/databricks-claude-sonnet-5
+  eval_simulator_user_model:
+    description: Model URI used by ConversationSimulator to generate simulated user turns
+    default: databricks:/databricks-claude-sonnet-5

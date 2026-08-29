@@ -8,7 +8,11 @@ from aiserver.contracts.responses import (
     ResponseEnvelope,
     RoutePlan,
 )
-from operations.evaluate_agent import direct_groundedness_score
+from operations.evaluate_agent import (
+    direct_groundedness_score,
+    eval_judge_model,
+    eval_simulator_user_model,
+)
 
 
 def test_response_envelope_is_typed_and_serializable():
@@ -22,6 +26,7 @@ def test_response_envelope_is_typed_and_serializable():
             model="databricks-gpt-5-6-luna",
             model_task_type="reasoning",
             model_reason="task_type_match",
+            model_rationale="Use stronger reasoning for quality.",
             candidate_subagents=("sales",),
             selected_tool_names=("Genie:sales",),
             unavailable_tool_details=("Genie:cdi unavailable",),
@@ -34,6 +39,7 @@ def test_response_envelope_is_typed_and_serializable():
     assert envelope.__dict__["truncated"] is True
     assert envelope.openai_run.api == "responses"
     assert envelope.openai_run.run_id == "run-123"
+    assert "quality" in envelope.openai_run.model_rationale
     assert envelope.openai_run.selected_tool_names == ("Genie:sales",)
 
 
@@ -105,3 +111,15 @@ def test_direct_groundedness_requires_freshness_metadata():
         )
         == 0.5
     )
+
+
+def test_eval_judge_and_simulator_models_are_configurable(monkeypatch):
+    monkeypatch.setenv("EVAL_JUDGE_MODEL", "databricks:/judge-model")
+    monkeypatch.delenv("EVAL_SIMULATOR_USER_MODEL", raising=False)
+
+    assert eval_judge_model() == "databricks:/judge-model"
+    assert eval_simulator_user_model() == "databricks:/judge-model"
+
+    monkeypatch.setenv("EVAL_SIMULATOR_USER_MODEL", "databricks:/user-model")
+
+    assert eval_simulator_user_model() == "databricks:/user-model"

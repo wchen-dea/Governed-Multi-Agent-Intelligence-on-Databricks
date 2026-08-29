@@ -24,7 +24,7 @@ Every request to the app generates an MLflow trace automatically.
 Traces route to the experiment specified by `MLFLOW_EXPERIMENT_ID`:
 
 | Environment | Experiment ID | Experiment Path |
-|-------------|--------------|-----------------|
+| --- | --- | --- |
 | dev | `3025644123415124` | `/Shared/multiagent-app-dev` |
 | qa/stg/prd | Set per target | See `targets/*.yml` |
 
@@ -64,11 +64,13 @@ uv run assistant-evaluate
 
 1. Creates an MLflow run named `agent-quality-evaluation`
 2. Logs test parameters (case count, max turns, KPI thresholds)
-3. Runs `mlflow.genai.evaluate()` with a `ConversationSimulator` (LLM-as-judge using `databricks-claude-sonnet-5`)
-4. Scores each conversation with 9 built-in scorers + 2 custom scorers:
+3. Runs `mlflow.genai.evaluate()` with a `ConversationSimulator`; `EVAL_JUDGE_MODEL` configures the built-in LLM judge scorers, and `EVAL_SIMULATOR_USER_MODEL` configures simulated user turns
+4. Scores each conversation with 9 built-in scorers + 3 custom scorers:
+
+The built-in scorers use `EVAL_JUDGE_MODEL`; `AuthCorrectness`, `DirectGroundedness`, and `DataToolAttempt` are deterministic custom scorers and do not invoke an LLM judge.
 
 | Scorer | What It Measures |
-|--------|-----------------|
+| --- | --- |
 | `ToolCallCorrectness` | Did the agent call the right tool? |
 | `Safety` | Is the response free of harmful content? |
 | `ConversationalSafety` | Multi-turn safety across the conversation |
@@ -136,7 +138,7 @@ Evaluation doubles as a CI/CD quality gate via `enforce_release_gate()`. Auth co
 ### KPI thresholds
 
 | KPI | Env Var | Default | Metric Candidates |
-|-----|---------|---------|-------------------|
+| --- | --- | --- | --- |
 | Tool-call accuracy | `EVAL_MIN_TOOL_CALL_ACCURACY` | 0.80 | `toolcallcorrectness/mean`, `tool_call_correctness`, `tool_call_accuracy` (monitored, non-blocking) |
 | Auth correctness | `EVAL_MIN_AUTH_CORRECTNESS` | 0.90 | `authcorrectness/mean`, `auth_correctness` |
 | Safety | `EVAL_MIN_SAFETY` | 0.95 | `safety/mean`, `safety` |
@@ -153,7 +155,7 @@ In [.github/workflows/databricks-cicd.yml](../../.github/workflows/databricks-ci
 ### Environment variables
 
 | Variable | Purpose | Default |
-|----------|---------|---------|
+| --- | --- | --- |
 | `MLFLOW_TRACKING_URI` | MLflow tracking backend | `databricks` (workspace-native) |
 | `MLFLOW_REGISTRY_URI` | Model registry backend | `databricks-uc` (Unity Catalog) |
 | `MLFLOW_EXPERIMENT_ID` | Target experiment for traces | Per-environment (see `targets/*.yml`) |
@@ -208,7 +210,7 @@ This is **separate** from MLflow traces — it captures Databricks App platform 
 The project has two independent telemetry paths:
 
 | Stream | Captures | Storage | Access |
-|--------|----------|---------|--------|
+| --- | --- | --- | --- |
 | **MLflow traces** | LLM calls, spans, latency, tokens, inputs/outputs | MLflow Experiment | Experiments UI → Traces tab |
 | **Lifecycle message bus** | Domain events (`request.invoke.started`, `response.guardrail.blocked`) | UC audit table | SQL queries on `quickstart_catalog.multi_agent_schema.agent_lifecycle_events` |
 

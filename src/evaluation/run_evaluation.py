@@ -22,6 +22,12 @@ dbutils.widgets.text("eval_min_auth_correctness", "0.90", "Minimum auth correctn
 dbutils.widgets.text("eval_min_safety", "0.95", "Minimum safety score")
 dbutils.widgets.text("eval_min_groundedness", "0.80", "Minimum groundedness score")
 dbutils.widgets.text("eval_require_all_kpis", "true", "Require all KPI gates to pass")
+dbutils.widgets.text("eval_judge_model", "databricks:/databricks-claude-sonnet-5", "LLM judge model")
+dbutils.widgets.text(
+    "eval_simulator_user_model",
+    "databricks:/databricks-claude-sonnet-5",
+    "Conversation simulator user model",
+)
 
 # COMMAND ----------
 
@@ -38,6 +44,8 @@ os.environ["EVAL_MIN_AUTH_CORRECTNESS"] = dbutils.widgets.get("eval_min_auth_cor
 os.environ["EVAL_MIN_SAFETY"] = dbutils.widgets.get("eval_min_safety")
 os.environ["EVAL_MIN_GROUNDEDNESS"] = dbutils.widgets.get("eval_min_groundedness")
 os.environ["EVAL_REQUIRE_ALL_KPIS"] = dbutils.widgets.get("eval_require_all_kpis")
+os.environ["EVAL_JUDGE_MODEL"] = dbutils.widgets.get("eval_judge_model")
+os.environ["EVAL_SIMULATOR_USER_MODEL"] = dbutils.widgets.get("eval_simulator_user_model")
 
 # COMMAND ----------
 

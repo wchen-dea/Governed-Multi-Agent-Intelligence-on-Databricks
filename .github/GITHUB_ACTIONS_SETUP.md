@@ -32,6 +32,8 @@ Add these secrets in GitHub repository settings:
 - `EVAL_MIN_SAFETY`
 - `EVAL_MIN_GROUNDEDNESS`
 - `EVAL_REQUIRE_ALL_KPIS`
+- `EVAL_JUDGE_MODEL`
+- `EVAL_SIMULATOR_USER_MODEL`
 
 If not provided, the workflow defaults are used.
 

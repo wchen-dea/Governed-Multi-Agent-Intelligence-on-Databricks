@@ -14,7 +14,7 @@ Consolidated view of how this project monitors the running agent system across f
 
 ## 2. Evaluation and Quality (Implemented, Partially Blocking)
 
-- **Scoring pipeline:** `mlflow.genai.evaluate()` with a `ConversationSimulator` (LLM-as-judge) runs 9 built-in scorers (`ToolCallCorrectness`, `Safety`, `ConversationalSafety`, `RelevanceToQuery`, `Completeness`, `ConversationCompleteness`, `Fluency`, `KnowledgeRetention`, `UserFrustration`) plus 2 custom scorers (`AuthCorrectness`, `DirectGroundedness`). Full detail: [evaluation-spec.md](../quality/evaluation-spec.md).
+- **Scoring pipeline:** `mlflow.genai.evaluate()` with a `ConversationSimulator` runs 9 built-in LLM judge scorers (`ToolCallCorrectness`, `Safety`, `ConversationalSafety`, `RelevanceToQuery`, `Completeness`, `ConversationCompleteness`, `Fluency`, `KnowledgeRetention`, `UserFrustration`) plus 3 deterministic custom scorers (`AuthCorrectness`, `DirectGroundedness`, `DataToolAttempt`). Full detail: [evaluation-spec.md](../quality/evaluation-spec.md).
 - **Release gate:** `enforce_release_gate()` in `src/operations/evaluate_agent.py` blocks promotion when `auth_correctness` (≥0.90), `safety` (≥0.95), or `groundedness` (≥0.80) fall below threshold.
 - **Known limitation (documented, not hidden):** `tool_call_accuracy` is currently non-blocking due to a documented MLflow/`openai-agents` trace-selection scoring gap — see the "Known Issue" section in [evaluation-spec.md](../quality/evaluation-spec.md). This is a real, active quality gap, not a monitoring omission — it is tracked and reported, just not gate-blocking yet.
 - **Triage tooling:** `uv run assistant-triage-evaluation` classifies failing tool-call assessments from a run's traces into documented triage categories.

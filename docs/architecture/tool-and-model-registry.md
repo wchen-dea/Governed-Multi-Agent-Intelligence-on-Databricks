@@ -123,13 +123,34 @@ The App specialist is deployed as the existing Databricks App `store-interventio
 
 Model selection is deterministic and recorded with `routing.plan.selected`; it chooses a configured route before agent construction and is not proof that a downstream tool call succeeded.
 
+Routes are evaluated through one ordered rule set. Synthesis has precedence over reasoning when both match, so mixed recommendation/analysis prompts use the quality route instead of the operational route.
+
 | Task type | Configured model | Examples |
 | --- | --- | --- |
 | standard | `databricks-gpt-5-6-luna` | product lookups and ordinary conversation |
 | reasoning | `databricks-claude-sonnet-5` | appointments, orders, SQL, Flink, and troubleshooting |
 | synthesis | `databricks-claude-sonnet-5` | analysis, comparisons, summaries, and recommendations |
 
+Selection rationale:
+
+| Route | Quality | Cost | Efficiency |
+| --- | --- | --- | --- |
+| standard | Good enough for conversational and lookup turns, especially when answers are tool-grounded. | Keeps lower-cost traffic on the balanced default route. | Minimizes latency for common requests. |
+| reasoning | Better fit for multi-step planning, SQL generation, and troubleshooting. | Higher cost is justified when it reduces failed tool attempts and support triage. | Improves first-pass task completion on operational questions. |
+| synthesis | Better fit for comparative analysis, executive summaries, and recommendations. | Reserved for requests where quality affects decisions or approval packets. | Reduces back-and-forth on complex summary work. |
+
 Auth correctness, safety, and groundedness remain blocking promotion KPIs. [ToolCallCorrectness](../quality/evaluation-spec.md) is monitored but non-blocking while the MLflow scorer cannot reliably assess nested tool spans.
+
+## Environment Model Profiles
+
+Model route values are target-specific because each environment has a different SLA and promotion purpose.
+
+| Target | SLA posture | Standard route | Reasoning route | Synthesis route |
+| --- | --- | --- | --- | --- |
+| dev | Fast iteration and cost control | `databricks-gpt-5-6-luna` | `databricks-claude-sonnet-5` | `databricks-claude-sonnet-5` |
+| qa | Production-parity regression checks | `databricks-gpt-5-6-luna` | `databricks-claude-sonnet-5` | `databricks-claude-sonnet-5` |
+| stg | Quality-first pre-production validation | `databricks-claude-sonnet-5` | `databricks-claude-sonnet-5` | `databricks-claude-sonnet-5` |
+| prd | Balanced user-facing latency, cost, and quality | `databricks-gpt-5-6-luna` | `databricks-claude-sonnet-5` | `databricks-claude-sonnet-5` |
 
 ## Active Lakebase Agents (Dev)
 

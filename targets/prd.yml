@@ -18,6 +18,10 @@ targets:
       hitl_trend_window_days: "90"
       openai_base_url: ""
       openai_timeout_seconds: "0"
+      model_routing_enabled: "true"
+      model_routing_default_model: databricks-gpt-5-6-luna
+      model_routing_reasoning_model: databricks-claude-sonnet-5
+      model_routing_quality_model: databricks-claude-sonnet-5
       subagents_config_path: ""
       # MLflow owner: experiment used for traces and eval in PROD.
       # Example: "1234567890123456" (numeric experiment id as string)

@@ -342,6 +342,8 @@ This builds versioned wheel and React payloads, clears prior generated remote wh
 - `EVAL_MIN_SAFETY`: release-gate threshold for safety KPI (default `0.95`).
 - `EVAL_MIN_GROUNDEDNESS`: release-gate threshold for groundedness KPI (default `0.80`).
 - `EVAL_REQUIRE_ALL_KPIS`: when `true`, fail release gate if any KPI metric is missing.
+- `EVAL_JUDGE_MODEL`: model URI used by MLflow built-in LLM judge scorers (default `databricks:/databricks-claude-sonnet-5`).
+- `EVAL_SIMULATOR_USER_MODEL`: model URI used by `ConversationSimulator` to generate simulated user turns (defaults to `EVAL_JUDGE_MODEL`).
 - `AGENT_TASK_BACKEND`: delegation task backend; `memory` by default and `uc_table` for durable Delta-backed tasks.
 - `AGENT_TASK_WAREHOUSE_ID`: SQL warehouse used by the UC task backend.
 - `AGENT_TASK_CATALOG`: Unity Catalog catalog for durable delegation tables.

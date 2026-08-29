@@ -29,6 +29,25 @@ Primary implementation:
 
 Dev uses the balanced GPT route for standard turns and the Sonnet route for reasoning and synthesis turns. Promote or change a task route only after a successful live invocation and evaluation run for that route.
 
+Model routing uses one ordered deterministic rule set. Synthesis terms are evaluated before reasoning terms, so mixed prompts such as "analyze appointment trends and recommend a plan" choose the synthesis route. This favors quality for recommendations and approval-oriented summaries while keeping ordinary lookup traffic on the standard route.
+
+Target overlays may choose different model sets because each environment has a different service-level posture:
+
+| Target | SLA posture | Standard route | Reasoning route | Synthesis route |
+| --- | --- | --- | --- | --- |
+| dev | Fast iteration and cost control | `databricks-gpt-5-6-luna` | `databricks-claude-sonnet-5` | `databricks-claude-sonnet-5` |
+| qa | Production-parity regression checks | `databricks-gpt-5-6-luna` | `databricks-claude-sonnet-5` | `databricks-claude-sonnet-5` |
+| stg | Quality-first pre-production validation | `databricks-claude-sonnet-5` | `databricks-claude-sonnet-5` | `databricks-claude-sonnet-5` |
+| prd | Balanced user-facing latency, cost, and quality | `databricks-gpt-5-6-luna` | `databricks-claude-sonnet-5` | `databricks-claude-sonnet-5` |
+
+Model selection balances three operating goals:
+
+| Route | Quality rationale | Cost rationale | Efficiency rationale |
+| --- | --- | --- | --- |
+| standard | Use a capable general model for simple lookups and normal conversation where tool grounding carries much of the answer quality. | Avoid spending premium reasoning tokens on low-complexity turns. | Keep latency predictable for high-frequency chat and lookup requests. |
+| reasoning | Use the stronger reasoning route for SQL, operational troubleshooting, schema interpretation, and multi-step support paths. | Accept higher per-call cost when better planning can reduce retries, failed tool use, and manual triage. | Prefer fewer, more accurate turns for incidents and operational workflows. |
+| synthesis | Use the stronger synthesis route for executive analysis, comparisons, plans, recommendations, and governed summaries. | Spend more only where output quality materially affects business review or approval decisions. | Produce higher-quality summaries in one pass instead of requiring repeated refinement. |
+
 Set `MODEL_ROUTING_ENABLED=false` to retain `ORCHESTRATOR_MODEL` for every task. Configure individual routes through `MODEL_ROUTING_DEFAULT_MODEL`, `MODEL_ROUTING_REASONING_MODEL`, and `MODEL_ROUTING_QUALITY_MODEL`.
 
 With routing enabled, dev records the selected model per request in routing lifecycle metadata. Model-route metadata is not proof of tool-call correctness.

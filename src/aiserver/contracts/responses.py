@@ -46,6 +46,7 @@ class OpenAIAgentRunMetadata:
     model: str = ""
     model_task_type: str = ""
     model_reason: str = ""
+    model_rationale: str = ""
     candidate_subagents: tuple[str, ...] = ()
     selected_tool_names: tuple[str, ...] = ()
     unavailable_tool_details: tuple[str, ...] = ()
