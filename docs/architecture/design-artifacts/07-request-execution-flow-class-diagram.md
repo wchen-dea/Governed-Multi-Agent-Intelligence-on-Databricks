@@ -45,6 +45,23 @@ class HandlerDependencies {
     +input_guardrails_evaluator(input, max_input_chars)
     +message_bus: MessageBus
 }
+class RuntimeAuthContext {
+    +subagent_tools: list
+    +mcp_servers: list~McpServer~
+    +unavailable_auth: list~str~
+}
+class RuntimeAuthDependencies {
+    +subagent_tools_builder: SubagentToolsBuilder
+}
+class SubagentToolsBuilder {
+    <<protocol>>
+}
+class ToolRegistry {
+    +resolve(subagent) ToolAdapter?
+}
+class AppToolAdapter {
+    +build(subagent, app_client, obo_client, deps) Callable
+}
 
 class InvokePipeline {
     +_prepare_request_stage(request) RequestStage
@@ -66,6 +83,10 @@ InvokePipeline ..> InvokeFinalizedStage : finalize
 InvokePipeline --> ResponsesAgentResponse : returns
 InvokePipeline ..> GuardrailHelpers : evaluate + attribute
 RequestStage --> ResponsesAgentRequest
+RequestStage --> RuntimeAuthContext
+RuntimeAuthDependencies ..> SubagentToolsBuilder
+SubagentToolsBuilder ..> ToolRegistry : builder implementation resolves direct tools
+ToolRegistry --> AppToolAdapter : direct app/endpoint adapter
 InvokePipeline ..> AsyncExitStack : MCP lifecycle
 ```
 
@@ -120,6 +141,23 @@ class HandlerDependencies {
     +input_guardrails_evaluator(input, max_input_chars)
     +message_bus: MessageBus
 }
+class RuntimeAuthContext {
+    +subagent_tools: list
+    +mcp_servers: list~McpServer~
+    +unavailable_auth: list~str~
+}
+class RuntimeAuthDependencies {
+    +subagent_tools_builder: SubagentToolsBuilder
+}
+class SubagentToolsBuilder {
+    <<protocol>>
+}
+class ToolRegistry {
+    +resolve(subagent) ToolAdapter?
+}
+class AppToolAdapter {
+    +build(subagent, app_client, obo_client, deps) Callable
+}
 
 class StreamPipeline {
     +_prepare_request_stage(request) RequestStage
@@ -143,6 +181,10 @@ StreamPipeline ..> StreamFinalizedStage : finalize
 StreamPipeline --> ResponsesAgentStreamEvent : yields
 StreamPipeline ..> StreamHelpers : track + attribute
 RequestStage --> ResponsesAgentRequest
+RequestStage --> RuntimeAuthContext
+RuntimeAuthDependencies ..> SubagentToolsBuilder
+SubagentToolsBuilder ..> ToolRegistry : builder implementation resolves direct tools
+ToolRegistry --> AppToolAdapter : direct app/endpoint adapter
 StreamPipeline ..> AsyncExitStack : MCP lifecycle
 ```
 

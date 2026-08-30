@@ -108,7 +108,7 @@ The default registry defines first-match precedence in this order:
 3. `AppToolAdapter` for direct Databricks serving-endpoint and App calls.
 4. `DelegationToolAdapter` for bounded task-bus handoff flows.
 
-MCP tools retain their MCP connection lifecycle, and delegation retains its approval/task-bus lifecycle. Direct endpoint/App calls are assembled as Responses API function tools through `build_subagent_tools`; MCP and Lakebase retain dedicated builders pending migration to the shared registry.
+MCP and Lakebase subagents skip registry resolution in `build_subagent_tools()`: `build_mcp_servers()` creates MCP servers and `build_lakebase_tools()` creates request-scoped SQL function tools. Only serving-endpoint and App subagents use the registry-enabled `build_subagent_tools()` path. Delegation remains a bounded approval/task-bus handoff, independent of function-tool wrapping.
 
 ## Subagent Types
 

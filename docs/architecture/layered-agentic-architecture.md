@@ -13,6 +13,7 @@ implementations.
 src/aiserver/
 ├── api/                       # HTTP and AgentServer delivery handlers
 ├── application/               # Agent use cases and application ports
+│   ├── adapters/               # Concrete tool adapter registry and strategies
 │   ├── auth/                  # Runtime identity and policy evaluation
 │   ├── delegation/            # Agent handoff and durable task processing
 │   ├── guardrails/            # Input and response governance controls
@@ -36,6 +37,8 @@ flowchart LR
     API --> BOOT[bootstrap]
     APP --> DOMAIN[contracts and config]
     APP --> PORTS[application ports]
+    ADAPTERS[application adapters] --> PORTS
+    APP --> ADAPTERS
     INFRA[infrastructure] --> PORTS
     INFRA --> DOMAIN
     BOOT --> APP
@@ -44,7 +47,9 @@ flowchart LR
 
 `application` must not import `api`, `bootstrap`, or `infrastructure`.
 Application use cases depend on ports such as `MessageBus`, `ConversationMemory`,
-and `TraceMetadataUpdater`. The composition root in
+`TraceMetadataUpdater`, `ToolAdapter`, and `ToolRegistry`. The concrete tool
+adapter registry is application code: it resolves direct function-tool strategies
+without coupling orchestration to a particular subagent kind. The composition root in
 `aiserver.bootstrap.container` constructs concrete MLflow, messaging, and
 persistence implementations and injects them into those use cases.
 

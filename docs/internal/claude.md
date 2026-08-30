@@ -135,6 +135,7 @@ Constraints: If app exists, bind instead of delete.
 
 - Primary files:
   - `src/aiserver/api/invocations.py`
+  - `src/aiserver/application/adapters/tools.py`
   - `src/aiserver/application/orchestration/agent.py`
   - `src/aiserver/application/auth/context.py`
   - `src/aiserver/contracts/subagents.py`
@@ -158,6 +159,7 @@ Constraints: If app exists, bind instead of delete.
 2. Do not change routing without matching permission/resource updates.
 3. Store environment-specific names and IDs in `targets/*.yml` variables.
 4. Validate locally before deployment.
+5. Keep direct function-tool changes in `application/adapters/tools.py`; MCP and Lakebase use dedicated builders in `application/orchestration/agent.py`, and delegation uses the task-bus handoff flow.
 5. Use `make redeploy` so validation, deploy, permissions, and smoke checks run in one flow.
 6. Prefer app bind over delete when app-name conflicts occur.
 

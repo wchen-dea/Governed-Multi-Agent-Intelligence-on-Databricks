@@ -196,7 +196,7 @@ For non-Genie tools, function tool names are generated as:
 
 - `query_<subagent_name>`
 
-Adapter selection is separate from execution assembly: MCP subagents are registered as MCP servers, Lakebase subagents receive request-scoped database execution, and delegation is submitted through the bounded task bus. The registry currently selects direct Responses API function tools for serving-endpoint and app subagents; MCP and Lakebase retain their dedicated builders pending migration to the shared registry.
+`build_subagent_tools()` deliberately excludes MCP and Lakebase subagents before resolving its adapter registry. `build_mcp_servers()` registers MCP subagents as servers, `build_lakebase_tools()` creates Lakebase tools with request-scoped database execution, and delegation is submitted through the bounded task bus. The registry-enabled builder therefore creates direct Responses API function tools only for serving-endpoint and App subagents.
 
 If an OBO tool is invoked without a forwarded token, the runtime returns a clear authorization error and does not silently fall back to app auth.
 

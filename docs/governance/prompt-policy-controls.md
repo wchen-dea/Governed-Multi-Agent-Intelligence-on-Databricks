@@ -15,8 +15,8 @@ Separate model instruction strategy from hard policy enforcement and define safe
 
 ### Tool Function Prompts
 
-- Source: function tool wrappers in `src/aiserver/application/orchestration/agent.py`
-- Responsibility: model and endpoint invocation shape
+- Source: direct function-tool wrappers in `src/aiserver/application/adapters/tools.py`; Lakebase wrappers remain in `src/aiserver/application/orchestration/agent.py`.
+- Responsibility: model and endpoint invocation shape. MCP servers and bounded delegation use their own connection and task-bus lifecycles rather than function-tool wrappers.
 
 ### UI Behavior Hints
 

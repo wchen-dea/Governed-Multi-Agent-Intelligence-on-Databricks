@@ -69,5 +69,8 @@ Handlers receive only `HandlerDependencies` — a flat, frozen dataclass of comp
 
 - Composition root: [src/aiserver/bootstrap/container.py](../../src/aiserver/bootstrap/container.py) (`build_dependency_container`, `get_handler_dependencies`)
 - Protocol contracts: [src/aiserver/application/ports/](../../src/aiserver/application/ports)
+- Concrete direct-tool adapters and default registry: [src/aiserver/application/adapters/tools.py](../../src/aiserver/application/adapters/tools.py)
 - Handler consumption: [src/aiserver/api/invocations.py](../../src/aiserver/api/invocations.py) (`HANDLER_DEPS = get_handler_dependencies()`)
 - All containers use frozen dataclasses — no runtime mutation after construction.
+
+The default adapter registry is an application-level implementation of the `ToolAdapter` and `ToolRegistry` ports. `build_subagent_tools()` uses it for direct serving-endpoint and App function tools; MCP server construction, Lakebase tool construction, and task-bus delegation remain dedicated runtime paths.

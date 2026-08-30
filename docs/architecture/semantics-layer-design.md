@@ -34,15 +34,17 @@ flowchart LR
 
     subgraph AISystem[AI System — this repository]
         ORCH[Multi-Agent Orchestrator]
+        ASM[Tool Assembly — Adapter Registry + Dedicated Builders]
     end
 
     BRONZE --> GOLD
     GOLD --> IDX
     GOLD --> MV
     MV --> GENIE
-    ORCH -->|MCP vector-search / ai-search| IDX
-    ORCH -->|MCP genie space| GENIE
-    ORCH -->|psycopg2 OAuth| LAKEBASE
+    ORCH --> ASM
+    ASM -->|MCP vector-search / ai-search| IDX
+    ASM -->|MCP genie space| GENIE
+    ASM -->|psycopg2 OAuth| LAKEBASE
 
     classDef inscope fill:#eaf6ea,stroke:#2f855a,stroke-width:1px;
     classDef outscope fill:#fdf2e9,stroke:#c05621,stroke-width:1px;

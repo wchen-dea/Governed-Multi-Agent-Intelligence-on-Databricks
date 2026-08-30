@@ -101,12 +101,12 @@ The orchestrator keeps direct function-tool behavior out of its assembly module 
 MCP -> Lakebase -> app endpoint -> delegation
 ```
 
-- `McpToolAdapter` identifies Genie and generic MCP subagents. Their servers are connected through the MCP lifecycle rather than wrapped as local function tools.
-- `LakebaseToolAdapter` defines the Lakebase strategy and its safe failure categorization. The current Lakebase builder continues to assemble those SQL tools with request-scoped workspace identity.
+- `McpToolAdapter` recognizes Genie and generic MCP subagents but does not build function tools. `build_mcp_servers()` owns MCP server construction and connection.
+- `LakebaseToolAdapter` recognizes Lakebase subagents and defines their safe failure categorization, but does not build function tools. `build_lakebase_tools()` owns request-scoped SQL-tool assembly.
 - `AppToolAdapter` wraps `serving_endpoint` and `app` subagents as Responses API function tools, selecting app or OBO client according to `auth_mode`.
-- `DelegationToolAdapter` represents bounded task-bus handoffs. Delegation is not a direct model function call; the existing approval/delegation flow constructs and submits its task contract separately.
+- `DelegationToolAdapter` recognizes delegation-capable subagents but does not build function tools. The approval/delegation flow constructs and submits bounded task-bus handoffs separately.
 
-`application/ports/tools.py` defines the `ToolAdapter` and `ToolRegistry` protocols. This keeps tests and alternative runtime implementations dependent on the port, while the default concrete registry remains an application adapter. MCP server connection and Lakebase assembly continue through their dedicated builders until those paths are migrated to the shared registry.
+`application/ports/tools.py` defines the `ToolAdapter` and `ToolRegistry` protocols. `build_subagent_tools()` deliberately excludes MCP and Lakebase entries before registry resolution and creates direct function tools only for serving-endpoint and App entries. This keeps MCP connection management, Lakebase SQL execution, and delegation independent of function-tool wrapping while retaining a common adapter extension contract.
 
 Configuration source:
 

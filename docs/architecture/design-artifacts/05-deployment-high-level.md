@@ -28,9 +28,11 @@ flowchart TB
     BE --> MR[Deterministic Model Router dev gpt-5-6-luna]
     MR --> FM[Configured Databricks Foundation Model]
     FM -.-> AIGW[AI Gateway — optional DATABRICKS_OPENAI_BASE_URL]
-    BE --> GENIE[Genie MCP — Sales Space / CDI Space]
-    BE --> AIS[AI Search MCP — Product Index / Flink Support Index]
-    BE --> LB[Lakebase PostgreSQL — projects/ore/branches/production]
+    BE --> ASM[Tool Assembly — Adapter Registry + Dedicated Builders]
+    ASM --> GENIE[Genie MCP — Sales Space / CDI Space]
+    ASM --> AIS[AI Search MCP — Product Index / Flink Support Index]
+    ASM --> LB[Lakebase PostgreSQL — projects/ore/branches/production]
+    ASM --> HITL[App Endpoint — hitl-app-agent]
     BE --> OAuth[Postgres Credentials API — OAuth database token]
     BE --> AUD[UC Audit Table — quickstart_catalog.multi_agent_schema.agent_lifecycle_events]
     BE --> TASKS[UC Delegation Task and Event Tables]
@@ -57,11 +59,12 @@ flowchart TB
         S5[lakebase_ods_agent — operations DB]
     end
 
-    BE[Backend] --> S1
-    BE --> S2
-    BE --> S3
-    BE --> S4
-    BE --> S5
+    BE[Backend] --> ASM[Tool Assembly]
+    ASM --> S1
+    ASM --> S2
+    ASM --> S3
+    ASM --> S4
+    ASM --> S5
 ```
 
 ## Current Alignment

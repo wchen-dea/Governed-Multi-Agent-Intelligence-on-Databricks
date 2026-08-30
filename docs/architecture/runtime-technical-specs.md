@@ -18,6 +18,7 @@ Primary implementation:
 - src/aiserver/api/invocations.py
 - src/aiserver/bootstrap/container.py
 - src/aiserver/application/orchestration/agent.py
+- src/aiserver/application/adapters/tools.py
 
 ### Task-Type Model Routes
 
@@ -61,7 +62,7 @@ This document is the canonical implementation-fact index for architecture behavi
 
 - Subagent configuration is externalized in JSON and validated through typed domain models.
 - Supported subagent kinds include genie, serving_endpoint, app, mcp, and lakebase.
-- Non-Genie function tools are generated dynamically from subagent metadata.
+- Direct serving-endpoint and App function tools are generated dynamically from subagent metadata through the adapter registry. MCP and Lakebase use their dedicated builders, and delegation uses the bounded task-bus handoff flow.
 - Genie integrations use MCP server registration with parallel runtime health checks and short TTL health caching.
 - Lakebase integrations use PostgreSQL wire protocol with an OAuth credential generated at invocation time by the Databricks Postgres credentials API.
 - Native function and MCP calls are required; pseudo-tool text is not valid tool execution.
@@ -77,6 +78,7 @@ Primary implementation:
 - src/aiserver/contracts/subagents.stg.json
 - src/aiserver/contracts/subagents.prd.json
 - src/aiserver/application/orchestration/agent.py
+- src/aiserver/application/adapters/tools.py
 
 ## 3. Authorization Specification
 
