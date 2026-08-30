@@ -71,30 +71,7 @@ Beyond the Databricks platform features above, this project implements these AI 
 
 ## Team Onboarding: Project Skills and Capabilities
 
-Core project skills used in this repository:
-
-- `add-tools`: wire new Databricks tools and grant required app/runtime permissions.
-- `create-tools`: create or prepare Genie Agent spaces and serving resources.
-- `discover-tools`: discover space IDs, serving endpoints, and route-ready resources.
-- `modify-agent`: update orchestrator behavior and subagent routing/config.
-- `deploy`: validate/deploy/troubleshoot target releases with DAB.
-- `quickstart`: bootstrap local environment and baseline setup.
-- `run-locally`: run backend/frontend locally and validate request paths.
-
-What these skills enable:
-
-- Governed multi-agent routing and policy-aware tool execution.
-- Genie Agent and AI Search integration with environment-specific configuration.
-- Hybrid authorization support (`app` and `obo`) for runtime tool calls.
-- Repeatable promotion across `dev`, `qa`, `stg`, and `prd`.
-- Operational validation with observability and quality-gate alignment.
-
-Runtime skills playbooks:
-
-- [runtime-routing](.claude/skills/runtime-routing/SKILL.md): orchestrator route selection, policy-aware targeting, and route validation.
-- [runtime-guardrails](.claude/skills/runtime-guardrails/SKILL.md): evidence/citation enforcement and blocked-output controls.
-- [runtime-auth-obo](.claude/skills/runtime-auth-obo/SKILL.md): app-vs-obo auth-mode enforcement and forwarded-token requirements.
-- [runtime-audit-observability](.claude/skills/runtime-audit-observability/SKILL.md): lifecycle event auditing, UC audit persistence, and backend observability checks.
+The project provides skills for tool discovery and integration, agent changes, local setup, deployment, and governed runtime operations. See [Documentation guide: Team Onboarding](docs/README.md#team-onboarding-skills-and-capabilities) for the complete skill index and runtime playbooks.
 
 HITL workflow details:
 
