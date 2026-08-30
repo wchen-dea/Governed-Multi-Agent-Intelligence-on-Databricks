@@ -1,4 +1,6 @@
 SHELL := /bin/sh
+.DEFAULT_GOAL := help
+MAKEFLAGS += --no-builtin-rules
 
 .PHONY: help test lint lint-markdown format runtime-core assistant-tools evaluate evaluate-strict triage-evaluation build-app-source update-hitl grant-hitl-privileges upload-wheel validate wait-stable bundle-deploy bundle-deploy-optional import ensure-running stop deploy grants redeploy redeploy-source-only health smoke smoke-governance query-dev logs status
 
@@ -18,6 +20,21 @@ QUERY ?= ping
 QUERY_PERSONA ?= manager
 
 APP_GET_JSON = databricks apps get "$(APP_NAME)" $(PROFILE_ARG) --output json
+
+define RESOLVE_APP_SOURCE_PATH
+APP_JSON="$$($(APP_GET_JSON) 2>/dev/null || true)"; \
+APP_SRC="$$(printf "%s" "$$APP_JSON" | jq -r '.default_source_code_path // empty')"; \
+if [ -z "$$APP_SRC" ] || [ "$$APP_SRC" = "null" ]; then \
+	printf "default_source_code_path is unset for $(APP_NAME) (deployment record reset); deriving path from bundle validate...\n" >&2; \
+	WS_FILE_PATH="$$(databricks bundle validate -t "$(TARGET)" $(PROFILE_ARG) --output json | jq -r '.workspace.file_path // empty')"; \
+	if [ -z "$$WS_FILE_PATH" ] || [ "$$WS_FILE_PATH" = "null" ]; then \
+		printf "Could not derive app source path for $(APP_NAME) from bundle validate either\n" >&2; \
+		exit 1; \
+	fi; \
+	APP_SRC="$$WS_FILE_PATH/.databricks_app_source"; \
+	printf "Derived app source path: %s\n" "$$APP_SRC" >&2; \
+fi;
+endef
 
 help:
 	@printf "Local dev Databricks app workflow\n\n"
@@ -126,18 +143,7 @@ bundle-deploy-optional: wait-stable
 		printf "bundle deploy failed; continuing with Terraform-free fallback path (import -> deploy -> permissions -> health -> smoke)\n"
 
 import: build-app-source
-	@APP_JSON="$$($(APP_GET_JSON) 2>/dev/null || true)"; \
-	APP_SRC="$$(printf "%s" "$$APP_JSON" | jq -r '.default_source_code_path')"; \
-	if [ -z "$$APP_SRC" ] || [ "$$APP_SRC" = "null" ]; then \
-		printf "default_source_code_path is unset for $(APP_NAME) (deployment record reset); deriving path from bundle validate...\n" >&2; \
-		WS_FILE_PATH="$$(databricks bundle validate -t "$(TARGET)" $(PROFILE_ARG) --output json | jq -r '.workspace.file_path')"; \
-		if [ -z "$$WS_FILE_PATH" ] || [ "$$WS_FILE_PATH" = "null" ]; then \
-			printf "Could not derive app source path for $(APP_NAME) from bundle validate either\n" >&2; \
-			exit 1; \
-		fi; \
-		APP_SRC="$$WS_FILE_PATH/.databricks_app_source"; \
-		printf "Derived app source path: %s\n" "$$APP_SRC" >&2; \
-	fi; \
+	@$(RESOLVE_APP_SOURCE_PATH)
 	databricks workspace delete "$$APP_SRC/wheels" --recursive $(PROFILE_ARG) >/dev/null 2>&1 || true; \
 	databricks workspace import-dir .databricks_app_source "$$APP_SRC" --overwrite $(PROFILE_ARG)
 
@@ -180,20 +186,13 @@ deploy: wait-stable
 		DEPLOY_STATE="NONE"; \
 	else \
 		BEFORE_SP="$$(printf "%s" "$$APP_JSON" | jq -r '.service_principal_client_id // empty')"; \
-		APP_SRC="$$(printf "%s" "$$APP_JSON" | jq -r '.default_source_code_path')"; \
+		APP_SRC="$$(printf "%s" "$$APP_JSON" | jq -r '.default_source_code_path // empty')"; \
 		APP_STATE="$$(printf "%s" "$$APP_JSON" | jq -r '.app_status.state // "UNKNOWN"')"; \
 		DEPLOY_STATE="$$(printf "%s" "$$APP_JSON" | jq -r '.active_deployment.status.state // "NONE"')"; \
 	fi; \
 	ATTEMPT=0; \
 	if [ -z "$$APP_SRC" ] || [ "$$APP_SRC" = "null" ]; then \
-		printf "default_source_code_path is unset for $(APP_NAME) (deployment record reset); deriving path from bundle validate...\n" >&2; \
-		WS_FILE_PATH="$$(databricks bundle validate -t "$(TARGET)" $(PROFILE_ARG) --output json | jq -r '.workspace.file_path')"; \
-		if [ -z "$$WS_FILE_PATH" ] || [ "$$WS_FILE_PATH" = "null" ]; then \
-			printf "Could not derive app source path for $(APP_NAME) from bundle validate either\n" >&2; \
-			exit 1; \
-		fi; \
-		APP_SRC="$$WS_FILE_PATH/.databricks_app_source"; \
-		printf "Derived app source path: %s\n" "$$APP_SRC" >&2; \
+		$(RESOLVE_APP_SOURCE_PATH)
 		DEPLOY_STATE="NONE"; \
 	fi; \
 	if [ "$$APP_EXISTS" = "false" ]; then \
