@@ -76,7 +76,7 @@ variables:
     default: ""
   default_request_persona:
     description: Optional default persona used when request does not provide custom_inputs.persona
-    default: ""
+    default: store-manager
   max_input_chars:
     description: Maximum user input characters accepted before routing
     default: "12000"

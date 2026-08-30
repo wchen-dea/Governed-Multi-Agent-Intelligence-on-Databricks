@@ -7,7 +7,7 @@ This guide separates current implementation authority from operating procedures,
 | Need | Authoritative location |
 | --- | --- |
 | Current runtime behavior | [Architecture guide](architecture/README.md) and [runtime technical specifications](architecture/runtime-technical-specs.md) |
-| Current solution overview | [AI architecture current solution](ai-architecture-current-solution.md) |
+| Current solution overview | [AI solution current](ai-solution-current.md) |
 | API and stream behavior | [API contracts](architecture/api-contracts.md) |
 | Active tools, models, and integration routes | [Tool and model registry](architecture/tool-and-model-registry.md) |
 | Deployment and incident procedures | [Operations guide](operations/README.md) |
@@ -47,7 +47,7 @@ Use this index to navigate project documentation by purpose:
 
 - [product/README.md](product/README.md): business outcomes, scope, and current capability boundary.
 - [product/agent-usage-guide.md](product/agent-usage-guide.md): what each agent is best at, perfect-match query types, and composite/freshness guidance for end users.
-- [ai-architecture-current-solution.md](ai-architecture-current-solution.md): consolidated current implementation architecture, runtime flow, deployment, HITL, model routing, and evaluation posture.
+- [ai-solution-current.md](ai-solution-current.md): consolidated current implementation architecture, runtime flow, deployment, HITL, model routing, and evaluation posture.
 - [architecture/README.md](architecture/README.md): architecture reading paths, authority map, and current control planes.
 - [governance/README.md](governance/README.md): policy, data, semantic, and security ownership.
 - [operations/README.md](operations/README.md): deployment, verification, MLflow, scripts, and incident paths.
@@ -83,7 +83,7 @@ Use this index to navigate project documentation by purpose:
 ## Recommended Read Order
 
 1. [architecture/README.md](architecture/README.md)
-2. [ai-architecture-current-solution.md](ai-architecture-current-solution.md)
+2. [ai-solution-current.md](ai-solution-current.md)
 3. [architecture/high-level-architecture.md](architecture/high-level-architecture.md)
 4. [product/business-specs.md](product/business-specs.md)
 5. [architecture/runtime-technical-specs.md](architecture/runtime-technical-specs.md)

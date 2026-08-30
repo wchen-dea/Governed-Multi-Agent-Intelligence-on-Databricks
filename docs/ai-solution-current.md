@@ -1,6 +1,6 @@
-# AI Architecture Current Solution
+# AI Solution Current
 
-This document describes the implemented architecture for the governed multi-agent Databricks application. It is the current-solution companion to the broader target-state blueprint in [ai-architecture-blueprint.md](ai-architecture-blueprint.md).
+This document describes the implemented architecture for the governed multi-agent Databricks application. It is the current-solution companion to the broader target-state blueprint in [ai-solution-blueprint.md](ai-solution-blueprint.md).
 
 ## Executive Summary
 

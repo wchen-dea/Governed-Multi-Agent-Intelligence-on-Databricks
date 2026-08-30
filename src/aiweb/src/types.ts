@@ -88,7 +88,5 @@ export interface FrontendSettings {
   forwardedAccessTokenHeader: string;
   setTokenCommand: string;
   clearTokenCommand: string;
-  setPersonaCommand: string;
-  clearPersonaCommand: string;
   allowedPersonas: string[];
 }

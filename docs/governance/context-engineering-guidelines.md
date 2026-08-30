@@ -6,7 +6,7 @@ Hands-on conventions for controlling what information enters model context in th
 
 Context engineering here means: which subagents/tools are visible to the orchestrator per request, what conversation state is recalled, what schema/evidence is retrieved just-in-time versus statically embedded, and what a tool result must contain to be trustworthy input for further reasoning.
 
-For the aspirational, not-yet-implemented target-state pipeline (composite relevance scoring, ontology resolution, compression/deduplication), see [../ai-architecture-blueprint.md](../ai-architecture-blueprint.md) section 6. Do not treat that section as current behavior.
+For the aspirational, not-yet-implemented target-state pipeline (composite relevance scoring, ontology resolution, compression/deduplication), see [../ai-solution-blueprint.md](../ai-solution-blueprint.md) section 6. Do not treat that section as current behavior.
 
 ## Implemented Mechanisms and Rules
 
@@ -66,7 +66,7 @@ uv run pytest tests/test_route_planner.py tests/test_memory_service.py tests/tes
 
 ## Possible Improvements to Level Up
 
-- **Relevance scoring pipeline.** The blueprint's composite score (semantic + lexical + entity + freshness + trust + ontology distance, see [../ai-architecture-blueprint.md](../ai-architecture-blueprint.md) section 6) is not implemented. Even a lightweight version — scoring which subagent's retrieved evidence to prioritize when two tools return overlapping information — would reduce reliance on prompt-only judgment.
+- **Relevance scoring pipeline.** The blueprint's composite score (semantic + lexical + entity + freshness + trust + ontology distance, see [../ai-solution-blueprint.md](../ai-solution-blueprint.md) section 6) is not implemented. Even a lightweight version — scoring which subagent's retrieved evidence to prioritize when two tools return overlapping information — would reduce reliance on prompt-only judgment.
 - **Token/context budget telemetry.** Add a metric for assembled orchestrator instruction size and per-tool result size so context growth (e.g., from adding subagents or verbose tool descriptions) is visible before it degrades latency or cost.
 - **Sticky-route and memory staleness checks.** Add an automated test or monitor that flags when `ROUTE_STICKINESS_TTL_SECONDS` or memory retention settings drift from what evaluation data supports, instead of relying on manual review before changing the TTL.
 - **Cross-tool join validation.** Add an eval case that exercises the composite-comparison flow (e.g., top appointment stores vs. top sales stores) end to end and asserts the orchestrator's final answer correctly identifies overlap, catching regressions in the entity-identifier convention (Rule 7).
@@ -79,4 +79,4 @@ uv run pytest tests/test_route_planner.py tests/test_memory_service.py tests/tes
 - [prompt-policy-controls.md](prompt-policy-controls.md)
 - [data-contracts-lineage.md](data-contracts-lineage.md)
 - [../architecture/tool-and-model-registry.md](../architecture/tool-and-model-registry.md)
-- [../ai-architecture-blueprint.md](../ai-architecture-blueprint.md)
+- [../ai-solution-blueprint.md](../ai-solution-blueprint.md)

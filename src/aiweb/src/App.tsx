@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { sendChat, sessionStatusLine, submitApprovalDecision } from "./api";
-import { maskToken, parsePersonaCommand, parseTokenCommand } from "./commands";
+import { maskToken, parseTokenCommand } from "./commands";
 import { settings } from "./config";
 import type {
   ChatMessage,
@@ -39,40 +39,34 @@ function isThemeValue(value: string | null): value is ThemeValue {
   return THEMES.some((theme) => theme.value === value);
 }
 
-const STARTER_GROUPS = [
-  "Business",
-  "Operations",
-  "Insight",
-  "HITL",
-  "Commands",
-] as const;
+const STARTER_GROUPS = ["Operations", "Insight", "HITL", "DE"] as const;
 
 type StarterGroup = (typeof STARTER_GROUPS)[number];
 
 const STARTERS: { group: StarterGroup; text: string }[] = [
-  { group: "Commands", text: "/persona manager" },
-  { group: "Commands", text: "/persona analyst" },
-  { group: "Commands", text: "/persona operator" },
-  { group: "Commands", text: "/persona engineer" },
   {
-    group: "Business",
+    group: "Operations",
     text: "What are the top 5 stores by revenue for the current season?",
   },
   {
-    group: "Business",
-    text: "Look up product details for brand code 'MICH' and list matching article types.",
-  },
-  {
-    group: "Business",
-    text: "How do CDI promoter and detractor counts compare across stores this month?",
-  },
-  {
     group: "Operations",
-    text: "Flink streaming job has increasing consumer lag. What are the common causes and how do we fix it?",
+    text: "Look up product details for brand code 'MICH' and list matching article types.",
   },
   {
     group: "Operations",
     text: "List today's open appointments and their current order status.",
+  },
+  {
+    group: "DE",
+    text: "Flink streaming job has increasing consumer lag. What are the common causes and how do we fix it?",
+  },
+  {
+    group: "DE",
+    text: "What Flink configuration tuning steps should DE support check first when backpressure appears?",
+  },
+  {
+    group: "Insight",
+    text: "How do CDI promoter and detractor counts compare across stores this month?",
   },
   {
     group: "Insight",
@@ -84,7 +78,7 @@ const STARTERS: { group: StarterGroup; text: string }[] = [
   },
   {
     group: "Insight",
-    text: "Using the 2025-08-30 to 2026-04-30 time window, which stores are showing strong sales but below-average CDI scores—where we may be performing well on revenue but falling short on customer experience?",
+    text: "Using the 2025-08-30 to 2026-04-30 time window, which stores are showing strong sales but below-average CDI scores—where we may be performing well on revenue but falling short on CDI?",
   },
   {
     group: "HITL",
@@ -93,41 +87,18 @@ const STARTERS: { group: StarterGroup; text: string }[] = [
 ];
 
 function renderMarkdown(text: string): JSX.Element {
-  const blocks = text.split(/\n\s*\n/);
-  return (
-    <div className="rich-text">
-      {blocks.map((block, index) => {
-        const lines = block.split("\n");
-        if (
-          lines.every((line) => line.includes("|") || /^[-| ]+$/.test(line))
-        ) {
-          const rows = lines.filter((line) => !/^\s*\|?\s*-+/.test(line));
-          return (
-            <table key={index}>
-              <tbody>
-                {rows.map((row, rowIndex) => (
-                  <tr key={rowIndex}>
-                    {row
-                      .split("|")
-                      .filter(Boolean)
-                      .map((cell, cellIndex) => (
-                        <td key={cellIndex}>{cell.trim()}</td>
-                      ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          );
-        }
-        const content = lines.join("\n");
-        const heading = content.match(/^(#{1,3})\s+(.+)$/);
-        if (heading) {
-          const Heading = `h${heading[1].length}` as "h1" | "h2" | "h3";
-          return <Heading key={index}>{heading[2]}</Heading>;
-        }
+  const lines = text.split("\n");
+  const blocks: JSX.Element[] = [];
+  let currentTableLines: string[] = [];
+  let currentTextLines: string[] = [];
+
+  function flushText() {
+    if (currentTextLines.length > 0) {
+      const content = currentTextLines.join("\n").trim();
+      if (content) {
         const safeParts = content.split(/(\[[0-9]+\])/g);
-        return (
-          <p key={index}>
+        blocks.push(
+          <p key={`p-${blocks.length}`}>
             {safeParts.map((part, partIndex) =>
               part.match(/^\[[0-9]+\]$/) ? (
                 <a
@@ -141,11 +112,81 @@ function renderMarkdown(text: string): JSX.Element {
                 part
               ),
             )}
-          </p>
+          </p>,
         );
-      })}
-    </div>
-  );
+      }
+      currentTextLines = [];
+    }
+  }
+
+  function flushTable() {
+    if (currentTableLines.length > 0) {
+      const rows = currentTableLines.filter(
+        (line) => !/^\s*\|?\s*[-| ]+\s*$/.test(line),
+      );
+      if (rows.length > 0) {
+        blocks.push(
+          <table key={`table-${blocks.length}`}>
+            <tbody>
+              {rows.map((row, rowIndex) => {
+                const cells = row.split("|").map((c) => c.trim());
+                if (cells.length > 1 && cells[0] === "") cells.shift();
+                if (cells.length > 1 && cells[cells.length - 1] === "")
+                  cells.pop();
+
+                return (
+                  <tr key={rowIndex}>
+                    {cells.map((cell, cellIndex) => (
+                      <td key={cellIndex}>{cell}</td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>,
+        );
+      }
+      currentTableLines = [];
+    }
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (!trimmed) {
+      flushText();
+      flushTable();
+      continue;
+    }
+
+    if (trimmed.startsWith("#")) {
+      const headingMatch = trimmed.match(/^(#{1,3})\s+(.+)$/);
+      if (headingMatch) {
+        flushText();
+        flushTable();
+        const Heading = `h${headingMatch[1].length}` as "h1" | "h2" | "h3";
+        blocks.push(
+          <Heading key={`h-${blocks.length}`}>{headingMatch[2]}</Heading>,
+        );
+        continue;
+      }
+    }
+
+    if (trimmed.includes("|")) {
+      flushText();
+      currentTableLines.push(line);
+      continue;
+    }
+
+    flushTable();
+    currentTextLines.push(line);
+  }
+
+  flushText();
+  flushTable();
+
+  return <div className="rich-text">{blocks}</div>;
 }
 
 function GovernancePanel({
@@ -310,27 +351,27 @@ export default function App() {
       id: newId(),
       role: "assistant",
       content:
-        `## ${settings.companyName} AI Workspace\n${settings.companyTagline}\n\n${settings.chatGreeting}\n\n` +
-        "### Available Agents\n" +
-        "|      Agent     |    Type   |    Description                                                |\n" +
-        "| -------------- | --------- | ------------------------------------------------------------- |\n" +
-        "| Sales Insights | Genie     | Revenue trends, store performance, seasonal comparisons       |\n" +
-        "| CDI    Metrics | Genie     | Customer Delight Index scores, promoter/detractor analysis    |\n" +
-        "| Product  Index | AI Search | Product catalog lookups by code, brand, or description        |\n" +
-        "| Flink  Support | AI Search | Flink troubleshooting, configuration guidance, best practices |\n" +
-        "| Lakebase   ODS | Lakebase  | Operational data — appointments, orders, invoices, etc.       |\n\n" +
-        "### Persona Selection\n" +
-        "Pick a persona from the starter chips, or run /persona <persona>.\n" +
-        `Accepted personas: ${settings.allowedPersonas.join(", ")}\n\n` +
-        "### Session Commands\n" +
-        "/token <databricks_access_token>\n/clear-token\n/persona <persona>\n/clear-persona\n\n" +
+        "### Available Agents\n\n" +
+        "| Agent | Type | Description |\n" +
+        "| --- | --- | --- |\n" +
+        "| Sales Insights | Genie | Revenue trends, store performance, seasonal comparisons |\n" +
+        "| CDI Metrics | Genie | Customer Delight Index scores, promoter/detractor analysis |\n" +
+        "| Product Index | AI Search | Product catalog lookups by code, brand, or description |\n" +
+        "| Flink Support | AI Search | Flink troubleshooting, configuration guidance, best practices |\n" +
+        "| Store Intervention | Databricks App | Human-in-the-loop store risk review and intervention planning |\n" +
+        "| Lakebase ODS | Lakebase | Operational data — appointments, orders, invoices, etc. |\n\n" +
+        "### Persona Selection\n\n" +
+        "Select a persona from the dropdown above the chat.\n\n" +
+        "### Session Commands\n\n" +
+        "/token <databricks_access_token>\n" +
+        "/clear-token\n\n" +
         statusLines(null, null),
     },
   ]);
   const [token, setToken] = useState<string | null>(null);
   const [persona, setPersona] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
-  const [starterGroup, setStarterGroup] = useState<StarterGroup>("Business");
+  const [starterGroup, setStarterGroup] = useState<StarterGroup>("Operations");
   const [theme, setTheme] = useState<ThemeValue>(() => {
     if (typeof window === "undefined") return "deep-ocean";
     const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
@@ -392,65 +433,6 @@ export default function App() {
           content:
             `Forwarded user token saved for this chat session.\nToken: \`${maskToken(tokenValue)}\`\n` +
             `Subsequent requests will include ${settings.forwardedAccessTokenHeader}.\n${statusLines(tokenValue, persona)}`,
-        },
-      ]);
-      setInput("");
-      return;
-    }
-
-    const personaCommand = parsePersonaCommand(
-      text,
-      settings.setPersonaCommand,
-      settings.clearPersonaCommand,
-    );
-
-    if (personaCommand.kind === "clear") {
-      setPersona(null);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: newId(),
-          role: "assistant",
-          content: `Persona cleared for this chat session.\n${statusLines(token, null)}`,
-        },
-      ]);
-      setInput("");
-      return;
-    }
-
-    if (personaCommand.kind === "set") {
-      const normalized = personaCommand.persona?.toLowerCase() ?? "";
-      if (!normalized) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: newId(),
-            role: "assistant",
-            content: `Persona command format: ${settings.setPersonaCommand} <persona>\nAccepted personas: ${settings.allowedPersonas.join(", ")}`,
-          },
-        ]);
-        setInput("");
-        return;
-      }
-      if (!settings.allowedPersonas.includes(normalized)) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: newId(),
-            role: "assistant",
-            content: `Invalid persona: \`${personaCommand.persona}\`.\nAccepted personas: ${settings.allowedPersonas.join(", ")}`,
-          },
-        ]);
-        setInput("");
-        return;
-      }
-      setPersona(normalized);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: newId(),
-          role: "assistant",
-          content: `Persona saved for this chat session.\n${statusLines(token, normalized)}`,
         },
       ]);
       setInput("");
@@ -596,8 +578,7 @@ export default function App() {
           </a>
           <div>
             <span className="eyebrow">DISCOUNT TIRE | OPERATIONS</span>
-            <h1>{settings.companyName} AI Workspace</h1>
-            <p>{settings.companyTagline}</p>
+            <h1>SBS AI Systems</h1>
           </div>
         </div>
         <button
@@ -611,26 +592,24 @@ export default function App() {
         </button>
       </header>
 
-      <nav className="utility-nav" aria-label="Workspace navigation">
-        <span className="utility-active">AI workspace</span>
-        <span>Products</span>
-        <span>Store operations</span>
-        <span>Support</span>
-      </nav>
-
-      <section className="trust-strip" aria-label="Workspace service status">
-        <span>
-          <strong>Expert context</strong> Governed business sources
-        </span>
-        <span>
-          <strong>Fast answers</strong> Streaming agent responses
-        </span>
-        <span>
-          <strong>Protected</strong> Policy-aware access
-        </span>
-      </section>
-
       <section className="context-bar" aria-label="Session context">
+        <div className="auth-status-block">
+          <span className={`status-pill ${token ? "is-secure" : ""}`}>
+            <span className="status-dot" />
+            {token ? "Hybrid OBO" : "App identity"}
+          </span>
+          {token ? (
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => setToken(null)}
+            >
+              Clear identity
+            </button>
+          ) : (
+            <span className="context-note">Session-scoped authorization</span>
+          )}
+        </div>
         <label>
           Persona
           <select
@@ -663,21 +642,6 @@ export default function App() {
             ))}
           </select>
         </label>
-        <span className={`status-pill ${token ? "is-secure" : ""}`}>
-          <span className="status-dot" />
-          {token ? "Hybrid OBO" : "App identity"}
-        </span>
-        {token ? (
-          <button
-            type="button"
-            className="text-button"
-            onClick={() => setToken(null)}
-          >
-            Clear identity
-          </button>
-        ) : (
-          <span className="context-note">Session-scoped authorization</span>
-        )}
       </section>
 
       <section className="starter-area">
@@ -755,8 +719,16 @@ export default function App() {
           autoFocus
           value={input}
           onChange={(event) => setInput(event.target.value)}
-          rows={3}
-          placeholder="Ask a question or run /persona, /token commands"
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              if (!isSending && input.trim()) {
+                void submitMessage(input);
+              }
+            }
+          }}
+          rows={2}
+          placeholder="Ask a question or run /token commands"
         />
         <button
           type="submit"

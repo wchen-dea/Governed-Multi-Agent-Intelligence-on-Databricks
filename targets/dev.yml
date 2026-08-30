@@ -23,7 +23,7 @@ targets:
       model_routing_reasoning_model: databricks-claude-sonnet-5
       model_routing_quality_model: databricks-claude-sonnet-5
       subagents_config_path: ""
-      default_request_persona: "manager"
+      default_request_persona: "store-manager"
       app_telemetry_logs_table: "quickstart_catalog.multi_agent_schema.app_logs"
       app_telemetry_metrics_table: "quickstart_catalog.multi_agent_schema.app_metrics"
       app_telemetry_traces_table: "quickstart_catalog.multi_agent_schema.app_traces"
