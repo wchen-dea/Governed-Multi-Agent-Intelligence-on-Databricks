@@ -2,7 +2,6 @@
 
 import asyncio
 import logging
-import os
 from contextlib import AsyncExitStack
 from dataclasses import dataclass
 from threading import Lock
@@ -27,25 +26,26 @@ from aiserver.application.ports.tools import (
     ToolAdapter,
 )
 from aiserver.application.runtime.identity import RequestIdentityContext, build_mcp_url
+from aiserver.config.settings import get_settings
 from aiserver.contracts.subagents import SubagentConfig
 
 logger = logging.getLogger(__name__)
 
-MCP_CONNECT_TIMEOUT_SECONDS = float(os.getenv("MCP_CONNECT_TIMEOUT_SECONDS", "10"))
+MCP_CONNECT_TIMEOUT_SECONDS = get_settings().mcp_connect_timeout_seconds
 # Pre-flight health-check timeout for the initial `list_tools()` probe used to decide
 # whether a tool is reported "unavailable" to the model before any real turn runs. A
 # slow/cold Genie space (sales/CDI) can exceed a tight timeout here even though it would
 # succeed on a real query, producing a false "please enable this agent" response. Kept
 # below MCP_SESSION_TIMEOUT_SECONDS since this only gates the pre-flight probe.
-MCP_LIST_TOOLS_TIMEOUT_SECONDS = float(os.getenv("MCP_LIST_TOOLS_TIMEOUT_SECONDS", "30"))
-MCP_HEALTH_TTL_SECONDS = float(os.getenv("MCP_HEALTH_TTL_SECONDS", "30"))
-MCP_HEALTH_FAILURE_TTL_SECONDS = float(os.getenv("MCP_HEALTH_FAILURE_TTL_SECONDS", "10"))
+MCP_LIST_TOOLS_TIMEOUT_SECONDS = get_settings().mcp_list_tools_timeout_seconds
+MCP_HEALTH_TTL_SECONDS = get_settings().mcp_health_ttl_seconds
+MCP_HEALTH_FAILURE_TTL_SECONDS = get_settings().mcp_health_failure_ttl_seconds
 # Read timeout for the MCP ClientSession (covers list_tools/tool calls made on every agent
 # turn, not just the pre-flight health check). databricks_openai's McpServer defaults this
 # to 20.0s if unset, which can be too tight for a slow/cold Genie space and surfaces as an
 # uncaught McpError mid-turn instead of a graceful "unavailable" degradation.
-MCP_SESSION_TIMEOUT_SECONDS = float(os.getenv("MCP_SESSION_TIMEOUT_SECONDS", "45"))
-ORCHESTRATOR_INSTRUCTIONS_CACHE_SIZE = int(os.getenv("ORCHESTRATOR_INSTRUCTIONS_CACHE_SIZE", "128"))
+MCP_SESSION_TIMEOUT_SECONDS = get_settings().mcp_session_timeout_seconds
+ORCHESTRATOR_INSTRUCTIONS_CACHE_SIZE = get_settings().orchestrator_instructions_cache_size
 
 
 @dataclass(frozen=True)

@@ -35,7 +35,7 @@ Primary entrypoint:
 - `src/aiserver/bootstrap/`
   - `container.py`: composition root that injects infrastructure adapters into application use cases.
 - `src/aiserver/config/`
-  - `settings.py`: dependency-neutral typed runtime settings.
+  - `settings.py`: Pydantic Settings model with validated, dependency-neutral runtime configuration.
 - `src/aiserver/contracts/`
   - `subagents.py`: typed config model and validation.
   - `delegation.py`: typed contracts for bounded agent-to-agent delegation.
@@ -87,6 +87,7 @@ Most common edit locations:
 - `src/aiserver/application/auth/policy.py`: deterministic policy checks.
 - `src/aiserver/application/orchestration/agent.py`: tool and MCP orchestration behavior.
 - `src/aiserver/application/adapters/tools.py`: direct function-tool adapters and registry behavior.
+- `src/aiserver/api/models.py`: strict Pydantic HTTP request models for backend endpoints.
 - `src/aiserver/bootstrap/container.py`: default dependency wiring.
 
 Tip:

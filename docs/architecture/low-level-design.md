@@ -35,6 +35,7 @@ This document covers low-level design and implementation details. See [high-leve
   - Loads `.env`
   - Initializes `AgentServer("ResponsesAgent", enable_chat_proxy=True)`
   - Exposes root route and application startup
+  - Validates approval submissions with the strict `ApprovalDecisionInput` Pydantic request model before persistence or delegation
 
 - `src/aiserver/application/auth/context.py`
   - Builds request-scoped hybrid auth context (app + optional OBO user identity)
@@ -102,6 +103,11 @@ This document covers low-level design and implementation details. See [high-leve
   - Forwarded token extraction (`x-forwarded-access-token`)
   - Request identity context construction for hybrid auth
   - Workspace host and MCP URL construction
+
+- `src/aiserver/config/settings.py`
+  - Defines `AppSettings` with Pydantic Settings for typed environment parsing and numeric bounds
+  - Preserves established environment variable names with explicit validation aliases
+  - Centralizes MCP connection, cache, session-timeout, and instruction-cache configuration
 
   - `src/aiserver/application/runtime/streaming.py`
     - Stream event normalization for stable item IDs
