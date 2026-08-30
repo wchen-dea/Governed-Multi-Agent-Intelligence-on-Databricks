@@ -113,18 +113,7 @@ Project guidelines and best practices for Unity Catalog-governed backend executi
 
 ## Technology Stack
 
-This project uses a modern AI app stack on Databricks:
-
-- Multi-agent orchestration: one orchestrator routes intent to specialist backends.
-- Tool-augmented reasoning: Agents call tools instead of relying on model-only answers.
-- Managed app runtime: Databricks Apps hosts the full stack.
-- Agent-native serving runtime: MLflow Agent Server with ResponsesAgent handlers.
-- OpenAI-compatible agent loop: OpenAI Agents SDK + Databricks OpenAI Responses API.
-- MCP integration for enterprise context: Genie tool access through MCP.
-- Governed data access: Unity Catalog permissions and SQL warehouse controls.
-- Hybrid authorization model: per-tool app identity and user identity (OBO) routing.
-- Deployment-as-code: Databricks Declarative Automation Bundles with target overlays.
-- Streamed UX: React + TypeScript frontend, bundled into the backend wheel and served in-process, renders finalized text deltas and run context.
+The application uses Databricks Apps, MLflow Agent Server, the OpenAI Agents SDK, the Databricks OpenAI-compatible Responses API, MCP, Unity Catalog, Lakebase, React, TypeScript, and Vite. See [AI technologies and patterns](docs/architecture/ai-technologies-and-patterns.md) for the canonical framework, pattern, tool, data-capability, and skill inventory.
 
 ## Core Capabilities
 
