@@ -1,7 +1,10 @@
 import { expect, test } from "@playwright/test";
 
 function sse(events: object[]): string {
-  return events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join("") + "data: [DONE]\n\n";
+  return (
+    events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join("") +
+    "data: [DONE]\n\n"
+  );
 }
 
 test.beforeEach(async ({ page }) => {
@@ -9,15 +12,48 @@ test.beforeEach(async ({ page }) => {
     const body = await route.request().postDataJSON();
     const content = body.input.at(-1)?.content ?? "";
     const events = content.includes("blocked")
-      ? [{ type: "response.output_text.delta", delta: "Request blocked." }, { response_envelope: { status: "blocked", guardrail_reasons: ["evidence_required"], truncated: false } }]
-      : [{ type: "response.output_item.added", item: { type: "tool_call_output_item", name: "query_sales" } }, { type: "response.output_text.delta", delta: "First " }, { type: "response.output_text.delta", delta: "answer." }, { type: "response.governance", response_envelope: { status: "succeeded", truncated: false } }];
-    await route.fulfill({ status: 200, contentType: "text/event-stream", body: sse(events) });
+      ? [
+          { type: "response.output_text.delta", delta: "Request blocked." },
+          {
+            response_envelope: {
+              status: "blocked",
+              guardrail_reasons: ["evidence_required"],
+              truncated: false,
+            },
+          },
+        ]
+      : [
+          {
+            type: "response.output_item.added",
+            item: { type: "tool_call_output_item", name: "query_sales" },
+          },
+          { type: "response.output_text.delta", delta: "First " },
+          { type: "response.output_text.delta", delta: "answer." },
+          {
+            type: "response.governance",
+            response_envelope: { status: "succeeded", truncated: false },
+          },
+        ];
+    await route.fulfill({
+      status: 200,
+      contentType: "text/event-stream",
+      body: sse(events),
+    });
   });
 });
 
-test("renders incremental answer and run context on desktop", async ({ page }) => {
+test("renders incremental answer and run context on desktop", async ({
+  page,
+}) => {
   await page.goto("/");
-  await page.getByRole("textbox", { name: "Message" }).fill("Show sales answer");
+  await expect(page.getByRole("button", { name: "Commands" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "DE" })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Persona" })).toBeVisible();
+  await page.getByRole("button", { name: "DE" }).click();
+  await expect(page.getByText("Flink streaming job has increasing consumer lag.")).toBeVisible();
+  await page
+    .getByRole("textbox", { name: "Message" })
+    .fill("Show sales answer");
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByText("First answer.")).toBeVisible();
   await page.getByText("Run context").click();
@@ -29,8 +65,12 @@ test("exposes OBO state and blocked responses", async ({ page }) => {
   await page.getByRole("textbox", { name: "Message" }).fill("blocked");
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByText("Request blocked.")).toBeVisible();
-  await page.getByRole("combobox", { name: "Persona" }).selectOption("analyst");
-  await page.getByRole("textbox", { name: "Message" }).fill("/token secret-token");
+  await page
+    .getByRole("combobox", { name: "Persona" })
+    .selectOption("executive");
+  await page
+    .getByRole("textbox", { name: "Message" })
+    .fill("/token secret-token");
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByText("Hybrid OBO")).toBeVisible();
 });
@@ -101,12 +141,20 @@ test("shows manager actions for a pending HITL response", async ({ page }) => {
   });
 
   await page.goto("/");
-  await page.getByRole("textbox", { name: "Message" }).fill("Review HITL packet");
+  await page
+    .getByRole("textbox", { name: "Message" })
+    .fill("Review HITL packet");
   await page.getByRole("button", { name: "Send" }).click();
-  await expect(page.getByRole("button", { name: "Approve planning" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Request more info" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Approve planning" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Request more info" }),
+  ).toBeVisible();
   await expect(page.getByRole("button", { name: "Reject" })).toBeVisible();
   await page.getByRole("button", { name: "Approve planning" }).click();
   await expect(page.getByText("Review packet ready.")).toBeVisible();
-  await expect(page.getByText(/Follow-up task: task-approved-123/)).toBeVisible();
+  await expect(
+    page.getByText(/Follow-up task: task-approved-123/),
+  ).toBeVisible();
 });

@@ -65,23 +65,22 @@ def eval_simulator_user_model() -> str:
 # `restricted_tools` name must exist, and each case's persona must be in that
 # subagent's `allowed_personas`, or the expectation is policy-denied before
 # routing ever runs. Coverage goals per subagent/persona:
-# - sales_insights_agent (manager), product_index_assistant (analyst),
-#   flink_support_agent (operator), cdi_agent (manager): exercise the model's
+# - sales_insights_agent (store-manager), product_index_assistant (store-manager),
+#   flink_support_agent (de-support), cdi_agent (executive): exercise the model's
 #   sticky, per-conversation routing (`route_planner.build_route_plan`) via a
 #   weak-overlap follow-up turn that should stay routed to the same subagent.
-# - lakebase_ods_agent: exercised by both a manager (appointments/orders) and
-#   an engineer (schema reconciliation) case, since it is the only subagent
-#   allowing the "engineer" persona alongside flink_support_agent.
+# - lakebase_ods_agent: exercised by a store-manager appointments/orders case;
+#   de-support is intentionally restricted to flink_support_agent only.
 # - flink_support_agent additionally asserts `requires_evidence`/
 #   `freshness_sla`, matching its system_prompt's explicit citation mandate.
-# - Three composite cases (manager persona) cover the orchestrator's cross-tool
+# - Three composite cases (store-manager persona) cover the orchestrator's cross-tool
 #   comparison rule: appointments-vs-sales, sales-vs-CDI, and appointments-vs-
 #   sales-ranking, matching the homepage "Insight" tab starters.
 test_cases = [
     {
         "goal": "Find out the top 3 stores by revenue for the current season",
-        "persona": "A business manager who wants a quick revenue summary.",
-        "context": {"custom_inputs": {"persona": "manager"}},
+        "persona": "A store manager who wants a quick revenue summary.",
+        "context": {"custom_inputs": {"persona": "store-manager"}},
         "expectations": {"expected_tool_calls": [{"name": "sales_insights_agent"}]},
         "simulation_guidelines": [
             "Ask for the top stores by revenue.",
@@ -93,8 +92,8 @@ test_cases = [
     },
     {
         "goal": "Look up product details for brand code MCH",
-        "persona": "An analyst researching tire product catalog coverage.",
-        "context": {"custom_inputs": {"persona": "analyst"}},
+        "persona": "A store manager researching tire product catalog coverage.",
+        "context": {"custom_inputs": {"persona": "store-manager"}},
         "expectations": {"expected_tool_calls": [{"name": "product_index_assistant"}]},
         "simulation_guidelines": [
             "Ask about products matching brand code MCH.",
@@ -103,8 +102,8 @@ test_cases = [
     },
     {
         "goal": "Diagnose increasing consumer lag in a Flink streaming job",
-        "persona": "An operator dealing with a Flink streaming job that has increasing consumer lag.",
-        "context": {"custom_inputs": {"persona": "operator"}},
+        "persona": "A data engineering support specialist dealing with a Flink streaming job that has increasing consumer lag.",
+        "context": {"custom_inputs": {"persona": "de-support"}},
         "expectations": {
             "expected_tool_calls": [{"name": "flink_support_agent"}],
             "requires_evidence": True,
@@ -120,8 +119,8 @@ test_cases = [
     },
     {
         "goal": "Check CDI delight scores across stores",
-        "persona": "A manager reviewing customer satisfaction metrics.",
-        "context": {"custom_inputs": {"persona": "manager"}},
+        "persona": "An executive reviewing customer satisfaction metrics.",
+        "context": {"custom_inputs": {"persona": "executive"}},
         "expectations": {"expected_tool_calls": [{"name": "cdi_agent"}]},
         "simulation_guidelines": [
             "Ask for CDI scores by store for the latest period.",
@@ -130,8 +129,8 @@ test_cases = [
     },
     {
         "goal": "List the latest open appointments and current order status",
-        "persona": "A manager reviewing current operational appointments and orders.",
-        "context": {"custom_inputs": {"persona": "manager"}},
+        "persona": "A store manager reviewing current operational appointments and orders.",
+        "context": {"custom_inputs": {"persona": "store-manager"}},
         "expectations": {
             "requires_tool_attempt": True,
             "expected_tool_calls": [{"name": "lakebase_ods_agent"}],
@@ -142,22 +141,22 @@ test_cases = [
         ],
     },
     {
-        "goal": "Reconcile order records against appointment schedules for a data quality check",
-        "persona": "An engineer investigating a mismatch between orders and appointment records.",
-        "context": {"custom_inputs": {"persona": "engineer"}},
+        "goal": "Confirm DE support is denied direct operational data access",
+        "persona": "A data engineering support specialist investigating a mismatch between orders and appointment records.",
+        "context": {"custom_inputs": {"persona": "de-support"}},
         "expectations": {
-            "requires_tool_attempt": True,
-            "expected_tool_calls": [{"name": "lakebase_ods_agent"}],
+            "expected_tool_calls": [],
+            "restricted_tools": ["lakebase_ods_agent"],
         },
         "simulation_guidelines": [
             "Ask to query the operational data store to compare order counts against appointment counts for the latest day.",
-            "Expect the operational data tool to be attempted; the engineer persona is authorized for the operational data store.",
+            "Expect the operational data tool to be blocked because de-support is only authorized for Flink support guidance.",
         ],
     },
     {
         "goal": "Cross-reference top appointment-count stores against top sales-performing stores",
-        "persona": "A manager who wants to know if high-appointment stores are also high-sales stores.",
-        "context": {"custom_inputs": {"persona": "manager"}},
+        "persona": "A store manager who wants to know if high-appointment stores are also high-sales stores.",
+        "context": {"custom_inputs": {"persona": "store-manager"}},
         "expectations": {
             "requires_tool_attempt": True,
             "expected_tool_calls": [
@@ -176,26 +175,25 @@ test_cases = [
     },
     {
         "goal": "Identify stores with strong sales but below-average CDI scores",
-        "persona": "A manager looking for stores that are winning on revenue but losing on customer experience.",
-        "context": {"custom_inputs": {"persona": "manager"}},
+        "persona": "An executive looking for stores that are winning on revenue but losing on customer experience.",
+        "context": {"custom_inputs": {"persona": "executive"}},
         "expectations": {
             "requires_tool_attempt": True,
             "expected_tool_calls": [
-                {"name": "sales_insights_agent"},
                 {"name": "cdi_agent"},
             ],
+            "restricted_tools": ["sales_insights_agent"],
         },
         "simulation_guidelines": [
             "Ask which stores have strong sales performance but below-average CDI scores.",
-            "Expect both the sales tool and the CDI tool to be called once each, and the final "
-            "answer to identify the specific stores with a sales-CDI gap.",
-            "Expect each source's freshness to be disclosed separately (sales data vs CDI data).",
+            "Expect the CDI tool to be called for customer delight analysis, while the sales tool is restricted under executive policy.",
+            "Expect source freshness to be disclosed for the CDI data.",
         ],
     },
     {
         "goal": "Identify stores where appointment demand outpaces sales ranking",
-        "persona": "A manager looking for stores with high service demand but comparatively lower sales rank.",
-        "context": {"custom_inputs": {"persona": "manager"}},
+        "persona": "A store manager looking for stores with high service demand but comparatively lower sales rank.",
+        "context": {"custom_inputs": {"persona": "store-manager"}},
         "expectations": {
             "requires_tool_attempt": True,
             "expected_tool_calls": [
@@ -210,9 +208,9 @@ test_cases = [
         ],
     },
     {
-        "goal": "Verify that an operator persona cannot access sales data",
-        "persona": "An operator trying to get sales revenue numbers.",
-        "context": {"custom_inputs": {"persona": "operator"}},
+        "goal": "Verify that a de-support persona cannot access sales data",
+        "persona": "A data engineering support specialist trying to get sales revenue numbers.",
+        "context": {"custom_inputs": {"persona": "de-support"}},
         "expectations": {
             "requires_user_identity": False,
             "restricted_tools": ["sales_insights_agent", "cdi_agent"],
@@ -225,8 +223,8 @@ test_cases = [
     },
     {
         "goal": "Have a brief conversational exchange that never asks for business data",
-        "persona": "A manager making small talk before starting a work session.",
-        "context": {"custom_inputs": {"persona": "manager"}},
+        "persona": "A store manager making small talk before starting a work session.",
+        "context": {"custom_inputs": {"persona": "store-manager"}},
         "expectations": {"expected_tool_calls": []},
         "simulation_guidelines": [
             "Greet the assistant and ask, in general terms, what kinds of questions it can help with.",

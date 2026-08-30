@@ -32,7 +32,7 @@ class AppSettings:
     message_bus_async: bool = False
     message_bus_async_queue_size: int = 1000
     message_bus_async_drain_timeout_seconds: float = 2.0
-    default_request_persona: str = "manager"
+    default_request_persona: str = "store-manager"
     max_input_chars: int = 12000
     max_response_chars: int = 20000
     agent_task_backend: str = "memory"
@@ -127,7 +127,7 @@ def get_settings() -> AppSettings:
         message_bus_async_drain_timeout_seconds=_env_float(
             "MESSAGE_BUS_ASYNC_DRAIN_TIMEOUT_SECONDS", 2.0
         ),
-        default_request_persona=os.getenv("DEFAULT_REQUEST_PERSONA", "manager"),
+        default_request_persona=os.getenv("DEFAULT_REQUEST_PERSONA", "store-manager"),
         max_input_chars=_env_int("MAX_INPUT_CHARS", 12000),
         max_response_chars=_env_int("MAX_RESPONSE_CHARS", 20000),
         agent_task_backend=os.getenv("AGENT_TASK_BACKEND", "memory"),

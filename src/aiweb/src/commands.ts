@@ -14,22 +14,6 @@ export function parseTokenCommand(
   return { kind: "set", token };
 }
 
-export function parsePersonaCommand(
-  text: string,
-  setPersonaCommand: string,
-  clearPersonaCommand: string,
-): { kind: "set" | "clear" | null; persona: string | null } {
-  const stripped = text.trim();
-  if (stripped === clearPersonaCommand) {
-    return { kind: "clear", persona: null };
-  }
-  if (!stripped.startsWith(`${setPersonaCommand} `)) {
-    return { kind: null, persona: null };
-  }
-  const persona = stripped.slice(setPersonaCommand.length).trim();
-  return { kind: "set", persona };
-}
-
 export function maskToken(token: string): string {
   const cleaned = token.trim();
   if (cleaned.length <= 10) {

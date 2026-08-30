@@ -6,10 +6,10 @@ A user-facing guide to what each assistant agent is best at, so you can ask ques
 
 The chat homepage groups sample questions into four tabs (`src/aiweb/src/App.tsx`):
 
-- **Business** — single-agent questions over Sales, Product, or CDI data.
-- **Operations** — single-agent questions over live appointment/order data or Flink troubleshooting.
-- **Insight** — composite questions that combine two agents' data into one synthesized answer (see [Questions That Combine Multiple Agents](#questions-that-combine-multiple-agents)).
-- **Commands** — `/persona` switches for testing persona-restricted routing.
+- **Operations** — single-agent questions over Sales, Product, or live appointment/order data.
+- **DE** — Flink streaming job troubleshooting and configuration tuning guidance for DE support.
+- **Insight** — Customer Delight Indicator (CDI) metrics and composite questions synthesizing multi-agent data.
+- **HITL** — human-in-the-loop store intervention planning requiring manager approval before dispatch.
 
 ## Quick Reference: Perfect-Match Query Types
 

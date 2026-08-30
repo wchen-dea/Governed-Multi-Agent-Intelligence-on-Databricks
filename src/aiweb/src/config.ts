@@ -1,20 +1,28 @@
 import type { FrontendSettings } from "./types";
 
+const DEFINED_AGENT_PERSONAS = ["store-manager", "executive", "de-support"];
+
+const LEGACY_PERSONA_MAP: Record<string, string> = {
+  manager: "store-manager",
+  analyst: "store-manager",
+  operator: "de-support",
+  engineer: "de-support",
+};
+
 function parseAllowedPersonas(raw: string | undefined): string[] {
   if (!raw) {
-    return ["manager", "analyst", "operator", "engineer", "executive"];
+    return DEFINED_AGENT_PERSONAS;
   }
-  const values = raw
+  const mapped = raw
     .split(",")
-    .map((v) => v.trim().toLowerCase())
-    .filter(Boolean);
-  return [
-    ...new Set(
-      values.length
-        ? values
-        : ["manager", "analyst", "operator", "engineer", "executive"],
-    ),
-  ];
+    .map((v) => {
+      const cleaned = v.trim().toLowerCase();
+      return LEGACY_PERSONA_MAP[cleaned] ?? cleaned;
+    })
+    .filter((v) => DEFINED_AGENT_PERSONAS.includes(v));
+
+  const result = [...new Set(mapped)];
+  return result.length ? result : DEFINED_AGENT_PERSONAS;
 }
 
 export const settings: FrontendSettings = {
@@ -32,8 +40,6 @@ export const settings: FrontendSettings = {
     "x-forwarded-access-token",
   setTokenCommand: "/token",
   clearTokenCommand: "/clear-token",
-  setPersonaCommand: "/persona",
-  clearPersonaCommand: "/clear-persona",
   allowedPersonas: parseAllowedPersonas(
     import.meta.env.VITE_CHAT_ALLOWED_PERSONAS,
   ),
