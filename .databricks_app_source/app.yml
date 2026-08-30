@@ -15,9 +15,9 @@ env:
 - name: MODEL_ROUTING_DEFAULT_MODEL
   value: databricks-gpt-5-6-luna
 - name: MODEL_ROUTING_REASONING_MODEL
-  value: databricks-gpt-5-6-luna
+  value: databricks-claude-sonnet-5
 - name: MODEL_ROUTING_QUALITY_MODEL
-  value: databricks-gpt-5-6-luna
+  value: databricks-claude-sonnet-5
 - name: API_PROXY
   value: http://localhost:8000/invocations
 - name: CHAT_APP_PORT
@@ -27,7 +27,7 @@ env:
 - name: SUBAGENTS_CONFIG_PATH
   value: ''
 - name: DEFAULT_REQUEST_PERSONA
-  value: manager
+  value: store-manager
 - name: MAX_INPUT_CHARS
   value: '12000'
 - name: MAX_RESPONSE_CHARS
