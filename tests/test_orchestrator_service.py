@@ -2,6 +2,7 @@ import asyncio
 from types import SimpleNamespace
 
 from aiserver.application.orchestration.agent import (
+    DefaultToolRegistry,
     OrchestratorDependencies,
     _lakebase_failure_result,
     build_mcp_servers,
@@ -55,6 +56,78 @@ def test_build_subagent_tools_uses_injected_wrapper_and_trace_updater():
     assert trace_payload["auth.tool_name"] == "query_knowledge_assistant"
     assert trace_payload["auth.auth_mode_selected"] == "app"
     assert trace_payload["auth.user_token_present"] == "false"
+
+
+def test_default_tool_registry_resolves_supported_adapter_for_app_subagents():
+    registry = DefaultToolRegistry()
+    subagent = SubagentConfig(
+        name="knowledge_assistant",
+        kind="serving_endpoint",
+        auth_mode="app",
+        endpoint="knowledge_assistant",
+        description="serving",
+    )
+
+    adapter = registry.resolve(subagent)
+
+    assert adapter is not None
+    assert adapter.supports(subagent) is True
+
+
+def test_default_tool_registry_resolves_lakebase_adapter():
+    registry = DefaultToolRegistry()
+    subagent = SubagentConfig(
+        name="operations_data",
+        kind="lakebase",
+        auth_mode="app",
+        project_id="project",
+        branch_id="main",
+        database="operations",
+        pg_host="lakebase.example.com",
+        endpoint_id="primary",
+        description="operational data",
+    )
+
+    adapter = registry.resolve(subagent)
+
+    assert adapter is not None
+    assert type(adapter).__name__ == "LakebaseToolAdapter"
+
+
+def test_build_subagent_tools_uses_registered_adapter_for_non_mcp_subagents():
+    subagents = [
+        SubagentConfig(
+            name="knowledge_assistant",
+            kind="serving_endpoint",
+            auth_mode="app",
+            endpoint="knowledge_assistant",
+            description="serving",
+        )
+    ]
+
+    class FakeAdapter:
+        def supports(self, subagent):
+            return subagent.kind == "serving_endpoint"
+
+        def build(self, subagent, *, app_client, obo_client, deps):
+            async def _call(question: str) -> str:
+                return f"adapter::{question}"
+
+            _call.__name__ = subagent.tool_name
+            _call.__doc__ = subagent.description
+            return _call
+
+    deps = OrchestratorDependencies(function_tool_wrapper=lambda func: func)
+    tools = build_subagent_tools(
+        subagents,
+        SimpleNamespace(responses=None),
+        None,
+        deps=deps,
+        tool_adapters=(FakeAdapter(),),
+    )
+
+    assert len(tools) == 1
+    assert asyncio.run(tools[0]("hello")) == "adapter::hello"
 
 
 def test_build_mcp_servers_uses_factory_and_tracks_obo_unavailable():

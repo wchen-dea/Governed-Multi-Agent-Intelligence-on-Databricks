@@ -14,6 +14,7 @@ src/aiserver/
 │   ├── server.py         # MLflow AgentServer bootstrap
 │   └── invocations.py   # @invoke / @stream request pipeline
 ├── application/          ← Request-time use cases and ports
+│   ├── adapters/          # Concrete tool adapter implementations
 │   ├── auth/             # Context and policy
 │   ├── delegation/       # Handoff, policy, worker
 │   ├── guardrails/       # Deterministic checks
@@ -41,7 +42,7 @@ src/aiserver/
 | Layer | Responsibility | Depends On |
 | --- | --- | --- |
 | **api** | HTTP lifecycle and request dispatch | application, bootstrap |
-| **application** | Use-case services: orchestration, policy/auth decisions, guardrails, delegation, runtime request helpers, and port definitions | contracts, config |
+| **application** | Use-case services: orchestration, concrete tool adapters, policy/auth decisions, guardrails, delegation, runtime request helpers, and port definitions | contracts, config |
 | **bootstrap** | Dependency composition | application, infrastructure |
 | **contracts** | Typed execution, delegation, and subagent registry contracts | (no higher layers) |
 | **config** | Environment settings | (no higher layers) |
@@ -95,6 +96,19 @@ AppDependencyContainer
 ```
 
 Services are composed at import time via `build_dependency_container()`. Handlers receive a flat `HandlerDependencies` object — no service locator, no runtime DI framework.
+
+## Tool Adapter Registry
+
+`application/ports/tools.py` defines the `ToolAdapter` and `ToolRegistry` interfaces. `DefaultToolRegistry` and the concrete adapters live in `application/adapters/tools.py`, so `orchestration/agent.py` remains responsible for assembling the agent, MCP servers, and request-scoped dependencies rather than owning every tool execution strategy.
+
+The default registry defines first-match precedence in this order:
+
+1. `McpToolAdapter` for Genie and generic MCP subagents.
+2. `LakebaseToolAdapter` for PostgreSQL/OAuth subagents.
+3. `AppToolAdapter` for direct Databricks serving-endpoint and App calls.
+4. `DelegationToolAdapter` for bounded task-bus handoff flows.
+
+MCP and Lakebase subagents skip registry resolution in `build_subagent_tools()`: `build_mcp_servers()` creates MCP servers and `build_lakebase_tools()` creates request-scoped SQL function tools. Only serving-endpoint and App subagents use the registry-enabled `build_subagent_tools()` path. Delegation remains a bounded approval/task-bus handoff, independent of function-tool wrapping.
 
 ## Subagent Types
 

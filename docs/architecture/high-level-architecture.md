@@ -169,7 +169,8 @@ flowchart TD
     D -->|obo + no token| ERR[Mark Tool Unavailable or Raise Auth Error]
     AID --> AVAIL[Policy-approved app-auth tools and MCP servers]
     OID --> AVAIL
-    AVAIL --> PLAN[Deterministic Route Plan]
+    AVAIL --> ASM[Tool Assembly: Adapter Registry plus MCP and Lakebase Builders]
+    ASM --> PLAN[Deterministic Route Plan]
     PLAN --> O[Construct Orchestrator Agent with candidate tools]
     O --> G[Genie Sales Agent via MCP]
     O --> K[MCP AI Search product_index_assistant]

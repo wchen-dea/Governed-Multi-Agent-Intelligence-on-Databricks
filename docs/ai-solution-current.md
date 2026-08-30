@@ -24,10 +24,11 @@ flowchart LR
     Pipeline --> Policy[Policy + Auth Context]
     Pipeline --> Router[Route Planner + Model Router]
     Router --> Orchestrator[OpenAI Agents SDK Orchestrator]
-    Orchestrator --> Genie[Genie MCP Agents]
-    Orchestrator --> Search[AI Search MCP Routes]
-    Orchestrator --> Lakebase[Lakebase PostgreSQL Tool]
-    Orchestrator --> HITL[Databricks App: hitl-app-agent]
+    Orchestrator --> Assembly[Tool Assembly: Adapter Registry + Dedicated Builders]
+    Assembly --> Genie[Genie MCP Agents]
+    Assembly --> Search[AI Search MCP Routes]
+    Assembly --> Lakebase[Lakebase PostgreSQL Tool]
+    Assembly --> HITL[Databricks App: hitl-app-agent]
     Pipeline --> Guardrails[Response Guardrails]
     Pipeline --> Audit[Lifecycle Message Bus]
     Pipeline --> MLflow[MLflow Tracing]
@@ -40,6 +41,7 @@ flowchart LR
 | --- | --- |
 | Backend app/API | [src/aiserver/api/](../src/aiserver/api) |
 | Use-case services | [src/aiserver/application/](../src/aiserver/application) |
+| Concrete tool adapters | [src/aiserver/application/adapters/tools.py](../src/aiserver/application/adapters/tools.py) |
 | Typed contracts and registries | [src/aiserver/contracts/](../src/aiserver/contracts) |
 | Settings | [src/aiserver/config/settings.py](../src/aiserver/config/settings.py) |
 | Infrastructure adapters | [src/aiserver/infrastructure/](../src/aiserver/infrastructure) |
@@ -51,44 +53,26 @@ flowchart LR
 
 ## Request Lifecycle
 
-Both invoke and stream requests follow the same control sequence:
-
-1. Receive an MLflow Responses API request.
-2. Apply input guardrails.
-3. Build request identity context from app identity and optional forwarded user token.
-4. Filter subagents through deterministic policy checks.
-5. Build route plan from the user request and policy-allowed subagents.
-6. Select the runtime model through deterministic task-type model routing.
-7. Connect healthy MCP servers and assemble native OpenAI Agents SDK tools.
-8. Run the orchestrator through `Runner.run` or `Runner.run_streamed`.
-9. Infer contributing subagents and append governed source metadata when required.
-10. Apply response guardrails.
-11. Persist memory turns when enabled.
-12. Emit lifecycle events and MLflow traces.
-13. Return the final response or a user-safe blocked/error response.
-
-Primary implementation:
-
-- [src/aiserver/api/invocations.py](../src/aiserver/api/invocations.py)
-- [src/aiserver/application/orchestration/agent.py](../src/aiserver/application/orchestration/agent.py)
-- [src/aiserver/application/auth/context.py](../src/aiserver/application/auth/context.py)
-- [src/aiserver/application/auth/policy.py](../src/aiserver/application/auth/policy.py)
-- [src/aiserver/application/guardrails/checks.py](../src/aiserver/application/guardrails/checks.py)
+Both invoke and stream requests apply input guardrails, identity and policy checks, route and model selection, tool/MCP assembly, orchestration, response guardrails, and audit/trace finalization. See [Low-level design: Request Lifecycle](architecture/low-level-design.md#request-lifecycle) for the complete control sequence and owning modules.
 
 ## Agent And Tool Inventory
 
-The logical dev registry contains six subagents:
+The dev registry currently contains six subagents: two Genie agents, two AI Search MCP routes, one Databricks App HITL specialist, and one Lakebase ODS agent. [Tool and model registry](architecture/tool-and-model-registry.md) is the authoritative inventory for endpoint identifiers, ownership, auth, classification, and environment availability. In dev, the logical `store-intervention-agent` subagent uses the deployed `hitl-app-agent` endpoint.
 
-| Logical subagent | Type | Runtime endpoint/source | Primary use |
-| --- | --- | --- | --- |
-| `sales_insights_agent` | Genie MCP | Genie space in `subagents.dev.json` | Revenue and sales analytics |
-| `cdi_agent` | Genie MCP | Genie space in `subagents.dev.json` | Customer Delight Indicator analytics |
-| `product_index_assistant` | AI Search MCP | Vector Search MCP route | Product catalog lookup |
-| `flink_support_agent` | AI Search MCP | AI Search MCP route | Flink support and troubleshooting |
-| `store-intervention-agent` | Databricks App | Dev endpoint `hitl-app-agent` | Evidence-backed store intervention packet and approval pause |
-| `lakebase_ods_agent` | Lakebase PostgreSQL | Lakebase `operations` database | Appointments, orders, invoices, and operational data |
+### Tool Adapter Resolution
 
-The logical subagent name and deployed Databricks App name can differ. In dev, the logical subagent is `store-intervention-agent`, while the Databricks App endpoint is `hitl-app-agent`.
+The orchestrator keeps direct function-tool behavior out of its assembly module through the concrete adapter registry in `application/adapters/tools.py`. The default registry precedence is deterministic:
+
+```text
+MCP -> Lakebase -> app endpoint -> delegation
+```
+
+- `McpToolAdapter` recognizes Genie and generic MCP subagents but does not build function tools. `build_mcp_servers()` owns MCP server construction and connection.
+- `LakebaseToolAdapter` recognizes Lakebase subagents and defines their safe failure categorization, but does not build function tools. `build_lakebase_tools()` owns request-scoped SQL-tool assembly.
+- `AppToolAdapter` wraps `serving_endpoint` and `app` subagents as Responses API function tools, selecting app or OBO client according to `auth_mode`.
+- `DelegationToolAdapter` recognizes delegation-capable subagents but does not build function tools. The approval/delegation flow constructs and submits bounded task-bus handoffs separately.
+
+`application/ports/tools.py` defines the `ToolAdapter` and `ToolRegistry` protocols. `build_subagent_tools()` deliberately excludes MCP and Lakebase entries before registry resolution and creates direct function tools only for serving-endpoint and App entries. This keeps MCP connection management, Lakebase SQL execution, and delegation independent of function-tool wrapping while retaining a common adapter extension contract.
 
 Configuration source:
 

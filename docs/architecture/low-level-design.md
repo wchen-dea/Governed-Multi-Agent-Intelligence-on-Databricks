@@ -35,6 +35,7 @@ This document covers low-level design and implementation details. See [high-leve
   - Loads `.env`
   - Initializes `AgentServer("ResponsesAgent", enable_chat_proxy=True)`
   - Exposes root route and application startup
+  - Validates approval submissions with the strict `ApprovalDecisionInput` Pydantic request model before persistence or delegation
 
 - `src/aiserver/application/auth/context.py`
   - Builds request-scoped hybrid auth context (app + optional OBO user identity)
@@ -54,12 +55,17 @@ This document covers low-level design and implementation details. See [high-leve
   - Blocks unsafe output and low-confidence sensitive responses
 
 - `src/aiserver/application/orchestration/agent.py`
-  - Creates callable tools for configured subagents
-  - Selects app vs OBO client per subagent tool call
+  - Composes tool/server builders and creates the orchestrator agent
   - Builds Genie MCP server list with auth-aware workspace client selection
   - Caches static orchestrator instruction blocks by subagent metadata and appends request-scoped unavailable details dynamically
   - Connects MCP servers with parallel health checks and short TTL health caching
   - Supports injectable dependencies for trace updates, tool wrapping, and MCP server creation
+
+- `src/aiserver/application/adapters/tools.py`
+  - Implements the `ToolAdapter` port for MCP, Lakebase, app endpoint, and delegation subagents
+  - Defines deterministic adapter precedence: MCP, Lakebase, app endpoint, then delegation
+  - Encapsulates app/OBO client selection, function-tool lifecycle events, and Lakebase failure classification
+  - Keeps MCP server connection and task-bus delegation as their own execution lifecycles rather than local function tools
 
 - `src/aiserver/application/ports/`
   - Defines protocol-based service interfaces for dependency injection
@@ -97,6 +103,11 @@ This document covers low-level design and implementation details. See [high-leve
   - Forwarded token extraction (`x-forwarded-access-token`)
   - Request identity context construction for hybrid auth
   - Workspace host and MCP URL construction
+
+- `src/aiserver/config/settings.py`
+  - Defines `AppSettings` with Pydantic Settings for typed environment parsing and numeric bounds
+  - Preserves established environment variable names with explicit validation aliases
+  - Centralizes MCP connection, cache, session-timeout, and instruction-cache configuration
 
   - `src/aiserver/application/runtime/streaming.py`
     - Stream event normalization for stable item IDs
@@ -139,7 +150,8 @@ This document covers low-level design and implementation details. See [high-leve
 ### Design Patterns
 
 - Orchestrator pattern: a central orchestrator routes user intent to specialist tools and subagents.
-- Strategy pattern: routing behavior varies by subagent type (`genie`, `serving_endpoint`, `app`, `mcp`) behind a unified interface.
+- Strategy pattern: `ToolAdapter` implementations vary by subagent type (`genie`, `mcp`, `lakebase`, `serving_endpoint`, `app`) behind a unified interface.
+- Registry pattern: the `ToolRegistry` port is implemented by `DefaultToolRegistry`, which resolves the first matching adapter in the fixed MCP, Lakebase, app endpoint, delegation order.
 - Policy/strategy blend: runtime auth selection varies by subagent `auth_mode` (`app`, `obo`) under a unified tool interface.
 - Configuration object pattern: typed subagent configuration with centralized validation reduces runtime misconfiguration.
 - Factory/builder pattern: tool and server construction is encapsulated in dedicated builder functions.
@@ -189,6 +201,8 @@ Default auth mode behavior:
 For non-Genie tools, function tool names are generated as:
 
 - `query_<subagent_name>`
+
+`build_subagent_tools()` deliberately excludes MCP and Lakebase subagents before resolving its adapter registry. `build_mcp_servers()` registers MCP subagents as servers, `build_lakebase_tools()` creates Lakebase tools with request-scoped database execution, and delegation is submitted through the bounded task bus. The registry-enabled builder therefore creates direct Responses API function tools only for serving-endpoint and App subagents.
 
 If an OBO tool is invoked without a forwarded token, the runtime returns a clear authorization error and does not silently fall back to app auth.
 
@@ -284,6 +298,8 @@ Direct non-interactive Databricks Apps invocation tests should use:
 | ---- | -------------- |
 | `src/aiserver/api/invocations.py` | Handler entrypoints and orchestration wiring |
 | `src/aiserver/application/orchestration/agent.py` | Tool/server construction and orchestrator assembly |
+| `src/aiserver/application/adapters/tools.py` | Concrete tool adapters and default registry |
+| `src/aiserver/application/ports/tools.py` | Tool adapter and registry protocol contracts |
 | `src/aiserver/contracts/subagents.py` | Typed subagent definitions and validation |
 | `src/aiserver/api/server.py` | MLflow Agent Server bootstrap, hosted-port resolution |
 | `src/aiserver/infrastructure/persistence/memory.py` | No-op and Lakebase-backed conversation/persona memory |

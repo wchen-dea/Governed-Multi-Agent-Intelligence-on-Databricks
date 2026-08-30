@@ -108,7 +108,7 @@ update-hitl:
 grant-hitl-privileges:
 	./scripts/grant_hitl_agent_privileges.sh
 
-upload-wheel: build-app-source validate import deploy ensure-running health
+upload-wheel: build-app-source validate import ensure-running deploy health
 
 validate:
 	databricks bundle validate -t "$(TARGET)" $(PROFILE_ARG)
@@ -143,8 +143,8 @@ bundle-deploy-optional: wait-stable
 		printf "bundle deploy failed; continuing with Terraform-free fallback path (import -> deploy -> permissions -> health -> smoke)\n"
 
 import: build-app-source
-	@$(RESOLVE_APP_SOURCE_PATH)
-	databricks workspace delete "$$APP_SRC/wheels" --recursive $(PROFILE_ARG) >/dev/null 2>&1 || true; \
+	@set -e; \
+	$(RESOLVE_APP_SOURCE_PATH) databricks workspace delete "$$APP_SRC/wheels" --recursive $(PROFILE_ARG) >/dev/null 2>&1 || true; \
 	databricks workspace import-dir .databricks_app_source "$$APP_SRC" --overwrite $(PROFILE_ARG)
 
 ensure-running:
@@ -176,7 +176,8 @@ stop:
 	fi
 
 deploy: wait-stable
-	@APP_EXISTS=true; \
+	@set -e; \
+	APP_EXISTS=true; \
 	BEFORE_SP=""; \
 	APP_JSON="$$($(APP_GET_JSON) 2>/dev/null || true)"; \
 	if [ -z "$$APP_JSON" ]; then \
@@ -192,8 +193,7 @@ deploy: wait-stable
 	fi; \
 	ATTEMPT=0; \
 	if [ -z "$$APP_SRC" ] || [ "$$APP_SRC" = "null" ]; then \
-		$(RESOLVE_APP_SOURCE_PATH)
-		DEPLOY_STATE="NONE"; \
+		$(RESOLVE_APP_SOURCE_PATH) DEPLOY_STATE="NONE"; \
 	fi; \
 	if [ "$$APP_EXISTS" = "false" ]; then \
 		printf "App %s does not exist; creating it once from source path: %s\n" "$(APP_NAME)" "$$APP_SRC"; \

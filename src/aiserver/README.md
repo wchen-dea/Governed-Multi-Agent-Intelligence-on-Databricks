@@ -22,7 +22,8 @@ Primary entrypoint:
   - `server.py`: AgentServer bootstrap and app startup.
   - `invocations.py`: `@invoke` and `@stream` request handlers.
 - `src/aiserver/application/`
-  - `orchestration/`: tool construction, routing, model selection, and orchestrator assembly.
+  - `adapters/`: concrete tool adapters and the default adapter registry for direct function tools.
+  - `orchestration/`: orchestration assembly, routing, model selection, MCP server construction, and Lakebase tool builders.
   - `auth/`: request-scoped app/OBO authorization and deterministic policy checks.
   - `delegation/`: native agent handoffs, delegation policy, and bounded task worker.
   - `guardrails/`: deterministic request and response guardrail checks.
@@ -34,7 +35,7 @@ Primary entrypoint:
 - `src/aiserver/bootstrap/`
   - `container.py`: composition root that injects infrastructure adapters into application use cases.
 - `src/aiserver/config/`
-  - `settings.py`: dependency-neutral typed runtime settings.
+  - `settings.py`: Pydantic Settings model with validated, dependency-neutral runtime configuration.
 - `src/aiserver/contracts/`
   - `subagents.py`: typed config model and validation.
   - `delegation.py`: typed contracts for bounded agent-to-agent delegation.
@@ -52,7 +53,7 @@ Supported subagent types:
 The dependency direction is `api -> application -> contracts/config`.
 Infrastructure implements application ports, and `bootstrap` is the only composition root.
 See `docs/architecture/layered-agentic-architecture.md` for the full package map
-and enforced import rules.
+and enforced import rules. See [Low-level design](../../docs/architecture/low-level-design.md) for detailed module responsibilities and design patterns.
 
 ## Local Run
 
@@ -85,11 +86,14 @@ Most common edit locations:
 - `src/aiserver/application/auth/context.py`: auth context and tool availability.
 - `src/aiserver/application/auth/policy.py`: deterministic policy checks.
 - `src/aiserver/application/orchestration/agent.py`: tool and MCP orchestration behavior.
+- `src/aiserver/application/adapters/tools.py`: direct function-tool adapters and registry behavior.
+- `src/aiserver/api/models.py`: strict Pydantic HTTP request models for backend endpoints.
 - `src/aiserver/bootstrap/container.py`: default dependency wiring.
 
 Tip:
 
 - Keep `src/aiserver/contracts/subagents.<target>.json` and runtime behavior aligned when adding or changing tools.
+- `build_subagent_tools()` uses the adapter registry for serving-endpoint and App subagents. MCP and Lakebase use dedicated builders, while delegation stays on the governed task-bus handoff path.
 - The active store intervention specialist source is in `src/hitl-agent/`; use `make update-hitl` to deploy source changes and `make grant-hitl-privileges` to refresh its least-privilege data access.
 
 ## Key Environment Variables

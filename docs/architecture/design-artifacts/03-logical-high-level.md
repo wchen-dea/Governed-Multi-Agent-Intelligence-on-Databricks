@@ -10,7 +10,7 @@ flowchart LR
     FE --> API[Backend API — MLflow Agent Server]
     API --> ORCH[Orchestrator — OpenAI Agents SDK Runner]
     ORCH --> POL[Policy Service + Guardrails Service]
-    ORCH --> TOOL[Tool + MCP Adapter Layer]
+    ORCH --> TOOL[Tool Assembly: Adapter Registry + MCP/Lakebase Builders]
     TOOL --> GENIE[Genie MCP — sales_insights_agent / cdi_agent]
     TOOL --> AIS[AI Search MCP — product_index_assistant / flink_support_agent]
     TOOL --> LB[Lakebase — lakebase_ods_agent — psycopg2 + OAuth credentials]
@@ -35,7 +35,7 @@ sequenceDiagram
     participant RA as Runtime Auth Service
     participant POL as Policy Service
     participant OR as Orchestrator Agent
-    participant TL as Tool Layer
+    participant TL as Tool Assembly
     participant DT as Delegation Task Bus
     participant GR as Guardrails Service
     participant MB as Message Bus
@@ -49,6 +49,9 @@ sequenceDiagram
     RA-->>BE: RuntimeAuthContext
     BE->>OR: Build route plan and agent with candidate tools + MCP
     alt Direct tool or MCP execution
+        OR->>TL: Resolve direct adapter or dedicated MCP/Lakebase builder
+        TL->>TL: Adapter precedence: MCP, Lakebase, app, delegation
+        TL-->>OR: Native function tool or connected MCP server
         OR->>TL: Native function or MCP tool call
         TL-->>OR: Tool result
     else Approved native delegation

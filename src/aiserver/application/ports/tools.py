@@ -9,6 +9,27 @@ from aiserver.application.runtime.identity import RequestIdentityContext
 from aiserver.contracts.subagents import SubagentConfig
 
 
+class ToolAdapter(Protocol):
+    """Resolve and build a callable tool for a subagent."""
+
+    def supports(self, subagent: SubagentConfig) -> bool: ...
+
+    def build(
+        self,
+        *,
+        subagent: SubagentConfig,
+        app_client: AsyncDatabricksOpenAI,
+        obo_client: AsyncDatabricksOpenAI | None,
+        deps: Any,
+    ) -> Any: ...
+
+
+class ToolRegistry(Protocol):
+    """Return the adapter that should handle a subagent."""
+
+    def resolve(self, subagent: SubagentConfig) -> ToolAdapter | None: ...
+
+
 class SubagentToolsBuilder(Protocol):
     """Build function tools for configured non-MCP subagents."""
 

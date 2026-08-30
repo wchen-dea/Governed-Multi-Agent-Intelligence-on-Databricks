@@ -26,6 +26,17 @@ Provide an auditable and maintainable registry for runtime integrations and owne
 	- `src/aiserver/contracts/subagents.stg.json`
 	- `src/aiserver/contracts/subagents.prd.json`
 
+## Runtime Adapter Resolution
+
+The configuration files declare available subagent capabilities; they do not contain execution logic. `src/aiserver/application/adapters/tools.py` defines the concrete adapter extension order:
+
+1. MCP (`genie` and `mcp`)
+2. Lakebase (`lakebase`)
+3. App endpoint (`serving_endpoint` and `app`)
+4. Delegation (bounded task-bus handoff)
+
+`build_subagent_tools()` intentionally skips MCP and Lakebase subagents before registry resolution. `build_mcp_servers()` connects MCP entries as MCP servers, and `build_lakebase_tools()` creates Lakebase tools with request-scoped database access. Serving endpoint and App entries become Responses API function tools through the registry-enabled builder. Delegation is not exposed as an arbitrary model function; it follows the governed approval and task-bus workflow. The adapter order prevents new adapter types from falling through to the App implementation when they are added to direct function-tool assembly.
+
 ## Semantics Layer Build Automation
 
 - Notebooks: `src/semantics/` (see [src/semantics/README.md](../../src/semantics/README.md))

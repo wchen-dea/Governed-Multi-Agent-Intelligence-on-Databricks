@@ -7,7 +7,6 @@ import sys
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Literal, cast
 
 from dotenv import load_dotenv
 from fastapi import HTTPException
@@ -15,6 +14,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from mlflow.genai.agent_server import AgentServer, setup_mlflow_git_based_version_tracking
 
+from aiserver.api.models import ApprovalDecisionInput
 from aiserver.application.delegation.policy import evaluate_delegation_policy
 from aiserver.application.delegation.worker import AgentTaskWorker
 from aiserver.application.orchestration.agent import (
@@ -64,13 +64,6 @@ def health():
 
 
 _APPROVAL_REPOSITORY: ApprovalRepository = default_approval_repository()
-ApprovalDecisionValue = Literal["approved", "rejected", "more_info_requested"]
-
-
-def _optional_payload_str(payload: dict[str, object], key: str) -> str | None:
-    """Return a string payload value, treating missing values as null."""
-    value = payload.get(key)
-    return value if isinstance(value, str) else None
 
 
 def _delegation_status_payload(record) -> dict[str, object]:
@@ -166,23 +159,17 @@ async def _submit_post_approval_task(
 
 
 @app.post("/approval-decisions")
-async def submit_approval_decision(payload: dict[str, object]) -> dict[str, object]:
+async def submit_approval_decision(payload: ApprovalDecisionInput) -> dict[str, object]:
     """Record a manager decision for a pending approval workflow."""
-    raw_decision = str(payload.get("decision", "approved"))
-    if raw_decision not in {"approved", "rejected", "more_info_requested"}:
-        raise HTTPException(status_code=400, detail="unsupported approval decision")
-    decision = cast(ApprovalDecisionValue, raw_decision)
     request = ApprovalDecisionRequest(
-        request_id=str(payload.get("request_id", "")),
-        agent_name=str(payload.get("agent_name", "")),
-        store_id=_optional_payload_str(payload, "store_id"),
-        approver=_optional_payload_str(payload, "approver"),
-        decision=decision,
-        reason=_optional_payload_str(payload, "reason"),
-        notes=_optional_payload_str(payload, "notes"),
+        request_id=payload.request_id,
+        agent_name=payload.agent_name,
+        store_id=payload.store_id,
+        approver=payload.approver,
+        decision=payload.decision,
+        reason=payload.reason,
+        notes=payload.notes,
     )
-    if not request.request_id or not request.agent_name:
-        raise HTTPException(status_code=400, detail="request_id and agent_name are required")
 
     record = ApprovalDecisionRecord(
         request_id=request.request_id,

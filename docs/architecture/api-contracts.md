@@ -95,7 +95,7 @@ Example:
 }
 ```
 
-The endpoint returns HTTP `400` when `request_id` or `agent_name` is missing, or when `decision` is unsupported. The decision is persisted through the configured approval repository before a successful response is returned.
+The request is validated by the strict `ApprovalDecisionInput` Pydantic model before any persistence or delegation side effect. Missing or blank required fields, unsupported decisions, invalid field types, and unknown fields return FastAPI HTTP `422` validation errors. The decision is persisted through the configured approval repository before a successful response is returned.
 
 ### Retrieve approval decision
 
