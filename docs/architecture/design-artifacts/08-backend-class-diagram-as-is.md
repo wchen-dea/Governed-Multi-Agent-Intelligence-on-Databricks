@@ -193,6 +193,38 @@ class FunctionToolWrapper {
 class McpServerFactory {
     <<protocol>>
 }
+class ToolAdapter {
+    <<protocol>>
+    +supports(subagent) bool
+    +build(subagent, app_client, obo_client, deps) Any
+}
+class McpToolAdapter {
+    +supports(subagent) bool
+    +build(subagent, app_client, obo_client, deps) Any
+}
+class LakebaseToolAdapter {
+    -_execute_query
+    -_failure_result
+    +supports(subagent) bool
+    +build(subagent, app_client, obo_client, deps) Any
+}
+class AppToolAdapter {
+    +supports(subagent) bool
+    +build(subagent, app_client, obo_client, deps) Any
+    -_select_client(subagent, app_client, obo_client) AsyncDatabricksOpenAI
+}
+class DelegationToolAdapter {
+    +supports(subagent) bool
+    +build(subagent, app_client, obo_client, deps) Any
+}
+class ToolRegistry {
+    -_adapters: tuple~ToolAdapter~
+    +register(adapter) ToolRegistry
+    +resolve(subagent) ToolAdapter?
+}
+class DefaultToolRegistry {
+    +resolve(subagent) ToolAdapter?
+}
 
 AppDependencyContainer o-- OrchestratorDependencies
 AppDependencyContainer o-- RuntimeAuthDependencies
@@ -202,6 +234,14 @@ AppDependencyContainer ..> AppSettings
 OrchestratorDependencies ..> MessageBus
 OrchestratorDependencies ..> FunctionToolWrapper
 OrchestratorDependencies ..> McpServerFactory
+
+McpToolAdapter ..|> ToolAdapter
+LakebaseToolAdapter ..|> ToolAdapter
+AppToolAdapter ..|> ToolAdapter
+DelegationToolAdapter ..|> ToolAdapter
+ToolRegistry o-- ToolAdapter : ordered adapters
+DefaultToolRegistry --|> ToolRegistry
+SubagentToolsBuilder ..> ToolRegistry : resolves direct tools
 
 RuntimeAuthDependencies ..> IdentityContextProvider
 RuntimeAuthDependencies ..> OboClientFactory

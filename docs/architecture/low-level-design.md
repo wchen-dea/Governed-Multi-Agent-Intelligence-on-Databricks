@@ -54,12 +54,17 @@ This document covers low-level design and implementation details. See [high-leve
   - Blocks unsafe output and low-confidence sensitive responses
 
 - `src/aiserver/application/orchestration/agent.py`
-  - Creates callable tools for configured subagents
-  - Selects app vs OBO client per subagent tool call
+  - Composes tool/server builders and creates the orchestrator agent
   - Builds Genie MCP server list with auth-aware workspace client selection
   - Caches static orchestrator instruction blocks by subagent metadata and appends request-scoped unavailable details dynamically
   - Connects MCP servers with parallel health checks and short TTL health caching
   - Supports injectable dependencies for trace updates, tool wrapping, and MCP server creation
+
+- `src/aiserver/application/adapters/tools.py`
+  - Implements the `ToolAdapter` port for MCP, Lakebase, app endpoint, and delegation subagents
+  - Defines deterministic adapter precedence: MCP, Lakebase, app endpoint, then delegation
+  - Encapsulates app/OBO client selection, function-tool lifecycle events, and Lakebase failure classification
+  - Keeps MCP server connection and task-bus delegation as their own execution lifecycles rather than local function tools
 
 - `src/aiserver/application/ports/`
   - Defines protocol-based service interfaces for dependency injection
@@ -139,7 +144,8 @@ This document covers low-level design and implementation details. See [high-leve
 ### Design Patterns
 
 - Orchestrator pattern: a central orchestrator routes user intent to specialist tools and subagents.
-- Strategy pattern: routing behavior varies by subagent type (`genie`, `serving_endpoint`, `app`, `mcp`) behind a unified interface.
+- Strategy pattern: `ToolAdapter` implementations vary by subagent type (`genie`, `mcp`, `lakebase`, `serving_endpoint`, `app`) behind a unified interface.
+- Registry pattern: `ToolRegistry` resolves the first matching adapter in the fixed MCP, Lakebase, app endpoint, delegation order.
 - Policy/strategy blend: runtime auth selection varies by subagent `auth_mode` (`app`, `obo`) under a unified tool interface.
 - Configuration object pattern: typed subagent configuration with centralized validation reduces runtime misconfiguration.
 - Factory/builder pattern: tool and server construction is encapsulated in dedicated builder functions.
@@ -189,6 +195,8 @@ Default auth mode behavior:
 For non-Genie tools, function tool names are generated as:
 
 - `query_<subagent_name>`
+
+Adapter selection is separate from execution assembly: MCP subagents are registered as MCP servers, Lakebase subagents receive request-scoped database execution, and delegation is submitted through the bounded task bus. The registry currently selects direct Responses API function tools for serving-endpoint and app subagents; MCP and Lakebase retain their dedicated builders pending migration to the shared registry.
 
 If an OBO tool is invoked without a forwarded token, the runtime returns a clear authorization error and does not silently fall back to app auth.
 
@@ -284,6 +292,8 @@ Direct non-interactive Databricks Apps invocation tests should use:
 | ---- | -------------- |
 | `src/aiserver/api/invocations.py` | Handler entrypoints and orchestration wiring |
 | `src/aiserver/application/orchestration/agent.py` | Tool/server construction and orchestrator assembly |
+| `src/aiserver/application/adapters/tools.py` | Concrete tool adapters and default registry |
+| `src/aiserver/application/ports/tools.py` | Tool adapter and registry protocol contracts |
 | `src/aiserver/contracts/subagents.py` | Typed subagent definitions and validation |
 | `src/aiserver/api/server.py` | MLflow Agent Server bootstrap, hosted-port resolution |
 | `src/aiserver/infrastructure/persistence/memory.py` | No-op and Lakebase-backed conversation/persona memory |

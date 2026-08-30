@@ -7,13 +7,13 @@ from contextlib import AsyncExitStack
 from dataclasses import dataclass
 from threading import Lock
 from time import monotonic
-from typing import Any, cast
+from typing import Any
 
 from agents import Agent, function_tool
-from agents.exceptions import UserError
 from databricks_openai import AsyncDatabricksOpenAI
 from databricks_openai.agents import McpServer
 
+from aiserver.application.adapters.tools import DefaultToolRegistry
 from aiserver.application.ports.audit import (
     MessageBus,
     NoOpMessageBus,
@@ -24,9 +24,9 @@ from aiserver.application.ports.lakebase import LakebaseConnectionFactory
 from aiserver.application.ports.tools import (
     FunctionToolWrapper,
     McpServerFactory,
+    ToolAdapter,
 )
 from aiserver.application.runtime.identity import RequestIdentityContext, build_mcp_url
-from aiserver.contracts.responses import ToolExecutionResult
 from aiserver.contracts.subagents import SubagentConfig
 
 logger = logging.getLogger(__name__)
@@ -251,56 +251,16 @@ class OrchestratorDependencies:
     message_bus: MessageBus = NoOpMessageBus()
 
 
-def _trace_tool_auth(
+def _resolve_tool_adapter(
     subagent: SubagentConfig,
-    has_user_identity: bool,
-    deps: OrchestratorDependencies,
-) -> None:
-    """Record per-tool auth selection metadata in the current trace.
-
-    Args:
-        subagent: Subagent being invoked.
-        has_user_identity: Whether request includes user identity for OBO.
-        deps: Orchestrator dependencies with trace updater.
-
-    Side Effects:
-        Writes tool auth metadata to the active trace span.
-    """
-    deps.trace_metadata_updater(
-        metadata={
-            "auth.tool_name": subagent.tool_name,
-            "auth.auth_mode_selected": subagent.auth_mode,
-            "auth.user_token_present": str(has_user_identity).lower(),
-        }
-    )
-
-
-def _select_tool_client(
-    subagent: SubagentConfig,
-    app_client: AsyncDatabricksOpenAI,
-    obo_client: AsyncDatabricksOpenAI | None,
-) -> AsyncDatabricksOpenAI:
-    """Select app or OBO client for a subagent.
-
-    Args:
-        subagent: Subagent configuration containing auth mode.
-        app_client: App-identity Databricks OpenAI client.
-        obo_client: Optional user-identity Databricks OpenAI client.
-
-    Returns:
-        The client authorized for the subagent's auth mode.
-
-    Raises:
-        UserError: If the subagent requires OBO and user identity is missing.
-    """
-    if not subagent.is_obo:
-        return app_client
-    if obo_client is None:
-        raise UserError(
-            "This tool requires user authorization (OBO), but no forwarded "
-            "access token was provided. Re-authenticate and try again."
-        )
-    return obo_client
+    tool_adapters: tuple[ToolAdapter, ...] | None,
+    tool_registry: Any | None = None,
+) -> ToolAdapter | None:
+    """Choose the first adapter that can handle the subagent."""
+    if tool_registry is not None:
+        return tool_registry.resolve(subagent)
+    registry = DefaultToolRegistry(tool_adapters)
+    return registry.resolve(subagent)
 
 
 def build_subagent_tools(
@@ -308,110 +268,31 @@ def build_subagent_tools(
     app_client: AsyncDatabricksOpenAI,
     obo_client: AsyncDatabricksOpenAI | None,
     deps: OrchestratorDependencies | None = None,
+    *,
+    tool_adapters: tuple[ToolAdapter, ...] | None = None,
+    tool_registry: Any | None = None,
 ) -> list:
-    """Build function tools for non-MCP subagents.
+    """Build function tools for non-MCP subagents via a registered adapter chain.
 
-    Args:
-        subagents: Loaded and validated subagent configuration entries.
-        app_client: Databricks OpenAI client bound to app identity.
-        obo_client: Optional Databricks OpenAI client bound to forwarded user
-            identity for OBO-only tools.
-        deps: Optional dependency overrides for testing and instrumentation.
-
-    Returns:
-        A list of wrapped function tools that can be attached to the
-        orchestrator agent.
-
-    Raises:
-        UserError: If an OBO subagent is invoked but no user token-backed
-            client is available.
-
-    Side Effects:
-        Publishes tool start/success/failure events on the message bus and
-        updates trace metadata with auth selection context.
+    The adapter boundary keeps subagent-specific execution logic separate from
+    orchestration while preserving the existing app/OB0 request flow.
     """
     dependencies = deps or OrchestratorDependencies()
     tools = []
 
-    def _make_tool(subagent_cfg: SubagentConfig):
-        async def _call(question: str, subagent_cfg_param: SubagentConfig = subagent_cfg) -> str:
-            started_at = monotonic()
-            dependencies.message_bus.publish(
-                "tool.call.started",
-                {
-                    "tool_name": subagent_cfg_param.tool_name,
-                    "subagent": subagent_cfg_param.name,
-                    "auth_mode": subagent_cfg_param.auth_mode,
-                },
-            )
-            selected_client = _select_tool_client(subagent_cfg_param, app_client, obo_client)
-            _trace_tool_auth(
-                subagent_cfg_param,
-                has_user_identity=obo_client is not None,
-                deps=dependencies,
-            )
-            try:
-                tool_input = [{"role": "user", "content": question}]
-                if subagent_cfg_param.system_prompt:
-                    tool_input = [
-                        {"role": "system", "content": subagent_cfg_param.system_prompt},
-                        *tool_input,
-                    ]
-                response = await selected_client.responses.create(
-                    model=subagent_cfg_param.model_name,
-                    input=cast(Any, tool_input),
-                )
-                execution = ToolExecutionResult(
-                    tool_name=subagent_cfg_param.tool_name,
-                    status="succeeded",
-                    latency_ms=(monotonic() - started_at) * 1000,
-                    auth_mode=subagent_cfg_param.auth_mode,
-                )
-                dependencies.message_bus.publish(
-                    "tool.call.succeeded",
-                    {
-                        "tool_name": subagent_cfg_param.tool_name,
-                        "subagent": subagent_cfg_param.name,
-                        "auth_mode": subagent_cfg_param.auth_mode,
-                        "status": execution.status,
-                        "latency_ms": execution.latency_ms,
-                        "attempt_count": execution.attempt_count,
-                    },
-                )
-                return response.output_text
-            except Exception as exc:
-                execution = ToolExecutionResult(
-                    tool_name=subagent_cfg_param.tool_name,
-                    status="failed",
-                    latency_ms=(monotonic() - started_at) * 1000,
-                    auth_mode=subagent_cfg_param.auth_mode,
-                    error_code=type(exc).__name__,
-                )
-                dependencies.message_bus.publish(
-                    "tool.call.failed",
-                    {
-                        "tool_name": subagent_cfg_param.tool_name,
-                        "subagent": subagent_cfg_param.name,
-                        "auth_mode": subagent_cfg_param.auth_mode,
-                        "error_type": type(exc).__name__,
-                        "status": execution.status,
-                        "latency_ms": execution.latency_ms,
-                        "attempt_count": execution.attempt_count,
-                        "error_code": execution.error_code,
-                    },
-                )
-                raise
-
-        _call.__name__ = subagent_cfg.tool_name
-        _call.__doc__ = subagent_cfg.description
-        return _call
-
     for subagent in subagents:
-        if subagent.is_genie or subagent.is_mcp:
+        if subagent.is_genie or subagent.is_mcp or subagent.is_lakebase:
             continue
-        if subagent.is_lakebase:
+        adapter = _resolve_tool_adapter(subagent, tool_adapters, tool_registry=tool_registry)
+        if adapter is None:
             continue
-        tools.append(dependencies.function_tool_wrapper(_make_tool(subagent)))
+        tool = adapter.build(
+            subagent=subagent,
+            app_client=app_client,
+            obo_client=obo_client,
+            deps=dependencies,
+        )
+        tools.append(dependencies.function_tool_wrapper(tool))
     return tools
 
 

@@ -24,10 +24,11 @@ flowchart LR
     Pipeline --> Policy[Policy + Auth Context]
     Pipeline --> Router[Route Planner + Model Router]
     Router --> Orchestrator[OpenAI Agents SDK Orchestrator]
-    Orchestrator --> Genie[Genie MCP Agents]
-    Orchestrator --> Search[AI Search MCP Routes]
-    Orchestrator --> Lakebase[Lakebase PostgreSQL Tool]
-    Orchestrator --> HITL[Databricks App: hitl-app-agent]
+    Orchestrator --> Assembly[Tool Assembly: Adapter Registry + Dedicated Builders]
+    Assembly --> Genie[Genie MCP Agents]
+    Assembly --> Search[AI Search MCP Routes]
+    Assembly --> Lakebase[Lakebase PostgreSQL Tool]
+    Assembly --> HITL[Databricks App: hitl-app-agent]
     Pipeline --> Guardrails[Response Guardrails]
     Pipeline --> Audit[Lifecycle Message Bus]
     Pipeline --> MLflow[MLflow Tracing]
@@ -40,6 +41,7 @@ flowchart LR
 | --- | --- |
 | Backend app/API | [src/aiserver/api/](../src/aiserver/api) |
 | Use-case services | [src/aiserver/application/](../src/aiserver/application) |
+| Concrete tool adapters | [src/aiserver/application/adapters/tools.py](../src/aiserver/application/adapters/tools.py) |
 | Typed contracts and registries | [src/aiserver/contracts/](../src/aiserver/contracts) |
 | Settings | [src/aiserver/config/settings.py](../src/aiserver/config/settings.py) |
 | Infrastructure adapters | [src/aiserver/infrastructure/](../src/aiserver/infrastructure) |
@@ -59,7 +61,7 @@ Both invoke and stream requests follow the same control sequence:
 4. Filter subagents through deterministic policy checks.
 5. Build route plan from the user request and policy-allowed subagents.
 6. Select the runtime model through deterministic task-type model routing.
-7. Connect healthy MCP servers and assemble native OpenAI Agents SDK tools.
+7. Use the registry-enabled direct-tool builder, connect healthy MCP servers, and assemble native OpenAI Agents SDK tools.
 8. Run the orchestrator through `Runner.run` or `Runner.run_streamed`.
 9. Infer contributing subagents and append governed source metadata when required.
 10. Apply response guardrails.
@@ -71,6 +73,7 @@ Primary implementation:
 
 - [src/aiserver/api/invocations.py](../src/aiserver/api/invocations.py)
 - [src/aiserver/application/orchestration/agent.py](../src/aiserver/application/orchestration/agent.py)
+- [src/aiserver/application/adapters/tools.py](../src/aiserver/application/adapters/tools.py)
 - [src/aiserver/application/auth/context.py](../src/aiserver/application/auth/context.py)
 - [src/aiserver/application/auth/policy.py](../src/aiserver/application/auth/policy.py)
 - [src/aiserver/application/guardrails/checks.py](../src/aiserver/application/guardrails/checks.py)
@@ -89,6 +92,21 @@ The logical dev registry contains six subagents:
 | `lakebase_ods_agent` | Lakebase PostgreSQL | Lakebase `operations` database | Appointments, orders, invoices, and operational data |
 
 The logical subagent name and deployed Databricks App name can differ. In dev, the logical subagent is `store-intervention-agent`, while the Databricks App endpoint is `hitl-app-agent`.
+
+### Tool Adapter Resolution
+
+The orchestrator keeps direct function-tool behavior out of its assembly module through the concrete adapter registry in `application/adapters/tools.py`. The default registry precedence is deterministic:
+
+```text
+MCP -> Lakebase -> app endpoint -> delegation
+```
+
+- `McpToolAdapter` identifies Genie and generic MCP subagents. Their servers are connected through the MCP lifecycle rather than wrapped as local function tools.
+- `LakebaseToolAdapter` defines the Lakebase strategy and its safe failure categorization. The current Lakebase builder continues to assemble those SQL tools with request-scoped workspace identity.
+- `AppToolAdapter` wraps `serving_endpoint` and `app` subagents as Responses API function tools, selecting app or OBO client according to `auth_mode`.
+- `DelegationToolAdapter` represents bounded task-bus handoffs. Delegation is not a direct model function call; the existing approval/delegation flow constructs and submits its task contract separately.
+
+`application/ports/tools.py` defines the `ToolAdapter` and `ToolRegistry` protocols. This keeps tests and alternative runtime implementations dependent on the port, while the default concrete registry remains an application adapter. MCP server connection and Lakebase assembly continue through their dedicated builders until those paths are migrated to the shared registry.
 
 Configuration source:
 

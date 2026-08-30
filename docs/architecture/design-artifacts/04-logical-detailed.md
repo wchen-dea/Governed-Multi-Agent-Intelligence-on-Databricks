@@ -17,7 +17,9 @@ flowchart TB
     DT --> DW[Bounded Delegation Worker]
 
     OR --> SC[Subagent Contracts — contracts/subagents.py]
-    OR --> TL[Tool Builders — serving_endpoint / app]
+    OR --> TR[Tool Registry — application/adapters/tools.py]
+    TR --> TL[App Tool Adapter — serving_endpoint / app]
+    TR --> DA[Delegation Adapter — bounded task-bus handoff]
     OR --> MCP[MCP Server Builders — genie / mcp]
     OR --> LB[Lakebase Tools Builder — psycopg2 + OAuth credentials]
     OR --> RP[Deterministic Routing — capability match or fallback]
@@ -50,6 +52,7 @@ sequenceDiagram
     H->>MCP: Connect healthy policy-approved MCP servers (TTL-cached)
     MCP-->>H: Connected servers + unavailable_health
     H->>OR: Build RoutePlan and candidate tools
+    OR->>OR: Resolve direct tool adapter; MCP/Lakebase use dedicated builders
     OR-->>H: low_confidence_fallback when intent is uncertain
     H->>OR: create_orchestrator_agent(model, candidates, servers, tools)
     OR->>TS: Native Runner tool/MCP call
