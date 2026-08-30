@@ -151,7 +151,7 @@ This document covers low-level design and implementation details. See [high-leve
 
 - Orchestrator pattern: a central orchestrator routes user intent to specialist tools and subagents.
 - Strategy pattern: `ToolAdapter` implementations vary by subagent type (`genie`, `mcp`, `lakebase`, `serving_endpoint`, `app`) behind a unified interface.
-- Registry pattern: `ToolRegistry` resolves the first matching adapter in the fixed MCP, Lakebase, app endpoint, delegation order.
+- Registry pattern: the `ToolRegistry` port is implemented by `DefaultToolRegistry`, which resolves the first matching adapter in the fixed MCP, Lakebase, app endpoint, delegation order.
 - Policy/strategy blend: runtime auth selection varies by subagent `auth_mode` (`app`, `obo`) under a unified tool interface.
 - Configuration object pattern: typed subagent configuration with centralized validation reduces runtime misconfiguration.
 - Factory/builder pattern: tool and server construction is encapsulated in dedicated builder functions.

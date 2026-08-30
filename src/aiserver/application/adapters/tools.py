@@ -232,7 +232,7 @@ class DelegationToolAdapter:
         raise ValueError("Delegation tools are built through the task-bus handoff flow")
 
 
-class ToolRegistry:
+class DefaultToolRegistry:
     """Resolve the first adapter that matches a subagent, in a deterministic order."""
 
     def __init__(
@@ -252,7 +252,7 @@ class ToolRegistry:
                 DelegationToolAdapter(),
             )
 
-    def register(self, adapter: ToolAdapter) -> "ToolRegistry":
+    def register(self, adapter: ToolAdapter) -> "DefaultToolRegistry":
         self._adapters = (*self._adapters, adapter)
         return self
 
@@ -261,7 +261,3 @@ class ToolRegistry:
             if adapter.supports(subagent):
                 return adapter
         return None
-
-
-class DefaultToolRegistry(ToolRegistry):
-    """Default runtime registry for subagent tool adapters."""

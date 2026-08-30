@@ -99,7 +99,7 @@ Services are composed at import time via `build_dependency_container()`. Handler
 
 ## Tool Adapter Registry
 
-`application/ports/tools.py` defines the `ToolAdapter` and `ToolRegistry` interfaces. The default implementations live in `application/adapters/tools.py`, so `orchestration/agent.py` remains responsible for assembling the agent, MCP servers, and request-scoped dependencies rather than owning every tool execution strategy.
+`application/ports/tools.py` defines the `ToolAdapter` and `ToolRegistry` interfaces. `DefaultToolRegistry` and the concrete adapters live in `application/adapters/tools.py`, so `orchestration/agent.py` remains responsible for assembling the agent, MCP servers, and request-scoped dependencies rather than owning every tool execution strategy.
 
 The default registry defines first-match precedence in this order:
 

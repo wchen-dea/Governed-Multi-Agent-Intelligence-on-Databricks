@@ -218,11 +218,12 @@ class DelegationToolAdapter {
     +build(subagent, app_client, obo_client, deps) Any
 }
 class ToolRegistry {
-    -_adapters: tuple~ToolAdapter~
-    +register(adapter) ToolRegistry
+    <<protocol>>
     +resolve(subagent) ToolAdapter?
 }
 class DefaultToolRegistry {
+    -_adapters: tuple~ToolAdapter~
+    +register(adapter) DefaultToolRegistry
     +resolve(subagent) ToolAdapter?
 }
 
@@ -239,8 +240,8 @@ McpToolAdapter ..|> ToolAdapter
 LakebaseToolAdapter ..|> ToolAdapter
 AppToolAdapter ..|> ToolAdapter
 DelegationToolAdapter ..|> ToolAdapter
-ToolRegistry o-- ToolAdapter : ordered adapters
-DefaultToolRegistry --|> ToolRegistry
+DefaultToolRegistry ..|> ToolRegistry
+DefaultToolRegistry o-- ToolAdapter : ordered adapters
 SubagentToolsBuilder ..> ToolRegistry : resolves direct tools
 
 RuntimeAuthDependencies ..> IdentityContextProvider
