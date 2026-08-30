@@ -47,9 +47,9 @@ test("renders incremental answer and run context on desktop", async ({
 }) => {
   await page.goto("/");
   await expect(page.getByRole("button", { name: "Commands" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "DE" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "DE", exact: true })).toBeVisible();
   await expect(page.getByRole("combobox", { name: "Persona" })).toBeVisible();
-  await page.getByRole("button", { name: "DE" }).click();
+  await page.getByRole("button", { name: "DE", exact: true }).click();
   await expect(page.getByText("Flink streaming job has increasing consumer lag.")).toBeVisible();
   await page
     .getByRole("textbox", { name: "Message" })
