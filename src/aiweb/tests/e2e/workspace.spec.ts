@@ -65,17 +65,17 @@ test("renders incremental answer and run context on desktop", async ({
 test("limits starter tabs and queries to the selected persona", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("button", { name: "Operations", exact: true })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Insight", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Insights", exact: true })).toBeDisabled();
   await expect(page.getByRole("button", { name: "HITL", exact: true })).toBeDisabled();
   await expect(page.getByRole("button", { name: "DE", exact: true })).toBeDisabled();
 
   await page.getByRole("combobox", { name: "Persona" }).selectOption("executive");
-  await expect(page.getByRole("button", { name: "Insight", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Insights", exact: true })).toBeEnabled();
   await expect(page.getByRole("button", { name: "HITL", exact: true })).toBeEnabled();
   await expect(page.getByRole("button", { name: "Operations", exact: true })).toBeDisabled();
   await expect(page.getByRole("button", { name: "DE", exact: true })).toBeDisabled();
   await expect(
-    page.getByText("How do CDI promoter and detractor counts compare across stores this month?"),
+    page.getByText("What are the top 5 stores by appointment count, and are they also in the top 20 stores by sales?"),
   ).toBeVisible();
   await page.getByRole("button", { name: "HITL", exact: true }).click();
   await expect(

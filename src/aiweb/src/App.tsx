@@ -39,13 +39,13 @@ function isThemeValue(value: string | null): value is ThemeValue {
   return THEMES.some((theme) => theme.value === value);
 }
 
-const STARTER_GROUPS = ["Operations", "Insight", "HITL", "DE"] as const;
+const STARTER_GROUPS = ["Operations", "Insights", "HITL", "DE"] as const;
 
 type StarterGroup = (typeof STARTER_GROUPS)[number];
 
 const PERSONA_STARTER_GROUPS: Record<string, readonly StarterGroup[]> = {
   "store-manager": ["Operations"],
-  executive: ["Insight", "HITL"],
+  executive: ["Insights", "HITL"],
   "de-support": ["DE"],
 };
 
@@ -71,19 +71,15 @@ const STARTERS: { group: StarterGroup; text: string }[] = [
     text: "What Flink configuration tuning steps should DE support check first when backpressure appears?",
   },
   {
-    group: "Insight",
-    text: "How do CDI promoter and detractor counts compare across stores this month?",
-  },
-  {
-    group: "Insight",
+    group: "Insights",
     text: "What are the top 5 stores by appointment count, and are they also in the top 20 stores by sales?",
   },
   {
-    group: "Insight",
+    group: "Insights",
     text: "Which stores have strong sales performance but below-average CDI scores, where we might be winning on revenue but losing on customer experience?",
   },
   {
-    group: "Insight",
+    group: "Insights",
     text: "Using the 2025-08-30 to 2026-04-30 time window, which stores are showing strong sales but below-average CDI scores—where we may be performing well on revenue but falling short on CDI?",
   },
   {
