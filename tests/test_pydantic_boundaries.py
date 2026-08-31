@@ -46,6 +46,16 @@ def test_settings_rejects_invalid_positive_timeout(monkeypatch):
         get_settings.cache_clear()
 
 
+def test_settings_reads_stream_execution_timeout(monkeypatch):
+    monkeypatch.setenv("STREAM_EXECUTION_TIMEOUT_SECONDS", "180")
+    get_settings.cache_clear()
+
+    try:
+        assert get_settings().stream_execution_timeout_seconds == 180.0
+    finally:
+        get_settings.cache_clear()
+
+
 def test_approval_decision_input_rejects_invalid_or_unknown_values():
     with pytest.raises(ValidationError):
         ApprovalDecisionInput(request_id="", agent_name="store-intervention-agent")

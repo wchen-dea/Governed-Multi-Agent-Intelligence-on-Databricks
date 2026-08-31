@@ -43,6 +43,12 @@ const STARTER_GROUPS = ["Operations", "Insight", "HITL", "DE"] as const;
 
 type StarterGroup = (typeof STARTER_GROUPS)[number];
 
+const PERSONA_STARTER_GROUPS: Record<string, readonly StarterGroup[]> = {
+  "store-manager": ["Operations"],
+  executive: ["Insight", "HITL"],
+  "de-support": ["DE"],
+};
+
 const STARTERS: { group: StarterGroup; text: string }[] = [
   {
     group: "Operations",
@@ -259,7 +265,7 @@ function ApprovalActions({
         className="approval-actions"
         aria-label="Manager approval status"
       >
-        <div>
+        <div className="approval-status-summary">
           <strong>Manager decision recorded</strong>
           <span>
             Status: {message.approvalState.status}
@@ -379,11 +385,24 @@ export default function App() {
   });
   const chatLogRef = useRef<HTMLElement>(null);
   const conversationId = useMemo(() => newId(), []);
+  const activeRequestRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
+
+  const enabledStarterGroups = useMemo(
+    () => (persona ? (PERSONA_STARTER_GROUPS[persona] ?? []) : []),
+    [persona],
+  );
+
+  useEffect(() => {
+    if (enabledStarterGroups.includes(starterGroup)) {
+      return;
+    }
+    setStarterGroup(enabledStarterGroups[0] ?? "Operations");
+  }, [enabledStarterGroups, starterGroup]);
 
   async function submitMessage(raw: string): Promise<void> {
     const text = raw.trim();
@@ -499,6 +518,9 @@ export default function App() {
               ),
             ),
           onMetadata: update,
+          onRequestController: (controller) => {
+            activeRequestRef.current = controller;
+          },
         },
       );
 
@@ -527,8 +549,11 @@ export default function App() {
         ),
       );
     } catch (error) {
-      const detail =
-        error instanceof Error
+      const cancelled =
+        error instanceof DOMException && error.name === "AbortError";
+      const detail = cancelled
+        ? "Query canceled."
+        : error instanceof Error
           ? error.message
           : "An unexpected error occurred.";
       setMessages((prev) =>
@@ -543,8 +568,13 @@ export default function App() {
         ),
       );
     } finally {
+      activeRequestRef.current = null;
       setIsSending(false);
     }
+  }
+
+  function cancelCurrentQuery(): void {
+    activeRequestRef.current?.abort();
   }
 
   useEffect(() => {
@@ -652,6 +682,7 @@ export default function App() {
               type="button"
               className={starterGroup === group ? "active" : ""}
               onClick={() => setStarterGroup(group)}
+              disabled={!enabledStarterGroups.includes(group)}
             >
               {group}
             </button>
@@ -666,7 +697,9 @@ export default function App() {
                 onClick={() => {
                   void submitMessage(starter.text);
                 }}
-                disabled={isSending}
+                disabled={
+                  isSending || !enabledStarterGroups.includes(starter.group)
+                }
               >
                 {starter.text}
               </button>
@@ -737,6 +770,16 @@ export default function App() {
         >
           {isSending ? "Sending..." : "Send"}
         </button>
+        {isSending ? (
+          <button
+            className="cancel-query"
+            type="button"
+            onClick={cancelCurrentQuery}
+            title="Cancel current query"
+          >
+            Cancel
+          </button>
+        ) : null}
       </form>
     </div>
   );

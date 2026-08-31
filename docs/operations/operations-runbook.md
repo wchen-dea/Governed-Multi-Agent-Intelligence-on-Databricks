@@ -374,6 +374,17 @@ MCP_HEALTH_FAILURE_TTL_SECONDS=10
 ORCHESTRATOR_INSTRUCTIONS_CACHE_SIZE=128
 ```
 
+#### Stream execution resilience
+
+The backend emits non-content stream progress events while tool and model work is in progress. Final answer text remains buffered until source handling and guardrails complete. Set the backend deadline below the frontend `CHAT_PROXY_TIMEOUT_SECONDS` so a long-running workflow returns a controlled timeout instead of an aborted response body:
+
+```bash
+STREAM_EXECUTION_TIMEOUT_SECONDS=240
+CHAT_PROXY_TIMEOUT_SECONDS=300
+```
+
+For a stream-abort investigation, review `request.stream.stage.completed`, `request.stream.failed`, and `request.stream.client_disconnected` lifecycle events together with the selected model, MCP/tool availability, and application logs.
+
 #### Backend-only
 
 ```bash

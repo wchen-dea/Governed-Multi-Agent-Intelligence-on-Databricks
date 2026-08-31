@@ -49,6 +49,8 @@ test("renders incremental answer and run context on desktop", async ({
   await expect(page.getByRole("button", { name: "Commands" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "DE", exact: true })).toBeVisible();
   await expect(page.getByRole("combobox", { name: "Persona" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "DE", exact: true })).toBeDisabled();
+  await page.getByRole("combobox", { name: "Persona" }).selectOption("de-support");
   await page.getByRole("button", { name: "DE", exact: true }).click();
   await expect(page.getByText("Flink streaming job has increasing consumer lag.")).toBeVisible();
   await page
@@ -58,6 +60,27 @@ test("renders incremental answer and run context on desktop", async ({
   await expect(page.getByText("First answer.")).toBeVisible();
   await page.getByText("Run context").click();
   await expect(page.getByText("App identity", { exact: true })).toBeVisible();
+});
+
+test("limits starter tabs and queries to the selected persona", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Operations", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Insight", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "HITL", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "DE", exact: true })).toBeDisabled();
+
+  await page.getByRole("combobox", { name: "Persona" }).selectOption("executive");
+  await expect(page.getByRole("button", { name: "Insight", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "HITL", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Operations", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "DE", exact: true })).toBeDisabled();
+  await expect(
+    page.getByText("How do CDI promoter and detractor counts compare across stores this month?"),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "HITL", exact: true }).click();
+  await expect(
+    page.getByText("Find stores with strong revenue but declining CDI scores"),
+  ).toBeVisible();
 });
 
 test("exposes OBO state and blocked responses", async ({ page }) => {
@@ -80,6 +103,26 @@ test("keeps the workspace usable on mobile", async ({ page }) => {
   await expect(page.locator(".app-shell")).toBeVisible();
   await expect(page.getByRole("textbox", { name: "Message" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Send" })).toBeVisible();
+});
+
+test("cancels an active query without reporting a backend error", async ({ page }) => {
+  await page.unroute("**/invocations");
+  await page.route("**/invocations", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
+    await route.fulfill({
+      status: 200,
+      contentType: "text/event-stream",
+      body: sse([{ type: "response.output_text.delta", delta: "Too late." }]),
+    });
+  });
+
+  await page.goto("/");
+  await page.getByRole("textbox", { name: "Message" }).fill("Long-running request");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByText("Query canceled.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Cancel" })).toHaveCount(0);
 });
 
 test("shows manager actions for a pending HITL response", async ({ page }) => {
