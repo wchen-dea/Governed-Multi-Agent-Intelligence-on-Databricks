@@ -3,7 +3,7 @@
 Enterprise Agentic AI Reference Architecture: Ontology, Context,
 Skills, MCP, Tools, Governance, and Relevance Scoring
 
-| **Prepared for** | Wenfei Chen |
+| **Drafted By** | Wenfei Chen |
 | --- | --- |
 | **Generated on** | August 5, 2026 |
 | **Conversation scope** | Enterprise AI systems architecture blueprint |
@@ -80,6 +80,11 @@ implementation anchors for each blueprint area.
 - [11.6 Deployment Topology](#116-deployment-topology)
 - [11.7 Operational SLOs](#117-operational-slos)
 - [11.8 Production Readiness Scorecard](#118-production-readiness-scorecard)
+- [11.9 Advanced Enterprise Agent Control Plane](#119-advanced-enterprise-agent-control-plane)
+- [11.10 Capability Lifecycle and Change Governance](#1110-capability-lifecycle-and-change-governance)
+- [11.11 Verification-First Execution Architecture](#1111-verification-first-execution-architecture)
+- [11.12 Maturity Model and Investment Gates](#1112-maturity-model-and-investment-gates)
+- [11.13 Tire Retail and Service Operating Model](#1113-tire-retail-and-service-operating-model)
 - [12. Conclusion and Recommended Next Step](#12-conclusion-and-recommended-next-step)
 - [13. Appendix: Source Reference Materials](#13-appendix-source-reference-materials)
 
@@ -550,6 +555,290 @@ rather than isolated experiments.
 | Observability | Every run emits complete traces, metrics, cost, and tool-call logs. | Dashboard, trace sample, alert policy |
 | Operations | Ownership, escalation, rollback, and incident response are documented. | Runbook, on-call owner, rollback procedure |
 | Governance | Agent, skill, model, and capability changes follow release gates. | Change record, approval workflow, version history |
+
+### 11.9 Advanced Enterprise Agent Control Plane
+
+At enterprise scale, the agent runtime should be governed by a control
+plane instead of scattered configuration, prompts, and deployment
+scripts. The control plane makes capability admission, runtime policy,
+evaluation, and rollback independently reviewable. It does not replace
+domain teams; it gives them a common contract for publishing governed
+capabilities.
+
+```mermaid
+flowchart LR
+    subgraph Design[Design and Change Plane]
+        REG[Capability Registry]
+        SKILL[Versioned Skill and Prompt Catalog]
+        POLICY[Policy as Code]
+        EVAL[Evaluation and Adversarial Test Catalog]
+    end
+
+    subgraph Runtime[Execution Plane]
+        GATE[Admission and Policy Decision Point]
+        ORCH[Workflow Orchestrator]
+        CTX[Context Broker]
+        VERIFY[Verification and Action Gate]
+    end
+
+    subgraph Capabilities[Governed Capability Plane]
+        MCP[MCP Servers]
+        API[APIs and Enterprise Workflows]
+        DATA[Data and Retrieval Systems]
+    end
+
+    subgraph Evidence[Evidence and Operations Plane]
+        TRACE[Immutable Trace and Evidence Store]
+        SCORE[Quality, Risk, Cost, and SLO Scoring]
+        FEEDBACK[Human Review and Outcome Feedback]
+    end
+
+    REG --> GATE
+    SKILL --> ORCH
+    POLICY --> GATE
+    EVAL --> SCORE
+    GATE --> ORCH
+    ORCH --> CTX
+    CTX --> MCP
+    CTX --> API
+    CTX --> DATA
+    ORCH --> VERIFY
+    VERIFY --> MCP
+    VERIFY --> API
+    VERIFY --> DATA
+    ORCH --> TRACE
+    VERIFY --> TRACE
+    TRACE --> SCORE
+    SCORE --> FEEDBACK
+    FEEDBACK --> EVAL
+    FEEDBACK --> POLICY
+```
+
+The control plane should publish these versioned artifacts:
+
+| Artifact | Required content | Admission decision |
+| --- | --- | --- |
+| Capability registration | Owner, interface, data classification, auth mode, risk, cost, freshness, SLO, and rollback method | Approved capability may be discovered by eligible skills. |
+| Skill release | Inputs, allowed capabilities, decision boundaries, output schema, evaluation set, and escalation rules | Skill can be routed only after passing its defined gate. |
+| Policy release | Persona, data, tool, model, retention, and action constraints expressed as testable rules | Runtime uses the versioned policy decision for each request. |
+| Model release | Approved model versions, supported tasks, context limits, safety profile, cost limits, and fallback order | Model becomes eligible for a route only after evaluation and security review. |
+| Retrieval release | Corpus/version, chunking, metadata contract, access policy, freshness target, and evaluation set | Context source becomes eligible only with provenance and quality evidence. |
+
+Policy enforcement should have both a decision point and enforcement
+points. The decision point computes allow, deny, require-approval, or
+require-verification decisions. Enforcement points exist at request
+admission, context retrieval, tool invocation, output release, and
+write-action execution. This avoids treating an orchestrator prompt as
+the sole security boundary.
+
+### 11.10 Capability Lifecycle and Change Governance
+
+Every agent, MCP server, data source, model route, prompt, and skill
+should follow the same lifecycle. A capability is not production-ready
+because it can be called; it must prove a bounded purpose, accountable
+owner, tested contract, and reversible operating path.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Proposed
+    Proposed --> Reviewed: owner, contract, risk classification
+    Reviewed --> Implemented: approved design
+    Implemented --> Evaluated: contract and scenario tests pass
+    Evaluated --> Shadow: live traffic without action authority
+    Shadow --> Approved: quality, risk, cost, and SLO gate pass
+    Approved --> Restricted: incident, drift, or policy change
+    Restricted --> Approved: remediation verified
+    Approved --> Deprecated: successor and migration plan
+    Deprecated --> Retired: traffic and retention window complete
+    Restricted --> Retired: unacceptable risk or unsupported dependency
+```
+
+Required lifecycle controls:
+
+- Assign a business owner, technical owner, on-call owner, and data owner.
+- Record a semantic contract: intent, inputs, outputs, evidence source,
+  freshness target, uncertainty behavior, and prohibited actions.
+- Test the capability in isolation and as part of representative
+  multi-tool workflows.
+- Run new model, prompt, skill, and retrieval releases in shadow or
+  canary mode before granting action authority.
+- Attach a kill switch, rollback procedure, dependency health check, and
+  deprecation plan to every production capability.
+- Re-certify access, quality, and ownership on a scheduled cadence and
+  whenever a material schema, model, policy, or data-classification
+  change occurs.
+
+### 11.11 Verification-First Execution Architecture
+
+For consequential recommendations and all write-capable workflows, the
+system should separate planning from execution. Models can propose a
+plan, but deterministic and independently auditable checks decide
+whether the plan may proceed. The agent must preserve evidence and
+action intent throughout this path.
+
+| Stage | Model responsibility | Deterministic responsibility | Output |
+| --- | --- | --- | --- |
+| Interpret | Parse request, intent, entities, and desired outcome | Validate input shape, identity, and policy scope | Bounded task objective |
+| Plan | Propose capability sequence and expected evidence | Verify capability allow-list, budget, and delegation depth | Executable plan or denial |
+| Gather | Select and summarize evidence | Enforce source authorization, freshness, provenance, and quotas | Evidence package |
+| Decide | Draft recommendation or action parameters | Validate schema, business rules, confidence, and required evidence | Verified proposal |
+| Authorize | Explain impact and request review when needed | Apply risk threshold, segregation of duties, and approval policy | Approved, rejected, or paused action |
+| Execute | None for irreversible action; model may observe result | Invoke idempotent action, record receipt, and verify postcondition | Action receipt and outcome |
+| Learn | Summarize outcome and propose evaluation cases | Redact, retain, score, and route feedback under policy | Governed learning signal |
+
+High-risk actions should use a transactional outbox or equivalent durable
+command record. The record binds the approved action parameters, policy
+version, evidence identifiers, approver, idempotency key, execution
+receipt, and postcondition result. This creates a reliable boundary
+between advisory reasoning and operational change.
+
+### 11.12 Maturity Model and Investment Gates
+
+The blueprint supports incremental adoption. Do not advance a workflow
+to a higher maturity level until it demonstrates the evidence required
+at the preceding level.
+
+| Level | Operating capability | Required evidence to advance |
+| --- | --- | --- |
+| 0. Experiment | Prompt-driven prototype with synthetic or public data | Named owner, documented limitation, and no production action authority |
+| 1. Governed read | Authenticated retrieval and read-only tools with audit traces | Access review, source provenance, baseline evaluation, and incident owner |
+| 2. Reliable decision support | Evidence-backed recommendations with deterministic routing and guardrails | Groundedness, tool correctness, latency/cost baseline, and human outcome review |
+| 3. Controlled workflow | Bounded multi-step tasks, durable state, and human approval for consequential actions | Idempotency, recovery test, segregation of duties, rollback procedure, and action audit |
+| 4. Managed autonomy | Narrow pre-approved actions with continuous monitoring and automatic containment | Stable SLOs, drift detection, periodic re-certification, kill-switch drill, and accountable business owner |
+
+Investment should be governed by workflow value and risk, not novelty.
+Prioritize the smallest set of capabilities that materially improve an
+observable business outcome. Increase autonomy only when the system has
+earned it through evidence of safe, reliable, and cost-effective
+operation.
+
+### 11.13 Tire Retail and Service Operating Model
+
+For a tire retailer and service operator such as Discount Tire, the
+highest-value AI workflows sit where customer demand, vehicle safety,
+store capacity, local inventory, fulfillment, and field execution meet.
+The target architecture should improve associate and operator decisions
+without allowing a model to override fitment rules, safety procedures,
+price authority, payment controls, or technician judgment. This section
+describes industry-aligned target-state guidance; it does not claim that
+these capabilities or data sources are implemented in this repository.
+
+#### Domain Value Chain
+
+```mermaid
+flowchart LR
+    CUST[Customer Need: vehicle, tire, service, or warranty] --> MATCH[Fitment and Product Decision]
+    MATCH --> AVAIL[Local Inventory and Fulfillment Promise]
+    AVAIL --> SLOT[Store or Mobile Appointment Capacity]
+    SLOT --> SERVICE[Service Execution and Technician Workflow]
+    SERVICE --> CARE[Customer Follow-up, Warranty, and CDI]
+    CARE --> DEMAND[Demand, Assortment, and Store Planning]
+    DEMAND --> AVAIL
+
+    subgraph Controls[Non-Negotiable Controls]
+        FIT[Vehicle Fitment and Safety Rules]
+        PRICE[Pricing and Discount Authority]
+        INV[Inventory Reservation and Allocation Policy]
+        CONSENT[Customer Consent and Communication Policy]
+        AUDIT[Evidence, Approval, and Audit Trail]
+    end
+
+    FIT --> MATCH
+    PRICE --> MATCH
+    INV --> AVAIL
+    CONSENT --> CARE
+    AUDIT --> SERVICE
+```
+
+The enterprise ontology should model at least the following governed
+entities and relationships:
+
+| Domain | Canonical entities | High-value relationships and controls |
+| --- | --- | --- |
+| Vehicle and fitment | VIN, year/make/model/trim, tire size, load index, speed rating, wheel, TPMS, fitment rule | Vehicle-to-approved fitment; compatible substitutions; prohibited fitment; source and effective date of fitment data |
+| Product and pricing | Tire, brand, SKU, service package, promotion, warranty, competitor price | Product-to-fitment eligibility; price authority; promotion eligibility; margin guardrail; expiration and regional applicability |
+| Inventory and fulfillment | Store, distribution center, stock position, reserved quantity, transfer, supplier ETA, order | Available-to-promise after reservations; transfer lead time; substitution policy; no promise beyond verified supply |
+| Service operations | Appointment, bay, technician role, work order, service duration, mobile unit, queue | Capacity-aware commitment; skill/equipment requirement; safety inspection dependency; no autonomous schedule override |
+| Customer and experience | Customer, vehicle, communication preference, warranty claim, CDI signal, recovery case | Consent and retention rules; evidence-backed recovery recommendation; protected customer attributes excluded from routing |
+| Store performance | Store, region, demand signal, conversion, units, margin, appointment volume, CDI | Comparable-store peer group; freshness window; confidence interval; explicit separation of observation from recommendation |
+
+Fitment, torque specifications, TPMS procedures, recall notices, and
+safety-service requirements should be treated as controlled source-of-
+truth data, not RAG-only content. The agent may explain an approved rule
+and collect missing information, but a deterministic fitment service or
+certified catalog must make the final compatibility decision. Every
+customer-facing recommendation should disclose the vehicle attributes,
+approved products, price/availability timestamp, and any assumptions
+that require associate confirmation.
+
+#### Practical Capability Sequence
+
+Start with workflows that reduce search, handoffs, and diagnosis time
+without changing customer commitments or operational records. Promote
+only after measurable quality and business evidence are established.
+
+| Priority | Capability | Leading-edge element | Pragmatic first release | Required guardrails and measures |
+| --- | --- | --- | --- | --- |
+| 1 | Store operations copilot | Cross-source reasoning over appointments, orders, inventory, and CDI | Read-only answers for open appointments, order state, store demand, and service exceptions | Source freshness, persona authorization, appointment/order data minimization, time-to-answer and tool correctness |
+| 2 | Associate fitment assistant | Multimodal vehicle/document understanding and explanatory recommendations | Guided intake that retrieves deterministic fitment results and approved product alternatives | Certified fitment source, no free-text compatibility decision, VIN/PII masking, recommendation acceptance and correction rate |
+| 3 | Inventory and fulfillment exception manager | Predictive ETA and transfer optimization | Explain stock-outs, locate eligible inventory, and draft transfer/escalation recommendations | Reservation-aware available-to-promise, human approval for allocation, promise accuracy, transfer cancellation and fulfillment rate |
+| 4 | Appointment and labor-capacity planner | Forecasting and constrained optimization | Identify overbooked days, queue risks, and candidate rescheduling options | No autonomous booking change, consent before customer contact, bay/skill constraints, wait-time and no-show impact |
+| 5 | Customer recovery planner | Causal and next-best-action models informed by CDI and service history | Evidence-backed manager packet for stores with sales/CDI/service risk | Human approval, fairness review, no protected-class targeting, CDI uplift and complaint recurrence |
+| 6 | Field and streaming incident copilot | Event-driven diagnosis from order, fulfillment, and installation telemetry | Detect and summarize delayed WOM/Flink/data pipeline updates for engineering triage | Read-only diagnostics first, incident evidence package, false-alert rate, mean time to detect and recover |
+
+The current project already provides a pragmatic foundation for the
+first and sixth capabilities: governed tool routing, sales/CDI and
+operational data access, Flink support retrieval, evidence controls,
+manager approval, lifecycle audit, and evaluation gates. The active
+integration inventory remains in the [Tool and model registry](architecture/tool-and-model-registry.md).
+
+#### Leading-Edge Architecture, Applied Pragmatically
+
+Leading-edge techniques should improve decision quality without making
+the initial system harder to operate:
+
+- **Event-driven operational context:** combine near-real-time order,
+  appointment, inventory, and service events into freshness-labeled
+  context packages. Use streaming alerts for exceptions, but retain a
+  human-readable source snapshot for every decision.
+- **Constraint-aware optimization:** use optimization or rules engines
+  for inventory allocation, appointment capacity, and route planning;
+  use the LLM to explain options, gather constraints, and draft a
+  recommendation rather than to solve safety or allocation constraints
+  unaided.
+- **Multimodal assisted intake:** use image/document models only to
+  extract candidate tire sidewall, damage, invoice, or vehicle details.
+  Require confidence thresholds and associate review before those fields
+  affect fitment, pricing, warranty, or service decisions.
+- **Digital store and service twin:** model stores, bays, local demand,
+  inventory, staffing, and fulfillment flows for simulation. Start with
+  what-if planning and exception prioritization before automated
+  optimization.
+- **Causal experimentation:** evaluate interventions such as staffing,
+  appointment-slot changes, or recovery offers against holdout stores or
+  cohorts. Do not treat correlations between sales, CDI, and demand as
+  proof that an intervention caused an outcome.
+- **Outcome-grounded learning:** join agent recommendations with
+  approved actions and measured outcomes. Use redacted, policy-approved
+  feedback to improve evaluation sets, not unreviewed production text as
+  direct training data.
+
+#### Safety, Consumer, and Operational Boundaries
+
+| Decision class | Agent role | Required independent control |
+| --- | --- | --- |
+| Product discovery and education | Explain verified product attributes and collect requirements | Current catalog, price, availability, and disclosure timestamp |
+| Vehicle fitment and safety | Retrieve certified rule result and explain it | Deterministic fitment validator; associate or technician confirmation for exceptions |
+| Appointment recommendation | Propose options within verified capacity | Customer consent and scheduling-system confirmation |
+| Inventory transfer or reservation | Draft recommendation and impact statement | Inventory policy engine plus authorized human approval |
+| Discount, refund, or warranty exception | Prepare evidence package | Delegated price/refund authority and policy approval |
+| Service procedure or repair | Summarize approved procedure | Technician judgment, safety checklist, and work-order verification |
+| Customer communication | Draft compliant message | Consent, channel preference, brand/legal review, and approved send path |
+
+The default for any uncertainty in fitment, safety, price, reservation,
+warranty, or repair is to pause, disclose the missing evidence, and route
+to an authorized associate or technician. This is both safer and more
+practical than designing a broad autonomous agent.
 
 ## 12. Conclusion and Recommended Next Step
 
