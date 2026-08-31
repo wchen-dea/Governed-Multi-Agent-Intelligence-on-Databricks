@@ -85,6 +85,7 @@ implementation anchors for each blueprint area.
 - [11.11 Verification-First Execution Architecture](#1111-verification-first-execution-architecture)
 - [11.12 Maturity Model and Investment Gates](#1112-maturity-model-and-investment-gates)
 - [11.13 Tire Retail and Service Operating Model](#1113-tire-retail-and-service-operating-model)
+- [11.14 Databricks AI Delivery Capability and Engineering Skills](#1114-databricks-ai-delivery-capability-and-engineering-skills)
 - [12. Conclusion and Recommended Next Step](#12-conclusion-and-recommended-next-step)
 - [13. Appendix: Source Reference Materials](#13-appendix-source-reference-materials)
 
@@ -839,6 +840,83 @@ The default for any uncertainty in fitment, safety, price, reservation,
 warranty, or repair is to pause, disclose the missing evidence, and route
 to an authorized associate or technician. This is both safer and more
 practical than designing a broad autonomous agent.
+
+### 11.14 Databricks AI Delivery Capability and Engineering Skills
+
+Production-grade AI systems require a multidisciplinary delivery model.
+An LLM application engineer alone cannot safely own enterprise data
+semantics, identity, operational reliability, or consequential workflow
+controls. The following capability model is designed for teams building
+governed AI systems on Databricks.
+
+#### Core AI Delivery Capabilities
+
+| Capability | What the team must be able to design and build | Databricks and implementation surfaces | Evidence of readiness |
+| --- | --- | --- | --- |
+| Product and workflow design | Frame a measurable business decision, users, constraints, failure modes, escalation path, and expected outcome | Product specification, workflow map, task contract, approval design | Named owner, success metric, risk classification, and accepted scope boundary |
+| Agent orchestration | Build bounded agent loops, specialist routing, tool-call contracts, state transitions, timeouts, retries, and fallbacks | OpenAI Agents SDK, MLflow Agent Server, FastAPI, typed application services | Scenario tests cover successful, unavailable, ambiguous, and partial-failure paths |
+| Model engineering | Select, route, evaluate, version, and roll back foundation, reasoning, embedding, reranking, and judge models | Databricks Model Serving, Foundation Model APIs, Unity AI Gateway, MLflow | Task/risk route policy, quality and cost baseline, fallback plan, and release evidence |
+| Retrieval and context engineering | Build trusted retrieval, metadata, chunking, reranking, context compression, freshness controls, and citations | AI Search, Vector Search, Unity Catalog volumes/tables, semantic metadata | Retrieval quality set, provenance coverage, freshness SLA, and groundedness evaluation |
+| Semantic and data engineering | Publish governed business entities, metric definitions, lineage, and source-of-record contracts | Unity Catalog, Delta tables, Metric Views, Genie spaces, Lakebase | Data owner, semantic contract, lineage, access policy, and data-quality checks |
+| Tool and integration engineering | Expose reliable, least-privileged tools with typed schemas, idempotency, timeouts, error handling, and output normalization | MCP, Databricks APIs, serving endpoints, Lakebase, enterprise APIs | Contract test, threat review, owner, SLO, audit event, and rollback/kill-switch path |
+| Security and identity engineering | Enforce user/app identity, least privilege, secret handling, token boundaries, data minimization, and auditability | Databricks Apps identities, OBO, Unity Catalog grants, secret scopes, AI Gateway | Access review, abuse cases, token-flow test, data-classification controls, and incident response owner |
+| Policy and safety engineering | Build deterministic policy decisions, content/PII protections, evidence gates, approval checks, and action boundaries | Typed policy services, guardrails, Pydantic validation, approval repositories | Deny-path tests, red-team scenarios, policy version, false-block review, and exception process |
+| Evaluation and reliability engineering | Measure task success, tool correctness, groundedness, safety, latency, cost, drift, and recovery behavior | MLflow Evaluation, tracing, test suites, load tests, release gates | Curated datasets, regression gate, production dashboard, alert thresholds, and error budget |
+| Platform and delivery engineering | Package, deploy, observe, scale, and roll back applications across isolated environments | Databricks Asset Bundles, Databricks Apps, CI/CD, workspace permissions, telemetry | Reproducible build, target overlays, least-privilege grants, smoke test, rollback drill, and runbook |
+
+#### Engineering Skill Matrix
+
+The delivery roles below may be separate people or combined roles on a
+small team. Accountability must remain explicit even when responsibilities
+are combined.
+
+| Engineering skill | Primary responsibility | Practical outputs | Advanced progression |
+| --- | --- | --- | --- |
+| AI solution architect | Owns end-to-end target architecture, domain boundaries, decision rights, and maturity roadmap | Architecture decision records, capability map, control-plane design, risk register | Federated capability governance and reusable enterprise reference architectures |
+| Agent and application engineer | Implements orchestration, APIs, tool adapters, prompt/skill packaging, and user experience | Agent services, function/MCP tools, typed request models, route tests, failure handling | Durable workflow engines, multi-agent state coordination, and constrained action planning |
+| Data and semantics engineer | Creates authoritative data products, Metric Views, retrieval indexes, metadata, and lineage | Delta/UC assets, semantic models, AI Search indexes, freshness/data-quality checks | Domain ontology, entity resolution, graph-enhanced retrieval, and data-product contracts |
+| ML and evaluation engineer | Designs model selection, offline/online evaluation, experiments, judge calibration, and monitoring | Evaluation datasets, scorers, model-route policy, experiment reports, drift checks | Causal outcome measurement, counterfactual testing, and automated model/prompt canaries |
+| Security and governance engineer | Defines identity, authorization, data use, model/tool risk controls, and audit requirements | Threat model, access matrix, policy rules, red-team suite, exception workflow | Continuous policy verification, data-loss prevention, and automated access re-certification |
+| Platform and DevOps engineer | Operates deployment, CI/CD, environment isolation, secrets, observability, and incident response | DAB resources, Databricks Apps configs, pipelines, dashboards, alerts, runbooks | Progressive delivery, policy-as-code gates, capacity/cost optimization, and resilience drills |
+| Domain operations lead | Validates workflows, approves decision rules, owns adoption, and closes feedback loops | Acceptance criteria, escalation rules, business KPI dashboard, outcome review | Digital-twin experiments, operating-policy optimization, and managed-autonomy approval |
+| UX and conversation designer | Makes AI behavior comprehensible, efficient, and safe for associates and operators | Interaction flows, disclosure language, recovery states, usability tests | Multimodal assisted intake and role-aware decision workspaces |
+
+#### Databricks Skill Stack by Delivery Stage
+
+| Delivery stage | Essential skills | Advanced skills to add after the foundation is stable |
+| --- | --- | --- |
+| Discover and design | Business process mapping, data discovery, Unity Catalog governance, semantic modeling, risk assessment | Ontology design, value/risk portfolio management, process simulation |
+| Build governed read workflows | Databricks Apps, MLflow Agent Server, OpenAI-compatible APIs, MCP, AI Search, Genie, Pydantic/typed contracts | Hybrid retrieval, reranking, multimodal extraction, dynamic context optimization |
+| Validate and release | Pytest, contract testing, MLflow Evaluation, tracing, DAB, CI/CD, permission automation | Automated adversarial evaluation, shadow traffic, canary analysis, statistical quality gates |
+| Operate and improve | Lifecycle auditing, dashboards, incident response, cost analysis, feedback review | Drift detection, causal measurement, autonomous containment, SLO/error-budget management |
+| Introduce controlled actions | Approval design, idempotent commands, rollback, segregation of duties, postcondition checks | Constraint optimization, transactional outbox, policy decision/enforcement architecture |
+
+#### Pragmatic Team Sequencing
+
+For the first production workflow, staff or explicitly assign these
+accountabilities: domain owner, agent/application engineer, data/semantics
+engineer, platform engineer, and security/governance reviewer. Do not
+delay a read-only, evidence-backed workflow until every advanced skill is
+available. Instead, add advanced competencies when the workflow needs
+them:
+
+1. Add retrieval/semantic specialization when model-only answers cannot
+  meet groundedness or freshness requirements.
+2. Add evaluation engineering before promoting a workflow beyond a
+  limited pilot.
+3. Add reliability and platform specialization before serving a
+  business-critical user population.
+4. Add formal approval, policy, and integration engineering before any
+  system can create, reserve, modify, send, or dispatch an operational
+  record.
+5. Add optimization, causal inference, and digital-twin skills only when
+  measured operational value justifies their data and operating cost.
+
+This project includes practical implementation playbooks for tool
+integration, agent modification, runtime routing, guardrails, OBO
+authorization, observability, local development, and deployment. See
+[AI technologies and patterns](architecture/ai-technologies-and-patterns.md)
+for the current framework/tool inventory and project skill catalog.
 
 ## 12. Conclusion and Recommended Next Step
 
