@@ -28,7 +28,7 @@ Model routing uses one deterministic rule set, evaluating synthesis before reaso
 - src/aiweb/src/api.ts
 - src/aiserver/api/server.py (mounts the built UI in-process; no separate proxy server)
 
-This document is the canonical implementation-fact index for architecture behavior; [API contracts](api-contracts.md), [tool and model registry](tool-and-model-registry.md), and [low-level design](low-level-design.md) remain authoritative for their named concerns.
+This document is the canonical implementation-fact index for architecture behavior; [API contracts](api-contracts.md), [tool and model registry](tool-and-model-registry.md), and [low-level design](runtime-behavior-and-implementation.md) remain authoritative for their named concerns.
 
 ## 2. Tool Routing Specification
 
@@ -207,7 +207,7 @@ Primary implementation:
 
 - [Architecture guide](README.md)
 - [High-level architecture](high-level-architecture.md)
-- [Low-level design](low-level-design.md)
+- [Low-level design](runtime-behavior-and-implementation.md)
 - [Business specifications](../product/business-specs.md)
 - [Operations runbook](../operations/operations-runbook.md)
 - [Architecture decision records](../adrs/README.md)

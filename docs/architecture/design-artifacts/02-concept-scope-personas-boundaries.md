@@ -1,4 +1,4 @@
-# Concept Phase: Detailed Diagrams
+# Concept Scope, Personas, and Boundaries
 
 This document captures detailed concept artifacts that shape implementation boundaries and governance assumptions.
 

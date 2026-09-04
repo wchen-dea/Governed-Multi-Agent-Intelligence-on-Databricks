@@ -53,7 +53,7 @@ flowchart LR
 
 ## Request Lifecycle
 
-Both invoke and stream requests apply input guardrails, identity and policy checks, route and model selection, tool/MCP assembly, orchestration, response guardrails, and audit/trace finalization. See [Low-level design: Request Lifecycle](architecture/low-level-design.md#request-lifecycle) for the complete control sequence and owning modules.
+Both invoke and stream requests apply input guardrails, identity and policy checks, route and model selection, tool/MCP assembly, orchestration, response guardrails, and audit/trace finalization. See [Low-level design: Request Lifecycle](architecture/runtime-behavior-and-implementation.md#request-lifecycle) for the complete control sequence and owning modules.
 
 ## Agent And Tool Inventory
 

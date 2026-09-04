@@ -375,7 +375,7 @@ After deployment, submit a test decision with a non-production request ID, retri
 
 - [API contracts](../architecture/api-contracts.md)
 - [Runtime technical specifications](../architecture/runtime-technical-specs.md)
-- [Low-level design](../architecture/low-level-design.md)
+- [Low-level design](../architecture/runtime-behavior-and-implementation.md)
 - [Prompt and policy controls](prompt-policy-controls.md)
 - [Operations runbook](../operations/operations-runbook.md)
 - [Store intervention subagent configuration](../../src/aiserver/contracts/subagents.dev.json)

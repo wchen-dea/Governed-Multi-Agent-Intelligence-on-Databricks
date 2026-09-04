@@ -1,6 +1,10 @@
 # Script Catalog
 
-Project commands are grouped into runtime core and assistant/operations support. Existing individual commands remain available for compatibility.
+Project commands are grouped into runtime core and assistant/operations support.
+This file is the command-group index and compatibility reference. The
+[operations runbook](operations-runbook.md) owns deployment sequencing and
+recovery, while the [UI deployment guide](ui-deployment-guide.md) owns frontend
+development and packaging details.
 
 ## Runtime Core
 

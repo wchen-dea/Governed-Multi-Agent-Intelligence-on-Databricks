@@ -176,5 +176,5 @@ Constraints: If app exists, bind instead of delete.
 ## Related Docs
 
 - `docs/architecture/high-level-architecture.md`
-- `docs/architecture/low-level-design.md`
+- `docs/architecture/runtime-behavior-and-implementation.md`
 - `docs/operations/operations-runbook.md`

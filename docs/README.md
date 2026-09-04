@@ -21,8 +21,8 @@ This guide separates current implementation authority from operating procedures,
 
 1. **AI executive:** [Architecture guide](architecture/README.md) -> [Product guide](product/README.md) -> [Quality guide](quality/README.md) -> [Operations guide](operations/README.md)
 2. **AI architect:** [Architecture guide](architecture/README.md) -> [Governance guide](governance/README.md) -> [ADR index](adrs/README.md)
-3. **Application engineer:** [API contracts](architecture/api-contracts.md) -> [Low-level design](architecture/low-level-design.md) -> [Tool and model registry](architecture/tool-and-model-registry.md)
-4. **Platform operator:** [Operations guide](operations/README.md) -> [Architecture deployment artifacts](architecture/design-artifacts/05-deployment-high-level.md)
+3. **Application engineer:** [API contracts](architecture/api-contracts.md) -> [Low-level design](architecture/runtime-behavior-and-implementation.md) -> [Tool and model registry](architecture/tool-and-model-registry.md)
+4. **Platform operator:** [Operations guide](operations/README.md) -> [Architecture deployment artifacts](architecture/design-artifacts/05-deployment-topology-and-resources.md)
 5. **Security or governance reviewer:** [Governance guide](governance/README.md) -> [Architecture high-level view](architecture/high-level-architecture.md)
 
 ## Team Onboarding: Skills and Capabilities
@@ -75,8 +75,8 @@ Use this index to navigate project documentation by purpose:
 - [architecture/api-contracts.md](architecture/api-contracts.md): API request/response and error behavior contract.
 - [operations/postmortem-template.md](operations/postmortem-template.md): standard template for incidents and release regressions.
 - [architecture/high-level-architecture.md](architecture/high-level-architecture.md): high-level system architecture, boundaries, and request flow.
-- [architecture/low-level-design.md](architecture/low-level-design.md): low-level implementation details, runtime behavior, and configuration model.
-- [architecture/backend-framework-design.md](architecture/backend-framework-design.md): backend package structure, request pipeline, DI, subagent types, and policy enforcement.
+- [architecture/runtime-behavior-and-implementation.md](architecture/runtime-behavior-and-implementation.md): low-level implementation details, runtime behavior, and configuration model.
+- [architecture/backend-package-structure-and-layers.md](architecture/backend-package-structure-and-layers.md): backend package structure, request pipeline, DI, subagent types, and policy enforcement.
 - [architecture/design-artifacts/README.md](architecture/design-artifacts/README.md): centralized concept, logical, and deployment diagram set.
 - [operations/operations-runbook.md](operations/operations-runbook.md): deployment and operations procedures.
 - [internal/claude.md](internal/claude.md): unified Claude skill summary, usage order, and operating guidelines.
@@ -100,7 +100,7 @@ Use this index to navigate project documentation by purpose:
 14. [operations/mlflow-rollout-checklist.md](operations/mlflow-rollout-checklist.md)
 15. [operations/mlflow-rollout-tracker.md](operations/mlflow-rollout-tracker.md)
 16. [architecture/api-contracts.md](architecture/api-contracts.md)
-17. [architecture/low-level-design.md](architecture/low-level-design.md)
+17. [architecture/runtime-behavior-and-implementation.md](architecture/runtime-behavior-and-implementation.md)
 18. [architecture/design-artifacts/README.md](architecture/design-artifacts/README.md)
 19. [operations/operations-runbook.md](operations/operations-runbook.md)
 20. [operations/postmortem-template.md](operations/postmortem-template.md)

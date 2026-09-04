@@ -1,4 +1,4 @@
-# Logical Phase: High-Level Diagrams
+# Logical Containers and Flows
 
 This document captures high-level logical architecture and end-to-end runtime flows.
 

@@ -16,15 +16,15 @@ Each phase is split into high-level (architecture overview) and detailed (engine
 
 | # | File | Focus |
 | --- | --- | --- |
-| 00 | [00-architecture-board-review.md](00-architecture-board-review.md) | Review index, implementation status, and canonical links |
-| 01 | [01-concept-high-level.md](01-concept-high-level.md) | Business capabilities, actors, system context |
-| 02 | [02-concept-detailed.md](02-concept-detailed.md) | Scope map, persona-agent matrix, trust boundaries |
-| 03 | [03-logical-high-level.md](03-logical-high-level.md) | Container diagram, request flow, identity flow |
-| 04 | [04-logical-detailed.md](04-logical-detailed.md) | Components, policy rules, failure/recovery, evaluation gate |
-| 05 | [05-deployment-high-level.md](05-deployment-high-level.md) | Environment topology, runtime map, resource mapping |
-| 06 | [06-deployment-detailed.md](06-deployment-detailed.md) | Network topology, CI/CD pipeline, observability, HA |
-| 07 | [07-request-execution-flow-class-diagram.md](07-request-execution-flow-class-diagram.md) | UML class diagrams for invoke/stream pipeline stages |
-| 08 | [08-backend-class-diagram-as-is.md](08-backend-class-diagram-as-is.md) | Domain model, DI composition, message bus strategy, subagent registry |
+| 00 | [00-architecture-review-checklist.md](00-architecture-review-checklist.md) | Review index, implementation status, and canonical links |
+| 01 | [01-concept-business-context.md](01-concept-business-context.md) | Business capabilities, actors, and system context |
+| 02 | [02-concept-scope-personas-boundaries.md](02-concept-scope-personas-boundaries.md) | Scope map, persona-agent matrix, trust boundaries |
+| 03 | [03-logical-containers-and-flows.md](03-logical-containers-and-flows.md) | Runtime containers, request flow, and identity flow |
+| 04 | [04-logical-components-policy-evaluation.md](04-logical-components-policy-evaluation.md) | Components, policy rules, failure/recovery, evaluation gate |
+| 05 | [05-deployment-topology-and-resources.md](05-deployment-topology-and-resources.md) | Environment topology, runtime map, and resource mapping |
+| 06 | [06-deployment-network-cicd-observability.md](06-deployment-network-cicd-observability.md) | Network topology, CI/CD pipeline, observability, HA |
+| 07 | [07-runtime-invocation-stream-pipeline.md](07-runtime-invocation-stream-pipeline.md) | Invoke and stream pipeline class diagrams |
+| 08 | [08-runtime-domain-model.md](08-runtime-domain-model.md) | Domain model, dependency composition, message bus, and subagent registry |
 
 ## Coverage Matrix
 
@@ -46,7 +46,7 @@ Each phase is split into high-level (architecture overview) and detailed (engine
 - **Release gate**: auth correctness, safety, and groundedness block promotion; tool-call accuracy is monitored but non-blocking until nested tool spans are scored reliably
 - **Workspace**: dbc-baff2b7f-4402.cloud.databricks.com (dev)
 
-Canonical narrative references: [runtime technical specifications](../runtime-technical-specs.md), [API contracts](../api-contracts.md), [tool and model registry](../tool-and-model-registry.md), and [low-level design](../low-level-design.md).
+Canonical narrative references: [runtime technical specifications](../runtime-technical-specs.md), [API contracts](../api-contracts.md), [tool and model registry](../tool-and-model-registry.md), and [low-level design](../runtime-behavior-and-implementation.md).
 
 ## Ownership and Update Policy
 

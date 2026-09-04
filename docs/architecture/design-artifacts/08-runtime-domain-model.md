@@ -1,4 +1,4 @@
-# Backend Class Diagrams
+# Runtime Domain Model
 
 Multi-view UML class diagrams reflecting current implementation naming and relationships.
 
@@ -452,5 +452,5 @@ The concrete per-environment registry lives in `src/aiserver/contracts/subagents
 
 - All diagrams mirror current implementation naming in `src/aiserver/`.
 - Views are logic-isolated: domain/policy, composition/ports, runtime stages, message bus strategy, subagent registry.
-- Use with `07-request-execution-flow-class-diagram.md` for invoke-vs-stream pipeline emphasis.
+- Use with `07-runtime-invocation-stream-pipeline.md` for invoke-vs-stream pipeline emphasis.
 - The durable delegation and model-routing classes above are the control planes that keep agent expansion bounded, observable, and policy-aware.

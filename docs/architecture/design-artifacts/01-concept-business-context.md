@@ -1,4 +1,4 @@
-# Concept Phase: High-Level Diagrams
+# Concept Business Context
 
 This document captures high-level concept diagrams used to align stakeholders before implementation detail.
 

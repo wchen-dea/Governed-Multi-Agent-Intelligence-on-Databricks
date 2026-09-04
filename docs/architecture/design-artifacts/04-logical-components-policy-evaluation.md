@@ -1,4 +1,4 @@
-# Logical Phase: Detailed Diagrams
+# Logical Components, Policy, and Evaluation
 
 This document captures detailed logical artifacts for engineering implementation and review.
 

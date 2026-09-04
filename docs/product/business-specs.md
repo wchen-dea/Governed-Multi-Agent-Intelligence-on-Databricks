@@ -98,6 +98,6 @@ Out of scope:
 - [Architecture guide](../architecture/README.md)
 - [Runtime technical specifications](../architecture/runtime-technical-specs.md)
 - [High-level architecture](../architecture/high-level-architecture.md)
-- [Low-level design](../architecture/low-level-design.md)
+- [Low-level design](../architecture/runtime-behavior-and-implementation.md)
 - [Operations runbook](../operations/operations-runbook.md)
 - [Architecture decision records](../adrs/README.md)

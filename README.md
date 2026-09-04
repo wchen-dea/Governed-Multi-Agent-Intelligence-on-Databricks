@@ -368,7 +368,7 @@ MCP connect/probe performance controls:
 - [docs/architecture/api-contracts.md](docs/architecture/api-contracts.md): invoke/stream API contract and error semantics.
 - [docs/operations/postmortem-template.md](docs/operations/postmortem-template.md): incident and regression postmortem template.
 - [docs/architecture/high-level-architecture.md](docs/architecture/high-level-architecture.md): high-level architecture and request flow
-- [docs/architecture/low-level-design.md](docs/architecture/low-level-design.md): low-level module design and runtime behavior
+- [docs/architecture/runtime-behavior-and-implementation.md](docs/architecture/runtime-behavior-and-implementation.md): runtime module design and implementation behavior
 - [docs/architecture/design-artifacts/README.md](docs/architecture/design-artifacts/README.md): centralized concept, logical, and deployment design diagrams
 - [docs/operations/operations-runbook.md](docs/operations/operations-runbook.md): deployment, operations, incident handling, rollback
 

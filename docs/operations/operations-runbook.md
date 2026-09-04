@@ -7,7 +7,7 @@ Use it as the execution reference for target-based releases.
 
 ## Scope
 
-This document covers deployment and operations only. High-level system context is in `docs/architecture/high-level-architecture.md`, and implementation details are in `docs/architecture/low-level-design.md`.
+This document covers deployment and operations only. High-level system context is in `docs/architecture/high-level-architecture.md`, and implementation details are in `docs/architecture/runtime-behavior-and-implementation.md`.
 
 ## Current Status
 
@@ -54,6 +54,11 @@ For target values:
 
 ### UC Audit + KPI Gate Release Checklist
 
+Configuration notation follows the target in which it is used: `targets/*.yml`
+uses lowercase `snake_case` keys such as `approval_backend`, while shell
+environment configuration uses uppercase names such as `APPROVAL_BACKEND`.
+The examples below are not interchangeable without converting the key format.
+
 Before promoting to `qa`, `stg`, or `prd`, ensure these placeholders are replaced in the corresponding target file:
 
 - `message_bus_backend: uc_table`
@@ -96,6 +101,12 @@ Final pre-release checks:
 - Confirm the external HITL App name is valid for the target and is not a deleted or unrelated App.
 
 ### Standard Deployment
+
+Use `make redeploy` for the combined release workflow. The steps below are the
+equivalent manual sequence for troubleshooting, partial recovery, or reviewing
+each deployment boundary. See the [command reference](command-reference.md) for
+the canonical command groups and the [UI deployment guide](ui-deployment-guide.md)
+for frontend build and packaging details.
 
 #### 0) Prepare app-source payload (wheel + React UI)
 
@@ -278,7 +289,11 @@ HITL verification checklist:
 6. Verify the row in `APPROVAL_CATALOG.APPROVAL_SCHEMA.APPROVAL_TABLE`.
 7. Confirm rejected and `more_info_requested` decisions remain non-dispatchable.
 
-### Local Operations
+### Local Operations (Backend and Deployment)
+
+These procedures cover backend startup, message buses, persistence, stream
+resilience, and evaluation. For frontend development and browser checks, use
+the [UI deployment guide's local development section](ui-deployment-guide.md#local-development).
 
 #### Local startup
 
@@ -494,7 +509,7 @@ After:
 ## Related Docs
 
 - `docs/architecture/high-level-architecture.md`: high-level architecture
-- `docs/architecture/low-level-design.md`: low-level design
+- `docs/architecture/runtime-behavior-and-implementation.md`: low-level design
 - `docs/internal/claude.md`: Claude skill usage and operator workflow
 
 ## Agent Use Cases (Web UI Verification)

@@ -42,6 +42,33 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+test("shows the beginning of the initial chat content", async ({ page }) => {
+  await page.goto("/");
+  const chatLog = page.locator(".chat-log");
+  await expect(chatLog.getByRole("heading", { name: "Available Agents" })).toBeVisible();
+  await expect
+    .poll(() => chatLog.evaluate((element) => element.scrollTop))
+    .toBe(0);
+});
+
+test("clear resets only the conversation content", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("combobox", { name: "Persona" }).selectOption("executive");
+  await page.getByRole("textbox", { name: "Message" }).fill("Show sales answer");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByText("First answer.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Clear conversation" }).click();
+
+  await expect(page.getByText("First answer.")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Available Agents" })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Persona" })).toHaveValue("executive");
+  await expect(page.getByRole("button", { name: "Insights", exact: true })).toBeEnabled();
+  await expect
+    .poll(() => page.locator(".chat-log").evaluate((element) => element.scrollTop))
+    .toBe(0);
+});
+
 test("renders incremental answer and run context on desktop", async ({
   page,
 }) => {
@@ -77,6 +104,9 @@ test("limits starter tabs and queries to the selected persona", async ({ page })
   await expect(
     page.getByText("What are the top 5 stores by appointment count, and are they also in the top 20 stores by sales?"),
   ).toBeVisible();
+  await expect(
+    page.getByText(/Using the 2025-08-30 to 2026-04-30 time window/),
+  ).toHaveCount(0);
   await page.getByRole("button", { name: "HITL", exact: true }).click();
   await expect(
     page.getByText("Find stores with strong revenue but declining CDI scores"),

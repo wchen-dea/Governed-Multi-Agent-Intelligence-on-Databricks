@@ -79,3 +79,4 @@ docs/_build/
 # Chainlit auto-generated config and runtime files
 .chainlit/
 chainlit.md
+etc/
