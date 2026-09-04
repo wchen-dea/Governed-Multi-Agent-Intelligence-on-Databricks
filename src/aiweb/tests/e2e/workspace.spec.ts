@@ -52,6 +52,22 @@ test("shows the beginning of the initial chat content", async ({ page }) => {
 });
 
 test("clear resets only the conversation content", async ({ page }) => {
+  const conversationIds: string[] = [];
+  await page.route("**/invocations", async (route) => {
+    const request = route.request().postDataJSON() as {
+      context?: { conversation_id?: string };
+    };
+    const conversationId = request.context?.conversation_id;
+    if (conversationId) conversationIds.push(conversationId);
+    await route.fulfill({
+      status: 200,
+      contentType: "text/event-stream",
+      body: sse([
+        { type: "response.output_text.delta", delta: "First answer." },
+        { type: "response.completed", response: {} },
+      ]),
+    });
+  });
   await page.goto("/");
   await page.getByRole("combobox", { name: "Persona" }).selectOption("executive");
   await page.getByRole("textbox", { name: "Message" }).fill("Show sales answer");
@@ -67,6 +83,12 @@ test("clear resets only the conversation content", async ({ page }) => {
   await expect
     .poll(() => page.locator(".chat-log").evaluate((element) => element.scrollTop))
     .toBe(0);
+
+  await page.getByRole("textbox", { name: "Message" }).fill("Show fresh sales answer");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByText("First answer.")).toBeVisible();
+  expect(conversationIds).toHaveLength(2);
+  expect(conversationIds[1]).not.toBe(conversationIds[0]);
 });
 
 test("renders incremental answer and run context on desktop", async ({

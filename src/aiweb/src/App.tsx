@@ -384,7 +384,7 @@ export default function App() {
   });
   const chatLogRef = useRef<HTMLElement>(null);
   const initialMessageIdRef = useRef(messages[0].id);
-  const conversationId = useMemo(() => newId(), []);
+  const [conversationId, setConversationId] = useState(() => newId());
   const activeRequestRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -595,6 +595,7 @@ export default function App() {
     activeRequestRef.current = null;
     const welcomeMessage = createWelcomeMessage(token, persona);
     initialMessageIdRef.current = welcomeMessage.id;
+    setConversationId(newId());
     setMessages([welcomeMessage]);
     setInput("");
     setIsSending(false);
