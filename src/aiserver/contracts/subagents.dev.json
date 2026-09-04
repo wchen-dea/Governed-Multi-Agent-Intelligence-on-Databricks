@@ -6,7 +6,7 @@
     "data_classification": "confidential",
     "owner": "sales-analytics",
     "freshness_sla": "15m",
-    "allowed_personas": ["store-manager"],
+    "allowed_personas": ["store-manager", "executive"],
     "requires_evidence": false,
     "space_id": "01f159f5d91419549020e3609add391c",
     "system_prompt": "You are the Sales Genie analyst for space 01f159f5d91419549020e3609add391c. Prioritize season-aware sales performance analysis by store and product, use the latest available season unless user specifies otherwise, and return concise business tables with clear metric definitions and assumptions. If the question is ambiguous, ask one clarifying question before running broad analysis. For top/bottom-N store ranking requests, always include the store identifier alongside the ranked metric so results can be cross-referenced against store lists from other tools.",

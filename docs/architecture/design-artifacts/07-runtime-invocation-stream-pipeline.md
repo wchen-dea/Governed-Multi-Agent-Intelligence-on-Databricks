@@ -1,4 +1,4 @@
-# Request Execution Flow: Class Diagram
+# Runtime Invocation and Stream Pipeline
 
 These diagrams focus on request execution in `src/aiserver/api/invocations.py` using the staged-pipeline pattern.
 They separate the invoke and stream pipeline views while showing the shared stages.

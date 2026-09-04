@@ -65,6 +65,6 @@ The active tool names, targets, owners, identities, classifications, and freshne
 
 - [Runtime technical specifications](runtime-technical-specs.md): implemented runtime facts and configuration behavior.
 - [Tool and model registry](tool-and-model-registry.md): active tool and model inventory by target.
-- [Low-level design](low-level-design.md): module responsibilities and detailed design patterns.
+- [Low-level design](runtime-behavior-and-implementation.md): module responsibilities and detailed design patterns.
 - [Governance guide](../governance/README.md): policy, security, semantics, and approval controls.
 - [Operations guide](../operations/README.md): deployment, observability, and incident procedures.

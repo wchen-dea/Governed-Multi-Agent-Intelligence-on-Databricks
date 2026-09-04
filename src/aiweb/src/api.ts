@@ -28,6 +28,7 @@ export interface SendChatResult {
 export interface StreamCallbacks {
   onTextDelta?: (delta: string) => void;
   onMetadata?: (metadata: GovernanceMetadata) => void;
+  onRequestController?: (controller: AbortController | null) => void;
 }
 
 function metadataFromEvent(
@@ -165,6 +166,7 @@ export async function sendChat(
   }
 
   const controller = new AbortController();
+  callbacks.onRequestController?.(controller);
   const timeout = setTimeout(
     () => controller.abort(),
     settings.timeoutSeconds * 1000,
@@ -280,5 +282,6 @@ export async function sendChat(
     return { content: fullText, streamedText: true, metadata: latestMetadata };
   } finally {
     clearTimeout(timeout);
+    callbacks.onRequestController?.(null);
   }
 }

@@ -1,4 +1,4 @@
-# Deployment Phase: Detailed Diagrams
+# Deployment Network, CI/CD, and Observability
 
 This document captures detailed deployment and operations diagrams.
 

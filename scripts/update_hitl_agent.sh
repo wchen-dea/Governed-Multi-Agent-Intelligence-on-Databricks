@@ -22,7 +22,7 @@ if [ -n "${HITL_WORKSPACE_PATH:-}" ]; then
     WORKSPACE_PATH="$HITL_WORKSPACE_PATH"
 else
     CURRENT_USER="$(databricks_cli current-user me --output json | jq -r '.userName')"
-    WORKSPACE_PATH="/Workspace/Users/$CURRENT_USER/hitl-app-agent"
+    WORKSPACE_PATH="/Workspace/Users/$CURRENT_USER/store-intervention-agent"
 fi
 
 if [ -n "${HITL_WAREHOUSE_ID:-}" ]; then
@@ -56,57 +56,34 @@ printf "SQL warehouse: %s\n" "$SQL_WAREHOUSE_ID"
 DEPLOY_SOURCE_DIR="$(mktemp -d)"
 trap 'rm -rf "$DEPLOY_SOURCE_DIR"' EXIT HUP INT TERM
 cp -R "$SOURCE_DIR/." "$DEPLOY_SOURCE_DIR/"
-cat > "$DEPLOY_SOURCE_DIR/app.yaml" <<EOF
-command:
-    - uvicorn
-    - app:app
-    - --host
-    - 0.0.0.0
-    - --port
-    - "8000"
-env:
-    - name: HITL_ENV
-        value: "$HITL_ENV"
-    - name: REVENUE_TABLE
-        value: "$REVENUE_TABLE"
-    - name: CDI_TABLE
-        value: "$CDI_TABLE"
-    - name: PEER_SET_TABLE
-        value: "$PEER_SET_TABLE"
-    - name: STORE_DIMENSION_TABLE
-        value: "$STORE_DIMENSION_TABLE"
-    - name: SQL_WAREHOUSE_ID
-        value: "$SQL_WAREHOUSE_ID"
-    - name: TREND_WINDOW_DAYS
-        value: "$TREND_WINDOW_DAYS"
-resources:
-    - name: hitl_sql_warehouse
-        sql_warehouse:
-            sql_warehouse_id: "$SQL_WAREHOUSE_ID"
-            permission: CAN_USE
-    - name: platinum_revenue_source
-        uc_securable:
-            securable_full_name: "$REVENUE_TABLE"
-            securable_type: TABLE
-            permission: SELECT
-    - name: gold_cdi_source
-        uc_securable:
-            securable_full_name: "$CDI_TABLE"
-            securable_type: TABLE
-            permission: SELECT
-    - name: gold_peer_set_source
-        uc_securable:
-            securable_full_name: "$PEER_SET_TABLE"
-            securable_type: TABLE
-            permission: SELECT
-    - name: gold_store_dimension_source
-        uc_securable:
-            securable_full_name: "$STORE_DIMENSION_TABLE"
-            securable_type: TABLE
-            permission: SELECT
-EOF
+{
+    printf '%s\n' \
+        'command:' \
+        '  - uvicorn' \
+        '  - app:app' \
+        '  - --host' \
+        '  - 0.0.0.0' \
+        '  - --port' \
+        '  - "8000"' \
+        '' \
+        'env:' \
+        '  - name: REVENUE_TABLE'
+    printf '    value: "%s"\n' "$REVENUE_TABLE"
+    printf '%s\n' '  - name: CDI_TABLE'
+    printf '    value: "%s"\n' "$CDI_TABLE"
+    printf '%s\n' '  - name: PEER_SET_TABLE'
+    printf '    value: "%s"\n' "$PEER_SET_TABLE"
+    printf '%s\n' '  - name: SQL_WAREHOUSE_ID'
+    printf '    value: "%s"\n' "$SQL_WAREHOUSE_ID"
+    printf '%s\n' '  - name: TREND_WINDOW_DAYS'
+    printf '    value: "%s"\n' "$TREND_WINDOW_DAYS"
+} > "$DEPLOY_SOURCE_DIR/app.yaml"
 
 databricks_cli workspace import-dir "$DEPLOY_SOURCE_DIR" "$WORKSPACE_PATH" --overwrite
+databricks_cli workspace import "$WORKSPACE_PATH/app.yaml" \
+    --file "$DEPLOY_SOURCE_DIR/app.yaml" \
+    --format RAW \
+    --overwrite
 
 APP_EXISTS=false
 BEFORE_SP=""
@@ -121,7 +98,7 @@ else
         --description "HITL specialist that prepares governed store intervention packets"
 fi
 
-databricks_cli apps deploy "$APP_NAME" --source-code-path "$WORKSPACE_PATH"
+databricks_cli apps deploy "$APP_NAME" --source-code-path "$WORKSPACE_PATH" --mode SNAPSHOT
 
 printf "Verifying deployment...\n"
 AFTER_JSON="$(databricks_cli apps get "$APP_NAME" --output json)"

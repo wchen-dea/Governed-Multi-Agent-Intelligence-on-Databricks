@@ -1,4 +1,4 @@
-# Deployment Phase: High-Level Diagrams
+# Deployment Topology and Resources
 
 This document captures high-level deployment architecture across environments.
 

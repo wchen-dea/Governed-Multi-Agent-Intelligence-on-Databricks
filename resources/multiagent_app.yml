@@ -62,6 +62,8 @@ resources:
           value: ${var.chat_app_port}
         - name: CHAT_PROXY_TIMEOUT_SECONDS
           value: ${var.chat_proxy_timeout_seconds}
+        - name: STREAM_EXECUTION_TIMEOUT_SECONDS
+          value: ${var.stream_execution_timeout_seconds}
         - name: SUBAGENTS_CONFIG_PATH
           value: ${var.subagents_config_path}
         - name: DEFAULT_REQUEST_PERSONA

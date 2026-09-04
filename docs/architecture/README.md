@@ -8,10 +8,10 @@ This guide is the entry point for the architecture corpus. It separates authorit
 
 | Reader | Start here | Then use |
 | --- | --- | --- |
-| AI executive | [High-level architecture](high-level-architecture.md) | [Architecture board review](design-artifacts/00-architecture-board-review.md), [evaluation specification](../quality/evaluation-spec.md) |
-| AI architect | [Runtime technical specifications](runtime-technical-specs.md) | [Low-level design](low-level-design.md), [backend framework design](backend-framework-design.md) |
-| Application engineer | [API contracts](api-contracts.md) | [Tool and model registry](tool-and-model-registry.md), [request execution diagram](design-artifacts/07-request-execution-flow-class-diagram.md) |
-| Platform operator | [Operations runbook](../operations/operations-runbook.md) | [Deployment diagrams](design-artifacts/05-deployment-high-level.md), [06 deployment detailed](design-artifacts/06-deployment-detailed.md) |
+| AI executive | [High-level architecture](high-level-architecture.md) | [Implementation review checklist](design-artifacts/00-architecture-review-checklist.md), [evaluation specification](../quality/evaluation-spec.md) |
+| AI architect | [Runtime technical specifications](runtime-technical-specs.md) | [Runtime behavior and implementation](runtime-behavior-and-implementation.md), [backend package structure and layers](backend-package-structure-and-layers.md) |
+| Application engineer | [API contracts](api-contracts.md) | [Tool and model registry](tool-and-model-registry.md), [request execution diagram](design-artifacts/07-runtime-invocation-stream-pipeline.md) |
+| Platform operator | [Operations runbook](../operations/operations-runbook.md) | [Deployment diagrams](design-artifacts/05-deployment-topology-and-resources.md), [06 deployment detailed](design-artifacts/06-deployment-network-cicd-observability.md) |
 
 ## Authority Map
 
@@ -22,9 +22,9 @@ This guide is the entry point for the architecture corpus. It separates authorit
 | [Tool and model registry](tool-and-model-registry.md) | Active dev tools, MCP routes, Lakebase configuration, and model routes |
 | [Semantics layer design](semantics-layer-design.md) | Semantics layer scope, ownership boundaries, and build pipelines for AI Search indexes and Metric Views |
 | [High-level architecture](high-level-architecture.md) | System boundaries, trust model, and end-to-end control planes |
-| [Low-level design](low-level-design.md) | Module responsibilities, request lifecycle, configuration, and implementation patterns |
+| [Runtime behavior and implementation](runtime-behavior-and-implementation.md) | Module responsibilities, request lifecycle, configuration, and implementation patterns |
 | [Human-in-the-loop approval](../governance/human-in-the-loop.md) | Approval states, manager decision API, persistence, and dispatch boundary |
-| [Backend framework design](backend-framework-design.md) | Backend package layout, dependency composition, staged execution, and service responsibilities |
+| [Backend package structure and layers](backend-package-structure-and-layers.md) | Backend package layout, dependency composition, staged execution, and service responsibilities |
 | [Design artifacts](design-artifacts/README.md) | Visual views of the canonical architecture, not independent implementation specifications |
 
 ## Current Control Planes
@@ -37,11 +37,11 @@ This guide is the entry point for the architecture corpus. It separates authorit
 
 ## Visual Reading Order
 
-1. [Architecture board review](design-artifacts/00-architecture-board-review.md)
-2. [Concept high level](design-artifacts/01-concept-high-level.md)
-3. [Logical high level](design-artifacts/03-logical-high-level.md)
-4. [Logical detailed](design-artifacts/04-logical-detailed.md)
-5. [Request execution pipeline](design-artifacts/07-request-execution-flow-class-diagram.md)
-6. [Backend class diagrams](design-artifacts/08-backend-class-diagram-as-is.md)
-7. [Deployment high level](design-artifacts/05-deployment-high-level.md)
-8. [Deployment detailed](design-artifacts/06-deployment-detailed.md)
+1. [Implementation review checklist](design-artifacts/00-architecture-review-checklist.md)
+2. [Concept business context](design-artifacts/01-concept-business-context.md)
+3. [Logical containers and flows](design-artifacts/03-logical-containers-and-flows.md)
+4. [Logical components, policy, and evaluation](design-artifacts/04-logical-components-policy-evaluation.md)
+5. [Runtime invocation and stream pipeline](design-artifacts/07-runtime-invocation-stream-pipeline.md)
+6. [Runtime domain model](design-artifacts/08-runtime-domain-model.md)
+7. [Deployment topology and resources](design-artifacts/05-deployment-topology-and-resources.md)
+8. [Deployment network, CI/CD, and observability](design-artifacts/06-deployment-network-cicd-observability.md)

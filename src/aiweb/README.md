@@ -22,6 +22,12 @@ This folder provides the primary TypeScript and React frontend used by the app r
 
 ## Run Locally
 
+For the complete frontend delivery procedure, including split local development,
+frontend checks, wheel packaging, Databricks Apps deployment, and troubleshooting,
+see [the UI deployment guide](../../docs/operations/ui-deployment-guide.md).
+The operations runbook remains authoritative for app-level deployment,
+permissions, health checks, and recovery.
+
 For the app as a whole, use the project-root commands from the top-level Makefile instead of manually invoking the frontend alone when you want the same build and deploy flow used by the Databricks app automation.
 
 ### Frontend-only local development

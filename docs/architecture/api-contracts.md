@@ -39,9 +39,11 @@ Optional headers:
 
 ## Stream Contract
 
-- The MLflow stream handler normalizes stable item identifiers, buffers execution events, then finalizes source metadata and guardrails before user-visible output.
+- The MLflow stream handler emits non-content `response.progress` events for accepted, prepared, executing, and finalizing stages so long-running governed workflows keep the response body active.
+- The handler normalizes stable item identifiers, buffers execution events, then finalizes source metadata and guardrails before user-visible answer output.
 - Tool output items are retained as metadata events; they are not visible assistant content.
-- The React client renders only `response.output_text.delta` as answer text and uses other events for governance hints.
+- The React client renders only `response.output_text.delta` as answer text and ignores progress events; progress never bypasses final-answer guardrails.
+- `STREAM_EXECUTION_TIMEOUT_SECONDS` bounds the total backend stream lifecycle. On expiry, the handler emits a user-safe timeout response and records `request.stream.failed` with reason `stream_execution_timeout` before the frontend request timeout is reached.
 
 ## Governance Metadata Contract
 

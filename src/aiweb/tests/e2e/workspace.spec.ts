@@ -42,6 +42,33 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+test("shows the beginning of the initial chat content", async ({ page }) => {
+  await page.goto("/");
+  const chatLog = page.locator(".chat-log");
+  await expect(chatLog.getByRole("heading", { name: "Available Agents" })).toBeVisible();
+  await expect
+    .poll(() => chatLog.evaluate((element) => element.scrollTop))
+    .toBe(0);
+});
+
+test("clear resets only the conversation content", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("combobox", { name: "Persona" }).selectOption("executive");
+  await page.getByRole("textbox", { name: "Message" }).fill("Show sales answer");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByText("First answer.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Clear conversation" }).click();
+
+  await expect(page.getByText("First answer.")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Available Agents" })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Persona" })).toHaveValue("executive");
+  await expect(page.getByRole("button", { name: "Insights", exact: true })).toBeEnabled();
+  await expect
+    .poll(() => page.locator(".chat-log").evaluate((element) => element.scrollTop))
+    .toBe(0);
+});
+
 test("renders incremental answer and run context on desktop", async ({
   page,
 }) => {
@@ -49,6 +76,8 @@ test("renders incremental answer and run context on desktop", async ({
   await expect(page.getByRole("button", { name: "Commands" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "DE", exact: true })).toBeVisible();
   await expect(page.getByRole("combobox", { name: "Persona" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "DE", exact: true })).toBeDisabled();
+  await page.getByRole("combobox", { name: "Persona" }).selectOption("de-support");
   await page.getByRole("button", { name: "DE", exact: true }).click();
   await expect(page.getByText("Flink streaming job has increasing consumer lag.")).toBeVisible();
   await page
@@ -58,6 +87,30 @@ test("renders incremental answer and run context on desktop", async ({
   await expect(page.getByText("First answer.")).toBeVisible();
   await page.getByText("Run context").click();
   await expect(page.getByText("App identity", { exact: true })).toBeVisible();
+});
+
+test("limits starter tabs and queries to the selected persona", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Operations", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Insights", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "HITL", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "DE", exact: true })).toBeDisabled();
+
+  await page.getByRole("combobox", { name: "Persona" }).selectOption("executive");
+  await expect(page.getByRole("button", { name: "Insights", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "HITL", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Operations", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "DE", exact: true })).toBeDisabled();
+  await expect(
+    page.getByText("What are the top 5 stores by appointment count, and are they also in the top 20 stores by sales?"),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/Using the 2025-08-30 to 2026-04-30 time window/),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "HITL", exact: true }).click();
+  await expect(
+    page.getByText("Find stores with strong revenue but declining CDI scores"),
+  ).toBeVisible();
 });
 
 test("exposes OBO state and blocked responses", async ({ page }) => {
@@ -80,6 +133,26 @@ test("keeps the workspace usable on mobile", async ({ page }) => {
   await expect(page.locator(".app-shell")).toBeVisible();
   await expect(page.getByRole("textbox", { name: "Message" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Send" })).toBeVisible();
+});
+
+test("cancels an active query without reporting a backend error", async ({ page }) => {
+  await page.unroute("**/invocations");
+  await page.route("**/invocations", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
+    await route.fulfill({
+      status: 200,
+      contentType: "text/event-stream",
+      body: sse([{ type: "response.output_text.delta", delta: "Too late." }]),
+    });
+  });
+
+  await page.goto("/");
+  await page.getByRole("textbox", { name: "Message" }).fill("Long-running request");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByText("Query canceled.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Cancel" })).toHaveCount(0);
 });
 
 test("shows manager actions for a pending HITL response", async ({ page }) => {

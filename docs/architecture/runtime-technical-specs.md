@@ -6,6 +6,7 @@ This document summarizes the technical specifications currently implemented in t
 
 - Layered backend architecture is implemented with API, application, bootstrap, config, domain, and infrastructure layers.
 - Request handling supports both invoke and stream flows through MLflow Agent Server handlers.
+- Streamed requests emit non-content lifecycle progress events while preserving guardrail-gated final answer text; a configurable backend deadline returns a controlled timeout before client/proxy stream expiry.
 - The OpenAI-compatible Responses API is the stable model and tool-call contract for orchestrator and specialist serving-endpoint calls.
 - OpenAI Agents SDK remains the primary synchronous orchestration runtime; durable graph workflows should be introduced only behind explicit workflow boundaries such as approval or long-running delegation.
 - Orchestrator agent is assembled at runtime with available tools and healthy MCP servers.
@@ -27,7 +28,7 @@ Model routing uses one deterministic rule set, evaluating synthesis before reaso
 - src/aiweb/src/api.ts
 - src/aiserver/api/server.py (mounts the built UI in-process; no separate proxy server)
 
-This document is the canonical implementation-fact index for architecture behavior; [API contracts](api-contracts.md), [tool and model registry](tool-and-model-registry.md), and [low-level design](low-level-design.md) remain authoritative for their named concerns.
+This document is the canonical implementation-fact index for architecture behavior; [API contracts](api-contracts.md), [tool and model registry](tool-and-model-registry.md), and [low-level design](runtime-behavior-and-implementation.md) remain authoritative for their named concerns.
 
 ## 2. Tool Routing Specification
 
@@ -206,7 +207,7 @@ Primary implementation:
 
 - [Architecture guide](README.md)
 - [High-level architecture](high-level-architecture.md)
-- [Low-level design](low-level-design.md)
+- [Low-level design](runtime-behavior-and-implementation.md)
 - [Business specifications](../product/business-specs.md)
 - [Operations runbook](../operations/operations-runbook.md)
 - [Architecture decision records](../adrs/README.md)

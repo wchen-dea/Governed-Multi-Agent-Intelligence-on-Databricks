@@ -5,6 +5,7 @@ import logging
 from collections.abc import AsyncGenerator
 from contextlib import AsyncExitStack
 from dataclasses import asdict, dataclass
+from time import monotonic
 from typing import Any, cast
 from uuid import uuid4
 
@@ -271,6 +272,28 @@ def _select_route_tools(
 def _tool_name(tool: Any) -> str:
     """Return a stable display name for an OpenAI function or MCP tool handle."""
     return str(getattr(tool, "name", getattr(tool, "__name__", ""))).strip()
+
+
+def _stream_progress_event(stage: str) -> ResponsesAgentStreamEvent:
+    """Keep the response stream active without releasing unguarded answer text."""
+    return cast(
+        Any,
+        {
+            "type": "response.progress",
+            "stage": stage,
+        },
+    )
+
+
+def _publish_stream_stage(stage: str, started_at: float) -> None:
+    """Publish a timing checkpoint for the streamed request lifecycle."""
+    HANDLER_DEPS.message_bus.publish(
+        "request.stream.stage.completed",
+        {
+            "stage": stage,
+            "elapsed_ms": (monotonic() - started_at) * 1000,
+        },
+    )
 
 
 async def _connect_request_stage(
@@ -1070,82 +1093,122 @@ async def invoke_handler(request: ResponsesAgentRequest) -> ResponsesAgentRespon
 async def stream_handler(
     request: ResponsesAgentRequest,
 ) -> AsyncGenerator[ResponsesAgentStreamEvent, None]:
+    started_at = monotonic()
     HANDLER_DEPS.message_bus.publish(
         "request.stream.started",
         {
             "subagents_total": len(SUBAGENTS),
         },
     )
-    conversation_id = get_session_id(request)
-    _apply_remembered_persona(request, conversation_id)
-    _restore_conversation_memory(request, conversation_id)
-    prepared = _prepare_request_stage(request)
-    persona = _request_persona(request)
+    yield _stream_progress_event("accepted")
 
     try:
-        async with AsyncExitStack() as stack:
-            connected = await _connect_request_stage(stack, prepared)
-            executed = await _execute_stream_stage(connected, prepared.messages)
-            finalized = _finalize_stream_stage(executed, connected)
-            if finalized.guardrail_blocked:
+        async with asyncio.timeout(SETTINGS.stream_execution_timeout_seconds):
+            conversation_id = get_session_id(request)
+            _apply_remembered_persona(request, conversation_id)
+            _restore_conversation_memory(request, conversation_id)
+            prepared = _prepare_request_stage(request)
+            persona = _request_persona(request)
+            _publish_stream_stage("prepared", started_at)
+            yield _stream_progress_event("prepared")
+
+            async with AsyncExitStack() as stack:
+                connected = await _connect_request_stage(stack, prepared)
+                _publish_stream_stage("connected", started_at)
+                yield _stream_progress_event("executing")
+                executed = await _execute_stream_stage(connected, prepared.messages)
+                _publish_stream_stage("executed", started_at)
+                yield _stream_progress_event("finalizing")
+                finalized = _finalize_stream_stage(executed, connected)
+                if finalized.guardrail_blocked:
+                    yield cast(
+                        Any,
+                        {
+                            "type": "response.output_text.delta",
+                            "item_id": "item_guardrail",
+                            "delta": _guardrail_block_message(finalized.guardrail_reasons),
+                        },
+                    )
+                    _publish_openai_run_completed(finalized.envelope)
+                    HANDLER_DEPS.message_bus.publish(
+                        "request.stream.failed",
+                        {
+                            "error_type": "UserError",
+                            "reason": "guardrail",
+                        },
+                    )
+                    return
+
+                for event in finalized.buffered_events:
+                    yield event
                 yield cast(
                     Any,
                     {
-                        "type": "response.output_text.delta",
-                        "item_id": "item_guardrail",
-                        "delta": _guardrail_block_message(finalized.guardrail_reasons),
+                        "type": "response.governance",
+                        "response_envelope": asdict(finalized.envelope),
+                    },
+                )
+                if finalized.source_suffix:
+                    yield cast(
+                        Any,
+                        {
+                            "type": "response.output_text.delta",
+                            "item_id": "item_source",
+                            "delta": finalized.source_suffix,
+                        },
+                    )
+                _persist_memory_turns(
+                    conversation_id,
+                    persona,
+                    question=_extract_user_question(prepared.messages),
+                    answer="".join(executed.streamed_text_parts) + finalized.source_suffix,
+                )
+                HANDLER_DEPS.message_bus.publish(
+                    "request.stream.succeeded",
+                    {
+                        "events_streamed": finalized.event_count,
+                        "unavailable_tools": len(finalized.unavailable),
+                        "unavailable_tool_details": finalized.unavailable,
+                        "response_envelope": asdict(finalized.envelope),
+                        "elapsed_ms": (monotonic() - started_at) * 1000,
                     },
                 )
                 _publish_openai_run_completed(finalized.envelope)
-                HANDLER_DEPS.message_bus.publish(
-                    "request.stream.failed",
-                    {
-                        "error_type": "UserError",
-                        "reason": "guardrail",
-                    },
-                )
-                return
-
-            for event in finalized.buffered_events:
-                yield event
-            yield cast(
-                Any,
-                {
-                    "type": "response.governance",
-                    "response_envelope": asdict(finalized.envelope),
-                },
-            )
-            if finalized.source_suffix:
-                yield cast(
-                    Any,
-                    {
-                        "type": "response.output_text.delta",
-                        "item_id": "item_source",
-                        "delta": finalized.source_suffix,
-                    },
-                )
-            _persist_memory_turns(
-                conversation_id,
-                persona,
-                question=_extract_user_question(prepared.messages),
-                answer="".join(executed.streamed_text_parts) + finalized.source_suffix,
-            )
-            HANDLER_DEPS.message_bus.publish(
-                "request.stream.succeeded",
-                {
-                    "events_streamed": finalized.event_count,
-                    "unavailable_tools": len(finalized.unavailable),
-                    "unavailable_tool_details": finalized.unavailable,
-                    "response_envelope": asdict(finalized.envelope),
-                },
-            )
-            _publish_openai_run_completed(finalized.envelope)
+    except TimeoutError:
+        HANDLER_DEPS.message_bus.publish(
+            "request.stream.failed",
+            {
+                "error_type": "TimeoutError",
+                "reason": "stream_execution_timeout",
+                "elapsed_ms": (monotonic() - started_at) * 1000,
+            },
+        )
+        logger.warning("Stream execution exceeded %.1f seconds", SETTINGS.stream_execution_timeout_seconds)
+        yield cast(
+            Any,
+            {
+                "type": "response.output_text.delta",
+                "item_id": "item_timeout",
+                "delta": "This request took too long to complete. Please retry or narrow the request.",
+            },
+        )
+        return
+    except asyncio.CancelledError:
+        HANDLER_DEPS.message_bus.publish(
+            "request.stream.client_disconnected",
+            {
+                "elapsed_ms": (monotonic() - started_at) * 1000,
+            },
+        )
+        logger.info("Client disconnected during streamed request")
+        raise
     except UserError as e:
         HANDLER_DEPS.message_bus.publish(
             "request.stream.failed",
             {
                 "error_type": type(e).__name__,
                 "reason": "authorization",
+                "elapsed_ms": (monotonic() - started_at) * 1000,
             },
         )
         logger.warning("Authorization error during stream: %s", e)
@@ -1155,6 +1218,7 @@ async def stream_handler(
             "request.stream.failed",
             {
                 "error_type": type(e).__name__,
+                "elapsed_ms": (monotonic() - started_at) * 1000,
             },
         )
         mcp_errors = extract_mcp_errors(e)

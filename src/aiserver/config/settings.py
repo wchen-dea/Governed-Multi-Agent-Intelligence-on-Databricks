@@ -86,6 +86,7 @@ class AppSettings(BaseSettings):
     mcp_health_failure_ttl_seconds: float = Field(10.0, ge=0.0)
     mcp_session_timeout_seconds: float = Field(45.0, gt=0.0)
     orchestrator_instructions_cache_size: int = Field(128, ge=1)
+    stream_execution_timeout_seconds: float = Field(240.0, gt=0.0)
 
 
 @lru_cache(maxsize=1)

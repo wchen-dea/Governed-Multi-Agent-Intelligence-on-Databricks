@@ -25,6 +25,32 @@ function statusLines(token: string | null, persona: string | null): string {
   return `${tokenLine}\n${personaLine}`;
 }
 
+function createWelcomeMessage(
+  token: string | null,
+  persona: string | null,
+): ChatMessage {
+  return {
+    id: newId(),
+    role: "assistant",
+    content:
+      "### Available Agents\n\n" +
+      "| Agent | Type | Description |\n" +
+      "| --- | --- | --- |\n" +
+      "| Sales Insights | Genie | Revenue trends, store performance, seasonal comparisons |\n" +
+      "| CDI Metrics | Genie | Customer Delight Index scores, promoter/detractor analysis |\n" +
+      "| Product Index | AI Search | Product catalog lookups by code, brand, or description |\n" +
+      "| Flink Support | AI Search | Flink troubleshooting, configuration guidance, best practices |\n" +
+      "| Store Intervention | Databricks App | Human-in-the-loop store risk review and intervention planning |\n" +
+      "| Lakebase ODS | Lakebase | Operational data — appointments, orders, invoices, etc. |\n\n" +
+      "### Persona Selection\n\n" +
+      "Select a persona from the dropdown above the chat.\n\n" +
+      "### Session Commands\n\n" +
+      "/token <databricks_access_token>\n" +
+      "/clear-token\n\n" +
+      statusLines(token, persona),
+  };
+}
+
 const THEME_STORAGE_KEY = "chat-ui-theme";
 
 const THEMES = [
@@ -39,9 +65,15 @@ function isThemeValue(value: string | null): value is ThemeValue {
   return THEMES.some((theme) => theme.value === value);
 }
 
-const STARTER_GROUPS = ["Operations", "Insight", "HITL", "DE"] as const;
+const STARTER_GROUPS = ["Operations", "Insights", "HITL", "DE"] as const;
 
 type StarterGroup = (typeof STARTER_GROUPS)[number];
+
+const PERSONA_STARTER_GROUPS: Record<string, readonly StarterGroup[]> = {
+  "store-manager": ["Operations"],
+  executive: ["Insights", "HITL"],
+  "de-support": ["DE"],
+};
 
 const STARTERS: { group: StarterGroup; text: string }[] = [
   {
@@ -65,20 +97,12 @@ const STARTERS: { group: StarterGroup; text: string }[] = [
     text: "What Flink configuration tuning steps should DE support check first when backpressure appears?",
   },
   {
-    group: "Insight",
-    text: "How do CDI promoter and detractor counts compare across stores this month?",
-  },
-  {
-    group: "Insight",
+    group: "Insights",
     text: "What are the top 5 stores by appointment count, and are they also in the top 20 stores by sales?",
   },
   {
-    group: "Insight",
+    group: "Insights",
     text: "Which stores have strong sales performance but below-average CDI scores, where we might be winning on revenue but losing on customer experience?",
-  },
-  {
-    group: "Insight",
-    text: "Using the 2025-08-30 to 2026-04-30 time window, which stores are showing strong sales but below-average CDI scores—where we may be performing well on revenue but falling short on CDI?",
   },
   {
     group: "HITL",
@@ -259,7 +283,7 @@ function ApprovalActions({
         className="approval-actions"
         aria-label="Manager approval status"
       >
-        <div>
+        <div className="approval-status-summary">
           <strong>Manager decision recorded</strong>
           <span>
             Status: {message.approvalState.status}
@@ -346,27 +370,8 @@ function ApprovalActions({
 
 export default function App() {
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: newId(),
-      role: "assistant",
-      content:
-        "### Available Agents\n\n" +
-        "| Agent | Type | Description |\n" +
-        "| --- | --- | --- |\n" +
-        "| Sales Insights | Genie | Revenue trends, store performance, seasonal comparisons |\n" +
-        "| CDI Metrics | Genie | Customer Delight Index scores, promoter/detractor analysis |\n" +
-        "| Product Index | AI Search | Product catalog lookups by code, brand, or description |\n" +
-        "| Flink Support | AI Search | Flink troubleshooting, configuration guidance, best practices |\n" +
-        "| Store Intervention | Databricks App | Human-in-the-loop store risk review and intervention planning |\n" +
-        "| Lakebase ODS | Lakebase | Operational data — appointments, orders, invoices, etc. |\n\n" +
-        "### Persona Selection\n\n" +
-        "Select a persona from the dropdown above the chat.\n\n" +
-        "### Session Commands\n\n" +
-        "/token <databricks_access_token>\n" +
-        "/clear-token\n\n" +
-        statusLines(null, null),
-    },
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [
+    createWelcomeMessage(null, null),
   ]);
   const [token, setToken] = useState<string | null>(null);
   const [persona, setPersona] = useState<string | null>(null);
@@ -378,12 +383,26 @@ export default function App() {
     return isThemeValue(stored) ? stored : "deep-ocean";
   });
   const chatLogRef = useRef<HTMLElement>(null);
+  const initialMessageIdRef = useRef(messages[0].id);
   const conversationId = useMemo(() => newId(), []);
+  const activeRequestRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
+
+  const enabledStarterGroups = useMemo(
+    () => (persona ? (PERSONA_STARTER_GROUPS[persona] ?? []) : []),
+    [persona],
+  );
+
+  useEffect(() => {
+    if (enabledStarterGroups.includes(starterGroup)) {
+      return;
+    }
+    setStarterGroup(enabledStarterGroups[0] ?? "Operations");
+  }, [enabledStarterGroups, starterGroup]);
 
   async function submitMessage(raw: string): Promise<void> {
     const text = raw.trim();
@@ -499,6 +518,9 @@ export default function App() {
               ),
             ),
           onMetadata: update,
+          onRequestController: (controller) => {
+            activeRequestRef.current = controller;
+          },
         },
       );
 
@@ -527,8 +549,11 @@ export default function App() {
         ),
       );
     } catch (error) {
-      const detail =
-        error instanceof Error
+      const cancelled =
+        error instanceof DOMException && error.name === "AbortError";
+      const detail = cancelled
+        ? "Query canceled."
+        : error instanceof Error
           ? error.message
           : "An unexpected error occurred.";
       setMessages((prev) =>
@@ -543,17 +568,36 @@ export default function App() {
         ),
       );
     } finally {
+      activeRequestRef.current = null;
       setIsSending(false);
     }
   }
 
+  function cancelCurrentQuery(): void {
+    activeRequestRef.current?.abort();
+  }
+
   useEffect(() => {
     const log = chatLogRef.current;
-    if (log) log.scrollTop = log.scrollHeight;
+    if (!log) return;
+    if (
+      messages.length === 1 &&
+      messages[0].id === initialMessageIdRef.current
+    ) {
+      log.scrollTop = 0;
+      return;
+    }
+    log.scrollTop = log.scrollHeight;
   }, [messages]);
 
   function clearConversation(): void {
-    setMessages([]);
+    activeRequestRef.current?.abort();
+    activeRequestRef.current = null;
+    const welcomeMessage = createWelcomeMessage(token, persona);
+    initialMessageIdRef.current = welcomeMessage.id;
+    setMessages([welcomeMessage]);
+    setInput("");
+    setIsSending(false);
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
@@ -652,6 +696,7 @@ export default function App() {
               type="button"
               className={starterGroup === group ? "active" : ""}
               onClick={() => setStarterGroup(group)}
+              disabled={!enabledStarterGroups.includes(group)}
             >
               {group}
             </button>
@@ -666,7 +711,9 @@ export default function App() {
                 onClick={() => {
                   void submitMessage(starter.text);
                 }}
-                disabled={isSending}
+                disabled={
+                  isSending || !enabledStarterGroups.includes(starter.group)
+                }
               >
                 {starter.text}
               </button>
@@ -737,6 +784,16 @@ export default function App() {
         >
           {isSending ? "Sending..." : "Send"}
         </button>
+        {isSending ? (
+          <button
+            className="cancel-query"
+            type="button"
+            onClick={cancelCurrentQuery}
+            title="Cancel current query"
+          >
+            Cancel
+          </button>
+        ) : null}
       </form>
     </div>
   );

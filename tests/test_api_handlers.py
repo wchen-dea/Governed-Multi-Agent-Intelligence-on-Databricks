@@ -10,6 +10,7 @@ from aiserver.api.invocations import (
     _guardrail_block_message,
     _guardrail_scope_subagents,
     _select_route_tools,
+    _stream_progress_event,
     _used_subagents_from_payloads,
     _user_error_failure_reason,
 )
@@ -27,6 +28,14 @@ def test_guardrail_block_message_mentions_reason_and_remediation():
 def test_user_error_failure_reason_distinguishes_guardrail_from_authorization():
     assert _user_error_failure_reason(UserError("Response blocked by guardrails")) == "guardrail"
     assert _user_error_failure_reason(UserError("This tool requires user authorization")) == "authorization"
+
+
+def test_stream_progress_event_is_non_content_heartbeat():
+    event = _stream_progress_event("executing")
+
+    assert event["type"] == "response.progress"
+    assert event["stage"] == "executing"
+    assert "delta" not in event
 
 
 def test_approval_state_requires_manager_signoff_for_intervention_agent():

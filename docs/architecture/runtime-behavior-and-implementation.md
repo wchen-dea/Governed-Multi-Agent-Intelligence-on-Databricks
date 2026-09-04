@@ -162,7 +162,7 @@ This document covers low-level design and implementation details. See [high-leve
 
 ## Request Lifecycle
 
-Reference diagram: [request execution pipeline](design-artifacts/07-request-execution-flow-class-diagram.md)
+Reference diagram: [request execution pipeline](design-artifacts/07-runtime-invocation-stream-pipeline.md)
 
 1. UI sends request to the Databricks App endpoint.
 2. MLflow Agent Server receives and dispatches to invoke/stream handler.
@@ -241,6 +241,7 @@ Used by local and hosted startup:
 - `API_PROXY`
 - `CHAT_GREETING`
 - `CHAT_PROXY_TIMEOUT_SECONDS`
+- `STREAM_EXECUTION_TIMEOUT_SECONDS`
 - `DATABRICKS_APP_NAME`
 - `DATABRICKS_APP_PORT`
 - `PORT`
@@ -312,5 +313,5 @@ Direct non-interactive Databricks Apps invocation tests should use:
 - [Runtime technical specifications](runtime-technical-specs.md): centralized technical domain map
 - [High-level architecture](high-level-architecture.md): system boundaries and request flow
 - [Design artifacts](design-artifacts/README.md): concept, logical, deployment, and runtime diagrams
-- [Backend class diagrams](design-artifacts/08-backend-class-diagram-as-is.md): current service composition
+- [Backend class diagrams](design-artifacts/08-runtime-domain-model.md): current service composition
 - [Operations runbook](../operations/operations-runbook.md): deployment and incident handling

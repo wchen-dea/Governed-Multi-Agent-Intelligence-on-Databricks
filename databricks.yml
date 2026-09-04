@@ -71,6 +71,9 @@ variables:
   chat_proxy_timeout_seconds:
     description: CHAT_PROXY_TIMEOUT_SECONDS for the chat app
     default: "300"
+  stream_execution_timeout_seconds:
+    description: Maximum backend stream execution time before a controlled timeout response
+    default: "240"
   subagents_config_path:
     description: Optional runtime path to an alternate subagents JSON config
     default: ""
