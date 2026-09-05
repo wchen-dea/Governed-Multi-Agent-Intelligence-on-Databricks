@@ -193,7 +193,9 @@ test("transcribes speaker input into the message draft", async ({ page }) => {
 
   await page.goto("/");
   await page.getByRole("textbox", { name: "Message" }).fill("Show");
-  await page.getByRole("button", { name: "Transcribe" }).click();
+  await page
+    .getByRole("button", { name: "Transcribe from microphone" })
+    .click();
   await expect(page.getByRole("textbox", { name: "Message" })).toHaveValue(
     "Show What are the top five stores",
   );

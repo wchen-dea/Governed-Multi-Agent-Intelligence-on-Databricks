@@ -687,9 +687,16 @@ body {
 }
 
 .chat-input .transcribe-button {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
   background: #ffffff;
   border: 1px solid #cbd5e1;
   color: #334155;
+  font-size: 1.1rem;
   box-shadow: var(--shadow-sm);
 }
 

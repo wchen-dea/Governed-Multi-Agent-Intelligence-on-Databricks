@@ -867,12 +867,15 @@ export default function App() {
         <button
           className="transcribe-button"
           type="button"
+          aria-label={
+            isTranscribing ? "Listening for speaker input" : "Transcribe from microphone"
+          }
           aria-pressed={isTranscribing}
           disabled={isSending || isTranscribing}
           onClick={startTranscription}
           title="Transcribe from microphone"
         >
-          {isTranscribing ? "Listening..." : "Transcribe"}
+          <span aria-hidden="true">&#127908;</span>
         </button>
         <button
           type="submit"
