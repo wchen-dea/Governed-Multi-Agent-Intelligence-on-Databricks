@@ -157,6 +157,48 @@ test("keeps the workspace usable on mobile", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Send" })).toBeVisible();
 });
 
+test("transcribes speaker input into the message draft", async ({ page }) => {
+  await page.addInitScript(() => {
+    class MockSpeechRecognition {
+      lang = "";
+      interimResults = false;
+      maxAlternatives = 1;
+      onend: (() => void) | null = null;
+      onerror: ((event: { error: string }) => void) | null = null;
+      onresult: ((event: {
+        resultIndex: number;
+        results: ArrayLike<{ 0: { transcript: string } }>;
+      }) => void) | null = null;
+
+      start() {
+        this.onresult?.({
+          resultIndex: 0,
+          results: [{ 0: { transcript: "What are" } }],
+        });
+        this.onresult?.({
+          resultIndex: 0,
+          results: [{ 0: { transcript: "What are the top five stores" } }],
+        });
+        this.onend?.();
+      }
+
+      abort() {}
+    }
+
+    Object.defineProperty(window, "SpeechRecognition", {
+      configurable: true,
+      value: MockSpeechRecognition,
+    });
+  });
+
+  await page.goto("/");
+  await page.getByRole("textbox", { name: "Message" }).fill("Show");
+  await page.getByRole("button", { name: "Transcribe" }).click();
+  await expect(page.getByRole("textbox", { name: "Message" })).toHaveValue(
+    "Show What are the top five stores",
+  );
+});
+
 test("cancels an active query without reporting a backend error", async ({ page }) => {
   await page.unroute("**/invocations");
   await page.route("**/invocations", async (route) => {

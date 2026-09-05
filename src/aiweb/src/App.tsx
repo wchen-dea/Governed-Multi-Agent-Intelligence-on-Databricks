@@ -61,6 +61,28 @@ const THEMES = [
 
 type ThemeValue = (typeof THEMES)[number]["value"];
 
+type SpeechRecognitionResultLike = {
+  0: { transcript: string };
+};
+
+type SpeechRecognitionEventLike = {
+  resultIndex: number;
+  results: ArrayLike<SpeechRecognitionResultLike>;
+};
+
+type SpeechRecognitionLike = {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onend: (() => void) | null;
+  onerror: ((event: { error: string }) => void) | null;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  start: () => void;
+  abort: () => void;
+};
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
+
 function isThemeValue(value: string | null): value is ThemeValue {
   return THEMES.some((theme) => theme.value === value);
 }
@@ -370,6 +392,10 @@ function ApprovalActions({
 
 export default function App() {
   const [input, setInput] = useState("");
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [transcriptionError, setTranscriptionError] = useState<string | null>(
+    null,
+  );
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
     createWelcomeMessage(null, null),
   ]);
@@ -386,11 +412,15 @@ export default function App() {
   const initialMessageIdRef = useRef(messages[0].id);
   const [conversationId, setConversationId] = useState(() => newId());
   const activeRequestRef = useRef<AbortController | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const transcriptionPrefixRef = useRef("");
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
+
+  useEffect(() => () => recognitionRef.current?.abort(), []);
 
   const enabledStarterGroups = useMemo(
     () => (persona ? (PERSONA_STARTER_GROUPS[persona] ?? []) : []),
@@ -403,6 +433,62 @@ export default function App() {
     }
     setStarterGroup(enabledStarterGroups[0] ?? "Operations");
   }, [enabledStarterGroups, starterGroup]);
+
+  function startTranscription(): void {
+    if (isSending || isTranscribing) return;
+
+    const speechWindow = window as typeof window & {
+      SpeechRecognition?: SpeechRecognitionConstructor;
+      webkitSpeechRecognition?: SpeechRecognitionConstructor;
+    };
+    const SpeechRecognition =
+      speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setTranscriptionError(
+        "Voice transcription is not supported by this browser.",
+      );
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+    recognition.lang = navigator.language || "en-US";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map((result) => result[0].transcript.trim())
+        .filter(Boolean)
+        .join(" ");
+      if (transcript) {
+        const prefix = transcriptionPrefixRef.current;
+        setInput(prefix ? `${prefix} ${transcript}` : transcript);
+      }
+    };
+    recognition.onerror = (event) => {
+      setTranscriptionError(
+        event.error === "not-allowed"
+          ? "Microphone access was not allowed."
+          : "Voice transcription failed. Please try again.",
+      );
+    };
+    recognition.onend = () => {
+      recognitionRef.current = null;
+      transcriptionPrefixRef.current = "";
+      setIsTranscribing(false);
+    };
+
+    setTranscriptionError(null);
+    transcriptionPrefixRef.current = input.trim();
+    setIsTranscribing(true);
+    try {
+      recognition.start();
+    } catch {
+      recognitionRef.current = null;
+      setIsTranscribing(false);
+      setTranscriptionError("Voice transcription could not be started.");
+    }
+  }
 
   async function submitMessage(raw: string): Promise<void> {
     const text = raw.trim();
@@ -779,6 +865,16 @@ export default function App() {
           placeholder="Ask a question or run /token commands"
         />
         <button
+          className="transcribe-button"
+          type="button"
+          aria-pressed={isTranscribing}
+          disabled={isSending || isTranscribing}
+          onClick={startTranscription}
+          title="Transcribe from microphone"
+        >
+          {isTranscribing ? "Listening..." : "Transcribe"}
+        </button>
+        <button
           type="submit"
           disabled={isSending || !input.trim()}
           title="Send message"
@@ -794,6 +890,11 @@ export default function App() {
           >
             Cancel
           </button>
+        ) : null}
+        {transcriptionError ? (
+          <span className="transcription-error" role="alert">
+            {transcriptionError}
+          </span>
         ) : null}
       </form>
     </div>
