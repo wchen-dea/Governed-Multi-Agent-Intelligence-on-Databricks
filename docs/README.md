@@ -80,6 +80,7 @@ Use this index to navigate project documentation by purpose:
 - [architecture/design-artifacts/README.md](architecture/design-artifacts/README.md): centralized concept, logical, and deployment diagram set.
 - [operations/operations-runbook.md](operations/operations-runbook.md): deployment and operations procedures.
 - [internal/claude.md](internal/claude.md): unified Claude skill summary, usage order, and operating guidelines.
+- [internal/ai-development-lifecycle-skills.md](internal/ai-development-lifecycle-skills.md): maps Claude Code skills to AI system development life-cycle stages and documents per-stage best practices.
 - [adrs/README.md](adrs/README.md): architecture decision records and long-lived technical decisions.
 
 ## Recommended Read Order

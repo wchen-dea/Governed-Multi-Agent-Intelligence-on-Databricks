@@ -686,6 +686,33 @@ body {
   color: #1e293b;
 }
 
+.chat-input .transcribe-button {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-size: 1.1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.chat-input .transcribe-button:hover:enabled {
+  background: #fff0f3;
+  border-color: #fda4af;
+  color: var(--red-dark);
+}
+
+.transcription-error {
+  flex-basis: 100%;
+  color: #b91c1c;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
 /* Thinking Indicator */
 .thinking {
   color: var(--muted);
