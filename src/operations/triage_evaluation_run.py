@@ -116,7 +116,14 @@ def triage_run(run_id: str | None, experiment_id: str | None) -> dict[str, list[
         return {}
 
     print(f"Triaging traces for run {run_id} ...")
-    traces = mlflow.search_traces(run_id=run_id, return_type="list")
+    trace_location = experiment_id
+    if trace_location is None:
+        trace_location = str(mlflow.get_run(run_id).info.experiment_id)
+    traces = mlflow.search_traces(
+        run_id=run_id,
+        locations=[trace_location],
+        return_type="list",
+    )
     buckets: dict[str, list[dict[str, str]]] = {}
 
     for trace in traces:
