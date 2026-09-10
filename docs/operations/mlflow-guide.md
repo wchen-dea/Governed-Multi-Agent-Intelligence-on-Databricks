@@ -10,7 +10,7 @@ Every request to the app generates an MLflow trace automatically.
 
 `mlflow.openai.autolog()` in [invocations.py](../../src/aiserver/api/invocations.py) captures every `AsyncDatabricksOpenAI` call as a traced span. The `@invoke()` and `@stream()` decorators from `mlflow.genai.agent_server` register the invocation handlers and wrap each request in a trace context.
 
-`set_trace_processors([])` clears the OpenAI Agents SDK's own trace sinks so MLflow is the single tracing backend — no duplicate trace output.
+`set_trace_processors([])` clears the OpenAI Agents SDK's default trace sinks; [invocations.py](../../src/aiserver/api/invocations.py) then registers `deepeval`'s `DeepEvalTracingProcessor` via `add_trace_processor()`. MLflow remains the trace of record — it autologs independently of the Agents SDK's processor list, so the two don't duplicate output. The `deepeval` processor is additive and local-only today (no `CONFIDENT_API_KEY` configured), useful for `deepeval test run`/`deepeval inspect` rather than production observability.
 
 ### What gets captured per request
 

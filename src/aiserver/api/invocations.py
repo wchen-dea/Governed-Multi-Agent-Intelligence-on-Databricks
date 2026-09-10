@@ -12,8 +12,9 @@ from uuid import uuid4
 import mlflow
 from agents import Runner, set_default_openai_api, set_default_openai_client
 from agents.exceptions import UserError
-from agents.tracing import set_trace_processors
+from agents.tracing import add_trace_processor, set_trace_processors
 from databricks_openai import AsyncDatabricksOpenAI
+from deepeval.openai_agents import DeepEvalTracingProcessor
 from mlflow.genai.agent_server import invoke, stream
 from mlflow.types.responses import (
     ResponsesAgentRequest,
@@ -59,6 +60,9 @@ _client = _build_openai_client()
 set_default_openai_client(_client)
 set_default_openai_api("responses")
 set_trace_processors([])
+# Additive to mlflow.openai.autolog(): deepeval hooks the Agents SDK span
+# pipeline directly rather than patching the OpenAI client, so both coexist.
+add_trace_processor(DeepEvalTracingProcessor())
 cast(Any, mlflow).openai.autolog()
 logger = logging.getLogger(__name__)
 if not SUBAGENTS:

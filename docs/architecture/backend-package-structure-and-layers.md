@@ -181,6 +181,7 @@ Both identities are resolved per-request in `RuntimeAuthContext`. Tools and MCP 
 | `databricks-openai` | `AsyncDatabricksOpenAI` client for model serving |
 | `databricks-agents` | Genie/MCP integration, deployment utilities |
 | `mlflow` | Agent Server, tracing, evaluation framework |
+| `deepeval` | Secondary Agents SDK trace processor; local-only unless `CONFIDENT_API_KEY` is set |
 | `fastapi` / `uvicorn` | HTTP server underlying Agent Server |
 | `psycopg2-binary` | Lakebase PostgreSQL connectivity |
 
