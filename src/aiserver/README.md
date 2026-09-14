@@ -102,6 +102,8 @@ General:
 
 - `ORCHESTRATOR_MODEL`: orchestrator model name.
 - `DATABRICKS_OPENAI_BASE_URL`: optional Databricks OpenAI base URL override (for example Unity AI Gateway URL).
+- `DATABRICKS_USE_AI_GATEWAY`: route through Unity AI Gateway V2's MLflow-compatible API; ignored when the base URL override is set.
+- `DATABRICKS_USE_AI_GATEWAY_NATIVE_API`: route through Unity AI Gateway V2's native OpenAI-compatible API; ignored when the base URL override is set.
 - `DATABRICKS_OPENAI_TIMEOUT_SECONDS`: optional Databricks OpenAI timeout in seconds; `0` keeps SDK defaults.
 - `BACKEND_LOG_LEVEL`, `BACKEND_LOG_FORMAT`, `BACKEND_LOG_DATE_FORMAT`.
 

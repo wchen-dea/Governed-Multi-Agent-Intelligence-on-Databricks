@@ -46,6 +46,10 @@ resources:
           value: ${var.mlflow_registry_uri}
         - name: DATABRICKS_OPENAI_BASE_URL
           value: ${var.openai_base_url}
+        - name: DATABRICKS_USE_AI_GATEWAY
+          value: ${var.openai_use_ai_gateway}
+        - name: DATABRICKS_USE_AI_GATEWAY_NATIVE_API
+          value: ${var.openai_use_ai_gateway_native_api}
         - name: DATABRICKS_OPENAI_TIMEOUT_SECONDS
           value: ${var.openai_timeout_seconds}
         - name: MODEL_ROUTING_ENABLED

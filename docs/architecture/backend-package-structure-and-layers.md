@@ -195,6 +195,8 @@ All runtime behavior is driven by environment variables (see [settings.py](../..
 | `MODEL_ROUTING_*` | Deterministic standard, reasoning, and synthesis model routes; dev uses `databricks-gpt-5-6-luna` for standard turns and `databricks-claude-sonnet-5` for reasoning/synthesis turns |
 | `AGENT_TASK_*` | UC delegation task store and bounded worker configuration |
 | `DATABRICKS_OPENAI_BASE_URL` | Optional AI Gateway override URL |
+| `DATABRICKS_USE_AI_GATEWAY` | Route through Unity AI Gateway V2's MLflow-compatible API (ignored when base URL is set) |
+| `DATABRICKS_USE_AI_GATEWAY_NATIVE_API` | Route through Unity AI Gateway V2's native OpenAI-compatible API (ignored when base URL is set) |
 | `DATABRICKS_OPENAI_TIMEOUT_SECONDS` | Client timeout for gateway-routed calls |
 | `MESSAGE_BUS_BACKEND` | Event bus backend selection |
 | `SUBAGENTS_CONFIG_PATH` | Override path to subagent registry JSON |

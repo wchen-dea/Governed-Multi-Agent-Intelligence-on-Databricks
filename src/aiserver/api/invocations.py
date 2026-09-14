@@ -45,12 +45,20 @@ HANDLER_DEPS = get_handler_dependencies()
 def _build_openai_client() -> AsyncDatabricksOpenAI:
     """Build Databricks OpenAI client with optional runtime overrides.
 
-    The defaults keep existing behavior. Operators can opt in to alternate
-    routing (for example Unity AI Gateway) by setting `DATABRICKS_OPENAI_BASE_URL`.
+    Precedence: an explicit `base_url` wins, then native Unity AI Gateway V2
+    routing, then MLflow-compatible AI Gateway routing, else the legacy direct
+    `/serving-endpoints` call. Model name strings (for example
+    `databricks-claude-sonnet-5`) are unchanged across all four modes; the
+    `system.ai.<model>` name is a Unity Catalog governance/lineage identity,
+    not a valid `model` value for chat/responses calls.
     """
     kwargs: dict[str, Any] = {}
     if SETTINGS.openai_base_url.strip():
         kwargs["base_url"] = SETTINGS.openai_base_url.strip()
+    elif SETTINGS.openai_use_ai_gateway_native_api:
+        kwargs["use_ai_gateway_native_api"] = True
+    elif SETTINGS.openai_use_ai_gateway:
+        kwargs["use_ai_gateway"] = True
     if SETTINGS.openai_timeout_seconds > 0:
         kwargs["timeout"] = SETTINGS.openai_timeout_seconds
     return AsyncDatabricksOpenAI(**kwargs)
@@ -363,7 +371,11 @@ async def _connect_request_stage(
         candidate_subagents=tuple(route_plan.candidates),
         selected_tool_names=selected_tool_names,
         unavailable_tool_details=tuple(unavailable),
-        ai_gateway_enabled=bool(SETTINGS.openai_base_url.strip()),
+        ai_gateway_enabled=bool(
+            SETTINGS.openai_base_url.strip()
+            or SETTINGS.openai_use_ai_gateway_native_api
+            or SETTINGS.openai_use_ai_gateway
+        ),
     )
     agent = HANDLER_DEPS.orchestrator_factory(
         model_selection.model,

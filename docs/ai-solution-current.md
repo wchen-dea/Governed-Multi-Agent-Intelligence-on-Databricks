@@ -140,6 +140,8 @@ The orchestrator uses the OpenAI Agents SDK with the Databricks OpenAI-compatibl
 Optional AI Gateway routing is configured with:
 
 - `DATABRICKS_OPENAI_BASE_URL`
+- `DATABRICKS_USE_AI_GATEWAY`
+- `DATABRICKS_USE_AI_GATEWAY_NATIVE_API`
 - `DATABRICKS_OPENAI_TIMEOUT_SECONDS`
 
 ## Governance Metadata And Audit

@@ -116,6 +116,8 @@ class AppSettings {
     +model_routing_reasoning_model: str
     +model_routing_quality_model: str
     +openai_base_url: str
+    +openai_use_ai_gateway: bool
+    +openai_use_ai_gateway_native_api: bool
     +openai_timeout_seconds: float
     +message_bus_backend: str
     +message_bus_topic: str
