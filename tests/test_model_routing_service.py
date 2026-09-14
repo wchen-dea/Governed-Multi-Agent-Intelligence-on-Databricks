@@ -1,5 +1,6 @@
 """Tests for deterministic request model selection."""
 
+from aiserver.application.orchestration import model as model_module
 from aiserver.application.orchestration.model import select_model
 from aiserver.config.settings import AppSettings
 
@@ -8,6 +9,21 @@ def _settings(**overrides: object) -> AppSettings:
     values = AppSettings().__dict__.copy()
     values.update(overrides)
     return AppSettings(**values)
+
+
+def test_standard_route_resolves_uc_model_name(monkeypatch):
+    monkeypatch.setattr(
+        model_module,
+        "resolve_model_name",
+        lambda model: f"resolved:{model}",
+    )
+
+    selection = select_model(
+        "Look up product details for brand code MICH",
+        _settings(model_routing_default_model="catalog.schema.model_routing_default_model"),
+    )
+
+    assert selection.model == "resolved:catalog.schema.model_routing_default_model"
 
 
 def test_standard_product_lookup_uses_default_model():

@@ -17,11 +17,11 @@ env:
 - name: MODEL_ROUTING_ENABLED
   value: 'true'
 - name: MODEL_ROUTING_DEFAULT_MODEL
-  value: quickstart_catalog.multi_agent_schema.model_routing_default_model
+  value: databricks-gpt-5-6-luna
 - name: MODEL_ROUTING_REASONING_MODEL
-  value: quickstart_catalog.multi_agent_schema.model_routing_reasoning_model
+  value: databricks-claude-sonnet-5
 - name: MODEL_ROUTING_QUALITY_MODEL
-  value: quickstart_catalog.multi_agent_schema.model_routing_quality_model
+  value: databricks-claude-sonnet-5
 - name: API_PROXY
   value: http://localhost:8000/invocations
 - name: CHAT_APP_PORT

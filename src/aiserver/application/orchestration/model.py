@@ -4,6 +4,7 @@ import re
 from dataclasses import dataclass
 from typing import Literal
 
+from aiserver.application.orchestration.model_registry import resolve_model_name
 from aiserver.config.settings import AppSettings
 
 TaskType = Literal["default", "standard", "reasoning", "synthesis"]
@@ -104,7 +105,7 @@ def select_model(question: str, settings: AppSettings) -> ModelSelection:
     terms = set(re.findall(r"[a-z0-9_]+", question.lower()))
     if not settings.model_routing_enabled:
         return ModelSelection(
-            settings.orchestrator_model,
+            resolve_model_name(settings.orchestrator_model),
             "default",
             "model_routing_disabled",
             "Use the configured orchestrator model for all requests when deterministic routing is disabled.",
@@ -113,13 +114,13 @@ def select_model(question: str, settings: AppSettings) -> ModelSelection:
         if not terms & rule.terms:
             continue
         return ModelSelection(
-            getattr(settings, rule.setting_name),
+            resolve_model_name(getattr(settings, rule.setting_name)),
             rule.task_type,
             rule.reason,
             rule.rationale,
         )
     return ModelSelection(
-        settings.model_routing_default_model,
+        resolve_model_name(settings.model_routing_default_model),
         "standard",
         "default_task_route",
         STANDARD_MODEL_RATIONALE,
