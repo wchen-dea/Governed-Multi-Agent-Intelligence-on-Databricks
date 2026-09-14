@@ -8,16 +8,20 @@ env:
   value: databricks-uc
 - name: DATABRICKS_OPENAI_BASE_URL
   value: ''
+- name: DATABRICKS_USE_AI_GATEWAY
+  value: 'false'
+- name: DATABRICKS_USE_AI_GATEWAY_NATIVE_API
+  value: 'false'
 - name: DATABRICKS_OPENAI_TIMEOUT_SECONDS
   value: '0'
 - name: MODEL_ROUTING_ENABLED
   value: 'true'
 - name: MODEL_ROUTING_DEFAULT_MODEL
-  value: databricks-gpt-5-6-luna
+  value: quickstart_catalog.multi_agent_schema.model_routing_default_model
 - name: MODEL_ROUTING_REASONING_MODEL
-  value: databricks-gpt-5-6-luna
+  value: quickstart_catalog.multi_agent_schema.model_routing_reasoning_model
 - name: MODEL_ROUTING_QUALITY_MODEL
-  value: databricks-gpt-5-6-luna
+  value: quickstart_catalog.multi_agent_schema.model_routing_quality_model
 - name: API_PROXY
   value: http://localhost:8000/invocations
 - name: CHAT_APP_PORT
