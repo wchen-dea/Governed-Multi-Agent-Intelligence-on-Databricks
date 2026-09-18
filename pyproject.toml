@@ -69,6 +69,7 @@ extend-exclude = [
     # cell-separated imports (# COMMAND ----------), not importable modules.
     "src/semantics",
     "src/evaluation",
+    "src/operations/cleanup_ai_resources.py",
 ]
 
 [tool.ruff.lint]
