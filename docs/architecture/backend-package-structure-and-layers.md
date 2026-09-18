@@ -181,6 +181,7 @@ Both identities are resolved per-request in `RuntimeAuthContext`. Tools and MCP 
 | `databricks-openai` | `AsyncDatabricksOpenAI` client for model serving |
 | `databricks-agents` | Genie/MCP integration, deployment utilities |
 | `mlflow` | Agent Server, tracing, evaluation framework |
+| `deepeval` | Secondary Agents SDK trace processor; local-only unless `CONFIDENT_API_KEY` is set |
 | `fastapi` / `uvicorn` | HTTP server underlying Agent Server |
 | `psycopg2-binary` | Lakebase PostgreSQL connectivity |
 
@@ -194,6 +195,8 @@ All runtime behavior is driven by environment variables (see [settings.py](../..
 | `MODEL_ROUTING_*` | Deterministic standard, reasoning, and synthesis model routes; dev uses `databricks-gpt-5-6-luna` for standard turns and `databricks-claude-sonnet-5` for reasoning/synthesis turns |
 | `AGENT_TASK_*` | UC delegation task store and bounded worker configuration |
 | `DATABRICKS_OPENAI_BASE_URL` | Optional AI Gateway override URL |
+| `DATABRICKS_USE_AI_GATEWAY` | Route through Unity AI Gateway V2's MLflow-compatible API (ignored when base URL is set) |
+| `DATABRICKS_USE_AI_GATEWAY_NATIVE_API` | Route through Unity AI Gateway V2's native OpenAI-compatible API (ignored when base URL is set) |
 | `DATABRICKS_OPENAI_TIMEOUT_SECONDS` | Client timeout for gateway-routed calls |
 | `MESSAGE_BUS_BACKEND` | Event bus backend selection |
 | `SUBAGENTS_CONFIG_PATH` | Override path to subagent registry JSON |

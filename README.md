@@ -298,6 +298,8 @@ This builds versioned wheel and React payloads, clears prior generated remote wh
 - `APPROVAL_TABLE`: approval Delta table name (default `agent_approval_decisions`).
 - `APPROVAL_FAIL_OPEN`: whether approval writes may fail open (default `false`; keep false for production).
 - `DATABRICKS_OPENAI_BASE_URL`: optional Databricks OpenAI base URL override (for example Unity AI Gateway URL).
+- `DATABRICKS_USE_AI_GATEWAY`: route through Unity AI Gateway V2's MLflow-compatible API; ignored when the base URL override is set.
+- `DATABRICKS_USE_AI_GATEWAY_NATIVE_API`: route through Unity AI Gateway V2's native OpenAI-compatible API; ignored when the base URL override is set.
 - `DATABRICKS_OPENAI_TIMEOUT_SECONDS`: optional timeout in seconds for Databricks OpenAI calls (`0` keeps SDK defaults).
 - `MODEL_ROUTING_ENABLED`: enable deterministic task-type model selection (default `true`).
 - `MODEL_ROUTING_DEFAULT_MODEL`: model used for standard lookups and conversational requests.

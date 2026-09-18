@@ -22,6 +22,19 @@ def test_settings_reads_existing_environment_variable_aliases(monkeypatch):
         get_settings.cache_clear()
 
 
+def test_settings_reads_ai_gateway_routing_flags(monkeypatch):
+    monkeypatch.setenv("DATABRICKS_USE_AI_GATEWAY", "true")
+    monkeypatch.setenv("DATABRICKS_USE_AI_GATEWAY_NATIVE_API", "true")
+    get_settings.cache_clear()
+
+    try:
+        settings = get_settings()
+        assert settings.openai_use_ai_gateway is True
+        assert settings.openai_use_ai_gateway_native_api is True
+    finally:
+        get_settings.cache_clear()
+
+
 def test_settings_uses_orchestrator_model_as_default_route_fallback(monkeypatch):
     monkeypatch.setenv("ORCHESTRATOR_MODEL", "custom-orchestrator")
     monkeypatch.delenv("MODEL_ROUTING_DEFAULT_MODEL", raising=False)

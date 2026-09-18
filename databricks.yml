@@ -47,6 +47,12 @@ variables:
   openai_base_url:
     description: Optional base URL override for Databricks OpenAI calls (for example Unity AI Gateway URL)
     default: ""
+  openai_use_ai_gateway:
+    description: Route Databricks OpenAI calls through Unity AI Gateway V2's MLflow-compatible API (ignored when openai_base_url is set)
+    default: "false"
+  openai_use_ai_gateway_native_api:
+    description: Route Databricks OpenAI calls through Unity AI Gateway V2's native OpenAI-compatible API (ignored when openai_base_url is set)
+    default: "false"
   openai_timeout_seconds:
     description: Optional timeout in seconds for Databricks OpenAI calls; 0 keeps SDK defaults
     default: "0"

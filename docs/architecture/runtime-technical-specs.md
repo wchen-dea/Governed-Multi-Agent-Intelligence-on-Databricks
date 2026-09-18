@@ -163,7 +163,7 @@ Manager approval is a separate, non-dispatch control boundary. The runtime persi
 
 - Deployment is target-based with dev, qa, stg, and prd overlays.
 - Shared resource configuration is centralized and target overrides are explicit.
-- AI Gateway is the preferred production control point for OpenAI-compatible traffic. Set `DATABRICKS_OPENAI_BASE_URL` and `DATABRICKS_OPENAI_TIMEOUT_SECONDS` to route Databricks OpenAI client calls through the gateway without changing application code.
+- AI Gateway is the preferred production control point for OpenAI-compatible traffic. Set `DATABRICKS_OPENAI_BASE_URL` for an explicit gateway URL, or `DATABRICKS_USE_AI_GATEWAY_NATIVE_API`/`DATABRICKS_USE_AI_GATEWAY` to auto-detect Unity AI Gateway V2, plus `DATABRICKS_OPENAI_TIMEOUT_SECONDS` — all without changing application code or model name strings.
 - Environment variables configure runtime behavior for auth, bus backends, UC audit sink, and release gates.
 - Environment variables configure the approval backend and its UC Delta table.
 - Process concurrency tuning is supported through a backend Uvicorn worker env control (`BACKEND_UVICORN_WORKERS`).

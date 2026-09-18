@@ -6,8 +6,9 @@ This script performs these actions:
 3) Checks underlying resource existence (Genie Agents, UC catalog/schema, AI Search,
    serving endpoints, SQL warehouse).
 4) Grants required permissions to the app service principal:
-   - Unity Catalog: SELECT ON ALL TABLES (catalog/schema USE grants are
-     provisioned outside this pipeline)
+   - Unity Catalog: SELECT ON ALL TABLES, EXECUTE ON SCHEMA (needed to read UC
+     registered models, e.g. model-routing pointers) (catalog/schema USE
+     grants are provisioned outside this pipeline)
     - Genie Agents: CAN_RUN
     - AI Search endpoints: CAN_USE
    - Serving endpoints: CAN_QUERY
@@ -521,12 +522,15 @@ class PermissionManager:
         # Catalog/schema `USE CATALOG`/`USE SCHEMA` access is provisioned outside
         # this app's deploy pipeline and is not granted here.
         # Unity Catalog has no "ALL TABLES IN SCHEMA" clause; schema-level SELECT/MODIFY
-        # grants are inherited by all tables within the schema.
+        # grants are inherited by all tables within the schema. Likewise, EXECUTE ON
+        # SCHEMA is inherited by all UC registered models/functions within the schema;
+        # `GRANT EXECUTE ON MODEL <full_name>` is not valid grant syntax here.
         principal = sp_client_id.replace("`", "")
         statements = [
             f"GRANT CREATE TABLE ON SCHEMA `{catalog}`.`{schema}` TO `{principal}`",
             f"GRANT SELECT ON SCHEMA `{catalog}`.`{schema}` TO `{principal}`",
             f"GRANT MODIFY ON SCHEMA `{catalog}`.`{schema}` TO `{principal}`",
+            f"GRANT EXECUTE ON SCHEMA `{catalog}`.`{schema}` TO `{principal}`",
         ]
         for stmt in statements:
             ok = self._execute_sql_grant(warehouse_id, stmt)

@@ -20,6 +20,10 @@ class AppSettings(BaseSettings):
     model_routing_reasoning_model: str = "databricks-claude-sonnet-5"
     model_routing_quality_model: str = "databricks-claude-sonnet-5"
     openai_base_url: str = Field("", validation_alias="DATABRICKS_OPENAI_BASE_URL")
+    openai_use_ai_gateway: bool = Field(False, validation_alias="DATABRICKS_USE_AI_GATEWAY")
+    openai_use_ai_gateway_native_api: bool = Field(
+        False, validation_alias="DATABRICKS_USE_AI_GATEWAY_NATIVE_API"
+    )
     openai_timeout_seconds: float = Field(
         0.0, ge=0.0, validation_alias="DATABRICKS_OPENAI_TIMEOUT_SECONDS"
     )

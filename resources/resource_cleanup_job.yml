@@ -1,0 +1,14 @@
+resources:
+  jobs:
+    multiagent_resource_cleanup:
+      name: multiagent_resource_cleanup
+      tags:
+        purpose: resource-cleanup
+      tasks:
+      - task_key: cleanup_resources
+        notebook_task:
+          notebook_path: ../src/operations/cleanup_ai_resources.py
+          base_parameters:
+            genie_space_ids: "${var.genie_space_id},${var.store_manager_genie_space_id},${var.executive_genie_space_id},${var.supply_chain_genie_space_id},${var.cdi_genie_space_id}"
+            vector_search_endpoints: "${var.product_index_ep},${var.flink_support_ep}"
+            dry_run: "true"

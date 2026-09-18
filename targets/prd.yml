@@ -17,6 +17,8 @@ targets:
       hitl_store_dimension_table: "dt_prd_gold.dwh.dim_store_active"
       hitl_trend_window_days: "90"
       openai_base_url: ""
+      openai_use_ai_gateway: "false"
+      openai_use_ai_gateway_native_api: "false"
       openai_timeout_seconds: "0"
       model_routing_enabled: "true"
       model_routing_default_model: databricks-gpt-5-6-luna

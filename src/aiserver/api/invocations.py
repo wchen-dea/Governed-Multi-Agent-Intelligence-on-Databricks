@@ -12,8 +12,9 @@ from uuid import uuid4
 import mlflow
 from agents import Runner, set_default_openai_api, set_default_openai_client
 from agents.exceptions import UserError
-from agents.tracing import set_trace_processors
+from agents.tracing import add_trace_processor, set_trace_processors
 from databricks_openai import AsyncDatabricksOpenAI
+from deepeval.openai_agents import DeepEvalTracingProcessor
 from mlflow.genai.agent_server import invoke, stream
 from mlflow.types.responses import (
     ResponsesAgentRequest,
@@ -44,12 +45,20 @@ HANDLER_DEPS = get_handler_dependencies()
 def _build_openai_client() -> AsyncDatabricksOpenAI:
     """Build Databricks OpenAI client with optional runtime overrides.
 
-    The defaults keep existing behavior. Operators can opt in to alternate
-    routing (for example Unity AI Gateway) by setting `DATABRICKS_OPENAI_BASE_URL`.
+    Precedence: an explicit `base_url` wins, then native Unity AI Gateway V2
+    routing, then MLflow-compatible AI Gateway routing, else the legacy direct
+    `/serving-endpoints` call. Model name strings (for example
+    `databricks-claude-sonnet-5`) are unchanged across all four modes; the
+    `system.ai.<model>` name is a Unity Catalog governance/lineage identity,
+    not a valid `model` value for chat/responses calls.
     """
     kwargs: dict[str, Any] = {}
     if SETTINGS.openai_base_url.strip():
         kwargs["base_url"] = SETTINGS.openai_base_url.strip()
+    elif SETTINGS.openai_use_ai_gateway_native_api:
+        kwargs["use_ai_gateway_native_api"] = True
+    elif SETTINGS.openai_use_ai_gateway:
+        kwargs["use_ai_gateway"] = True
     if SETTINGS.openai_timeout_seconds > 0:
         kwargs["timeout"] = SETTINGS.openai_timeout_seconds
     return AsyncDatabricksOpenAI(**kwargs)
@@ -59,6 +68,9 @@ _client = _build_openai_client()
 set_default_openai_client(_client)
 set_default_openai_api("responses")
 set_trace_processors([])
+# Additive to mlflow.openai.autolog(): deepeval hooks the Agents SDK span
+# pipeline directly rather than patching the OpenAI client, so both coexist.
+add_trace_processor(DeepEvalTracingProcessor())
 cast(Any, mlflow).openai.autolog()
 logger = logging.getLogger(__name__)
 if not SUBAGENTS:
@@ -359,7 +371,11 @@ async def _connect_request_stage(
         candidate_subagents=tuple(route_plan.candidates),
         selected_tool_names=selected_tool_names,
         unavailable_tool_details=tuple(unavailable),
-        ai_gateway_enabled=bool(SETTINGS.openai_base_url.strip()),
+        ai_gateway_enabled=bool(
+            SETTINGS.openai_base_url.strip()
+            or SETTINGS.openai_use_ai_gateway_native_api
+            or SETTINGS.openai_use_ai_gateway
+        ),
     )
     agent = HANDLER_DEPS.orchestrator_factory(
         model_selection.model,

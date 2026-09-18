@@ -23,6 +23,7 @@ dependencies = [
     "httpx2>=2.12.0",
     "pydantic>=2.13,<3",
     "pydantic-settings>=2.0,<3",
+    "deepeval>=4.2.2",
 ]
 
 [build-system]
@@ -68,6 +69,7 @@ extend-exclude = [
     # cell-separated imports (# COMMAND ----------), not importable modules.
     "src/semantics",
     "src/evaluation",
+    "src/operations/cleanup_ai_resources.py",
 ]
 
 [tool.ruff.lint]
