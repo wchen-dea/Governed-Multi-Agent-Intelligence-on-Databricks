@@ -14,7 +14,7 @@ artifacts:
     # Deploy tooling (for example the VS Code Databricks extension) may run this
     # build command outside a login shell, where ~/.local/bin (uv's default
     # install location) is not yet on PATH.
-    build: PATH="$HOME/.local/bin:$PATH" uv build --wheel
+    build: rm -f dist/*.whl && PATH="$HOME/.local/bin:$PATH" uv build --wheel
 variables:
   app_name:
     description: Databricks app name for the current environment
@@ -110,6 +110,9 @@ variables:
   cdi_genie_space_id:
     description: CDI Genie Agent space ID for the current environment
     default: ""
+  genie_source_tables:
+    description: Comma-separated Unity Catalog tables and metric views queried by the target Genie Agents
+    default: ""
   knowledge_assistant_endpoint_name:
     description: Knowledge assistant serving endpoint name for the current environment
     default: ""
@@ -121,7 +124,7 @@ variables:
     default: "product_index_ep"
   flink_support_ep:
     description: Vector Search endpoint name for the Flink support RAG index
-    default: "flink-support-ed"
+    default: "flink_support_ep"
   semantics_catalog:
     description: Unity Catalog catalog for semantics-layer tables, indexes, and metric views
     default: quickstart_catalog
@@ -247,7 +250,7 @@ variables:
     default: quickstart_catalog.multi_agent_schema.app_traces
   eval_judge_model:
     description: Model URI used by MLflow built-in LLM judge scorers
-    default: databricks:/databricks-claude-sonnet-5
+    default: databricks:/databricks-gpt-5-6-luna
   eval_simulator_user_model:
     description: Model URI used by ConversationSimulator to generate simulated user turns
-    default: databricks:/databricks-claude-sonnet-5
+    default: databricks:/databricks-gpt-5-6-luna

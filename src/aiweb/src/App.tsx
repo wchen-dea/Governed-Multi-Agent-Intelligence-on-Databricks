@@ -100,35 +100,35 @@ const PERSONA_STARTER_GROUPS: Record<string, readonly StarterGroup[]> = {
 const STARTERS: { group: StarterGroup; text: string }[] = [
   {
     group: "Operations",
-    text: "What are the top 5 stores by revenue for the current season?",
+    text: "Using the latest available season, which stores had the highest total net_sales in the last 30 days? Include Store Code and total net sales.",
   },
   {
     group: "Operations",
-    text: "Look up product details for brand code 'MICH' and list matching article types.",
+    text: "Look up product_code '000000000000183662' and return product_description, brand_code, and article_type.",
   },
   {
     group: "Operations",
-    text: "List today's open appointments and their current order status.",
+    text: "List the latest open appointments and include the current status of each linked order.",
   },
   {
     group: "DE",
-    text: "Flink streaming job has increasing consumer lag. What are the common causes and how do we fix it?",
+    text: "From the support knowledge base, what are the common causes of increasing consumer lag in Amazon Managed Service for Apache Flink, and how should we troubleshoot them?",
   },
   {
     group: "DE",
-    text: "What Flink configuration tuning steps should DE support check first when backpressure appears?",
+    text: "Using the ORE platform and pipeline support articles, what Flink configuration checks should DE support perform first when backpressure appears?",
   },
   {
     group: "Insights",
-    text: "What are the top 5 stores by appointment count, and are they also in the top 20 stores by sales?",
+    text: "Which stores are in the top quartile for net_sales but have a negative 30-day Overall Delight NPS trend? Include Store Code, sales trend, CDI trend, and the rolling promoter, detractor, and response counts.",
   },
   {
     group: "Insights",
-    text: "Which stores have strong sales performance but below-average CDI scores, where we might be winning on revenue but losing on customer experience?",
+    text: "Compare the latest rolling CDI NPS with total net_sales by Store Code. Which high-revenue stores have below-average customer delight, and what are their promoter, detractor, and response counts?",
   },
   {
     group: "HITL",
-    text: "Find stores with strong revenue but declining CDI scores, compare each store with its peers and recent trend, prepare an evidence-backed customer-experience intervention packet, and pause for manager approval before any operational dispatch.",
+    text: "Find stores in the top quartile for net_sales with a declining Overall Delight NPS over the last 30 days, compare each store with its cluster peers, and prepare an evidence-backed intervention packet using the revenue, CDI, peer membership, and active store dimension sources. Pause for manager approval; do not dispatch anything.",
   },
 ];
 

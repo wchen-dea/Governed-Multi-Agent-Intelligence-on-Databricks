@@ -27,7 +27,7 @@ resources:
         run_if: ALL_DONE
         environment_key: evaluation_env
         python_wheel_task:
-          package_name: multiagent_app_on_databricks
+          package_name: multiagent
           entry_point: assistant-triage-evaluation
           parameters:
           - "--experiment-id"
@@ -37,4 +37,4 @@ resources:
         spec:
           environment_version: "2"
           dependencies:
-          - ../dist/*.whl
+          - ../dist/multiagent-*.whl

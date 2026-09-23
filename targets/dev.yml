@@ -34,6 +34,7 @@ targets:
       executive_genie_space_id: ""
       supply_chain_genie_space_id: ""
       cdi_genie_space_id: "01f1b796045f1ff1b5f193a8e0694b41"
+      genie_source_tables: "dt_prod_platinum.sales.sales_performance,dt_prod_platinum.customer_delight_index.cdi_performance,dt_prod_platinum.customer_delight_index.cdi_metrics"
       knowledge_assistant_endpoint_name: ""
       product_index_ep: "product_index_ep"
       flink_support_ep: "flink_support_ep"

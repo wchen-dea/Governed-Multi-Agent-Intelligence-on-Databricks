@@ -19,7 +19,7 @@ dbutils.widgets.text(
 )
 dbutils.widgets.text("source_table", "dim_product", "Curated source table for the index")
 dbutils.widgets.text("index_name", "gmai_product_search_index", "Vector Search index name")
-dbutils.widgets.text("endpoint_name", "gmai_product_search_index_ep", "Vector Search endpoint name")
+dbutils.widgets.text("endpoint_name", "product_index_ep", "Vector Search endpoint name")
 dbutils.widgets.text("embedding_model", "databricks-gte-large-en", "Embedding model endpoint")
 
 catalog = dbutils.widgets.get("catalog")

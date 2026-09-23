@@ -538,6 +538,48 @@ class PermissionManager:
             if not ok:
                 self._warn_or_fail(f"Failed UC SQL grant: {stmt}")
 
+    def _grant_genie_source_permissions(
+        self,
+        source_tables: str | None,
+        warehouse_id_or_name: str | None,
+        sp_client_id: str,
+    ) -> None:
+        """Grant least-privilege UC access to source objects used by Genie Agents."""
+        if not source_tables or not source_tables.strip():
+            print("INFO: No Genie source tables configured for target.")
+            return
+        if not warehouse_id_or_name or _is_placeholder(warehouse_id_or_name):
+            self._warn_or_fail("Cannot grant Genie source access without a valid warehouse id.")
+            return
+
+        warehouse_id = self._resolve_warehouse_id(warehouse_id_or_name)
+        if not warehouse_id:
+            self._warn_or_fail(f"SQL warehouse not found or inaccessible: {warehouse_id_or_name}")
+            return
+
+        principal = sp_client_id.replace("`", "")
+        statements: list[str] = []
+        for raw_name in source_tables.split(","):
+            full_name = raw_name.strip()
+            parts = full_name.split(".")
+            if len(parts) != 3 or any(not part for part in parts):
+                self._warn_or_fail(f"Ignoring invalid Genie source object: {full_name}")
+                continue
+            catalog, schema, _ = parts
+            statements.extend(
+                [
+                    f"GRANT USE CATALOG ON CATALOG `{catalog}` TO `{principal}`",
+                    f"GRANT USE SCHEMA ON SCHEMA `{catalog}`.`{schema}` TO `{principal}`",
+                    f"GRANT SELECT ON TABLE `{catalog}`.`{schema}`.`{parts[2]}` TO `{principal}`",
+                ]
+            )
+
+        for statement in dict.fromkeys(statements):
+            ok = self._execute_sql_grant(warehouse_id, statement)
+            print(f"GENIE SOURCE GRANT: {'OK' if ok else 'FAILED'} -> {statement}")
+            if not ok:
+                self._warn_or_fail(f"Failed Genie source grant: {statement}")
+
     def _grant_warehouse_can_use(self, warehouse_id: str, sp_client_id: str) -> None:
         ok = self._update_permissions("warehouses", warehouse_id, "CAN_USE", sp_client_id)
         print(f"WAREHOUSE PERMISSION: {'OK' if ok else 'FAILED'} -> {warehouse_id} CAN_USE")
@@ -803,6 +845,11 @@ class PermissionManager:
         validated_ai_search = self._check_ai_search_uc_securables(ai_search_indexes)
 
         self._grant_genie_can_run(genie_space_ids, sp_client_id)
+        self._grant_genie_source_permissions(
+            str(target_vars.get("genie_source_tables") or ""),
+            str(warehouse_id) if isinstance(warehouse_id, str) else None,
+            sp_client_id,
+        )
         self._grant_serving_can_query(serving_endpoints, sp_client_id)
         self._grant_ai_search_can_use(ai_search_endpoints, sp_client_id)
         self._grant_ai_search_uc_permissions(validated_ai_search, sp_client_id)
