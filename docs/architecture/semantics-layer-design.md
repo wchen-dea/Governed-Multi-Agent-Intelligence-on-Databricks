@@ -73,8 +73,8 @@ Consequence: this repository's semantics-layer responsibility is limited to **AI
 - Pipeline: a Databricks notebook per index ensures/curates the source Delta table, then creates or refreshes a Vector Search `DELTA_SYNC` index with Databricks-managed embeddings.
 - Consumption: the orchestrator queries the index through the managed MCP route (`/api/2.0/mcp/vector-search/...` or `/api/2.0/mcp/ai-search/...`), not through this repo's own retrieval code.
 - Current indexes:
-  - `quickstart_catalog.multi_agent_schema.dim_product_search_index` — product catalog search (`product_index_assistant` MCP tool).
-  - `quickstart_catalog.multi_agent_schema.flink_support_index` — support knowledge base RAG (`flink_support_agent` MCP tool).
+  - `quickstart_catalog.multi_agent_schema.gmai_product_search_index` — product catalog search (`product_index_assistant` MCP tool).
+  - `quickstart_catalog.multi_agent_schema.gmai_flink_support_index` — support knowledge base RAG (`flink_support_agent` MCP tool).
 
 ### 2. Unity Catalog Metric Views (built by this project)
 

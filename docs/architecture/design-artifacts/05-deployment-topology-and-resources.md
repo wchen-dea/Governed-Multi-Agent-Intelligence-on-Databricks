@@ -51,8 +51,8 @@ flowchart TB
     end
 
     subgraph AISearchMCP
-        S3[product_index_assistant — dim_product_search_index]
-        S4[flink_support_agent — flink_support_index]
+        S3[product_index_assistant — gmai_product_search_index]
+        S4[flink_support_agent — gmai_flink_support_index]
     end
 
     subgraph Lakebase

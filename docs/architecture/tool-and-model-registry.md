@@ -42,8 +42,8 @@ The configuration files declare available subagent capabilities; they do not con
 - Notebooks: `src/semantics/` (see [src/semantics/README.md](../../src/semantics/README.md))
 - Design and ownership boundaries: [Semantics layer design](semantics-layer-design.md) — this project builds AI Search indexes and Metric Views only; Genie Agent spaces and the Lakebase project are owned by other projects.
 - Jobs: `resources/semantics_jobs.yml` (one Databricks Job per notebook, run on demand or scheduled per target)
-- `create_dim_product_search_index.py` curates `dim_product` and builds/refreshes the `dim_product_search_index` Vector Search index.
-- `create_flink_support_index.py` extracts the support KB volume into `flink_support_kb` and builds/refreshes the `flink_support_index` Vector Search index.
+- `create_gmai_product_search_index.py` curates `dim_product` and builds/refreshes the `gmai_product_search_index` Vector Search index.
+- `create_gmai_flink_support_index.py` extracts the support KB volume into `flink_support_kb` and builds/refreshes the `gmai_flink_support_index` Vector Search index.
 - `create_fct_cdi_trusted_expert_score_metric_view.py` publishes the `fct_cdi_trusted_expert_score_metric_view` Unity Catalog Semantic Metric View from `dt_prod_gold.dwh_dbx.fct_cdi` and its `cdi_daily`/`total_time_score`/`trusted_expert_score` joins.
 
 ## Active Genie Agents (Dev)
@@ -70,7 +70,7 @@ Typical source pattern for Genie Agents:
 
 - Type: mcp
 - Runtime name: `product_index_assistant`
-- MCP URL: `/api/2.0/mcp/vector-search/quickstart_catalog/multi_agent_schema/dim_product_search_index`
+- MCP URL: `/api/2.0/mcp/vector-search/quickstart_catalog/multi_agent_schema/gmai_product_search_index`
 - Backing AI Search endpoint: `product_index_ep`
 - Auth mode: app
 - Classification: internal
@@ -81,7 +81,7 @@ Typical source pattern for Genie Agents:
 
 - Type: mcp
 - Runtime name: `flink_support_agent`
-- MCP URL: `/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/flink_support_index`
+- MCP URL: `/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/gmai_flink_support_index`
 - Source: RAG over `/Volumes/quickstart_catalog/multi_agent_schema/support_kb`
 - Auth mode: app
 - Classification: internal

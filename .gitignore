@@ -80,3 +80,4 @@ docs/_build/
 .chainlit/
 chainlit.md
 etc/
+.github/

@@ -181,8 +181,8 @@ flowchart TD
     W[Optional Bounded Lifespan Worker] -->|claim and process durable tasks| DT
 
     G --> M[MCP Genie Space sales]
-    K --> R1[Vector Search dim_product_search_index]
-    F --> R3[Vector Search flink_support_index]
+    K --> R1[Vector Search gmai_product_search_index]
+    F --> R3[Vector Search gmai_flink_support_index]
     CDI --> M2[MCP Genie Space CDI metrics]
     LB --> PG[Lakebase PostgreSQL via OAuth credentials]
 

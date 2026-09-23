@@ -62,6 +62,8 @@ make health
 make smoke
 ```
 
+The `deploy` target submits the app snapshot through the Databricks Apps REST API; DAB remains responsible for bundle-managed infrastructure and permissions.
+
 These targets build the packaged app source, upload it to the Databricks app workspace, deploy the app, and validate the generated UI route and `/invocations` contract.
 
 ## Build

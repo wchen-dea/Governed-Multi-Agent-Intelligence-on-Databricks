@@ -86,8 +86,8 @@ Current dev target examples:
 
 - Genie Agent: `sales_insights_agent` (space id configured in `subagents.dev.json`)
 - Genie Agent: `cdi_agent` — Customer Delight Indicator analytics backed by UC Semantic Metric View `quickstart_catalog.multi_agent_schema.fct_cdi_trusted_expert_score_metric_view`
-- Vector Search MCP index: `product_index_assistant` using `/api/2.0/mcp/vector-search/quickstart_catalog/multi_agent_schema/dim_product_search_index`
-- AI Search MCP index: `flink_support_agent` using `/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/flink_support_index` (RAG over support KB volume)
+- Vector Search MCP index: `product_index_assistant` using `/api/2.0/mcp/vector-search/quickstart_catalog/multi_agent_schema/gmai_product_search_index`
+- AI Search MCP index: `flink_support_agent` using `/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/gmai_flink_support_index` (RAG over support KB volume)
 
 Typical Genie Agent source pattern:
 
@@ -96,7 +96,7 @@ Typical Genie Agent source pattern:
 
 Semantics layer build automation:
 
-- Notebooks under [src/semantics/](src/semantics) build/refresh `dim_product_search_index`, `flink_support_index`, and `fct_cdi_trusted_expert_score_metric_view`.
+- Notebooks under [src/semantics/](src/semantics) build/refresh `gmai_product_search_index`, `gmai_flink_support_index`, and `fct_cdi_trusted_expert_score_metric_view`.
 - Corresponding Databricks Jobs are declared in `resources/semantics_jobs.yml`; see [src/semantics/README.md](src/semantics/README.md).
 
 ## Backend UC Security and Governance Guidelines
@@ -270,7 +270,7 @@ For a source-only deployment that does not contact Terraform Registry, run:
 make upload-wheel TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT
 ```
 
-This builds versioned wheel and React payloads, clears prior generated remote wheels, uploads the payload, creates the app only when it is missing, otherwise updates the existing app without changing its service principal, deploys through the Databricks Apps API, and checks health. It does not apply bundle-managed resource grants.
+This builds versioned wheel and React payloads, clears prior generated remote wheels, uploads the payload, creates the app only when it is missing, otherwise updates the existing app without changing its service principal, submits the source snapshot through the Apps REST API, and checks health. It does not apply bundle-managed resource grants.
 
 ## Runtime Environment Variables
 

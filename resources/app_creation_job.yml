@@ -1,0 +1,42 @@
+resources:
+  jobs:
+    create-or-deploy-multiagent-app:
+      name: create-or-deploy-multiagent-app
+      tags:
+        purpose: app-rest-deployment
+      tasks:
+      - task_key: create_or_deploy_hitl_app
+        environment_key: app_management_env
+        spark_python_task:
+          python_file: ../scripts/deploy_app_rest.py
+          parameters:
+          - --app-name
+          - ${var.hitl_app_name}
+          - --source-code-path
+          - ${workspace.file_path}/src/hitl-agent
+          - --target
+          - ${bundle.target}
+          - --app-spec-path
+          - ${workspace.file_path}/resources/hitl_app.yml
+      - task_key: create_or_deploy_multiagent_app
+        depends_on:
+        - task_key: create_or_deploy_hitl_app
+        environment_key: app_management_env
+        spark_python_task:
+          python_file: ../scripts/deploy_app_rest.py
+          parameters:
+          - --app-name
+          - ${var.app_name}
+          - --source-code-path
+          - ${workspace.file_path}/.databricks_app_source
+          - --target
+          - ${bundle.target}
+          - --app-spec-path
+          - ${workspace.file_path}/resources/multiagent_app.yml
+      environments:
+      - environment_key: app_management_env
+        spec:
+          environment_version: "2"
+          dependencies:
+          - databricks-sdk
+          - ruamel.yaml

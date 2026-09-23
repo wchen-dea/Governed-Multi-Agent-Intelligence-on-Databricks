@@ -54,7 +54,7 @@ This is the one dimension with a real gap between aspiration and implementation,
 ## Possible Improvements to Level Up
 
 - **Automated drift monitoring.** Schedule a recurring job (weekly/bi-weekly) that re-runs the evaluation suite against a fixed holdout set and plots KPI trend over time, rather than relying on ad hoc manual re-runs after a release.
-- **Retrieval/index staleness alerting.** Add an automated check that flags when an AI Search index (`dim_product_search_index`, `flink_support_index`) hasn't been refreshed within its `freshness_sla`, instead of relying on the semantics-layer job schedule alone.
+- **Retrieval/index staleness alerting.** Add an automated check that flags when an AI Search index (`gmai_product_search_index`, `gmai_flink_support_index`) hasn't been refreshed within its `freshness_sla`, instead of relying on the semantics-layer job schedule alone.
 - **Cost anomaly alerting.** Add a scheduled job that compares recent token-usage/cost-per-request against a rolling baseline and raises an alert on sudden increases, closing the gap called out in [03-security-risk-controls.md](../reference/03-security-risk-controls.md).
 - **Wire monitoring signals to a dashboard.** The signals in [cost-performance-budget.md](cost-performance-budget.md) are defined but not yet dashboarded; connect them to a standing dashboard (System Tables + a BI tool, or MLflow-native charts) instead of manual trace inspection.
 - **Resolve the `tool_call_accuracy` scoring gap** documented in [evaluation-spec.md](../quality/evaluation-spec.md) and re-enable it as a blocking KPI once fixed — this is the single biggest quality-monitoring gap today.

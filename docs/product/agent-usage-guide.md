@@ -59,7 +59,7 @@ flowchart LR
 ```mermaid
 flowchart LR
   A[User question] --> B[Orchestrator routes to Product agent]
-  B --> C[product_index_assistant searches dim_product_search_index]
+  B --> C[product_index_assistant searches gmai_product_search_index]
   C --> D{Exact code match?}
   D -->|Yes| E[Return exact product + article types]
   D -->|Approximate only| F[Disclose approximate-match disclaimer + closest results]
@@ -80,7 +80,7 @@ flowchart LR
 ```mermaid
 flowchart LR
   A[User question] --> B[Orchestrator routes to Flink support agent]
-  B --> C[flink_support_agent retrieves from flink_support_index RAG]
+  B --> C[flink_support_agent retrieves from gmai_flink_support_index RAG]
   C --> D{Guardrail: requires_evidence}
   D -->|Citations present| E["Grounded answer + Source: lines"]
   D -->|Citations missing| F[Blocked: evidence_required]
