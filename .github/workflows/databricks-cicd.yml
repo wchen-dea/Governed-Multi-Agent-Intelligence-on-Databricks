@@ -235,17 +235,48 @@ jobs:
           EVAL_SIMULATOR_USER_MODEL: "databricks:/databricks-claude-sonnet-5"
         run: uv run assistant-evaluate
 
-      - name: Source-only redeploy main app
-        run: |
-          set -euo pipefail
-          make redeploy-source-only TARGET="$TARGET" APP_NAME="$APP_NAME" PROFILE=
+      - name: Build wheel and app-source payload
+        run: uv run runtime-build-source
 
-      - name: Deploy HITL specialist app
+      - name: Deploy DAB infrastructure and jobs
+        run: databricks bundle deploy -t "$TARGET"
+
+      - name: Upload app-source payload
         run: |
           set -euo pipefail
-          make update-hitl APP_NAME="$HITL_APP_NAME" TARGET="$TARGET" PROFILE=
+          BUNDLE_JSON="$(databricks bundle validate -t "$TARGET" --output json)"
+          WS_FILE_PATH="$(printf '%s' "$BUNDLE_JSON" | jq -r '.workspace.file_path // empty')"
+          test -n "$WS_FILE_PATH"
+          databricks workspace import-dir .databricks_app_source \
+            "$WS_FILE_PATH/.databricks_app_source" --overwrite
+
+      - name: Create and deploy both Apps through the DAB job
+        run: databricks bundle run create-or-deploy-multiagent-app -t "$TARGET"
+
+      - name: Grant orchestrator runtime permissions
+        run: |
+          uv run python src/operations/grant_app_runtime_permissions.py \
+            --app-name "$APP_NAME" \
+            --target "$TARGET" \
+            --fail-open
 
       - name: Grant HITL specialist privileges
+        env:
+          APP_NAME: ${{ env.HITL_APP_NAME }}
+          ORCHESTRATOR_APP_NAME: ${{ env.APP_NAME }}
+          PROFILE: ""
+        run: ./scripts/grant_hitl_agent_privileges.sh
+
+      - name: Verify both Apps are healthy
         run: |
           set -euo pipefail
-          ORCHESTRATOR_APP_NAME="$APP_NAME" make grant-hitl-privileges APP_NAME="$HITL_APP_NAME" TARGET="$TARGET" PROFILE=
+          for app in "$HITL_APP_NAME" "$APP_NAME"; do
+            APP_JSON="$(databricks apps get "$app" --output json)"
+            DEPLOYMENT_STATE="$(printf '%s' "$APP_JSON" | jq -r '.active_deployment.status.state')"
+            APP_STATE="$(printf '%s' "$APP_JSON" | jq -r '.app_status.state')"
+            if [ "$DEPLOYMENT_STATE" != "SUCCEEDED" ] || [ "$APP_STATE" != "RUNNING" ]; then
+              printf 'Unhealthy app %s: deployment=%s app=%s\n' "$app" "$DEPLOYMENT_STATE" "$APP_STATE" >&2
+              exit 1
+            fi
+            printf 'Healthy app %s: deployment=%s app=%s\n' "$app" "$DEPLOYMENT_STATE" "$APP_STATE"
+          done

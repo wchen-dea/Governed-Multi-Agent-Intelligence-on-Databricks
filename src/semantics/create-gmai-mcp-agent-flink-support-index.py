@@ -1,9 +1,9 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # Build flink_support_index
+# MAGIC # Build gmai_flink_support_index
 # MAGIC
 # MAGIC Extracts text from the Flink support knowledge base volume, builds the
-# MAGIC `flink_support_kb` source table, and creates/refreshes the `flink_support_index`
+# MAGIC `flink_support_kb` source table, and creates/refreshes the `gmai_flink_support_index`
 # MAGIC Vector Search index used by the `flink_support_agent` MCP tool.
 # MAGIC
 # MAGIC Run as a Databricks Job (see `resources/semantics_jobs.yml`). Safe to re-run.
@@ -23,8 +23,8 @@ dbutils.widgets.text(
     "Support KB volume path",
 )
 dbutils.widgets.text("source_table", "flink_support_kb", "Source table for the index")
-dbutils.widgets.text("index_name", "flink_support_index", "Vector Search index name")
-dbutils.widgets.text("endpoint_name", "flink-support-vs-endpoint", "Vector Search endpoint name")
+dbutils.widgets.text("index_name", "gmai_flink_support_index", "Vector Search index name")
+dbutils.widgets.text("endpoint_name", "gmai_flink_support_index_ep", "Vector Search endpoint name")
 dbutils.widgets.text("embedding_model", "databricks-gte-large-en", "Embedding model endpoint")
 
 catalog = dbutils.widgets.get("catalog")

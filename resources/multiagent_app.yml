@@ -148,12 +148,12 @@ resources:
           permission: 'CAN_RUN'
       - name: 'product_search_index'
         uc_securable:
-          securable_full_name: 'quickstart_catalog.multi_agent_schema.dim_product_search_index'
+          securable_full_name: 'quickstart_catalog.multi_agent_schema.gmai_product_search_index'
           securable_type: 'TABLE'
           permission: 'SELECT'
-      - name: 'flink_support_index'
+      - name: 'gmai_flink_support_index'
         uc_securable:
-          securable_full_name: 'quickstart_catalog.multi_agent_schema.flink_support_index'
+          securable_full_name: 'quickstart_catalog.multi_agent_schema.gmai_flink_support_index'
           securable_type: 'TABLE'
           permission: 'SELECT'
       - name: 'lakebase_pg_password'

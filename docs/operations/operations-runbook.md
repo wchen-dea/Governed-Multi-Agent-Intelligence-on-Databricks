@@ -144,7 +144,7 @@ databricks workspace import-dir .databricks_app_source "$APP_SRC" --overwrite --
 #### 4) Deploy app from imported source
 
 ```bash
-databricks apps deploy APP_NAME --profile PROFILE --source-code-path "$APP_SRC" --mode SNAPSHOT
+make app-rest-deploy TARGET=TARGET APP_NAME=APP_NAME PROFILE=PROFILE
 ```
 
 ### Fallback Deployment Procedure
@@ -155,7 +155,7 @@ Use this procedure when `bundle deploy` fails due to Terraform provider registry
 make upload-wheel TARGET=TARGET APP_NAME=APP_NAME PROFILE=PROFILE
 ```
 
-`upload-wheel` builds the wheel and React payload, removes generated remote wheels, imports the source, creates the app only when it is missing, deploys updates to the existing app otherwise, verifies the service principal did not change on update, and checks health. It does not apply bundle-managed app resources or grants.
+`upload-wheel` builds the wheel and React payload, removes generated remote wheels, imports the source, creates the app only when it is missing, submits updates through `POST /api/2.0/apps/{app}/deployments`, verifies the service principal did not change on update, and checks health. It does not apply bundle-managed app resources or grants.
 
 For a full release attempt with validation, optional bundle apply, grants, health, and smoke checks, use:
 
@@ -714,7 +714,7 @@ Verify the configured route uses the canonical Vector Search MCP path:
 /api/2.0/mcp/vector-search/<catalog>/<schema>/<index>
 ```
 
-For the dev product index, verify the app has `CAN_USE` on `product_index_ep` and `SELECT` on `quickstart_catalog.multi_agent_schema.dim_product_search_index`. The bundle declares the index as a `uc_securable` app resource so parent catalog/schema access is included. The permission script also accepts the legacy `ai-search` path for compatibility, but new configurations should use `vector-search`. To (re)build the index, run the `build_dim_product_search_index` job (see `resources/semantics_jobs.yml`).
+For the dev product index, verify the app has `CAN_USE` on `product_index_ep` and `SELECT` on `quickstart_catalog.multi_agent_schema.gmai_product_search_index`. The bundle declares the index as a `uc_securable` app resource so parent catalog/schema access is included. The permission script also accepts the legacy `ai-search` path for compatibility, but new configurations should use `vector-search`. To (re)build the index, run the `build_gmai_product_search_index` job (see `resources/semantics_jobs.yml`).
 
 ### Terraform registry unreachable during `bundle deploy`
 

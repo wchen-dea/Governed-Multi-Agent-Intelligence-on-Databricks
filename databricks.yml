@@ -2,7 +2,10 @@ bundle:
   name: multiagent-app-on-databricks
   uuid: ad3ec8f6-1ff5-4bb2-bbb7-056bd09c43a8
 include:
-- resources/*.yml
+- resources/app_creation_job.yml
+- resources/evaluation_job.yml
+- resources/resource_cleanup_job.yml
+- resources/semantics_jobs.yml
 - targets/*.yml
 - resources/*/*.yml
 artifacts:
