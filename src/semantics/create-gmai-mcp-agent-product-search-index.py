@@ -72,16 +72,49 @@ USING DELTA
 TBLPROPERTIES (delta.enableChangeDataFeed = true)
 """)
 
+null_product_count = spark.sql(f"""
+SELECT COUNT(*) AS null_product_count
+FROM {full_staging_table}
+WHERE product_code IS NULL
+""").first()["null_product_count"]
+if null_product_count:
+    print(
+        f"WARNING: skipping {null_product_count} staging rows with NULL product_code "
+        f"from {full_staging_table}."
+    )
+
+duplicate_product_count = spark.sql(f"""
+SELECT COUNT(*) - COUNT(DISTINCT product_code) AS duplicate_product_count
+FROM {full_staging_table}
+WHERE product_code IS NOT NULL
+""").first()["duplicate_product_count"]
+if duplicate_product_count:
+    print(
+        f"WARNING: deduplicating {duplicate_product_count} duplicate product rows "
+        f"from {full_staging_table}."
+    )
+
 spark.sql(f"""
 MERGE INTO {full_source_table} AS target
 USING (
-    SELECT
-        product_code,
-        product_description,
-        brand_code,
-        article_type,
+    SELECT product_code, product_description, brand_code, article_type,
         concat_ws(' | ', product_code, product_description, brand_code, article_type) AS search_text
-    FROM {full_staging_table}
+    FROM (
+        SELECT
+            product_code,
+            product_description,
+            brand_code,
+            article_type,
+            ROW_NUMBER() OVER (
+                PARTITION BY product_code
+                ORDER BY product_description DESC NULLS LAST,
+                    brand_code DESC NULLS LAST,
+                    article_type DESC NULLS LAST
+            ) AS row_number
+        FROM {full_staging_table}
+        WHERE product_code IS NOT NULL
+    ) AS ranked_source
+    WHERE row_number = 1
 ) AS source
 ON target.product_code = source.product_code
 WHEN MATCHED THEN UPDATE SET *
@@ -107,6 +140,7 @@ print(f"Refreshed {full_source_table} from {full_staging_table}.")
 import time
 
 from databricks.sdk import WorkspaceClient
+from databricks.sdk.errors import NotFound
 from databricks.sdk.service.vectorsearch import (
     DeltaSyncVectorIndexSpecRequest,
     EmbeddingSourceColumn,
@@ -133,7 +167,7 @@ def _wait_for_endpoint(name: str, timeout: int = 600) -> None:
 try:
     w.vector_search_endpoints.get_endpoint(endpoint_name)
     print(f"Endpoint {endpoint_name!r} already exists.")
-except Exception:
+except NotFound:
     print(f"Creating endpoint {endpoint_name!r} …")
     w.vector_search_endpoints.create_endpoint(
         name=endpoint_name, endpoint_type=EndpointType.STANDARD
@@ -144,7 +178,7 @@ try:
     w.vector_search_indexes.get_index(full_index_name)
     print(f"Index {full_index_name!r} already exists; triggering sync.")
     w.vector_search_indexes.sync_index(full_index_name)
-except Exception:
+except NotFound:
     print(f"Creating Delta Sync index {full_index_name!r} …")
     w.vector_search_indexes.create_index(
         name=full_index_name,

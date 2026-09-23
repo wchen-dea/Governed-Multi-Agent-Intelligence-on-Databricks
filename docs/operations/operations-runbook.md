@@ -235,7 +235,7 @@ Use this short checklist when onboarding or updating a Genie Agent backed by bus
 - Define business KPI scope, grain, dimensions, and measures.
 - Apply consistent semantic metadata (for example domain, subject, owner, grain).
 - Recommended blueprint: [Unity-Catalog-Semantic-Metric-Views-Blueprint](https://github.com/wchen-dea/Unity-Catalog-Semantic-Metric-Views-Blueprint)
-- Publish/refresh via the `build_fct_cdi_trusted_expert_score_metric_view` job (`resources/semantics_jobs.yml`, notebook `src/semantics/create_fct_cdi_trusted_expert_score_metric_view.py`).
+- Publish/refresh via the `build_gmai_genie_agent_cdi_metric_view` job (`resources/semantics_jobs.yml`, notebook `src/semantics/create_gmai_genie_agent_cdi_metric_view.py`).
 
 2. Validate with representative Genie prompts
 

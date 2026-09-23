@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "Agent Developer", email = "developer@example.com" }
 ]
-requires-python = "==3.12.*"
+requires-python = ">=3.11,<3.13"
 dependencies = [
     "fastapi~=0.115.12",
     "uvicorn~=0.34.2",
@@ -22,6 +22,7 @@ dependencies = [
     "httpx2>=2.12.0",
     "pydantic~=2.13.4",
     "pydantic-settings>=2.0,<3",
+    "deepeval>=4.2.2",
 ]
 
 [build-system]
@@ -34,7 +35,7 @@ dev = [
     "hatchling>=1.28.0",
     "pytest~=8.3.5",
     "ruff>=0.11.0",
-    "databricks-connect~=17.3.0",
+    "databricks-connect~=17.3.0; python_version >= '3.12'",
 ]
 
 setup = [

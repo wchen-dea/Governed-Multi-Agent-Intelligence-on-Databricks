@@ -212,7 +212,7 @@ If an OBO tool is invoked without a forwarded token, the runtime returns a clear
 
 - `databricks.yml`: bundle root config, shared variables, includes, and the `multiagent_wheel` artifact (built via `uv build --wheel`)
 - `resources/multiagent_app.yml`: shared app defaults and baseline resource permissions
-- `resources/semantics_jobs.yml`: semantics-layer Databricks Jobs that build/refresh `gmai_product_search_index`, `gmai_flink_support_index`, and `fct_cdi_trusted_expert_score_metric_view` from `src/semantics/`
+- `resources/semantics_jobs.yml`: semantics-layer Databricks Jobs that build/refresh `gmai_product_search_index`, `gmai_flink_support_index`, and `gmai_genie_agent_cdi_metric_view` from `src/semantics/`
 - `resources/evaluation_job.yml`: Databricks Job that runs `operations.evaluate_agent.evaluate()` on workspace compute (`src/evaluation/run_evaluation.py`) so the release-gate evaluation reaches MLflow tracking and Lakebase over the private network, followed by a `triage_evaluation` task that runs `assistant-triage-evaluation` against the same experiment regardless of gate outcome
 - `targets/*.yml`: target-specific host, state path, variables, and resource overrides
 

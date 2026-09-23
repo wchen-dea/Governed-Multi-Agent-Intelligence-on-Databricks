@@ -59,7 +59,7 @@ This project implements **only part** of the full ai-ready semantics layer. The 
 | Component | Built/owned by this project | Notes |
 | --- | --- | --- |
 | AI Search (Vector Search) indexes | **Yes** | Built by pipelines in `src/semantics/`, deployed as Databricks Jobs in `resources/semantics_jobs.yml`. |
-| Unity Catalog Metric Views | **Yes** | Published by `src/semantics/create_fct_cdi_trusted_expert_score_metric_view.py` over gold-layer Delta tables. |
+| Unity Catalog Metric Views | **Yes** | Published by `src/semantics/create_gmai_genie_agent_cdi_metric_view.py` over gold-layer Delta tables. |
 | Genie Agent spaces | No — other project | This repo only registers the Genie space id in `src/aiserver/contracts/subagents.<target>.json` and routes to it via MCP. Space creation, metric-view binding at the Genie level, and prompt tuning are owned by the Genie/analytics project. |
 | Lakebase operational data store | No — other project | The Lakebase project (Postgres instance, schema, ODS tables, real-time ingestion) is provisioned and owned by a separate project. This repo only holds a service point (`lakebase_ods_agent` subagent) that connects via OAuth-authenticated `psycopg2` for read queries. |
 
@@ -81,7 +81,7 @@ Consequence: this repository's semantics-layer responsibility is limited to **AI
 - Source: gold-layer Delta assets (for example `dt_prod_gold.dwh_dbx.fct_cdi`) joined to supporting daily/aggregate assets.
 - Pipeline: a Databricks notebook publishes/refreshes a `CREATE VIEW ... WITH METRICS LANGUAGE YAML` object defining dimensions, measures, and value formatting.
 - Consumption: a Genie Agent space (owned by another project) is bound to the Metric View as its structured semantic source; this repo only stores the resulting `space_id` in subagent config and routes requests to it via MCP.
-- Current metric view: `quickstart_catalog.multi_agent_schema.fct_cdi_trusted_expert_score_metric_view`.
+- Current metric view: `quickstart_catalog.multi_agent_schema.gmai_genie_agent_cdi_metric_view`.
 
 ### 3. Genie Agent Spaces (external dependency)
 

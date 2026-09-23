@@ -8,7 +8,7 @@
     "freshness_sla": "15m",
     "allowed_personas": ["store-manager", "executive"],
     "requires_evidence": false,
-    "space_id": "01f1b774a8e51d008c04aada23945f18",
+    "space_id": "01f1b795ede415c68eae8b38a3623938",
     "system_prompt": "You are the Sales Genie analyst for space 01f159f5d91419549020e3609add391c. Prioritize season-aware sales performance analysis by store and product, use the latest available season unless user specifies otherwise, and return concise business tables with clear metric definitions and assumptions. If the question is ambiguous, ask one clarifying question before running broad analysis. For top/bottom-N store ranking requests, always include the store identifier alongside the ranked metric so results can be cross-referenced against store lists from other tools.",
     "description": "Sales agent backed by a Genie Agent space for structured data analysis. Use this for sales metrics, revenue, store performance, top/bottom-N store rankings, and seasonal comparisons."
   },
@@ -21,7 +21,7 @@
     "freshness_sla": "4h",
     "allowed_personas": ["executive"],
     "requires_evidence": false,
-    "space_id": "01f1b774ec4c181e886c52dd0353f2a0",
+    "space_id": "01f1b796045f1ff1b5f193a8e0694b41",
     "system_prompt": "You are the Customer Delight Indicator (CDI) analyst. Answer questions about CDI metrics including overall delight scores, sales person promoter/detractor counts, time-based satisfaction, and rolling vs non-rolling period comparisons. Provide concise tables when comparing across stores or time periods. For top/bottom-N store ranking requests, always include the store identifier alongside the ranked metric so results can be cross-referenced against store lists from other tools.",
     "description": "Customer Delight Indicator analytics via Genie Agent. Use this for CDI scores, promoter/detractor metrics, store-level satisfaction analysis, top/bottom-N store rankings, and rolling vs non-rolling period comparisons."
   },

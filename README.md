@@ -85,7 +85,7 @@ Runtime integrations are environment-specific through `src/aiserver/contracts/su
 Current dev target examples:
 
 - Genie Agent: `sales_insights_agent` (space id configured in `subagents.dev.json`)
-- Genie Agent: `cdi_agent` — Customer Delight Indicator analytics backed by UC Semantic Metric View `quickstart_catalog.multi_agent_schema.fct_cdi_trusted_expert_score_metric_view`
+- Genie Agent: `cdi_agent` — Customer Delight Indicator analytics backed by UC Semantic Metric View `quickstart_catalog.multi_agent_schema.gmai_genie_agent_cdi_metric_view`
 - Vector Search MCP index: `product_index_assistant` using `/api/2.0/mcp/vector-search/quickstart_catalog/multi_agent_schema/gmai_product_search_index`
 - AI Search MCP index: `flink_support_agent` using `/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/gmai_flink_support_index` (RAG over support KB volume)
 
@@ -96,7 +96,7 @@ Typical Genie Agent source pattern:
 
 Semantics layer build automation:
 
-- Notebooks under [src/semantics/](src/semantics) build/refresh `gmai_product_search_index`, `gmai_flink_support_index`, and `fct_cdi_trusted_expert_score_metric_view`.
+- Notebooks under [src/semantics/](src/semantics) build/refresh `gmai_product_search_index`, `gmai_flink_support_index`, and `gmai_genie_agent_cdi_metric_view`.
 - Corresponding Databricks Jobs are declared in `resources/semantics_jobs.yml`; see [src/semantics/README.md](src/semantics/README.md).
 
 ## Backend UC Security and Governance Guidelines

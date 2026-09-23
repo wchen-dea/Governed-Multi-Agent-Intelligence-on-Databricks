@@ -44,7 +44,7 @@ The configuration files declare available subagent capabilities; they do not con
 - Jobs: `resources/semantics_jobs.yml` (one Databricks Job per notebook, run on demand or scheduled per target)
 - `create_gmai_product_search_index.py` curates `dim_product` and builds/refreshes the `gmai_product_search_index` Vector Search index.
 - `create_gmai_flink_support_index.py` extracts the support KB volume into `flink_support_kb` and builds/refreshes the `gmai_flink_support_index` Vector Search index.
-- `create_fct_cdi_trusted_expert_score_metric_view.py` publishes the `fct_cdi_trusted_expert_score_metric_view` Unity Catalog Semantic Metric View from `dt_prod_gold.dwh_dbx.fct_cdi` and its `cdi_daily`/`total_time_score`/`trusted_expert_score` joins.
+- `create_gmai_genie_agent_cdi_metric_view.py` publishes the `gmai_genie_agent_cdi_metric_view` Unity Catalog Semantic Metric View from `dt_prod_gold.dwh_dbx.fct_cdi` and its `cdi_daily`/`total_time_score`/`trusted_expert_score` joins.
 
 ## Active Genie Agents (Dev)
 
@@ -95,7 +95,7 @@ Typical source pattern for Genie Agents:
 - Type: genie
 - Runtime name: `cdi_agent`
 - Space ID source: `src/aiserver/contracts/subagents.dev.json`
-- Source: materialized view `quickstart_catalog.multi_agent_schema.fct_cdi_trusted_expert_score_metric_view`
+- Source: materialized view `quickstart_catalog.multi_agent_schema.gmai_genie_agent_cdi_metric_view`
 - Genie space created and owned by the Genie/analytics project; this project only registers the space id and routes to it via MCP.
 - Auth mode: app
 - Classification: confidential

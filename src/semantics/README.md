@@ -17,7 +17,7 @@ Each notebook is idempotent and is intended to run as a Databricks Job (see
 | --- | --- | --- |
 | [create-gmai-mcp-agent-product-search-index.py](create-gmai-mcp-agent-product-search-index.py) | `gmai_product_search_index` Vector Search index | `product_index_assistant` MCP tool |
 | [create-gmai-mcp-agent-flink-support-index.py](create-gmai-mcp-agent-flink-support-index.py) | `gmai_flink_support_index` Vector Search index | `flink_support_agent` MCP tool |
-| [create_fct_cdi_trusted_expert_score_metric_view.py](create_fct_cdi_trusted_expert_score_metric_view.py) | `fct_cdi_trusted_expert_score_metric_view` Unity Catalog Semantic Metric View | `cdi_agent` Genie Agent |
+| [create_gmai_genie_agent_cdi_metric_view.py](create_gmai_genie_agent_cdi_metric_view.py) | `gmai_genie_agent_cdi_metric_view` Unity Catalog Semantic Metric View | `cdi_agent` Genie Agent |
 
 ## Conventions
 
