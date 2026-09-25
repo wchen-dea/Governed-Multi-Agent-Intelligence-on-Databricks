@@ -63,8 +63,8 @@ flowchart LR
 - Exercise both `uv run runtime-serve-app` (bundled) and `uv run runtime-serve-backend --reload` (iterative) paths, and hit `http://localhost:8000/invocations` as a smoke test.
 
 ### 7. Deployment & promotion (`deploy`)
-- Use `make redeploy TARGET=<target> APP_NAME=<app-name> PROFILE=<profile>` so validation, deploy, permissions, and smoke checks run as one flow instead of ad hoc steps.
-- Prefer binding an existing app over deleting it on name conflicts; only fall back to `make upload-wheel` when Terraform Registry is unavailable, and still apply the bundle for resource-grant changes.
+- Use the explicit DAB and Databricks Apps deployment sequence in the operations runbook so validation, deployment, permissions, and verification remain visible.
+- Prefer binding an existing app over deleting it on name conflicts; use `make build-app-source` when Terraform Registry is unavailable, and still apply the bundle for resource-grant changes.
 - Always pass `--profile` explicitly; never rely on an implicit default profile across targets.
 
 ### 8. Evaluation & release gate

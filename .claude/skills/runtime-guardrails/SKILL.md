@@ -59,7 +59,8 @@ This skill does not cover:
 
 ```bash
 databricks bundle validate -t <target> --profile <profile>
-make redeploy TARGET=<target> APP_NAME=<app-name> PROFILE=<profile>
+databricks bundle deploy -t <target> --profile <profile>
+make build-app-source TARGET=<target>
 ```
 
 ## Validation Commands

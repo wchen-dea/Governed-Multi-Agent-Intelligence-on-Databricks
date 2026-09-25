@@ -11,14 +11,8 @@ resources:
         env:
         - name: HITL_ENV
           value: ${bundle.target}
-        - name: REVENUE_TABLE
-          value: ${var.hitl_revenue_table}
-        - name: CDI_TABLE
-          value: ${var.hitl_cdi_table}
-        - name: PEER_SET_TABLE
-          value: ${var.hitl_peer_set_table}
-        - name: STORE_DIMENSION_TABLE
-          value: ${var.hitl_store_dimension_table}
+        - name: SNAPSHOT_TABLE
+          value: ${var.hitl_snapshot_table}
         - name: SQL_WAREHOUSE_ID
           value: ${var.hitl_sql_warehouse_id}
         - name: TREND_WINDOW_DAYS
@@ -28,23 +22,8 @@ resources:
         sql_warehouse:
           id: ${var.hitl_sql_warehouse_id}
           permission: CAN_USE
-      - name: platinum_revenue_source
+      - name: hitl_snapshot
         uc_securable:
-          securable_full_name: ${var.hitl_revenue_table}
-          securable_type: TABLE
-          permission: SELECT
-      - name: gold_cdi_source
-        uc_securable:
-          securable_full_name: ${var.hitl_cdi_table}
-          securable_type: TABLE
-          permission: SELECT
-      - name: gold_peer_set_source
-        uc_securable:
-          securable_full_name: ${var.hitl_peer_set_table}
-          securable_type: TABLE
-          permission: SELECT
-      - name: gold_store_dimension_source
-        uc_securable:
-          securable_full_name: ${var.hitl_store_dimension_table}
+          securable_full_name: ${var.hitl_snapshot_table}
           securable_type: TABLE
           permission: SELECT

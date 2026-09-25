@@ -1,0 +1,29 @@
+resources:
+  jobs:
+    refresh-hitl-source-snapshot:
+      name: refresh-hitl-source-snapshot
+      tags:
+        layer: hitl
+        purpose: curated-source-snapshot
+      tasks:
+      - task_key: refresh_snapshot
+        environment_key: snapshot_refresh_env
+        spark_python_task:
+          python_file: ../src/hitl-agent/refresh_snapshot.py
+          parameters:
+          - --revenue-table
+          - ${var.hitl_revenue_table}
+          - --cdi-table
+          - ${var.hitl_cdi_table}
+          - --peer-set-table
+          - ${var.hitl_peer_set_table}
+          - --store-dimension-table
+          - ${var.hitl_store_dimension_table}
+          - --snapshot-table
+          - ${var.hitl_snapshot_table}
+          - --trend-window-days
+          - ${var.hitl_trend_window_days}
+      environments:
+      - environment_key: snapshot_refresh_env
+        spec:
+          environment_version: "2"

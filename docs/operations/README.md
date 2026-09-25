@@ -29,8 +29,8 @@ This section owns deployment procedures, runtime verification, MLflow operations
 - The [command reference](command-reference.md) is the index of canonical command
 	groups and release targets; workflow guides show commands in their operational
 	context.
-- `make redeploy` is the full validation, bundle-attempt, grants, health, and smoke workflow.
-- `make upload-wheel` is the versioned source-only fallback. It cannot apply bundle-managed resources or grants.
+- The operations runbook is the authoritative validation, bundle deployment, app-source deployment, permissions, and verification workflow.
+- `make build-app-source` creates the versioned source payload for source-only fallback. It cannot apply bundle-managed resources or grants.
 - Run `uv run assistant-evaluate` to determine current gate status. Tool-call accuracy is monitored but non-blocking while nested tool spans cannot be scored reliably.
 
 ## Templates

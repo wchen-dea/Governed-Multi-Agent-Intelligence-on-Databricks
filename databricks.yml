@@ -6,6 +6,7 @@ include:
 - resources/evaluation_job.yml
 - resources/resource_cleanup_job.yml
 - resources/semantics_jobs.yml
+- resources/hitl_snapshot_job.yml
 - targets/*.yml
 - resources/*/*.yml
 artifacts:
@@ -39,6 +40,9 @@ variables:
   hitl_trend_window_days:
     description: Rolling window in days for HITL trend analysis
     default: "90"
+  hitl_snapshot_table:
+    description: Curated Delta snapshot consumed by the HITL specialist App
+    default: quickstart_catalog.multi_agent_schema.hitl_source_snapshot
   mlflow_experiment_id:
     description: MLflow experiment ID for tracing/evaluation in the current environment
   mlflow_tracking_uri:

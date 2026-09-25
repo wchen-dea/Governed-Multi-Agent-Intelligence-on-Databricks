@@ -244,7 +244,9 @@ uv run runtime-serve-app
 Validate and deploy:
 
 ```bash
-make redeploy TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT
+databricks bundle validate -t dev --profile DEFAULT
+databricks bundle deploy -t dev --profile DEFAULT
+make build-app-source TARGET=dev
 ```
 
 Lint Markdown documentation:
@@ -267,7 +269,8 @@ If bundle deploy fails due to Terraform provider registry availability, use the 
 For a source-only deployment that does not contact Terraform Registry, run:
 
 ```bash
-make upload-wheel TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT
+make build-app-source TARGET=dev
+databricks apps get multiagent-app-dev --output json --profile DEFAULT
 ```
 
 This builds versioned wheel and React payloads, clears prior generated remote wheels, uploads the payload, creates the app only when it is missing, otherwise updates the existing app without changing its service principal, submits the source snapshot through the Apps REST API, and checks health. It does not apply bundle-managed resource grants.
@@ -328,8 +331,8 @@ The specialist App is also declared in DAB as `hitl-app-agent`; set `hitl_app_na
 Update the specialist App source or its data privileges with:
 
 ```bash
-make update-hitl APP_NAME=hitl-app-agent PROFILE=DEFAULT
-make grant-hitl-privileges APP_NAME=hitl-app-agent PROFILE=DEFAULT
+databricks apps get hitl-app-agent --profile DEFAULT --output json
+databricks bundle deploy -t dev --profile DEFAULT
 ```
 
 MCP connect/probe performance controls:
@@ -378,12 +381,11 @@ MCP connect/probe performance controls:
 
 Useful operational commands:
 
-- `make redeploy TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT`
-- `make upload-wheel TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT`
 - `make lint`
+- `make lint-markdown`
 - `make format`
-- `make grants TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT`
-- `make query-dev TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT QUERY='top stores by revenue' QUERY_PERSONA=manager`
+- `make build-app-source TARGET=dev`
+- `make stop APP_NAME=multiagent-app-dev HITL_APP_NAME=hitl-app-agent PROFILE=DEFAULT`
 
 ## Current Status
 

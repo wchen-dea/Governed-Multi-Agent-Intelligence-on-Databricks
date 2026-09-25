@@ -148,10 +148,9 @@ Constraints: If app exists, bind instead of delete.
 
 ### deploy
 
-- Standard flow:
-  - `make redeploy TARGET=<target> APP_NAME=<app-name> PROFILE=<profile>`
+- Standard flow: use the explicit DAB and Databricks Apps deployment sequence in the operations runbook.
 - Targets: `dev`, `qa`, `stg`, `prd`
-- Source-only fallback: `make upload-wheel TARGET=<target> APP_NAME=<app-name> PROFILE=<profile>` if Terraform Registry is unavailable; successful bundle apply is still required for resource-grant changes
+- Source-only fallback: `make build-app-source TARGET=<target>` if Terraform Registry is unavailable; successful bundle apply is still required for resource-grant changes
 
 ## Operating Guidelines
 
@@ -160,7 +159,7 @@ Constraints: If app exists, bind instead of delete.
 3. Store environment-specific names and IDs in `targets/*.yml` variables.
 4. Validate locally before deployment.
 5. Keep direct function-tool changes in `application/adapters/tools.py`; MCP and Lakebase use dedicated builders in `application/orchestration/agent.py`, and delegation uses the task-bus handoff flow.
-5. Use `make redeploy` so validation, deploy, permissions, and smoke checks run in one flow.
+5. Use the explicit deployment sequence so validation, deployment, permissions, and verification remain visible.
 6. Prefer app bind over delete when app-name conflicts occur.
 
 ## Quick Decision Map

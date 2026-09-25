@@ -15,6 +15,7 @@ targets:
       hitl_peer_set_table: "dt_dev_gold.dwh.brg_store_cluster_membership_group"
       hitl_store_dimension_table: "dt_dev_gold.dwh.dim_store_active"
       hitl_trend_window_days: "90"
+      hitl_snapshot_table: "quickstart_catalog.multi_agent_schema.hitl_source_snapshot"
       mlflow_experiment_id: "3025644123415124"
       openai_base_url: ""
       openai_use_ai_gateway: "false"

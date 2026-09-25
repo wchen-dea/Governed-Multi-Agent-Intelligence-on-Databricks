@@ -58,7 +58,7 @@ The original `uv run` entry points in `pyproject.toml` remain as compatibility c
 | `make format` | Apply Ruff Python formatting and React Prettier formatting. |
 | `make lint-markdown` | Validate authored Markdown only. |
 | `make evaluate` | Run MLflow evaluation and enforce configured KPI gates. |
-| `make redeploy TARGET=<target> APP_NAME=<app> PROFILE=<profile>` | Full validation, bundle attempt, source deploy, grants, health, and smoke workflow. |
-| `make upload-wheel TARGET=<target> APP_NAME=<app> PROFILE=<profile>` | Versioned source-only app deployment fallback; does not apply bundle resources or grants. |
+| `make build-app-source TARGET=<target>` | Build the versioned wheel and React app-source payload. |
+| `make stop APP_NAME=<app> HITL_APP_NAME=<app> PROFILE=<profile>` | Stop the configured Databricks Apps. |
 
 See the [operations guide](README.md) and [operations runbook](operations-runbook.md) for command prerequisites and recovery boundaries.

@@ -97,7 +97,8 @@ Lakebase example (requires `user_api_scopes: [sql]` and a Postgres role for the 
 
 ```bash
 databricks bundle validate -t <target> --profile <profile>
-make redeploy TARGET=<target> APP_NAME=<app-name> PROFILE=<profile>
+databricks bundle deploy -t <target> --profile <profile>
+make build-app-source TARGET=<target>
 ```
 
 ## Notes

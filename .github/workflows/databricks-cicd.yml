@@ -215,10 +215,7 @@ jobs:
 
           export_if_concrete HITL_APP_NAME "$(value_for hitl_app_name)"
           export_if_concrete HITL_WAREHOUSE_ID "$(value_for hitl_sql_warehouse_id)"
-          export_if_concrete HITL_REVENUE_TABLE "$(value_for hitl_revenue_table)"
-          export_if_concrete HITL_CDI_TABLE "$(value_for hitl_cdi_table)"
-          export_if_concrete HITL_PEER_SET_TABLE "$(value_for hitl_peer_set_table)"
-          export_if_concrete HITL_STORE_DIMENSION_TABLE "$(value_for hitl_store_dimension_table)"
+          export_if_concrete HITL_SNAPSHOT_TABLE "$(value_for hitl_snapshot_table)"
           export_if_concrete HITL_TREND_WINDOW_DAYS "$(value_for hitl_trend_window_days)"
 
       - name: Run tests

@@ -63,4 +63,4 @@ Adopt Supervisor Agent selectively for standardized, lower-risk use cases where 
 - Runtime auth and policy: [src/aiserver/application/auth/context.py](../../src/aiserver/application/auth/context.py), [src/aiserver/application/auth/policy.py](../../src/aiserver/application/auth/policy.py)
 - Guardrails: [src/aiserver/application/guardrails/checks.py](../../src/aiserver/application/guardrails/checks.py)
 - Subagent registry: [src/aiserver/contracts/subagents.dev.json](../../src/aiserver/contracts/subagents.dev.json) (6 subagents, per-persona access)
-- Deployment: [Makefile](../../Makefile) (`make deploy`, `make redeploy`), [docs/operations/operations-runbook.md](../operations/operations-runbook.md)
+- Deployment: [Makefile](../../Makefile) (`make build-app-source`, `make stop`), [docs/operations/operations-runbook.md](../operations/operations-runbook.md)

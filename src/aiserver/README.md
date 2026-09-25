@@ -94,7 +94,7 @@ Tip:
 
 - Keep `src/aiserver/contracts/subagents.<target>.json` and runtime behavior aligned when adding or changing tools.
 - `build_subagent_tools()` uses the adapter registry for serving-endpoint and App subagents. MCP and Lakebase use dedicated builders, while delegation stays on the governed task-bus handoff path.
-- The active store intervention specialist source is in `src/hitl-agent/`; use `make update-hitl` to deploy source changes and `make grant-hitl-privileges` to refresh its least-privilege data access.
+- The active store intervention specialist source is in `src/hitl-agent/`; deploy source changes and refresh least-privilege data access through the Databricks Apps and DAB procedures in the operations runbook.
 
 ## Key Environment Variables
 

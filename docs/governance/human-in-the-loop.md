@@ -63,10 +63,10 @@ Deploy it with the rest of the bundle:
 databricks bundle deploy -t dev --profile PROFILE
 ```
 
-For manual source-only refreshes, deploy it with the repository helper:
+For manual source-only refreshes, deploy it with the Databricks Apps source workflow:
 
 ```bash
-make update-hitl APP_NAME=hitl-app-agent PROFILE=PROFILE
+databricks apps deploy hitl-app-agent --profile PROFILE --source-code-path "$HITL_SOURCE_DIR" --mode SNAPSHOT
 ```
 
 The helper imports `src/hitl-agent`, creates the App only when it does not already exist, and otherwise performs an update-only `databricks apps deploy` against the existing App. On update, it verifies the App service principal client ID did not change.
@@ -86,7 +86,7 @@ The App must be `RUNNING` with an active successful deployment before it is regi
 The current specialist implementation uses Databricks SQL Statement Execution against the gold and platinum tables configured in `src/hitl-agent/app.yaml`. Grant its App service principal only the warehouse and UC privileges required for those queries:
 
 ```bash
-make grant-hitl-privileges APP_NAME=hitl-app-agent PROFILE=PROFILE
+databricks bundle deploy -t TARGET --profile PROFILE
 ```
 
 The helper resolves the specialist service principal and grants:
@@ -98,7 +98,7 @@ The helper resolves the specialist service principal and grants:
 Review the generated grants first with:
 
 ```bash
-DRY_RUN=true make grant-hitl-privileges APP_NAME=hitl-app-agent PROFILE=PROFILE
+databricks bundle validate -t TARGET --profile PROFILE
 ```
 
 Override the current dev data sources when promoting to another environment:
@@ -109,7 +109,7 @@ HITL_REVENUE_TABLE=<catalog>.<schema>.<table> \
 HITL_CDI_TABLE=<catalog>.<schema>.<table> \
 HITL_PEER_SET_TABLE=<catalog>.<schema>.<table> \
 HITL_STORE_DIMENSION_TABLE=<catalog>.<schema>.<table> \
-make grant-hitl-privileges APP_NAME=hitl-app-agent PROFILE=PROFILE
+databricks bundle deploy -t TARGET --profile PROFILE
 ```
 
 If explicit `HITL_*_TABLE` values are omitted, the helper derives conventional defaults from `TARGET` or `HITL_ENV`, for example `TARGET=qa` maps to `dt_qa_platinum.enterprise.store_sales_performance` and `dt_qa_gold.dwh.*`.
@@ -132,7 +132,7 @@ Operators can disable or retarget this behavior with `APPROVAL_DELEGATION_ENABLE
 For subsequent source updates, use the repository helper from the project root:
 
 ```bash
-make update-hitl APP_NAME=hitl-app-agent PROFILE=PROFILE
+databricks apps deploy hitl-app-agent --profile PROFILE --source-code-path "$HITL_SOURCE_DIR" --mode SNAPSHOT
 ```
 
 The helper imports `src/hitl-agent` into the current user's workspace path, creates or updates the App from that workspace source, and prints the resulting deployment status. Override the defaults when needed:
@@ -140,7 +140,7 @@ The helper imports `src/hitl-agent` into the current user's workspace path, crea
 ```bash
 HITL_SOURCE_DIR=/path/to/source \
 HITL_WORKSPACE_PATH=/Workspace/Users/owner/hitl-app-agent \
-make update-hitl APP_NAME=hitl-app-agent PROFILE=PROFILE
+databricks apps deploy hitl-app-agent --profile PROFILE --source-code-path "$HITL_SOURCE_DIR" --mode SNAPSHOT
 ```
 
 The script requires `app.py`, `app.yaml`, and `requirements.txt` in the source directory. It creates the App only when missing, updates existing Apps in place, verifies the service principal is preserved on update, and does not change the orchestrator registry.
@@ -192,18 +192,14 @@ Run the typed registry and bundle checks:
 ```bash
 uv run pytest -q tests/test_subagent_config.py tests/test_api_handlers.py
 databricks bundle validate -t TARGET --profile PROFILE
-make redeploy TARGET=TARGET APP_NAME=APP_NAME PROFILE=PROFILE
+make build-app-source TARGET=TARGET
+databricks bundle deploy -t TARGET --profile PROFILE
 ```
 
 Then verify the route with the manager persona:
 
 ```bash
-make query-dev \
-  TARGET=dev \
-  APP_NAME=multiagent-app-dev \
-  PROFILE=PROFILE \
-  QUERY_PERSONA=manager \
-  QUERY='Find stores with strong revenue but declining CDI scores, compare each store with its peers and recent trend, prepare an evidence-backed customer-experience intervention packet, and pause for manager approval before any operational dispatch.'
+Use an authenticated `/invocations` request against `multiagent-app-dev` with the manager persona and the required query payload.
 ```
 
 A successful verification must show qualifying stores or a clear no-match result, evidence/source metadata, `approval_state.status=pending`, and no operational dispatch. If the result says `App with name hitl-app-agent does not exist`, the App creation, naming, deployment, or permission step is incomplete.
@@ -212,7 +208,7 @@ A successful verification must show qualifying stores or a clear no-match result
 
 Repeat the App binding/creation and least-privilege grants for QA, staging, and production, or use the organization-approved promotion mechanism if the App supports environment isolation. Replace target placeholders before promotion and keep each App's data resources in the same environment boundary as the orchestrator.
 
-The bundle declares the specialist App as `resources.apps.hitl-app-agent`; `make update-hitl` remains the source-only helper for targeted HITL updates outside a full bundle deployment.
+The bundle declares the specialist App as `resources.apps.hitl-app-agent`; use the Databricks Apps source workflow for targeted HITL updates outside a full bundle deployment.
 
 ## Decision Boundary
 
@@ -366,7 +362,8 @@ Before deployment:
 
 ```bash
 databricks bundle validate -t TARGET --profile PROFILE
-make redeploy TARGET=TARGET APP_NAME=APP_NAME PROFILE=PROFILE
+make build-app-source TARGET=TARGET
+databricks bundle deploy -t TARGET --profile PROFILE
 ```
 
 After deployment, submit a test decision with a non-production request ID, retrieve it through `GET /approval-decisions/{request_id}`, and verify the corresponding row exists in the configured UC table.

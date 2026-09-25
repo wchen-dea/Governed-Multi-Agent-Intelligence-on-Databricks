@@ -12,7 +12,7 @@ This document covers high-level architecture only. See [low-level design](runtim
 
 - Dev deployment is live with React UI as the primary client.
 - Hosted runtime uses `uv run runtime-serve-app`.
-- Deployments may intermittently fail when Terraform provider registry is unreachable; versioned-wheel `make upload-wheel` is the source-only operational fallback and does not apply bundle resources or grants.
+- Deployments may intermittently fail when Terraform provider registry is unreachable; the versioned wheel from `make build-app-source` is the source-only operational fallback and does not apply bundle resources or grants.
 - Deterministic route-plan unit tests pass. Tool-call accuracy remains monitored but non-blocking while MLflow trace selection cannot score nested tool spans reliably.
 
 ## Main Content

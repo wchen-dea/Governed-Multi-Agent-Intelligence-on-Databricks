@@ -10,7 +10,9 @@ This repository deploys using DAB with target overlays in `targets/`.
 ## Standard Flow
 
 ```bash
-make redeploy TARGET=<target> APP_NAME=<app-name> PROFILE=<profile>
+make build-app-source TARGET=<target>
+databricks bundle validate -t <target> --profile <profile>
+databricks bundle deploy -t <target> --profile <profile>
 ```
 
 Targets used in this repo: `dev`, `qa`, `stg`, `prd`.
@@ -42,4 +44,4 @@ databricks apps logs <app-name> --follow --profile <profile>
 ## Notes
 
 - Always include `--profile` explicitly.
-- `make redeploy` runs build, validate, deploy, import, app deploy, permissions, health, and smoke checks.
+- Use the operations runbook for app-source import, app deployment, permissions, and post-deployment verification.

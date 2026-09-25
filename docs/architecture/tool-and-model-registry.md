@@ -116,8 +116,8 @@ Typical source pattern for Genie Agents:
 - Evidence: required; responses must contain a citation or `Source:` line
 - Human approval: required before any operational recommendation or dispatch
 - Persistence: `APPROVAL_BACKEND=uc_table` in dev, table `quickstart_catalog.multi_agent_schema.agent_approval_decisions`
-- Specialist source: `src/hitl-agent/` (update with `make update-hitl`)
-- Specialist privileges: `make grant-hitl-privileges` grants warehouse `CAN_USE`, UC catalog/schema use, and table-level `SELECT`
+- Specialist source: `src/hitl-agent/` (deploy through the Databricks Apps source workflow)
+- Specialist privileges: apply warehouse `CAN_USE`, UC catalog/schema use, and table-level `SELECT` through the approved deployment procedure
 - Status: active
 
 This agent prepares an approval packet from revenue and CDI signals. It is not a dispatch executor. See [Human-in-the-loop approval](../governance/human-in-the-loop.md).

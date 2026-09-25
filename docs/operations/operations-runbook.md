@@ -47,8 +47,8 @@ For target values:
 - Confirm target (`dev` / `qa` / `stg` / `prd`) and CLI profile.
 - Confirm target variables in `targets/*.yml` are correct.
 - Confirm the target's HITL App, `hitl-app-agent` in dev, exists or is bound to DAB resource `hitl-app-agent`, is running, and grants the orchestrator service principal `CAN_USE`; follow the [HITL specialist creation procedure](../governance/human-in-the-loop.md#create-store-intervention-agent) when onboarding it.
-- Use `make update-hitl APP_NAME=<hitl-app-name> PROFILE=<profile>` for source-only HITL deploys; it creates the App only when missing and otherwise verifies the existing service principal is preserved.
-- Confirm the HITL App service principal has the current SQL warehouse, UC schema, and table `SELECT` grants; run `make grant-hitl-privileges` after changing its data sources.
+- Use the Databricks Apps source deployment procedure in the HITL guide for source-only HITL deploys; it creates the App only when missing and otherwise verifies the existing service principal is preserved.
+- Confirm the HITL App service principal has the current SQL warehouse, UC schema, and table `SELECT` grants through the approved grant procedure after changing its data sources.
 - Confirm the app service principal has a Lakebase OAuth role and the app has the target `postgres` resource grant.
 - Confirm no pending manual hotfix state in the target app.
 
@@ -102,9 +102,8 @@ Final pre-release checks:
 
 ### Standard Deployment
 
-Use `make redeploy` for the combined release workflow. The steps below are the
-equivalent manual sequence for troubleshooting, partial recovery, or reviewing
-each deployment boundary. See the [command reference](command-reference.md) for
+Use the explicit release workflow below. It is also the troubleshooting and
+partial-recovery sequence for reviewing each deployment boundary. See the [command reference](command-reference.md) for
 the canonical command groups and the [UI deployment guide](ui-deployment-guide.md)
 for frontend build and packaging details.
 
@@ -144,33 +143,27 @@ databricks workspace import-dir .databricks_app_source "$APP_SRC" --overwrite --
 #### 4) Deploy app from imported source
 
 ```bash
-make app-rest-deploy TARGET=TARGET APP_NAME=APP_NAME PROFILE=PROFILE
+databricks apps deploy APP_NAME --profile PROFILE --source-code-path "$APP_SRC" --mode SNAPSHOT
 ```
 
 ### Fallback Deployment Procedure
 
-Use this procedure when `bundle deploy` fails due to Terraform provider registry availability.
+Use this procedure when `bundle deploy` fails due to Terraform provider registry availability. Build the source payload with `make build-app-source`, then follow the source import and app deployment steps above.
 
 ```bash
-make upload-wheel TARGET=TARGET APP_NAME=APP_NAME PROFILE=PROFILE
+make build-app-source TARGET=TARGET
 ```
 
-`upload-wheel` builds the wheel and React payload, removes generated remote wheels, imports the source, creates the app only when it is missing, submits updates through `POST /api/2.0/apps/{app}/deployments`, verifies the service principal did not change on update, and checks health. It does not apply bundle-managed app resources or grants.
-
-For a full release attempt with validation, optional bundle apply, grants, health, and smoke checks, use:
-
-```bash
-make redeploy TARGET=TARGET APP_NAME=APP_NAME PROFILE=PROFILE
-```
+After the payload is built, use the source import and `databricks apps deploy` commands in the standard deployment procedure. This does not apply bundle-managed app resources or grants.
 
 ### Databricks App Source Caveat
 
 In some environments, relying on bundle runtime commands may use a reduced source payload (for example, only bundle resource files), which can fail startup with errors such as missing command or missing modules.
 
-When this occurs, use `make upload-wheel` to deploy the complete app-source payload. It creates a versioned wheel, uploads it under the app source path, creates the app only when missing, and otherwise deploys the resulting snapshot to the existing app without changing its service principal:
+When this occurs, use `make build-app-source` to create the complete app-source payload, then use the source import and app deployment commands above:
 
 ```bash
-make upload-wheel TARGET=TARGET APP_NAME=APP_NAME PROFILE=PROFILE
+make build-app-source TARGET=TARGET
 ```
 
 Then verify:
@@ -188,14 +181,12 @@ Expected health fields:
 
 The GitHub Actions deployment pipeline (`.github/workflows/databricks-cicd.yml`) is aligned to this runbook:
 
-- **`pr-ci` job** (pull requests): `uv run pytest -q` → `uv run assistant-evaluate` → `make build-app-source` → `make validate TARGET=<pr-base-branch>`.
-- **`deploy` job** (push to `dev`/`qa`/`stg`/`prd` or manual dispatch): `uv run pytest -q` → `uv run assistant-evaluate` → resolve HITL bundle variables → `make redeploy-source-only TARGET=<target> APP_NAME=<app-name>` → `make update-hitl APP_NAME=<hitl-app-name>` → `make grant-hitl-privileges APP_NAME=<hitl-app-name>`.
+- **`pr-ci` job** (pull requests): `uv run pytest -q` → `uv run assistant-evaluate` → `make build-app-source` → the workflow's bundle validation command.
+- **`deploy` job** (push to `dev`/`qa`/`stg`/`prd` or manual dispatch): tests and evaluation → bundle deployment → app-source preparation and app deployment → HITL updates and grants.
 
-`make redeploy` is a full release target that runs `build-app-source`, `validate`, `bundle-deploy-optional`, `import`, `deploy`, `grants`, `health`, and `smoke` in sequence (see [Makefile](../../Makefile)). CI uses `make redeploy-source-only` so app source updates preserve existing service principals and avoid a duplicate DAB-managed HITL deployment in the same job.
+The CI workflow owns the combined release orchestration. For operator-driven recovery, use the explicit standard or fallback procedures in this runbook rather than an obsolete aggregate Make target.
 
-For an operator-driven source-only recovery, use `make upload-wheel` instead of `make redeploy`.
-
-`make update-hitl` creates the specialist App only when it is missing. When the App already exists, it performs an update-only deploy and verifies the service principal client ID is unchanged.
+The HITL source procedure creates the specialist App only when it is missing. When the App already exists, it performs an update-only deploy and verifies the service principal client ID is unchanged.
 
 This keeps repository state clean (no committed wheel binaries) while ensuring each CI run deploys a fresh wheel artifact.
 
@@ -439,7 +430,9 @@ For non-interactive CLI tests against Databricks Apps `/invocations`, use `Autho
 Example helper:
 
 ```bash
-make query-dev TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT QUERY='top stores by revenue' QUERY_PERSONA=manager
+curl --fail --silent --show-error \
+  -H "Authorization: Bearer $DATABRICKS_TOKEN" \
+  "https://<workspace-host>/api/2.0/apps/multiagent-app-dev" | jq .
 ```
 
 ### Incident Triage
@@ -629,7 +622,7 @@ Not `"chat_completions"`. Rebuild and redeploy.
 **Possible causes:**
 
 1. **Missing wheel artifact:** The deployed `wheels/` directory contains no `.whl` file. The launcher raises `FileNotFoundError` on startup.
-   - Fix: `make build-app-source && make import TARGET=dev && make deploy TARGET=dev APP_NAME=multiagent-app-dev`
+   - Fix: `make build-app-source TARGET=dev`, then follow the source import and app deployment commands in the standard deployment procedure.
 
 2. **Cold-start timeout:** First request after deployment takes longer (MCP connections, Genie space warm-up). The platform gateway times out.
    - Fix: Retry the query — subsequent requests use cached MCP connections.
@@ -670,14 +663,10 @@ If it recurs, check for import errors or startup crashes in the wheel (e.g., mis
 
 **Fix:**
 
-1. Run the grant script:
-   ```bash
-   make grants TARGET=dev APP_NAME=multiagent-app-dev
-   ```
-
-   Note: `make grants` only applies table-level `SELECT` grants (schema/catalog
-   `USE` access is provisioned outside this pipeline, by the data platform team).
-   If the app still lacks catalog/schema access, apply it manually:
+1. Apply the required grants through the DAB resource configuration. Table-level
+   `SELECT` grants and schema/catalog `USE` access may also require coordination
+   with the data platform team. If the app still lacks catalog/schema access,
+   apply it manually:
 
 2. Or grant manually in a SQL editor:
    ```sql
@@ -725,10 +714,10 @@ For the dev product index, verify the app has `CAN_USE` on `product_index_ep` an
 **Fix:** Use the fallback import/deploy workflow:
 
 ```bash
-make upload-wheel TARGET=dev APP_NAME=multiagent-app-dev PROFILE=DEFAULT
+make build-app-source TARGET=dev
 ```
 
-Or use `make redeploy` which has built-in fallback logic.
+Then use the source import and app deployment commands in the standard deployment procedure.
 
 The fallback only deploys application source. It does not replace a failed bundle apply for app resource grants. If the bundle failed before applying `resources/multiagent_app.yml`, restore Terraform registry connectivity and rerun `databricks bundle deploy`; otherwise the app may run without its Lakebase resource permission.
 
@@ -742,7 +731,7 @@ The fallback only deploys application source. It does not replace a failed bundl
 
 **Fix:**
 
-1. Use `make redeploy` — its `bundle-deploy-optional` step tolerates the failure and falls through to import/deploy.
+1. Build and deploy the app source using the fallback import/deploy procedure above.
 2. Verify env vars are present in `.databricks_app_source/app.yml` — the launcher reads them at startup. Regenerate it with `make build-app-source TARGET=dev` if `targets/<target>.yml` changed since the last build.
 3. Restore resource grants manually if needed:
    ```bash
@@ -753,8 +742,8 @@ The fallback only deploys application source. It does not replace a failed bundl
      ],
      "user_api_scopes": ["sql"]
    }'
-   # Re-run permission grants
-   make grants TARGET=dev APP_NAME=multiagent-app-dev
+   # Re-apply bundle-managed permissions after registry access is restored
+   databricks bundle deploy -t dev --profile dev
    ```
 4. Note: the Databricks Apps API does not currently expose all `postgres` resource updates through `apps update`; apply the Lakebase resource grant and secret resource through `databricks bundle deploy`. If Terraform registry access is unavailable, restore the network path before applying permissions rather than silently relying on OAuth.
 
@@ -770,9 +759,10 @@ The fallback only deploys application source. It does not replace a failed bundl
 2. The launcher is up to date (contains `_load_app_yml_env`).
 3. Rebuild and redeploy so `app.yml` regenerates and gets imported:
    ```bash
-   make build-app-source TARGET=dev
-   make import TARGET=dev APP_NAME=multiagent-app-dev
-   make deploy TARGET=dev APP_NAME=multiagent-app-dev
+    make build-app-source TARGET=dev
+    APP_SRC=$(databricks apps get multiagent-app-dev --output json --profile dev | jq -r '.default_source_code_path')
+    databricks workspace import-dir .databricks_app_source "$APP_SRC" --overwrite --profile dev
+    databricks apps deploy multiagent-app-dev --profile dev --source-code-path "$APP_SRC" --mode SNAPSHOT
    ```
 
 ### Lakebase ODS agent OAuth failure
@@ -797,7 +787,7 @@ The fallback only deploys application source. It does not replace a failed bundl
 
 3. Ensure `get_lakebase_token()` in [lakebase.py](../../src/aiserver/infrastructure/databricks/lakebase.py) calls `ws_client.config.authenticate()` with no arguments and returns the authenticated header map.
 
-4. Rebuild and redeploy with `make upload-wheel TARGET=TARGET APP_NAME=APP_NAME PROFILE=PROFILE`.
+4. Rebuild with `make build-app-source TARGET=TARGET`, then import and deploy the app source using the standard deployment procedure.
 
 **Lakebase role management commands:**
 

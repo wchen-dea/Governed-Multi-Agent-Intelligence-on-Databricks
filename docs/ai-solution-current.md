@@ -239,10 +239,9 @@ The bundle declares two Databricks Apps:
 
 Deployment modes:
 
-- `make redeploy`: full release path. Runs build, validate, optional bundle deploy, source deploy fallback, grants, health, and smoke checks.
-- `make redeploy-source-only`: source-only main app path that creates the app if missing and otherwise updates in place while preserving the service principal.
-- `make update-hitl`: source-only HITL app path that creates the app if missing and otherwise updates in place while preserving the service principal.
-- `make grant-hitl-privileges`: grants the HITL app service principal SQL warehouse and UC table access; when `ORCHESTRATOR_APP_NAME` is set, also grants the orchestrator app `CAN_USE` on the HITL app.
+- `make build-app-source`: builds the wheel-backed app-source payload.
+- `make stop`: stops the configured Databricks Apps using overrideable app names and profile.
+- Bundle deployment and app-source publishing are orchestrated by the DAB and CI/CD workflow; see the operations runbook for the explicit sequence.
 
 ## Evaluation And Release Gates
 
@@ -282,7 +281,7 @@ Release gate behavior:
 
 - QA/STG/PRD target overlays still include placeholder workspace hosts and resource IDs that must be replaced before deployment.
 - HITL App source-only deployment is separate from the main app wheel payload.
-- `make upload-wheel` and `make update-hitl` preserve existing App service principals on update, but deleting and recreating a Databricks App will create a new service principal.
+- Source-only app updates should preserve existing App service principals, but deleting and recreating a Databricks App will create a new service principal.
 - Route metadata explains why a model was selected; it does not prove that the model called the correct tool or produced a grounded answer.
 
 ## Validation Commands

@@ -51,23 +51,11 @@ def _default_source_table(layer: str, schema: str, table: str) -> str:
     """Build the conventional environment-scoped UC source table name."""
     return f"dt_{APP_ENV}_{layer}.{schema}.{table}"
 
-# Approved data source tables (fully qualified Unity Catalog names).
-# Replace these placeholders with your actual catalog.schema.table references.
-REVENUE_TABLE = os.getenv(
-    "REVENUE_TABLE",
-    _default_source_table("platinum", "enterprise", "store_sales_performance"),
-)
-CDI_TABLE = os.getenv(
-    "CDI_TABLE",
-    _default_source_table("gold", "dwh", "fct_cdi_daily"),
-)
-PEER_SET_TABLE = os.getenv(
-    "PEER_SET_TABLE",
-    _default_source_table("gold", "dwh", "brg_store_cluster_membership_group"),
-)
-STORE_DIMENSION_TABLE = os.getenv(
-    "STORE_DIMENSION_TABLE",
-    _default_source_table("gold", "dwh", "dim_store_active"),
+# The scheduled snapshot job owns access to the source tables. The App only
+# needs SELECT on this single, curated Delta table.
+SNAPSHOT_TABLE = os.getenv(
+    "SNAPSHOT_TABLE",
+    "quickstart_catalog.multi_agent_schema.hitl_source_snapshot",
 )
 
 # Rolling window for trend analysis (days)
@@ -157,113 +145,26 @@ def _execute_sql(sql: str) -> list[dict[str, Any]]:
 
 
 def _discover_candidates() -> list[dict[str, Any]]:
-    """Find stores with strong revenue AND declining CDI (Overall Delight NPS).
-
-    Revenue source: store_sales_performance (`Store Code`, `Day Date`, net_sales)
-    CDI source: fct_cdi_daily (store_code, date_dimension_identifier,
-                               totpromo_rolling, totdetr_rolling, totresp_rolling)
-    CDI NPS formula: (promoters - detractors) / NULLIF(responses, 0)
-    """
+    """Find high-revenue stores with declining CDI from the curated snapshot."""
     sql = f"""
-    WITH revenue_ranked AS (
-        SELECT
-            `Store Code` AS store_code,
-            SUM(net_sales) AS total_revenue,
-            PERCENT_RANK() OVER (ORDER BY SUM(net_sales)) AS revenue_pctile,
-            -- Trend: compare last 30d vs prior 30d
-            SUM(CASE WHEN `Day Date` >= CURRENT_DATE - INTERVAL 30 DAYS THEN net_sales ELSE 0 END)
-              / NULLIF(SUM(CASE WHEN `Day Date` BETWEEN CURRENT_DATE - INTERVAL 60 DAYS
-                                               AND CURRENT_DATE - INTERVAL 31 DAYS
-                            THEN net_sales ELSE 0 END), 0) - 1 AS revenue_trend_pct
-        FROM {REVENUE_TABLE}
-        WHERE `Day Date` >= CURRENT_DATE - INTERVAL {TREND_WINDOW_DAYS} DAYS
-        GROUP BY `Store Code`
-    ),
-    cdi_scored AS (
-        SELECT
-            store_code,
-            date_dimension_identifier,
-            -- CDI = Overall Delight NPS = (promoters - detractors) / responses
-            (totpromo_rolling - totdetr_rolling)
-              / NULLIF(CAST(totresp_rolling AS DOUBLE), 0) AS cdi_nps
-        FROM {CDI_TABLE}
-        WHERE date_dimension_identifier >= CAST(DATE_FORMAT(
-              CURRENT_DATE - INTERVAL {TREND_WINDOW_DAYS} DAYS, 'yyyyMMdd') AS INT)
-    ),
-    cdi_ranked AS (
-        SELECT
-            store_code,
-            AVG(cdi_nps) AS avg_cdi,
-            PERCENT_RANK() OVER (ORDER BY AVG(cdi_nps) DESC) AS cdi_pctile,
-            -- Trend: last 30d avg vs prior 30d avg
-            AVG(CASE WHEN date_dimension_identifier >= CAST(DATE_FORMAT(
-                  CURRENT_DATE - INTERVAL 30 DAYS, 'yyyyMMdd') AS INT)
-                THEN cdi_nps END)
-              - AVG(CASE WHEN date_dimension_identifier BETWEEN
-                  CAST(DATE_FORMAT(CURRENT_DATE - INTERVAL 60 DAYS, 'yyyyMMdd') AS INT)
-                  AND CAST(DATE_FORMAT(CURRENT_DATE - INTERVAL 31 DAYS, 'yyyyMMdd') AS INT)
-                THEN cdi_nps END) AS cdi_trend_delta
-        FROM cdi_scored
-        GROUP BY store_code
-    )
-    SELECT
-        r.store_code,
-        r.total_revenue,
-        r.revenue_pctile,
-        r.revenue_trend_pct,
-        c.avg_cdi,
-        c.cdi_pctile,
-        c.cdi_trend_delta
-    FROM revenue_ranked r
-    JOIN cdi_ranked c ON r.store_code = c.store_code
-    WHERE r.revenue_pctile >= 0.75   -- strong revenue (top quartile)
-      AND c.cdi_trend_delta < 0      -- declining CDI NPS
-    ORDER BY c.cdi_trend_delta ASC
+    SELECT store_code, total_revenue, revenue_pctile, revenue_trend_pct,
+           avg_cdi, cdi_pctile, cdi_trend_delta
+    FROM {SNAPSHOT_TABLE}
+    WHERE revenue_pctile >= 0.75
+      AND cdi_trend_delta < 0
+    ORDER BY cdi_trend_delta ASC
     LIMIT 20
     """
     return _execute_sql(sql)
 
 
 def _get_peer_comparison(store_code: str) -> dict[str, Any]:
-    """Retrieve peer set context for a given store.
-
-    The peer model uses brg_store_cluster_membership_group which maps
-    store_cluster_membership_group_identifier -> store_cluster_dimension_identifier.
-    We join through the configured store dimension table to resolve store_code to its cluster, then
-    compute peer-group averages for revenue and CDI.
-    """
+    """Retrieve peer context from the curated snapshot."""
     sql = f"""
-    WITH target_cluster AS (
-        -- Find the cluster(s) the target store belongs to
-        SELECT DISTINCT
-            brg.store_cluster_dimension_identifier AS cluster_id
-        FROM {PEER_SET_TABLE} brg
-        JOIN {STORE_DIMENSION_TABLE} ds
-            ON brg.store_cluster_membership_group_identifier = ds.store_cluster_membership_group_identifier
-        WHERE ds.store_code = '{store_code}'
-    ),
-    peer_stores AS (
-        -- All stores in the same cluster(s)
-        SELECT DISTINCT ds.store_code AS peer_store_code
-        FROM {PEER_SET_TABLE} brg
-        JOIN {STORE_DIMENSION_TABLE} ds
-            ON brg.store_cluster_membership_group_identifier = ds.store_cluster_membership_group_identifier
-        WHERE brg.store_cluster_dimension_identifier IN (SELECT cluster_id FROM target_cluster)
-          AND ds.store_code != '{store_code}'
-    )
     SELECT
-        (SELECT cluster_id FROM target_cluster LIMIT 1) AS peer_group_id,
-        AVG(r.net_sales) AS peer_avg_daily_revenue,
-        AVG((cdi.totpromo_rolling - cdi.totdetr_rolling)
-            / NULLIF(CAST(cdi.totresp_rolling AS DOUBLE), 0)) AS peer_avg_cdi
-    FROM peer_stores ps
-    LEFT JOIN {REVENUE_TABLE} r
-        ON r.`Store Code` = ps.peer_store_code
-        AND r.`Day Date` >= CURRENT_DATE - INTERVAL 30 DAYS
-    LEFT JOIN {CDI_TABLE} cdi
-        ON cdi.store_code = ps.peer_store_code
-        AND cdi.date_dimension_identifier >= CAST(DATE_FORMAT(
-            CURRENT_DATE - INTERVAL 30 DAYS, 'yyyyMMdd') AS INT)
+        peer_group_id, peer_avg_daily_revenue, peer_avg_cdi
+    FROM {SNAPSHOT_TABLE}
+    WHERE store_code = '{store_code}'
     """
     rows = _execute_sql(sql)
     return rows[0] if rows else {}

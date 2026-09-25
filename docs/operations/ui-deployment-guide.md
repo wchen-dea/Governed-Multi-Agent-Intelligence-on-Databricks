@@ -132,10 +132,11 @@ Do not manually copy files into `.databricks_app_source` or `src/aiserver/static
 Set the target-specific app name and profile, then run the full workflow:
 
 ```bash
-make redeploy TARGET=dev APP_NAME=multiagent-app-dev PROFILE=dev
+databricks bundle deploy -t dev --profile dev
+make build-app-source TARGET=dev
 ```
 
-For another environment, change all three values consistently. `make redeploy` performs the following sequence:
+For another environment, change all three values consistently. The standard release workflow performs the following sequence:
 
 1. Build the wheel and bundled React assets.
 2. Validate the Databricks Asset Bundle.
@@ -164,9 +165,8 @@ Resolve those separately before promoting the release.
 Run the standard checks and inspect the app status:
 
 ```bash
-make health TARGET=dev APP_NAME=multiagent-app-dev PROFILE=dev
-make smoke TARGET=dev APP_NAME=multiagent-app-dev PROFILE=dev
-make status TARGET=dev APP_NAME=multiagent-app-dev PROFILE=dev
+databricks apps get multiagent-app-dev --output json --profile dev
+databricks apps logs multiagent-app-dev --follow --profile dev
 ```
 
 Expected health values are:
@@ -180,18 +180,20 @@ Expected health values are:
 For an authenticated functional check, use a Databricks bearer token without putting it in source control:
 
 ```bash
-make query-dev TARGET=dev APP_NAME=multiagent-app-dev PROFILE=dev \
-  QUERY='top stores by revenue' QUERY_PERSONA=store-manager
+curl --fail --silent --show-error \
+  -H "Authorization: Bearer $DATABRICKS_TOKEN" \
+  "https://<workspace-host>/api/2.0/apps/multiagent-app-dev" \
+  | jq .
 ```
 
-For governance-specific verification, provide `TOKEN` only through the shell environment and use `make smoke-governance` as documented in the operations runbook.
+For governance-specific verification, provide credentials only through the shell environment and follow the authenticated verification procedure in the operations runbook.
 
 ## Troubleshooting
 
 - **The browser shows the backend JSON status instead of the UI:** run `make build-app-source`; the wheel only contains the UI when Vite has built and the preparation script has copied the assets.
 - **The Vite page cannot reach the API:** set `VITE_API_PROXY=http://localhost:8000/invocations` for split local development. The deployed app must use `/invocations`.
 - **A deployed update uses old UI code:** rebuild with `make build-app-source`, import the regenerated `.databricks_app_source`, and deploy a new snapshot. `apps deploy` does not rebuild local assets.
-- **The app source path is missing:** run `make validate` to derive the bundle workspace path, or use the full `make redeploy` flow so the path is resolved automatically.
+- **The app source path is missing:** retrieve `default_source_code_path` with `databricks apps get`, then import the generated `.databricks_app_source` directory as described in the operations runbook.
 - **The app is healthy but the root smoke check is unauthorized:** a `401` or `403` root response is accepted by the structural smoke check; use an authenticated browser/session or invocation check to validate the UI content.
 - **The deployment is locked or still in progress:** rerun the workflow; the Make targets wait for stable compute and active-deployment locks before updating.
 

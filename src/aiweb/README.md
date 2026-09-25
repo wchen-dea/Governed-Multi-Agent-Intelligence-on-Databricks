@@ -56,15 +56,11 @@ npm run dev
 ```bash
 make help
 make build-app-source
-make import
-make deploy
-make health
-make smoke
+make lint-markdown
+databricks apps get <app-name> --output json --profile <profile>
 ```
 
-The `deploy` target submits the app snapshot through the Databricks Apps REST API; DAB remains responsible for bundle-managed infrastructure and permissions.
-
-These targets build the packaged app source, upload it to the Databricks app workspace, deploy the app, and validate the generated UI route and `/invocations` contract.
+The Makefile builds and validates the local app-source payload. DAB remains responsible for bundle-managed infrastructure and permissions; use the operations runbook for the explicit Databricks deployment sequence.
 
 ## Build
 
@@ -90,4 +86,4 @@ Coverage includes desktop and mobile layouts, incremental streaming, governance 
 
 - Default backend URL for local frontend-only development is `http://localhost:8000/invocations`.
 - The built React UI is bundled into the backend wheel (`src/aiserver/static/`, produced by `prepare_app_source.py`) and served in-process by `src/aiserver/api/server.py` — same origin, no separate proxy process.
-- Project automation lives in the root Makefile; use `make help` for the current command set and `make redeploy` for the end-to-end refresh path.
+- Project automation lives in the root Makefile; use `make help` for the current command set and `make build-app-source` to assemble the deployable payload.

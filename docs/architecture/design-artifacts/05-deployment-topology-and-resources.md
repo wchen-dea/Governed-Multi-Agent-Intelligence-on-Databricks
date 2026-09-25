@@ -69,4 +69,4 @@ flowchart TB
 
 ## Current Alignment
 
-When Terraform Registry is unavailable, source recovery uses versioned-wheel `make upload-wheel`; it imports and SNAPSHOT-deploys app source but does not apply bundle-managed resources or grants.
+When Terraform Registry is unavailable, source recovery uses the versioned wheel produced by `make build-app-source`; it imports and SNAPSHOT-deploys app source but does not apply bundle-managed resources or grants.

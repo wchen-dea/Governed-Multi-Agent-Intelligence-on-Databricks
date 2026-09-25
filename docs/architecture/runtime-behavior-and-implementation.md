@@ -290,7 +290,7 @@ Direct non-interactive Databricks Apps invocation tests should use:
 ## Operational Constraints in Design
 
 - MCP health checks run in parallel with timeout controls and short TTL caching for healthy/unhealthy outcomes.
-- `make upload-wheel` provides the lifecycle-gated source deployment path for Terraform registry outages; it does not apply bundle-managed resources or grants.
+- `make build-app-source` provides the app-source payload for Terraform registry outage recovery; source deployment does not apply bundle-managed resources or grants.
 - Genie-backed queries require SQL warehouse and Unity Catalog grants for both user and app service principal.
 
 ## Key Files Quick Map
