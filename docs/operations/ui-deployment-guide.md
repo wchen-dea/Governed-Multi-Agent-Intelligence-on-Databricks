@@ -20,7 +20,7 @@ The generated directories `src/aiweb/dist`, `src/aiserver/static`, `.databricks_
 
 Install and authenticate the tools used by the repository:
 
-- Python 3.11 or 3.12 with `uv`
+- Python 3.12 with `uv`
 - Node.js and `npm`
 - Databricks CLI, `jq`, and a configured Databricks CLI profile for deployment
 - Access to the target workspace, app, model/tool resources, and required permissions

@@ -230,7 +230,7 @@ For architecture diagrams, see [docs/architecture/high-level-architecture.md](do
 
 Prerequisites:
 
-- Python 3.11+
+- Python 3.12
 - uv
 - Databricks CLI
 

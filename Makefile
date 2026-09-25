@@ -2,7 +2,11 @@ SHELL := /bin/sh
 .DEFAULT_GOAL := help
 MAKEFLAGS += --no-builtin-rules
 
-.PHONY: help test lint lint-markdown format runtime-core assistant-tools evaluate evaluate-strict triage-evaluation build-app-source
+PROFILE ?= DEFAULT
+APP_NAME ?= multiagent-app-dev
+HITL_APP_NAME ?= hitl-app-agent
+
+.PHONY: help test lint lint-markdown format runtime-core assistant-tools evaluate evaluate-strict triage-evaluation build-app-source stop
 
 help:
 	@printf "Local development workflow\n\n"
@@ -17,6 +21,7 @@ help:
 	@printf "  make evaluate-strict   Run evaluation with all KPI gates required\n"
 	@printf "  make triage-evaluation Classify a local evaluation run\n"
 	@printf "  make build-app-source  Build the local wheel + React app-source payload\n"
+	@printf "  make stop               Stop Databricks Apps\n"
 	@printf "\nDeployment is owned by the DAB and CI/CD workflow.\n"
 
 test:
@@ -48,3 +53,8 @@ triage-evaluation:
 
 build-app-source:
 	TARGET="$(TARGET)" uv run runtime-build-source
+
+stop:
+	@for app in "$(APP_NAME)" "$(HITL_APP_NAME)"; do \
+		databricks apps stop "$$app" --profile "$(PROFILE)"; \
+	done

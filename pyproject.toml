@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "Agent Developer", email = "developer@example.com" }
 ]
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi~=0.115.12",
     "uvicorn~=0.34.2",
@@ -317,3 +317,4 @@ assistant-grant-app-permissions = "operations.grant_app_runtime_permissions:main
 assistant-grant-lakebase-memory = "operations.grant_lakebase_memory_permissions:main"
 assistant-benchmark-stream = "operations.benchmark_stream_parsing:main"
 assistant-triage-evaluation = "operations.triage_evaluation_run:main"
+release-controller = "operations.release_controller:main"
