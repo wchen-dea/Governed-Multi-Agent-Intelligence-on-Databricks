@@ -1,5 +1,5 @@
 ---
-name: runtime-guardrails
+name: governance-guardrails
 description: "Implement or update runtime guardrail behavior for policy checks, evidence requirements, and blocked-output controls. Use when: changing sensitive-output rules, evidence/citation enforcement, or guardrail validation flows."
 ---
 
@@ -17,7 +17,7 @@ This skill covers:
 
 This skill does not cover:
 
-- Routing metadata changes (use runtime-routing).
+- Routing metadata changes (use governance-routing).
 - New Databricks tool/resource creation (use create-tools/add-tools).
 
 ## Preconditions

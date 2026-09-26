@@ -1,5 +1,5 @@
 ---
-name: discover-tools
+name: capability-discover
 description: "Discover Databricks resources available to this project. Use when: planning tool routing, finding Genie Agent space IDs, or checking serving endpoint names."
 ---
 

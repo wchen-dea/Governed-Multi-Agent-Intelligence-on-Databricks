@@ -1,5 +1,5 @@
 ---
-name: modify-agent
+name: behavior-modify
 description: "Modify orchestrator behavior, subagent routing, and request handling for this repository. Use when: changing model/instructions, adding subagents, or adjusting runtime flow."
 ---
 

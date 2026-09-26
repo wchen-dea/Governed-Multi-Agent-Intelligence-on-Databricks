@@ -1,5 +1,5 @@
 ---
-name: run-locally
+name: environment-run-local
 description: "Run and validate the app locally. Use when: starting backend/frontend, testing invocations, or troubleshooting local runtime issues."
 ---
 

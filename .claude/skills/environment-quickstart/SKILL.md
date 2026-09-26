@@ -1,5 +1,5 @@
 ---
-name: quickstart
+name: environment-quickstart
 description: "Initialize local Databricks development for this repository. Use when: first setup, auth/profile setup, .env bootstrapping, or MLflow experiment setup."
 ---
 

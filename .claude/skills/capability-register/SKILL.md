@@ -1,5 +1,5 @@
 ---
-name: add-tools
+name: capability-register
 description: "Wire additional Databricks tools into this app and grant required app permissions. Use when: adding Genie/endpoint integrations or fixing runtime permission failures."
 ---
 

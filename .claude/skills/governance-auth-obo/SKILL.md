@@ -1,5 +1,5 @@
 ---
-name: runtime-auth-obo
+name: governance-auth-obo
 description: "Implement or update runtime on-behalf-of-user authorization behavior, token-forwarding requirements, and auth-mode enforcement. Use when: changing app vs obo auth rules, forwarded token handling, or auth validation outcomes."
 ---
 
@@ -17,7 +17,7 @@ This skill covers:
 
 This skill does not cover:
 
-- New route design (use runtime-routing).
+- New route design (use governance-routing).
 - New permission grant resources (use add-tools).
 
 ## Preconditions

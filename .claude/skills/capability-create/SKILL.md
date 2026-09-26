@@ -1,5 +1,5 @@
 ---
-name: create-tools
+name: capability-create
 description: "Create or prepare Databricks resources this app can route to. Use when: required Genie Agents/endpoints/resources do not exist yet."
 ---
 

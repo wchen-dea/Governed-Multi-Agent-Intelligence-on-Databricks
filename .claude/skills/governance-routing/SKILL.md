@@ -1,5 +1,5 @@
 ---
-name: runtime-routing
+name: governance-routing
 description: "Implement or modify runtime routing behavior for orchestrator tool selection, policy-aware subagent targeting, and auth-mode-aware execution. Use when: adding/changing route rules, route metadata, or routing validations."
 ---
 

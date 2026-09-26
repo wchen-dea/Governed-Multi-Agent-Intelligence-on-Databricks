@@ -1,5 +1,5 @@
 ---
-name: runtime-audit-observability
+name: observability-audit
 description: "Implement or update runtime lifecycle auditing and observability behavior for message bus backends, UC audit persistence, and deployment telemetry validation. Use when: changing event schemas, backend selection, async publish behavior, or observability checks."
 ---
 
@@ -17,8 +17,8 @@ This skill covers:
 
 This skill does not cover:
 
-- Business routing rules (use runtime-routing).
-- Guardrail policy logic (use runtime-guardrails).
+- Business routing rules (use governance-routing).
+- Guardrail policy logic (use governance-guardrails).
 
 ## Preconditions
 

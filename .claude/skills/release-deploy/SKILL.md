@@ -1,5 +1,5 @@
 ---
-name: deploy
+name: release-deploy
 description: "Deploy this app with Databricks Declarative Automation Bundles. Use when: validate/deploy/run by target, bind existing app, or troubleshoot deploy drift."
 ---
 
