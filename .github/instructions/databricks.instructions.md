@@ -1,6 +1,6 @@
 ---
 description: "Databricks application, bundle, Unity Catalog, MCP, and deployment conventions."
-applyTo: "databricks.yml,app.yml,targets/**,resources/**,src/semantics/**,src/operations/**,.databricks_app_source/**"
+applyTo: "databricks.yml,app.yml,targets/**,resources/**,src/semantics/**,.databricks_app_source/**"
 ---
 
 # Databricks

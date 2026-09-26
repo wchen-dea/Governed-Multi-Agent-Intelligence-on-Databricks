@@ -1,6 +1,6 @@
 ---
 description: "Testing and validation conventions for Python, frontend, contracts, and agent behavior."
-applyTo: "tests/**,src/**"
+applyTo: "tests/**"
 ---
 
 # Testing
