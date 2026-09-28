@@ -26,7 +26,7 @@ function parseAllowedPersonas(raw: string | undefined): string[] {
 }
 
 export const settings: FrontendSettings = {
-  backendUrl: import.meta.env.VITE_API_PROXY ?? "/invocations",
+  backendUrl: import.meta.env.VITE_API_PROXY ?? "/api/chat",
   chatGreeting:
     import.meta.env.VITE_CHAT_GREETING ?? "What would you like to know?",
   timeoutSeconds: Number(

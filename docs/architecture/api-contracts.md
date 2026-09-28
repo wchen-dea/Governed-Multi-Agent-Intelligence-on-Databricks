@@ -8,11 +8,44 @@ Document the stable contract for invoke and stream usage and expected error sema
 
 ## Endpoints
 
+- Versioned application API: `/api/chat`, `/api/approvals`, `/api/health`
 - `POST /invocations`
 - Stream handler through MLflow agent server stream route
 - `GET /health`
 - `POST /approval-decisions`
 - `GET /approval-decisions/{request_id}`
+
+## Versioned application API
+
+The `/api` surface is the stable contract for AIWeb. It deliberately hides
+MLflow Agent Server and Responses API implementation details. The existing
+routes remain compatibility routes during migration.
+
+### `POST /api/chat`
+
+Request fields:
+
+| Field | Required | Meaning |
+| --- | --- | --- |
+| `messages` | yes | Ordered user and assistant transcript messages |
+| `conversation_id` | yes | Client conversation correlation identifier |
+| `persona` | no | Requested configured assistant persona |
+| `stream` | no | Whether the response uses SSE; defaults to `true` |
+
+The SSE event types are intentionally public and implementation-neutral:
+
+- `text_delta`: `{ "type": "text_delta", "delta": "..." }`
+- `metadata`: `{ "type": "metadata", "metadata": { ... } }`
+- `completed`: `{ "type": "completed" }`
+- `error`: `{ "type": "error", "error": { "code": "...", "message": "..." } }`
+
+The API adapter will translate these events to and from the current Agent
+Server stream while the compatibility route is still supported.
+
+### `POST /api/approvals`
+
+Uses the same decision fields as the existing approval endpoint and returns
+`status`, `approval`, and optional payload-redacted `delegation` data.
 
 ## Invoke Request Contract
 

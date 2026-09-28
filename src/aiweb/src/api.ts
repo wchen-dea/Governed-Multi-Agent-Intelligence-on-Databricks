@@ -75,7 +75,7 @@ export async function submitApprovalDecision(options: {
   if (options.token)
     headers[settings.forwardedAccessTokenHeader] = options.token;
   const response = await fetch(
-    `${settings.backendUrl.replace(/\/invocations\/?$/, "")}/approval-decisions`,
+    `${settings.backendUrl.replace(/\/api\/chat\/?$/, "")}/api/approvals`,
     {
       method: "POST",
       headers,
@@ -157,13 +157,11 @@ export async function sendChat(
   ];
 
   const payload: Record<string, unknown> = {
-    input: payloadInput,
+    messages: payloadInput,
+    conversation_id: options.conversationId,
+    persona: options.persona,
     stream: true,
-    context: { conversation_id: options.conversationId },
   };
-  if (options.persona) {
-    payload.custom_inputs = { persona: options.persona };
-  }
 
   const controller = new AbortController();
   callbacks.onRequestController?.(controller);
@@ -243,7 +241,11 @@ export async function sendChat(
         }
         seenEvents.add(eventKey);
 
-        const delta = updateStreamHints(event, { categories, tools });
+        const runtimeEvent =
+          event.type === "text_delta"
+            ? { type: "response.output_text.delta", delta: event.delta }
+            : event;
+        const delta = updateStreamHints(runtimeEvent, { categories, tools });
         if (delta) {
           if (fullText.endsWith(delta)) {
             continue;
@@ -253,7 +255,9 @@ export async function sendChat(
           callbacks.onTextDelta?.(delta);
         }
         latestMetadata = metadataFromEvent(
-          event,
+          event.type === "metadata"
+            ? { response_envelope: event.metadata }
+            : runtimeEvent,
           governanceFromHints({ categories, tools }),
         );
         callbacks.onMetadata?.(latestMetadata);

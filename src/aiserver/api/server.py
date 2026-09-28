@@ -15,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from mlflow.genai.agent_server import AgentServer, setup_mlflow_git_based_version_tracking
 
 from aiserver.api.models import ApprovalDecisionInput
+from aiserver.api.public import router as public_api_router
 from aiserver.application.delegation.policy import evaluate_delegation_policy
 from aiserver.application.delegation.worker import AgentTaskWorker
 from aiserver.application.orchestration.agent import (
@@ -41,6 +42,7 @@ import aiserver.api.invocations  # noqa: E402, F401
 
 agent_server = AgentServer("ResponsesAgent", enable_chat_proxy=True)
 app = agent_server.app
+app.include_router(public_api_router)
 _worker_stop_event: asyncio.Event | None = None
 _worker_task: asyncio.Task[None] | None = None
 _agent_server_lifespan = app.router.lifespan_context
@@ -61,6 +63,12 @@ def health():
         "message": "Service is running. Use /invocations for agent requests.",
         "ui_dist": str(UI_DIST_DIR),
     }
+
+
+@app.get("/api/health")
+def public_health():
+    """Return the stable public health payload."""
+    return health()
 
 
 _APPROVAL_REPOSITORY: ApprovalRepository = default_approval_repository()
@@ -188,6 +196,12 @@ async def submit_approval_decision(payload: ApprovalDecisionInput) -> dict[str, 
         "approval": _approval_payload(record),
         "delegation": delegation,
     }
+
+
+@app.post("/api/approvals")
+async def submit_public_approval_decision(payload: ApprovalDecisionInput) -> dict[str, object]:
+    """Compatibility-neutral alias for the public approval contract."""
+    return await submit_approval_decision(payload)
 
 
 @app.get("/approval-decisions/{request_id}")
