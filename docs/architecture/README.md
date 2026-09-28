@@ -8,10 +8,10 @@ This guide is the entry point for the architecture corpus. It separates authorit
 
 | Reader | Start here | Then use |
 | --- | --- | --- |
-| AI executive | [High-level architecture](high-level-architecture.md) | [Implementation review checklist](design-artifacts/00-architecture-review-checklist.md), [evaluation specification](../quality/evaluation-spec.md) |
+| AI executive | [High-level architecture](high-level-architecture.md) | [Implementation review checklist](design-artifacts/00-architecture-review-checklist.md), [evaluation specification](../quality/evaluation-specification.md) |
 | AI architect | [Runtime technical specifications](runtime-technical-specs.md) | [Runtime behavior and implementation](runtime-behavior-and-implementation.md), [backend package structure and layers](backend-package-structure-and-layers.md) |
 | Application engineer | [API contracts](api-contracts.md) | [Tool and model registry](tool-and-model-registry.md), [request execution diagram](design-artifacts/07-runtime-invocation-stream-pipeline.md) |
-| Platform operator | [Operations runbook](../operations/operations-runbook.md) | [Deployment diagrams](design-artifacts/05-deployment-topology-and-resources.md), [06 deployment detailed](design-artifacts/06-deployment-network-cicd-observability.md) |
+| Platform operator | [Operations runbook](../operations/runbook.md) | [Deployment diagrams](design-artifacts/05-deployment-topology-and-resources.md), [06 deployment detailed](design-artifacts/06-deployment-network-cicd-observability.md) |
 
 ## Authority Map
 
@@ -23,7 +23,7 @@ This guide is the entry point for the architecture corpus. It separates authorit
 | [Semantics layer design](semantics-layer-design.md) | Semantics layer scope, ownership boundaries, and build pipelines for AI Search indexes and Metric Views |
 | [High-level architecture](high-level-architecture.md) | System boundaries, trust model, and end-to-end control planes |
 | [Runtime behavior and implementation](runtime-behavior-and-implementation.md) | Module responsibilities, request lifecycle, configuration, and implementation patterns |
-| [Human-in-the-loop approval](../governance/human-in-the-loop.md) | Approval states, manager decision API, persistence, and dispatch boundary |
+| [Human-in-the-loop approval](../governance/human-approval.md) | Approval states, manager decision API, persistence, and dispatch boundary |
 | [Backend package structure and layers](backend-package-structure-and-layers.md) | Backend package layout, dependency composition, staged execution, and service responsibilities |
 | [Design artifacts](design-artifacts/README.md) | Visual views of the canonical architecture, not independent implementation specifications |
 

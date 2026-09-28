@@ -1,10 +1,10 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # Build fct_cdi_trusted_expert_score_metric_view
+# MAGIC # Build gmai_genie_agent_cdi_metric_view
 # MAGIC
 # MAGIC Publishes the Unity Catalog Semantic Metric View backing the `cdi_agent` Genie
 # MAGIC Agent. Mirrors the deployed definition of
-# MAGIC `quickstart_catalog.multi_agent_schema.fct_cdi_trusted_expert_score_metric_view`:
+# MAGIC `quickstart_catalog.multi_agent_schema.gmai_genie_agent_cdi_metric_view`:
 # MAGIC a base fact (`fct_cdi`) joined to the daily rolling aggregate asset. See the
 # MAGIC [Unity-Catalog-Semantic-Metric-Views-Blueprint](https://github.com/wchen-dea/Unity-Catalog-Semantic-Metric-Views-Blueprint).
 # MAGIC
@@ -61,7 +61,7 @@ for full_name in (source_table, full_cdi_daily_table):
 # MAGIC ## Publish the metric view
 # MAGIC
 # MAGIC Dimensions and measures below mirror the live column list of
-# MAGIC `fct_cdi_trusted_expert_score_metric_view` (`store_code`, `activity_date`,
+# MAGIC `gmai_genie_agent_cdi_metric_view` (`store_code`, `activity_date`,
 # MAGIC `appointment_indicator`, `source_system_name`, `prior_period`, `Response Count`,
 # MAGIC `Avg Recommend Score`, `Avg Salesperson Score`, `Avg Time Score`, and
 # MAGIC `Avg Service Score`).

@@ -15,10 +15,7 @@ else
     printf "HITL_WAREHOUSE_ID is required for HITL_ENV=%s\n" "$HITL_ENV" >&2
     exit 1
 fi
-REVENUE_TABLE="${HITL_REVENUE_TABLE:-dt_${HITL_ENV}_platinum.enterprise.store_sales_performance}"
-CDI_TABLE="${HITL_CDI_TABLE:-dt_${HITL_ENV}_gold.dwh.fct_cdi_daily}"
-PEER_SET_TABLE="${HITL_PEER_SET_TABLE:-dt_${HITL_ENV}_gold.dwh.brg_store_cluster_membership_group}"
-STORE_DIMENSION_TABLE="${HITL_STORE_DIMENSION_TABLE:-dt_${HITL_ENV}_gold.dwh.dim_store_active}"
+SNAPSHOT_TABLE="${HITL_SNAPSHOT_TABLE:-quickstart_catalog.multi_agent_schema.hitl_source_snapshot}"
 ORCHESTRATOR_APP_NAME="${ORCHESTRATOR_APP_NAME:-}"
 
 databricks_cli() {
@@ -102,10 +99,7 @@ printf "Service principal: %s\n" "$SP_CLIENT_ID"
 printf "Profile: %s\n" "$PROFILE"
 
 grant_warehouse
-grant_table_with_usage "$REVENUE_TABLE"
-grant_table_with_usage "$CDI_TABLE"
-grant_table_with_usage "$PEER_SET_TABLE"
-grant_table_with_usage "$STORE_DIMENSION_TABLE"
+grant_table_with_usage "$SNAPSHOT_TABLE"
 grant_orchestrator_can_use
 
 printf "HITL specialist privilege update completed%s.\n" \

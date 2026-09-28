@@ -11,7 +11,7 @@ This section owns deployment procedures, runtime verification, MLflow operations
 | Deploy or recover an app | [Operations runbook](operations-runbook.md) |
 | Deliver the React web UI | [UI deployment guide](ui-deployment-guide.md) |
 | Review commands | [Command reference](command-reference.md) |
-| Trace or evaluate behavior | [MLflow guide](mlflow-guide.md) and [evaluation specification](../quality/evaluation-spec.md) |
+| Trace or evaluate behavior | [MLflow guide](mlflow-guide.md) and [evaluation specification](../quality/evaluation-specification.md) |
 | Understand monitoring coverage and gaps | [AI agent monitoring: observability, evaluation, safety, drift, and cost](ai-agent-monitoring-observability.md) |
 | Plan cost/performance | [Cost and performance budget](cost-performance-budget.md) |
 | Run a release activity | [MLflow rollout checklist](mlflow-rollout-checklist.md) |
@@ -29,8 +29,8 @@ This section owns deployment procedures, runtime verification, MLflow operations
 - The [command reference](command-reference.md) is the index of canonical command
 	groups and release targets; workflow guides show commands in their operational
 	context.
-- `make redeploy` is the full validation, bundle-attempt, grants, health, and smoke workflow.
-- `make upload-wheel` is the versioned source-only fallback. It cannot apply bundle-managed resources or grants.
+- The operations runbook is the authoritative validation, bundle deployment, app-source deployment, permissions, and verification workflow.
+- `make build-app-source` creates the versioned source payload for source-only fallback. It cannot apply bundle-managed resources or grants.
 - Run `uv run assistant-evaluate` to determine current gate status. Tool-call accuracy is monitored but non-blocking while nested tool spans cannot be scored reliably.
 
 ## Templates

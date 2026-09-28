@@ -26,5 +26,5 @@ Override KPI thresholds or the experiment id per invocation with
 
 ## Related
 
-- [docs/quality/evaluation-spec.md](../../docs/quality/evaluation-spec.md): scorer definitions, KPI thresholds, and gate policy.
+- [docs/quality/evaluation-specification.md](../../docs/quality/evaluation-specification.md): scorer definitions, KPI thresholds, and gate policy.
 - `src/operations/evaluate_agent.py`: evaluation logic and test cases run by this job.

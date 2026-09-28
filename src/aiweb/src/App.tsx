@@ -1,114 +1,35 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { sendChat, sessionStatusLine, submitApprovalDecision } from "./api";
-import { maskToken, parseTokenCommand } from "./commands";
+import { FormEvent, memo, useEffect, useMemo, useRef, useState } from "react";
+import { submitApprovalDecision } from "./api";
 import { settings } from "./config";
-import type {
-  ChatMessage,
-  GovernanceMetadata,
-  HumanApprovalState,
-} from "./types";
-
-function newId(): string {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
-  return `msg-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
-function statusLines(token: string | null, persona: string | null): string {
-  const tokenLine = token
-    ? "Auth mode for this chat: Hybrid (app + forwarded user OBO token)."
-    : "Auth mode for this chat: App identity only.";
-  const personaLine = persona
-    ? `Persona for this chat: \`${persona}\`.`
-    : "Persona for this chat: not set.";
-  return `${tokenLine}\n${personaLine}`;
-}
-
-function createWelcomeMessage(
-  token: string | null,
-  persona: string | null,
-): ChatMessage {
-  return {
-    id: newId(),
-    role: "assistant",
-    content:
-      "### Available Agents\n\n" +
-      "| Agent | Type | Description |\n" +
-      "| --- | --- | --- |\n" +
-      "| Sales Insights | Genie | Revenue trends, store performance, seasonal comparisons |\n" +
-      "| CDI Metrics | Genie | Customer Delight Index scores, promoter/detractor analysis |\n" +
-      "| Product Index | AI Search | Product catalog lookups by code, brand, or description |\n" +
-      "| Flink Support | AI Search | Flink troubleshooting, configuration guidance, best practices |\n" +
-      "| Store Intervention | Databricks App | Human-in-the-loop store risk review and intervention planning |\n" +
-      "| Lakebase ODS | Lakebase | Operational data — appointments, orders, invoices, etc. |\n\n" +
-      "### Persona Selection\n\n" +
-      "Select a persona from the dropdown above the chat.\n\n" +
-      "### Session Commands\n\n" +
-      "/token <databricks_access_token>\n" +
-      "/clear-token\n\n" +
-      statusLines(token, persona),
-  };
-}
-
-const THEME_STORAGE_KEY = "chat-ui-theme";
+import MessageMarkdown from "./MessageMarkdown";
+import { useChatSession } from "./useChatSession";
+import type { ChatMessage, HumanApprovalState } from "./types";
 
 const THEMES = [
   { value: "deep-ocean", label: "Deep ocean" },
   { value: "sky-blue", label: "Sky blue" },
   { value: "deep-sky-blue", label: "Deep sky blue" },
 ] as const;
-
 type ThemeValue = (typeof THEMES)[number]["value"];
-
-type SpeechRecognitionResultLike = {
-  0: { transcript: string };
-};
-
-type SpeechRecognitionEventLike = {
-  resultIndex: number;
-  results: ArrayLike<SpeechRecognitionResultLike>;
-};
-
-type SpeechRecognitionLike = {
-  lang: string;
-  interimResults: boolean;
-  maxAlternatives: number;
-  onend: (() => void) | null;
-  onerror: ((event: { error: string }) => void) | null;
-  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
-  start: () => void;
-  abort: () => void;
-};
-
-type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
-
-function isThemeValue(value: string | null): value is ThemeValue {
-  return THEMES.some((theme) => theme.value === value);
-}
-
-const STARTER_GROUPS = ["Operations", "Insights", "HITL", "DE"] as const;
-
-type StarterGroup = (typeof STARTER_GROUPS)[number];
-
+type StarterGroup = "Operations" | "Insights" | "HITL" | "DE";
+const STARTER_GROUPS: StarterGroup[] = ["Operations", "Insights", "HITL", "DE"];
 const PERSONA_STARTER_GROUPS: Record<string, readonly StarterGroup[]> = {
   "store-manager": ["Operations"],
   executive: ["Insights", "HITL"],
   "de-support": ["DE"],
 };
-
 const STARTERS: { group: StarterGroup; text: string }[] = [
   {
     group: "Operations",
-    text: "What are the top 5 stores by revenue for the current season?",
+    text: "Using the latest available season, which stores had the highest total net_sales in the last 30 days? Include Store Code and total net sales.",
   },
   {
     group: "Operations",
-    text: "Look up product details for brand code 'MICH' and list matching article types.",
+    text: "Look up product_code '000000000000183662' and return product_description, brand_code, and article_type.",
   },
   {
     group: "Operations",
-    text: "List today's open appointments and their current order status.",
+    text: "List the latest open appointments and include the current status of each linked order.",
   },
   {
     group: "DE",
@@ -116,7 +37,7 @@ const STARTERS: { group: StarterGroup; text: string }[] = [
   },
   {
     group: "DE",
-    text: "What Flink configuration tuning steps should DE support check first when backpressure appears?",
+    text: "Using the ORE platform and pipeline support articles, what Flink configuration checks should DE support perform first when backpressure appears?",
   },
   {
     group: "Insights",
@@ -124,7 +45,7 @@ const STARTERS: { group: StarterGroup; text: string }[] = [
   },
   {
     group: "Insights",
-    text: "Which stores have strong sales performance but below-average CDI scores, where we might be winning on revenue but losing on customer experience?",
+    text: "Compare the latest rolling CDI NPS with total net_sales by Store Code. Which high-revenue stores have below-average customer delight, and what are their promoter, detractor, and response counts?",
   },
   {
     group: "HITL",
@@ -132,114 +53,11 @@ const STARTERS: { group: StarterGroup; text: string }[] = [
   },
 ];
 
-function renderMarkdown(text: string): JSX.Element {
-  const lines = text.split("\n");
-  const blocks: JSX.Element[] = [];
-  let currentTableLines: string[] = [];
-  let currentTextLines: string[] = [];
-
-  function flushText() {
-    if (currentTextLines.length > 0) {
-      const content = currentTextLines.join("\n").trim();
-      if (content) {
-        const safeParts = content.split(/(\[[0-9]+\])/g);
-        blocks.push(
-          <p key={`p-${blocks.length}`}>
-            {safeParts.map((part, partIndex) =>
-              part.match(/^\[[0-9]+\]$/) ? (
-                <a
-                  href={`#citation-${part.slice(1, -1)}`}
-                  key={partIndex}
-                  className="citation"
-                >
-                  {part}
-                </a>
-              ) : (
-                part
-              ),
-            )}
-          </p>,
-        );
-      }
-      currentTextLines = [];
-    }
-  }
-
-  function flushTable() {
-    if (currentTableLines.length > 0) {
-      const rows = currentTableLines.filter(
-        (line) => !/^\s*\|?\s*[-| ]+\s*$/.test(line),
-      );
-      if (rows.length > 0) {
-        blocks.push(
-          <table key={`table-${blocks.length}`}>
-            <tbody>
-              {rows.map((row, rowIndex) => {
-                const cells = row.split("|").map((c) => c.trim());
-                if (cells.length > 1 && cells[0] === "") cells.shift();
-                if (cells.length > 1 && cells[cells.length - 1] === "")
-                  cells.pop();
-
-                return (
-                  <tr key={rowIndex}>
-                    {cells.map((cell, cellIndex) => (
-                      <td key={cellIndex}>{cell}</td>
-                    ))}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>,
-        );
-      }
-      currentTableLines = [];
-    }
-  }
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const trimmed = line.trim();
-
-    if (!trimmed) {
-      flushText();
-      flushTable();
-      continue;
-    }
-
-    if (trimmed.startsWith("#")) {
-      const headingMatch = trimmed.match(/^(#{1,3})\s+(.+)$/);
-      if (headingMatch) {
-        flushText();
-        flushTable();
-        const Heading = `h${headingMatch[1].length}` as "h1" | "h2" | "h3";
-        blocks.push(
-          <Heading key={`h-${blocks.length}`}>{headingMatch[2]}</Heading>,
-        );
-        continue;
-      }
-    }
-
-    if (trimmed.includes("|")) {
-      flushText();
-      currentTableLines.push(line);
-      continue;
-    }
-
-    flushTable();
-    currentTextLines.push(line);
-  }
-
-  flushText();
-  flushTable();
-
-  return <div className="rich-text">{blocks}</div>;
+function isTheme(value: string): value is ThemeValue {
+  return THEMES.some((theme) => theme.value === value);
 }
 
-function GovernancePanel({
-  message,
-}: {
-  message: ChatMessage;
-}): JSX.Element | null {
+function GovernancePanel({ message }: { message: ChatMessage }) {
   if (
     message.role !== "assistant" ||
     (!message.tools?.length &&
@@ -290,16 +108,13 @@ function ApprovalActions({
 }: {
   message: ChatMessage;
   token: string | null;
-  onDecision: (messageId: string, state: HumanApprovalState) => void;
-}): JSX.Element | null {
-  const [decisionInFlight, setDecisionInFlight] = useState<string | null>(null);
-  const [decisionError, setDecisionError] = useState<string | null>(null);
-  if (!message.approvalState) {
-    return null;
-  }
-
-  if (message.approvalState.status !== "pending") {
-    const delegation = message.approvalState.delegation;
+  onDecision: (id: string, state: HumanApprovalState) => void;
+}) {
+  const [inFlight, setInFlight] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const approval = message.approvalState;
+  if (!approval) return null;
+  if (approval.status !== "pending")
     return (
       <section
         className="approval-actions"
@@ -308,25 +123,22 @@ function ApprovalActions({
         <div className="approval-status-summary">
           <strong>Manager decision recorded</strong>
           <span>
-            Status: {message.approvalState.status}
-            {delegation
-              ? ` | Follow-up task: ${delegation.task_id} (${delegation.status ?? "pending"})`
+            Status: {approval.status}
+            {approval.delegation
+              ? ` | Follow-up task: ${approval.delegation.task_id} (${approval.delegation.status ?? "pending"})`
               : ""}
           </span>
         </div>
       </section>
     );
-  }
-
   async function decide(
     decision: "approved" | "rejected" | "more_info_requested",
-  ): Promise<void> {
-    setDecisionInFlight(decision);
-    setDecisionError(null);
+  ) {
+    setInFlight(decision);
+    setError(null);
     try {
-      const requestId = message.openaiRun?.run_id || message.id;
       const state = await submitApprovalDecision({
-        requestId,
+        requestId: message.openaiRun?.run_id || message.id,
         agentName: "store-intervention-agent",
         approver: "manager",
         decision,
@@ -340,358 +152,209 @@ function ApprovalActions({
         token,
       });
       onDecision(message.id, state);
-    } catch (error) {
-      setDecisionError(
-        error instanceof Error
-          ? error.message
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
           : "Approval decision could not be saved.",
       );
     } finally {
-      setDecisionInFlight(null);
+      setInFlight(null);
     }
   }
-
   return (
     <section className="approval-actions" aria-label="Manager approval actions">
       <div>
         <strong>Manager approval required</strong>
         <span>
-          {message.approvalState.reason ??
-            "Review this packet before any action."}
+          {approval.reason ?? "Review this packet before any action."}
         </span>
       </div>
       <div className="approval-buttons">
         <button
           type="button"
-          disabled={decisionInFlight !== null}
+          disabled={inFlight !== null}
           onClick={() => void decide("approved")}
         >
-          {decisionInFlight === "approved" ? "Saving..." : "Approve planning"}
+          {inFlight === "approved" ? "Saving..." : "Approve planning"}
         </button>
         <button
           type="button"
-          disabled={decisionInFlight !== null}
+          disabled={inFlight !== null}
           onClick={() => void decide("more_info_requested")}
         >
-          {decisionInFlight === "more_info_requested"
+          {inFlight === "more_info_requested"
             ? "Saving..."
             : "Request more info"}
         </button>
         <button
           type="button"
-          disabled={decisionInFlight !== null}
+          disabled={inFlight !== null}
           onClick={() => void decide("rejected")}
         >
-          {decisionInFlight === "rejected" ? "Saving..." : "Reject"}
+          {inFlight === "rejected" ? "Saving..." : "Reject"}
         </button>
       </div>
-      {decisionError ? <span role="alert">{decisionError}</span> : null}
+      {error ? <span role="alert">{error}</span> : null}
     </section>
   );
 }
 
-export default function App() {
-  const [input, setInput] = useState("");
+const ChatMessage = memo(function ChatMessage({
+  message,
+  token,
+  onDecision,
+}: {
+  message: ChatMessage;
+  token: string | null;
+  onDecision: (id: string, state: HumanApprovalState) => void;
+}) {
+  return (
+    <article
+      className={`bubble bubble-${message.role} status-${message.status ?? "idle"}`}
+    >
+      {message.role === "assistant" &&
+      message.status === "streaming" &&
+      !message.content ? (
+        <div className="thinking">
+          <span /> <span /> <span /> Retrieving context
+        </div>
+      ) : (
+        <MessageMarkdown text={message.content} />
+      )}
+      <GovernancePanel message={message} />
+      <ApprovalActions
+        message={message}
+        token={token}
+        onDecision={onDecision}
+      />
+    </article>
+  );
+});
+
+function useTranscription(
+  input: string,
+  isSending: boolean,
+  setInput: (value: string) => void,
+) {
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const [transcriptionError, setTranscriptionError] = useState<string | null>(
-    null,
-  );
-  const [messages, setMessages] = useState<ChatMessage[]>(() => [
-    createWelcomeMessage(null, null),
-  ]);
-  const [token, setToken] = useState<string | null>(null);
-  const [persona, setPersona] = useState<string | null>(null);
-  const [isSending, setIsSending] = useState(false);
-  const [starterGroup, setStarterGroup] = useState<StarterGroup>("Operations");
-  const [theme, setTheme] = useState<ThemeValue>(() => {
-    if (typeof window === "undefined") return "deep-ocean";
-    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
-    return isThemeValue(stored) ? stored : "deep-ocean";
-  });
-  const chatLogRef = useRef<HTMLElement>(null);
-  const initialMessageIdRef = useRef(messages[0].id);
-  const [conversationId, setConversationId] = useState(() => newId());
-  const activeRequestRef = useRef<AbortController | null>(null);
-  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
-  const transcriptionPrefixRef = useRef("");
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
-  }, [theme]);
-
+  const [error, setError] = useState<string | null>(null);
+  const recognitionRef = useRef<{ abort: () => void } | null>(null);
+  const prefixRef = useRef("");
   useEffect(() => () => recognitionRef.current?.abort(), []);
-
-  const enabledStarterGroups = useMemo(
-    () => (persona ? (PERSONA_STARTER_GROUPS[persona] ?? []) : []),
-    [persona],
-  );
-
-  useEffect(() => {
-    if (enabledStarterGroups.includes(starterGroup)) {
-      return;
-    }
-    setStarterGroup(enabledStarterGroups[0] ?? "Operations");
-  }, [enabledStarterGroups, starterGroup]);
-
-  function startTranscription(): void {
+  function startTranscription() {
     if (isSending || isTranscribing) return;
-
-    const speechWindow = window as typeof window & {
-      SpeechRecognition?: SpeechRecognitionConstructor;
-      webkitSpeechRecognition?: SpeechRecognitionConstructor;
+    const browser = window as typeof window & {
+      SpeechRecognition?: new () => any;
+      webkitSpeechRecognition?: new () => any;
     };
-    const SpeechRecognition =
-      speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setTranscriptionError(
-        "Voice transcription is not supported by this browser.",
-      );
+    const Constructor =
+      browser.SpeechRecognition ?? browser.webkitSpeechRecognition;
+    if (!Constructor) {
+      setError("Voice transcription is not supported by this browser.");
       return;
     }
-
-    const recognition = new SpeechRecognition();
+    const recognition = new Constructor();
     recognitionRef.current = recognition;
     recognition.lang = navigator.language || "en-US";
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
-    recognition.onresult = (event) => {
+    recognition.onresult = (event: any) => {
       const transcript = Array.from(event.results)
-        .map((result) => result[0].transcript.trim())
+        .map((result: any) => result[0].transcript.trim())
         .filter(Boolean)
         .join(" ");
-      if (transcript) {
-        const prefix = transcriptionPrefixRef.current;
-        setInput(prefix ? `${prefix} ${transcript}` : transcript);
-      }
+      if (transcript)
+        setInput(
+          prefixRef.current ? `${prefixRef.current} ${transcript}` : transcript,
+        );
     };
-    recognition.onerror = (event) => {
-      setTranscriptionError(
+    recognition.onerror = (event: { error: string }) =>
+      setError(
         event.error === "not-allowed"
           ? "Microphone access was not allowed."
           : "Voice transcription failed. Please try again.",
       );
-    };
     recognition.onend = () => {
       recognitionRef.current = null;
-      transcriptionPrefixRef.current = "";
+      prefixRef.current = "";
       setIsTranscribing(false);
     };
-
-    setTranscriptionError(null);
-    transcriptionPrefixRef.current = input.trim();
+    setError(null);
+    prefixRef.current = input.trim();
     setIsTranscribing(true);
     try {
       recognition.start();
     } catch {
       recognitionRef.current = null;
       setIsTranscribing(false);
-      setTranscriptionError("Voice transcription could not be started.");
+      setError("Voice transcription could not be started.");
     }
   }
+  return { isTranscribing, error, startTranscription };
+}
 
-  async function submitMessage(raw: string): Promise<void> {
-    const text = raw.trim();
-    if (!text || isSending) {
-      return;
-    }
-
-    const tokenCommand = parseTokenCommand(
-      text,
-      settings.setTokenCommand,
-      settings.clearTokenCommand,
-    );
-    if (tokenCommand.kind === "clear") {
-      setToken(null);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: newId(),
-          role: "assistant",
-          content: `Forwarded user token removed for this chat session.\n${statusLines(null, persona)}`,
-        },
-      ]);
-      setInput("");
-      return;
-    }
-
-    if (tokenCommand.kind === "set") {
-      const tokenValue = tokenCommand.token;
-      if (!tokenValue) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: newId(),
-            role: "assistant",
-            content: `Token command format: ${settings.setTokenCommand} <databricks_access_token>`,
-          },
-        ]);
-        setInput("");
-        return;
-      }
-      setToken(tokenValue);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: newId(),
-          role: "assistant",
-          content:
-            `Forwarded user token saved for this chat session.\nToken: \`${maskToken(tokenValue)}\`\n` +
-            `Subsequent requests will include ${settings.forwardedAccessTokenHeader}.\n${statusLines(tokenValue, persona)}`,
-        },
-      ]);
-      setInput("");
-      return;
-    }
-
-    const userMessage: ChatMessage = {
-      id: newId(),
-      role: "user",
-      content: text,
-    };
-    const placeholderId = newId();
-
-    setMessages((prev) => [
-      ...prev,
-      userMessage,
-      {
-        id: placeholderId,
-        role: "assistant",
-        content: "",
-        status: "streaming",
-      },
-    ]);
-    setInput("");
-    setIsSending(true);
-
-    const history = messages.filter(
-      (m) => m.role === "user" || m.role === "assistant",
-    );
-
-    try {
-      const update = (metadata: GovernanceMetadata) =>
-        setMessages((prev) =>
-          prev.map((message) =>
-            message.id === placeholderId
-              ? {
-                  ...message,
-                  tools: metadata.tools,
-                  sourceCategories: metadata.sourceCategories,
-                  routePlan: metadata.routePlan,
-                  guardrailReasons: metadata.guardrailReasons,
-                  truncated: metadata.truncated,
-                  openaiRun: metadata.openaiRun,
-                  approvalState: metadata.approvalState,
-                }
-              : message,
-          ),
-        );
-      const result = await sendChat(
-        {
-          history,
-          userMessage: text,
-          conversationId,
-          persona,
-          token,
-        },
-        {
-          onTextDelta: (delta) =>
-            setMessages((prev) =>
-              prev.map((message) =>
-                message.id === placeholderId
-                  ? { ...message, content: message.content + delta }
-                  : message,
-              ),
-            ),
-          onMetadata: update,
-          onRequestController: (controller) => {
-            activeRequestRef.current = controller;
-          },
-        },
-      );
-
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === placeholderId
-            ? {
-                ...msg,
-                content:
-                  result.content || sessionStatusLine(persona, Boolean(token)),
-                status:
-                  result.metadata.status === "blocked"
-                    ? "blocked"
-                    : result.metadata.truncated
-                      ? "truncated"
-                      : "idle",
-                tools: result.metadata.tools,
-                sourceCategories: result.metadata.sourceCategories,
-                routePlan: result.metadata.routePlan,
-                guardrailReasons: result.metadata.guardrailReasons,
-                truncated: result.metadata.truncated,
-                openaiRun: result.metadata.openaiRun,
-                approvalState: result.metadata.approvalState,
-              }
-            : msg,
-        ),
-      );
-    } catch (error) {
-      const cancelled =
-        error instanceof DOMException && error.name === "AbortError";
-      const detail = cancelled
-        ? "Query canceled."
-        : error instanceof Error
-          ? error.message
-          : "An unexpected error occurred.";
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === placeholderId
-            ? {
-                ...msg,
-                content: `${detail}${sessionStatusLine(persona, Boolean(token))}`,
-                status: "error",
-              }
-            : msg,
-        ),
-      );
-    } finally {
-      activeRequestRef.current = null;
-      setIsSending(false);
-    }
-  }
-
-  function cancelCurrentQuery(): void {
-    activeRequestRef.current?.abort();
-  }
-
+export default function App() {
+  const [input, setInput] = useState("");
+  const [persona, setPersona] = useState<string | null>(null);
+  const [starterGroup, setStarterGroup] = useState<StarterGroup>("Operations");
+  const [theme, setTheme] = useState<ThemeValue>(() => {
+    const stored =
+      typeof window === "undefined"
+        ? null
+        : window.localStorage.getItem("chat-ui-theme");
+    return stored && isTheme(stored) ? stored : "deep-ocean";
+  });
+  const {
+    messages,
+    token,
+    setToken,
+    isSending,
+    submitMessage,
+    cancelCurrentQuery,
+    clearConversation,
+    updateApproval,
+    initialMessageId,
+  } = useChatSession(persona);
+  const {
+    isTranscribing,
+    error: transcriptionError,
+    startTranscription,
+  } = useTranscription(input, isSending, setInput);
+  const chatLogRef = useRef<HTMLElement>(null);
+  const enabledGroups = useMemo(
+    () => (persona ? (PERSONA_STARTER_GROUPS[persona] ?? []) : []),
+    [persona],
+  );
+  const visibleStarters = useMemo(
+    () => STARTERS.filter((starter) => starter.group === starterGroup),
+    [starterGroup],
+  );
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    window.localStorage.setItem("chat-ui-theme", theme);
+  }, [theme]);
+  useEffect(() => {
+    if (!enabledGroups.includes(starterGroup))
+      setStarterGroup(enabledGroups[0] ?? "Operations");
+  }, [enabledGroups, starterGroup]);
   useEffect(() => {
     const log = chatLogRef.current;
-    if (!log) return;
-    if (
-      messages.length === 1 &&
-      messages[0].id === initialMessageIdRef.current
-    ) {
-      log.scrollTop = 0;
-      return;
-    }
-    log.scrollTop = log.scrollHeight;
-  }, [messages]);
-
-  function clearConversation(): void {
-    activeRequestRef.current?.abort();
-    activeRequestRef.current = null;
-    const welcomeMessage = createWelcomeMessage(token, persona);
-    initialMessageIdRef.current = welcomeMessage.id;
-    setConversationId(newId());
-    setMessages([welcomeMessage]);
+    if (log)
+      log.scrollTop =
+        messages.length === 1 && messages[0].id === initialMessageId
+          ? 0
+          : log.scrollHeight;
+  }, [messages, initialMessageId]);
+  function sendInput() {
+    const value = input;
     setInput("");
-    setIsSending(false);
+    void submitMessage(value);
   }
-
-  async function onSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await submitMessage(input);
+    sendInput();
   }
-
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -722,7 +385,6 @@ export default function App() {
           ↺
         </button>
       </header>
-
       <section className="context-bar" aria-label="Session context">
         <div className="auth-status-block">
           <span className={`status-pill ${token ? "is-secure" : ""}`}>
@@ -744,10 +406,9 @@ export default function App() {
         <label>
           Persona
           <select
+            aria-label="Persona"
             value={persona ?? ""}
-            onChange={(event) => {
-              setPersona(event.target.value || null);
-            }}
+            onChange={(event) => setPersona(event.target.value || null)}
           >
             <option value="">Default</option>
             {settings.allowedPersonas.map((item) => (
@@ -760,10 +421,10 @@ export default function App() {
         <label>
           Background
           <select
+            aria-label="Background"
             value={theme}
             onChange={(event) => {
-              const next = event.target.value;
-              if (isThemeValue(next)) setTheme(next);
+              if (isTheme(event.target.value)) setTheme(event.target.value);
             }}
           >
             {THEMES.map((item) => (
@@ -774,7 +435,6 @@ export default function App() {
           </select>
         </label>
       </section>
-
       <section className="starter-area">
         <div className="starter-tabs">
           {STARTER_GROUPS.map((group) => (
@@ -783,32 +443,25 @@ export default function App() {
               type="button"
               className={starterGroup === group ? "active" : ""}
               onClick={() => setStarterGroup(group)}
-              disabled={!enabledStarterGroups.includes(group)}
+              disabled={!enabledGroups.includes(group)}
             >
               {group}
             </button>
           ))}
         </div>
         <div className="starters">
-          {STARTERS.filter((starter) => starter.group === starterGroup).map(
-            (starter, index) => (
-              <button
-                key={`${starterGroup}-${index}-${starter.text}`}
-                type="button"
-                onClick={() => {
-                  void submitMessage(starter.text);
-                }}
-                disabled={
-                  isSending || !enabledStarterGroups.includes(starter.group)
-                }
-              >
-                {starter.text}
-              </button>
-            ),
-          )}
+          {visibleStarters.map((starter) => (
+            <button
+              key={starter.text}
+              type="button"
+              onClick={() => void submitMessage(starter.text)}
+              disabled={isSending || !enabledGroups.includes(starter.group)}
+            >
+              {starter.text}
+            </button>
+          ))}
         </div>
       </section>
-
       <main
         className="chat-log"
         ref={chatLogRef}
@@ -816,37 +469,14 @@ export default function App() {
         aria-busy={isSending}
       >
         {messages.map((message) => (
-          <article
+          <ChatMessage
             key={message.id}
-            className={`bubble bubble-${message.role} status-${message.status ?? "idle"}`}
-          >
-            {message.role === "assistant" &&
-            message.status === "streaming" &&
-            !message.content ? (
-              <div className="thinking">
-                <span /> <span /> <span /> Retrieving context
-              </div>
-            ) : (
-              renderMarkdown(message.content)
-            )}
-            <GovernancePanel message={message} />
-            <ApprovalActions
-              message={message}
-              token={token}
-              onDecision={(messageId, state) =>
-                setMessages((prev) =>
-                  prev.map((item) =>
-                    item.id === messageId
-                      ? { ...item, approvalState: state }
-                      : item,
-                  ),
-                )
-              }
-            />
-          </article>
+            message={message}
+            token={token}
+            onDecision={updateApproval}
+          />
         ))}
       </main>
-
       <form className="chat-input" onSubmit={onSubmit}>
         <textarea
           aria-label="Message"
@@ -856,9 +486,7 @@ export default function App() {
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();
-              if (!isSending && input.trim()) {
-                void submitMessage(input);
-              }
+              if (!isSending && input.trim()) sendInput();
             }
           }}
           rows={2}
@@ -868,14 +496,16 @@ export default function App() {
           className="transcribe-button"
           type="button"
           aria-label={
-            isTranscribing ? "Listening for speaker input" : "Transcribe from microphone"
+            isTranscribing
+              ? "Listening for speaker input"
+              : "Transcribe from microphone"
           }
           aria-pressed={isTranscribing}
           disabled={isSending || isTranscribing}
           onClick={startTranscription}
           title="Transcribe from microphone"
         >
-          <span aria-hidden="true">&#127908;</span>
+          <span aria-hidden="true">🎤</span>
         </button>
         <button
           type="submit"

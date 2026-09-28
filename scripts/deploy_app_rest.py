@@ -13,18 +13,26 @@ from databricks.sdk import WorkspaceClient
 from ruamel.yaml import YAML
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+def _default_repo_root() -> Path:
+    script_path = globals().get("__file__")
+    if script_path:
+        return Path(script_path).resolve().parents[1]
+    return Path.cwd()
+
+
+REPO_ROOT = _default_repo_root()
 
 
 def _load_app_create_payload(
     app_name: str, source_code_path: str, target: str, app_spec_path: str
 ) -> dict:
     yaml = YAML(typ="safe")
-    bundle = yaml.load((REPO_ROOT / "databricks.yml").read_text())
-    target_config = yaml.load((REPO_ROOT / "targets" / f"{target}.yml").read_text())
     spec_path = Path(app_spec_path)
     if not spec_path.is_absolute():
         spec_path = REPO_ROOT / spec_path
+    repo_root = spec_path.parent.parent if spec_path.is_absolute() else REPO_ROOT
+    bundle = yaml.load((repo_root / "databricks.yml").read_text())
+    target_config = yaml.load((repo_root / "targets" / f"{target}.yml").read_text())
     app_resources = yaml.load(spec_path.read_text())["resources"]["apps"]
     app_resource = next(iter(app_resources.values()))
 
@@ -97,7 +105,7 @@ def main() -> int:
 
 if __name__ == "__main__":
     try:
-        raise SystemExit(main())
+        main()
     except Exception as exc:
         print(f"REST app deployment failed: {exc}", file=sys.stderr)
         raise

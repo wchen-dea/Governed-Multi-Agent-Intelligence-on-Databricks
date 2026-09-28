@@ -2,7 +2,7 @@
 
 ## Scope
 
-This section owns evaluation design, scorers, KPI thresholds, and promotion evidence. Current architecture facts are maintained in [runtime technical specifications](../architecture/runtime-technical-specs.md); operational execution is covered by the [MLflow guide](../operations/mlflow-guide.md).
+This section owns evaluation design, scorers, KPI thresholds, and promotion evidence. Current architecture facts are maintained in [runtime technical specifications](../architecture/runtime-specification.md); operational execution is covered by the [MLflow guide](../operations/mlflow-guide.md).
 
 ## Primary Document
 

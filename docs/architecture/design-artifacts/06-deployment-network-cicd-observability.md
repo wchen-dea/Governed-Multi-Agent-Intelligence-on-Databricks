@@ -38,8 +38,8 @@ flowchart TD
     Eval --> Decision{All required KPIs pass?}
     Decision -- No --> Block[Block promotion — auth correctness safety or groundedness]
     Decision -- Yes --> Validate[databricks bundle validate -t dev]
-    Validate --> DeployDev[make redeploy or make upload-wheel — dev target]
-    DeployDev --> Smoke[make health and make smoke]
+    Validate --> DeployDev[CI/CD app-source deployment — dev target]
+    DeployDev --> Smoke[Databricks Apps status and logs]
     Smoke --> DeployQA[bundle deploy -t qa]
     DeployQA --> DeployStg[bundle deploy -t stg]
     DeployStg --> DeployProd[bundle deploy -t prd]

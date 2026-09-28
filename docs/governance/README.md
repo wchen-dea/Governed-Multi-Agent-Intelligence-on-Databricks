@@ -2,7 +2,7 @@
 
 ## Scope
 
-This section defines policy intent, data semantics, lineage expectations, and security controls. Current runtime behavior is authoritative in [architecture runtime technical specifications](../architecture/runtime-technical-specs.md); this section distinguishes implemented controls from target-state governance practices.
+This section defines policy intent, data semantics, lineage expectations, and security controls. Current runtime behavior is authoritative in [architecture runtime technical specifications](../architecture/runtime-specification.md); this section distinguishes implemented controls from target-state governance practices.
 
 ## Ownership
 

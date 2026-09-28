@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=Path(__file__).parent.parent.parent / ".env", override=True)
 
-MV_NAME = "quickstart_catalog.multi_agent_schema.fct_cdi_trusted_expert_score_metric_view"
+MV_NAME = "quickstart_catalog.multi_agent_schema.gmai_genie_agent_cdi_metric_view"
 
 
 def _get_warehouse_id(w: WorkspaceClient) -> str:

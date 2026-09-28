@@ -5,7 +5,7 @@ Usage:
     uv run assistant-triage-evaluation [--run-id RUN_ID] [--experiment-id EXPERIMENT_ID]
 
 Classifies each trace with a failing ToolCallCorrectness (or DataToolAttempt)
-assessment into one of the categories called out in `docs/quality/evaluation-spec.md`:
+assessment into one of the categories called out in `docs/quality/evaluation-specification.md`:
 
 - incorrect_tool_selected
 - required_tool_omitted

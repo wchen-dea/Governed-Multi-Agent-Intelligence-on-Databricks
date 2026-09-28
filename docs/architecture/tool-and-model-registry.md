@@ -44,7 +44,7 @@ The configuration files declare available subagent capabilities; they do not con
 - Jobs: `resources/semantics_jobs.yml` (one Databricks Job per notebook, run on demand or scheduled per target)
 - `create_gmai_product_search_index.py` curates `dim_product` and builds/refreshes the `gmai_product_search_index` Vector Search index.
 - `create_gmai_flink_support_index.py` extracts the support KB volume into `flink_support_kb` and builds/refreshes the `gmai_flink_support_index` Vector Search index.
-- `create_fct_cdi_trusted_expert_score_metric_view.py` publishes the `fct_cdi_trusted_expert_score_metric_view` Unity Catalog Semantic Metric View from `dt_prod_gold.dwh_dbx.fct_cdi` and its `cdi_daily`/`total_time_score`/`trusted_expert_score` joins.
+- `create_gmai_genie_agent_cdi_metric_view.py` publishes the `gmai_genie_agent_cdi_metric_view` Unity Catalog Semantic Metric View from `dt_prod_gold.dwh_dbx.fct_cdi` and its `cdi_daily`/`total_time_score`/`trusted_expert_score` joins.
 
 ## Active Genie Agents (Dev)
 
@@ -95,7 +95,7 @@ Typical source pattern for Genie Agents:
 - Type: genie
 - Runtime name: `cdi_agent`
 - Space ID source: `src/aiserver/contracts/subagents.dev.json`
-- Source: materialized view `quickstart_catalog.multi_agent_schema.fct_cdi_trusted_expert_score_metric_view`
+- Source: materialized view `quickstart_catalog.multi_agent_schema.gmai_genie_agent_cdi_metric_view`
 - Genie space created and owned by the Genie/analytics project; this project only registers the space id and routes to it via MCP.
 - Auth mode: app
 - Classification: confidential
@@ -116,13 +116,13 @@ Typical source pattern for Genie Agents:
 - Evidence: required; responses must contain a citation or `Source:` line
 - Human approval: required before any operational recommendation or dispatch
 - Persistence: `APPROVAL_BACKEND=uc_table` in dev, table `quickstart_catalog.multi_agent_schema.agent_approval_decisions`
-- Specialist source: `src/hitl-agent/` (update with `make update-hitl`)
-- Specialist privileges: `make grant-hitl-privileges` grants warehouse `CAN_USE`, UC catalog/schema use, and table-level `SELECT`
+- Specialist source: `src/hitl-agent/` (deploy through the Databricks Apps source workflow)
+- Specialist privileges: apply warehouse `CAN_USE`, UC catalog/schema use, and table-level `SELECT` through the approved deployment procedure
 - Status: active
 
-This agent prepares an approval packet from revenue and CDI signals. It is not a dispatch executor. See [Human-in-the-loop approval](../governance/human-in-the-loop.md).
+This agent prepares an approval packet from revenue and CDI signals. It is not a dispatch executor. See [Human-in-the-loop approval](../governance/human-approval.md).
 
-The App specialist is deployed as Databricks App `hitl-app-agent` in dev; its logical subagent name remains `store-intervention-agent`. Its source is exported under `src/hitl-agent/`. Follow the [creation procedure](../governance/human-in-the-loop.md#create-store-intervention-agent) for a new environment and use the update/grant helpers for ongoing changes.
+The App specialist is deployed as Databricks App `hitl-app-agent` in dev; its logical subagent name remains `store-intervention-agent`. Its source is exported under `src/hitl-agent/`. Follow the [creation procedure](../governance/human-approval.md#create-store-intervention-agent) for a new environment and use the update/grant helpers for ongoing changes.
 
 ## Other Environments
 
@@ -150,7 +150,7 @@ Selection rationale:
 | reasoning | Better fit for multi-step planning, SQL generation, and troubleshooting. | Higher cost is justified when it reduces failed tool attempts and support triage. | Improves first-pass task completion on operational questions. |
 | synthesis | Better fit for comparative analysis, executive summaries, and recommendations. | Reserved for requests where quality affects decisions or approval packets. | Reduces back-and-forth on complex summary work. |
 
-Auth correctness, safety, and groundedness remain blocking promotion KPIs. [ToolCallCorrectness](../quality/evaluation-spec.md) is monitored but non-blocking while the MLflow scorer cannot reliably assess nested tool spans.
+Auth correctness, safety, and groundedness remain blocking promotion KPIs. [ToolCallCorrectness](../quality/evaluation-specification.md) is monitored but non-blocking while the MLflow scorer cannot reliably assess nested tool spans.
 
 ## Environment Model Profiles
 
@@ -201,5 +201,5 @@ Conversation/persona memory (`MEMORY_BACKEND=lakebase`) uses a separate Lakebase
 
 - [Architecture guide](README.md)
 - [Runtime technical specifications](runtime-technical-specs.md)
-- [Business specifications](../product/business-specs.md)
+- [Business specifications](../reference/business-requirements.md)
 - [High-level architecture](high-level-architecture.md)

@@ -24,7 +24,7 @@ dbutils.widgets.text(
 )
 dbutils.widgets.text("source_table", "flink_support_kb", "Source table for the index")
 dbutils.widgets.text("index_name", "gmai_flink_support_index", "Vector Search index name")
-dbutils.widgets.text("endpoint_name", "gmai_flink_support_index_ep", "Vector Search endpoint name")
+dbutils.widgets.text("endpoint_name", "flink_support_ep", "Vector Search endpoint name")
 dbutils.widgets.text("embedding_model", "databricks-gte-large-en", "Embedding model endpoint")
 
 catalog = dbutils.widgets.get("catalog")

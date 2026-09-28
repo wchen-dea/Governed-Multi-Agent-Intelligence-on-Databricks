@@ -65,13 +65,14 @@ def eval_simulator_user_model() -> str:
 # `restricted_tools` name must exist, and each case's persona must be in that
 # subagent's `allowed_personas`, or the expectation is policy-denied before
 # routing ever runs. Coverage goals per subagent/persona:
-# - sales_insights_agent (store-manager), product_index_assistant (store-manager),
-#   flink_support_agent (de-support), cdi_agent (executive): exercise the model's
+# - gmai-genie-agent-sales-insights (store-manager), gmai-mcp-agent-product-search-index
+#   (store-manager), gmai-mcp-agent-flink-support-index (de-support),
+#   gmai-genie-agent-cdi (executive): exercise the model's
 #   sticky, per-conversation routing (`route_planner.build_route_plan`) via a
 #   weak-overlap follow-up turn that should stay routed to the same subagent.
-# - lakebase_ods_agent: exercised by a store-manager appointments/orders case;
-#   de-support is intentionally restricted to flink_support_agent only.
-# - flink_support_agent additionally asserts `requires_evidence`/
+# - gmai-lakebase-agent-ods: exercised by a store-manager appointments/orders case;
+#   de-support is intentionally restricted to gmai-mcp-agent-flink-support-index only.
+# - gmai-mcp-agent-flink-support-index additionally asserts `requires_evidence`/
 #   `freshness_sla`, matching its system_prompt's explicit citation mandate.
 # - Three composite cases (store-manager persona) cover the orchestrator's cross-tool
 #   comparison rule: appointments-vs-sales, sales-vs-CDI, and appointments-vs-
@@ -81,7 +82,7 @@ test_cases = [
         "goal": "Find out the top 3 stores by revenue for the current season",
         "persona": "A store manager who wants a quick revenue summary.",
         "context": {"custom_inputs": {"persona": "store-manager"}},
-        "expectations": {"expected_tool_calls": [{"name": "sales_insights_agent"}]},
+        "expectations": {"expected_tool_calls": [{"name": "gmai-genie-agent-sales-insights"}]},
         "simulation_guidelines": [
             "Ask for the top stores by revenue.",
             "Prefer concise tabular answers.",
@@ -94,7 +95,7 @@ test_cases = [
         "goal": "Look up product details for brand code MCH",
         "persona": "A store manager researching tire product catalog coverage.",
         "context": {"custom_inputs": {"persona": "store-manager"}},
-        "expectations": {"expected_tool_calls": [{"name": "product_index_assistant"}]},
+        "expectations": {"expected_tool_calls": [{"name": "gmai-mcp-agent-product-search-index"}]},
         "simulation_guidelines": [
             "Ask about products matching brand code MCH.",
             "Follow up by asking about article types for those products.",
@@ -105,7 +106,7 @@ test_cases = [
         "persona": "A data engineering support specialist dealing with a Flink streaming job that has increasing consumer lag.",
         "context": {"custom_inputs": {"persona": "de-support"}},
         "expectations": {
-            "expected_tool_calls": [{"name": "flink_support_agent"}],
+            "expected_tool_calls": [{"name": "gmai-mcp-agent-flink-support-index"}],
             "requires_evidence": True,
             "freshness_sla": "24h",
         },
@@ -121,7 +122,7 @@ test_cases = [
         "goal": "Check CDI delight scores across stores",
         "persona": "An executive reviewing customer satisfaction metrics.",
         "context": {"custom_inputs": {"persona": "executive"}},
-        "expectations": {"expected_tool_calls": [{"name": "cdi_agent"}]},
+        "expectations": {"expected_tool_calls": [{"name": "gmai-genie-agent-cdi"}]},
         "simulation_guidelines": [
             "Ask for CDI scores by store for the latest period.",
             "Follow up on promoter vs detractor counts.",
@@ -133,7 +134,7 @@ test_cases = [
         "context": {"custom_inputs": {"persona": "store-manager"}},
         "expectations": {
             "requires_tool_attempt": True,
-            "expected_tool_calls": [{"name": "lakebase_ods_agent"}],
+            "expected_tool_calls": [{"name": "gmai-lakebase-agent-ods"}],
         },
         "simulation_guidelines": [
             "Ask for the latest day's open appointments and their current order status.",
@@ -146,7 +147,7 @@ test_cases = [
         "context": {"custom_inputs": {"persona": "de-support"}},
         "expectations": {
             "expected_tool_calls": [],
-            "restricted_tools": ["lakebase_ods_agent"],
+            "restricted_tools": ["gmai-lakebase-agent-ods"],
         },
         "simulation_guidelines": [
             "Ask to query the operational data store to compare order counts against appointment counts for the latest day.",
@@ -160,8 +161,8 @@ test_cases = [
         "expectations": {
             "requires_tool_attempt": True,
             "expected_tool_calls": [
-                {"name": "lakebase_ods_agent"},
-                {"name": "sales_insights_agent"},
+                {"name": "gmai-lakebase-agent-ods"},
+                {"name": "gmai-genie-agent-sales-insights"},
             ],
         },
         "simulation_guidelines": [
@@ -180,9 +181,9 @@ test_cases = [
         "expectations": {
             "requires_tool_attempt": True,
             "expected_tool_calls": [
-                {"name": "cdi_agent"},
+                {"name": "gmai-genie-agent-cdi"},
             ],
-            "restricted_tools": ["sales_insights_agent"],
+            "restricted_tools": ["gmai-genie-agent-sales-insights"],
         },
         "simulation_guidelines": [
             "Ask which stores have strong sales performance but below-average CDI scores.",
@@ -197,8 +198,8 @@ test_cases = [
         "expectations": {
             "requires_tool_attempt": True,
             "expected_tool_calls": [
-                {"name": "lakebase_ods_agent"},
-                {"name": "sales_insights_agent"},
+                {"name": "gmai-lakebase-agent-ods"},
+                {"name": "gmai-genie-agent-sales-insights"},
             ],
         },
         "simulation_guidelines": [
@@ -213,7 +214,10 @@ test_cases = [
         "context": {"custom_inputs": {"persona": "de-support"}},
         "expectations": {
             "requires_user_identity": False,
-            "restricted_tools": ["sales_insights_agent", "cdi_agent"],
+            "restricted_tools": [
+                "gmai-genie-agent-sales-insights",
+                "gmai-genie-agent-cdi",
+            ],
             "restricted_keywords": ["revenue", "$", "sales"],
             "expected_tool_calls": [],
         },
@@ -379,10 +383,17 @@ if asyncio.iscoroutinefunction(invoke_fn):
 
     nest_asyncio.apply()
 
+    def _run_async_in_current_thread(coroutine):
+        """Run an async invocation from simulator worker or caller threads."""
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(coroutine)
+        return loop.run_until_complete(coroutine)
+
     def predict_fn(input: list[dict], custom_inputs: dict | None = None, **kwargs) -> dict:
         req = ResponsesAgentRequest(input=input, custom_inputs=custom_inputs)
-        loop = asyncio.get_event_loop()
-        response = loop.run_until_complete(invoke_fn(req))
+        response = _run_async_in_current_thread(invoke_fn(req))
         # Force the trace (including autologged tool-call spans) to commit
         # before the simulator/scorers read it; async export otherwise races
         # scoring and makes real tool calls look like they never happened.

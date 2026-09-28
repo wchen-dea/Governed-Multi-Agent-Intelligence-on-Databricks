@@ -52,8 +52,8 @@ Supported subagent types:
 
 The dependency direction is `api -> application -> contracts/config`.
 Infrastructure implements application ports, and `bootstrap` is the only composition root.
-See `docs/architecture/layered-agentic-architecture.md` for the full package map
-and enforced import rules. See [Low-level design](../../docs/architecture/runtime-behavior-and-implementation.md) for detailed module responsibilities and design patterns.
+See `docs/architecture/layered-agent-architecture.md` for the full package map
+and enforced import rules. See [Low-level design](../../docs/architecture/runtime-implementation.md) for detailed module responsibilities and design patterns.
 
 ## Local Run
 
@@ -94,7 +94,7 @@ Tip:
 
 - Keep `src/aiserver/contracts/subagents.<target>.json` and runtime behavior aligned when adding or changing tools.
 - `build_subagent_tools()` uses the adapter registry for serving-endpoint and App subagents. MCP and Lakebase use dedicated builders, while delegation stays on the governed task-bus handoff path.
-- The active store intervention specialist source is in `src/hitl-agent/`; use `make update-hitl` to deploy source changes and `make grant-hitl-privileges` to refresh its least-privilege data access.
+- The active store intervention specialist source is in `src/hitl-agent/`; deploy source changes and refresh least-privilege data access through the Databricks Apps and DAB procedures in the operations runbook.
 
 ## Key Environment Variables
 
