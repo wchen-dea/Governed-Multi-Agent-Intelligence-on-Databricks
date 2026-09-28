@@ -39,7 +39,7 @@ Provide a governed enterprise AI assistant that routes requests to the right dat
 | --- | --- | --- |
 | Sales, product, Flink, CDI, and Lakebase requests | Implemented through governed native tool/MCP routes | [Tool and model registry](../architecture/tool-and-model-registry.md) |
 | Bounded agent delegation | Implemented for approved app-auth tasks with UC durable state | [Runtime technical specifications](../architecture/runtime-specification.md) |
-| General asynchronous mailbox workflows | Target capability; not implemented | [Architecture guide](../architecture/README.md) |
+| General asynchronous mailbox workflows | Target capability; not implemented | [Architecture guide](../architecture/index.md) |
 | Release promotion | Blocked by `ToolCallCorrectness = 0.400 < 0.800` | [Evaluation specification](../quality/evaluation-specification.md) |
 
 ## Business Requirements
@@ -95,9 +95,9 @@ Out of scope:
 
 ## Related Documents
 
-- [Architecture guide](../architecture/README.md)
+- [Architecture guide](../architecture/index.md)
 - [Runtime technical specifications](../architecture/runtime-specification.md)
 - [High-level architecture](../architecture/system-architecture.md)
 - [Low-level design](../architecture/runtime-implementation.md)
 - [Operations runbook](../operations/runbook.md)
-- [Architecture decision records](../decisions/README.md)
+- [Architecture decision records](../decisions/index.md)

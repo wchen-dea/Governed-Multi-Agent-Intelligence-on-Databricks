@@ -25,7 +25,7 @@ This guide is the entry point for the architecture corpus. It separates authorit
 | [Runtime behavior and implementation](runtime-behavior-and-implementation.md) | Module responsibilities, request lifecycle, configuration, and implementation patterns |
 | [Human-in-the-loop approval](../governance/human-approval.md) | Approval states, manager decision API, persistence, and dispatch boundary |
 | [Backend package structure and layers](backend-package-structure-and-layers.md) | Backend package layout, dependency composition, staged execution, and service responsibilities |
-| [Design artifacts](design-artifacts/README.md) | Visual views of the canonical architecture, not independent implementation specifications |
+| [Design artifacts](design-artifacts/index.md) | Visual views of the canonical architecture, not independent implementation specifications |
 
 ## Current Control Planes
 

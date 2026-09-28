@@ -11,4 +11,4 @@ This section owns contributor and assistant workflow guidance. It does not repla
 
 ## Current Boundary
 
-Use the [architecture guide](../architecture/README.md) for implementation facts, the [operations guide](../operations/README.md) for deploy/recovery procedures, and the [governance guide](../governance/README.md) for policy intent.
+Use the [architecture guide](../architecture/index.md) for implementation facts, the [operations guide](../operations/index.md) for deploy/recovery procedures, and the [governance guide](../governance/index.md) for policy intent.

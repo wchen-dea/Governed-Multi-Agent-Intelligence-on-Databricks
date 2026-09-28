@@ -205,9 +205,9 @@ Primary implementation:
 
 ## Related Documents
 
-- [Architecture guide](README.md)
+- [Architecture guide](index.md)
 - [High-level architecture](high-level-architecture.md)
 - [Low-level design](runtime-behavior-and-implementation.md)
 - [Business specifications](../reference/business-requirements.md)
 - [Operations runbook](../operations/runbook.md)
-- [Architecture decision records](../decisions/README.md)
+- [Architecture decision records](../decisions/index.md)

@@ -14,7 +14,7 @@ flowchart LR
 
 Give the Discount Tire AI Center of Excellence (CoE) a repeatable, pragmatic-but-ambitious way to originate, design, prioritize, and graduate AI use cases. This document sets the requirement and design rules a use case must satisfy to enter, advance through, and exit the CoE portfolio. It complements the enterprise specification in [foundation-governance.md](foundation-governance.md) (mandatory controls, ownership, requirement taxonomy) and the business initiative catalog in the same document — this document is the *process and design-rule layer* that decides which initiatives get funded, how they are scoped, and when they are allowed to scale.
 
-This is reference/target-state guidance for CoE operating practice, not a description of shipped application behavior. Current implemented capability remains authoritative in the [product guide](../product/README.md) and [architecture guide](../architecture/README.md).
+This is reference/target-state guidance for CoE operating practice, not a description of shipped application behavior. Current implemented capability remains authoritative in the [product guide](../product/index.md) and [architecture guide](../architecture/index.md).
 
 ## Operating Principles
 

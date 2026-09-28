@@ -308,10 +308,10 @@ Direct non-interactive Databricks Apps invocation tests should use:
 
 ## Related Docs
 
-- [Architecture guide](README.md): authority map and role-based reading paths
+- [Architecture guide](index.md): authority map and role-based reading paths
 - [Business specifications](../reference/business-requirements.md): business goals and requirements
 - [Runtime technical specifications](runtime-technical-specs.md): centralized technical domain map
 - [High-level architecture](high-level-architecture.md): system boundaries and request flow
-- [Design artifacts](design-artifacts/README.md): concept, logical, deployment, and runtime diagrams
+- [Design artifacts](design-artifacts/index.md): concept, logical, deployment, and runtime diagrams
 - [Backend class diagrams](design-artifacts/08-runtime-domain-model.md): current service composition
 - [Operations runbook](../operations/runbook.md): deployment and incident handling

@@ -2,7 +2,7 @@
 
 ## Scope
 
-This section owns business outcomes, use cases, constraints, and success measures. It does not define runtime implementation or release evidence; use [architecture](../architecture/README.md), [quality](../quality/README.md), and [operations](../operations/README.md) for those concerns.
+This section owns business outcomes, use cases, constraints, and success measures. It does not define runtime implementation or release evidence; use [architecture](../architecture/index.md), [quality](../quality/index.md), and [operations](../operations/index.md) for those concerns.
 
 ## Primary Document
 

@@ -215,7 +215,7 @@ For each release candidate, capture:
 
 ## Related Documents
 
-- [Quality guide](README.md)
+- [Quality guide](index.md)
 - [Runtime technical specifications](../architecture/runtime-specification.md)
 - [Business specifications](../reference/business-requirements.md)
 - [Operations runbook](../operations/runbook.md)

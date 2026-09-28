@@ -71,7 +71,7 @@ Beyond the Databricks platform features above, this project implements these AI 
 
 ## Team Onboarding: Project Skills and Capabilities
 
-The project provides skills for tool discovery and integration, agent changes, local setup, deployment, and governed runtime operations. See [Documentation guide: Team Onboarding](docs/README.md#team-onboarding-skills-and-capabilities) for the complete skill index and runtime playbooks.
+The project provides skills for tool discovery and integration, agent changes, local setup, deployment, and governed runtime operations. See [Documentation guide: Team Onboarding](docs/index.md#team-onboarding-skills-and-capabilities) for the complete skill index and runtime playbooks.
 
 HITL workflow details:
 
@@ -224,7 +224,7 @@ For architecture diagrams, see [docs/architecture/system-architecture.md](docs/a
 - [resources/hitl_app.yml](resources/hitl_app.yml): DAB-managed `store-intervention-agent` specialist App resource
 - [targets/](targets): target-specific deployment overlays
 - [databricks.yml](databricks.yml): DAB bundle root configuration
-- [docs/README.md](docs/README.md): architecture, design, and runbook documentation index
+- [docs/index.md](docs/index.md): architecture, design, and runbook documentation index
 
 ## Quick Start
 
@@ -374,7 +374,7 @@ MCP connect/probe performance controls:
 - [docs/operations/postmortem-template.md](docs/operations/postmortem-template.md): incident and regression postmortem template.
 - [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md): high-level architecture and request flow
 - [docs/architecture/runtime-implementation.md](docs/architecture/runtime-implementation.md): runtime module design and implementation behavior
-- [docs/architecture/design-artifacts/README.md](docs/architecture/design-artifacts/README.md): centralized concept, logical, and deployment design diagrams
+- [docs/architecture/design-artifacts/index.md](docs/architecture/design-artifacts/index.md): centralized concept, logical, and deployment design diagrams
 - [docs/operations/runbook.md](docs/operations/runbook.md): deployment, operations, incident handling, rollback
 
 ## Makefile Helpers

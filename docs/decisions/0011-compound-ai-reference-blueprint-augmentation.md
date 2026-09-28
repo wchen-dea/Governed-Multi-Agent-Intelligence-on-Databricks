@@ -181,7 +181,7 @@ flowchart TB
 ## Implementation Notes
 
 - Source blueprint documents: [docs/architecture/target-state-architecture.md](../ai-solution-blueprint.md), [docs/architecture/current-state-architecture.md](../ai-solution-current.md)
-- Architecture guide: [docs/architecture/system-architecture.md](../architecture/system-architecture.md), [docs/architecture/README.md](../architecture/README.md)
+- Architecture guide: [docs/architecture/system-architecture.md](../architecture/system-architecture.md), [docs/architecture/index.md](../architecture/index.md)
 - Referenced ADRs: [0002](0002-hybrid-auth-model.md), [0004](0004-lifecycle-message-bus.md), [0005](0005-governed-routing-policy-and-response-guardrails.md), [0006](0006-unity-catalog-audit-table-for-lifecycle-events.md), [0007](0007-evaluation-kpi-release-gate.md), [0008](0008-custom-orchestrator-vs-databricks-supervisor-agent.md), [0009](0009-unity-ai-gateway-for-llm-traffic.md), [0010](0010-environment-aware-model-routing.md)
 - Human-in-the-loop reference: [docs/governance/human-approval.md](../governance/human-approval.md)
 - No source code changes accompany this ADR; it is a review/decision record only.

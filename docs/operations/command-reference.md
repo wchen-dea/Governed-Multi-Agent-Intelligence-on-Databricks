@@ -61,4 +61,4 @@ The original `uv run` entry points in `pyproject.toml` remain as compatibility c
 | `make build-app-source TARGET=<target>` | Build the versioned wheel and React app-source payload. |
 | `make stop APP_NAME=<app> HITL_APP_NAME=<app> PROFILE=<profile>` | Stop the configured Databricks Apps. |
 
-See the [operations guide](README.md) and [operations runbook](operations-runbook.md) for command prerequisites and recovery boundaries.
+See the [operations guide](index.md) and [operations runbook](operations-runbook.md) for command prerequisites and recovery boundaries.

@@ -27,7 +27,7 @@ configuration, tests, and deployment definitions.
 This document is a reusable enterprise target-state blueprint. The project
 is a working Databricks implementation instance used to validate and evolve
 selected blueprint patterns. Current implementation authority is the
-[architecture guide](architecture/README.md), especially the
+[architecture guide](architecture/index.md), especially the
 [runtime technical specifications](architecture/runtime-specification.md).
 
 ### Blueprint-to-Repository Cross-Reference

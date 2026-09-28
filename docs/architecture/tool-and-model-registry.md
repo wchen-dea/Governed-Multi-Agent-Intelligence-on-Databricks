@@ -199,7 +199,7 @@ Conversation/persona memory (`MEMORY_BACKEND=lakebase`) uses a separate Lakebase
 
 ## Related Documents
 
-- [Architecture guide](README.md)
+- [Architecture guide](index.md)
 - [Runtime technical specifications](runtime-technical-specs.md)
 - [Business specifications](../reference/business-requirements.md)
 - [High-level architecture](high-level-architecture.md)

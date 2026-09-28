@@ -6,24 +6,24 @@ This guide separates current implementation authority from operating procedures,
 
 | Need | Authoritative location |
 | --- | --- |
-| Current runtime behavior | [Architecture guide](architecture/README.md) and [runtime technical specifications](architecture/runtime-specification.md) |
+| Current runtime behavior | [Architecture guide](architecture/index.md) and [runtime technical specifications](architecture/runtime-specification.md) |
 | Current solution overview | [AI solution current](ai-solution-current.md) |
 | AI frameworks, patterns, tools, and skills | [AI technologies and patterns](architecture/technology-and-patterns.md) |
 | API and stream behavior | [API contracts](api/contracts.md) |
 | Active tools, models, and integration routes | [Tool and model registry](architecture/tool-and-model-registry.md) |
-| Deployment and incident procedures | [Operations guide](operations/README.md) |
-| Evaluation and release evidence | [Quality guide](quality/README.md) |
-| Policy intent and security expectations | [Governance guide](governance/README.md) |
-| Historical technical decisions | [ADR index](decisions/README.md) |
-| Enterprise target-state research | [Reference pack](reference/README.md) |
+| Deployment and incident procedures | [Operations guide](operations/index.md) |
+| Evaluation and release evidence | [Quality guide](quality/index.md) |
+| Policy intent and security expectations | [Governance guide](governance/index.md) |
+| Historical technical decisions | [ADR index](decisions/index.md) |
+| Enterprise target-state research | [Reference pack](reference/index.md) |
 
 ## Read By Role
 
-1. **AI executive:** [Architecture guide](architecture/README.md) -> [Product guide](product/README.md) -> [Quality guide](quality/README.md) -> [Operations guide](operations/README.md)
-2. **AI architect:** [Architecture guide](architecture/README.md) -> [Governance guide](governance/README.md) -> [ADR index](decisions/README.md)
+1. **AI executive:** [Architecture guide](architecture/index.md) -> [Product guide](product/index.md) -> [Quality guide](quality/index.md) -> [Operations guide](operations/index.md)
+2. **AI architect:** [Architecture guide](architecture/index.md) -> [Governance guide](governance/index.md) -> [ADR index](decisions/index.md)
 3. **Application engineer:** [API contracts](api/contracts.md) -> [Low-level design](architecture/runtime-implementation.md) -> [Tool and model registry](architecture/tool-and-model-registry.md)
-4. **Platform operator:** [Operations guide](operations/README.md) -> [Architecture deployment artifacts](architecture/design-artifacts/05-deployment-topology-and-resources.md)
-5. **Security or governance reviewer:** [Governance guide](governance/README.md) -> [Architecture high-level view](architecture/system-architecture.md)
+4. **Platform operator:** [Operations guide](operations/index.md) -> [Architecture deployment artifacts](architecture/design-artifacts/05-deployment-topology-and-resources.md)
+5. **Security or governance reviewer:** [Governance guide](governance/index.md) -> [Architecture high-level view](architecture/system-architecture.md)
 
 ## Team Onboarding: Skills and Capabilities
 
@@ -54,15 +54,15 @@ Active skill playbooks:
 
 Use this index to navigate project documentation by purpose:
 
-- [product/README.md](product/README.md): business outcomes, scope, and current capability boundary.
+- [product/index.md](product/index.md): business outcomes, scope, and current capability boundary.
 - [getting-started/agent-usage.md](getting-started/agent-usage.md): what each agent is best at, perfect-match query types, and composite/freshness guidance for end users.
 - [ai-solution-current.md](ai-solution-current.md): consolidated current implementation architecture, runtime flow, deployment, HITL, model routing, and evaluation posture.
-- [architecture/README.md](architecture/README.md): architecture reading paths, authority map, and current control planes.
+- [architecture/index.md](architecture/index.md): architecture reading paths, authority map, and current control planes.
 - [architecture/technology-and-patterns.md](architecture/technology-and-patterns.md): concise inventory of AI frameworks, design patterns, tools, data capabilities, and project skills.
-- [governance/README.md](governance/README.md): policy, data, semantic, and security ownership.
-- [operations/README.md](operations/README.md): deployment, verification, MLflow, scripts, and incident paths.
-- [quality/README.md](quality/README.md): evaluation, KPI thresholds, and release evidence.
-- [internal/README.md](internal/README.md): contributor and assistant workflow boundaries.
+- [governance/index.md](governance/index.md): policy, data, semantic, and security ownership.
+- [operations/index.md](operations/index.md): deployment, verification, MLflow, scripts, and incident paths.
+- [quality/index.md](quality/index.md): evaluation, KPI thresholds, and release evidence.
+- [internal/index.md](internal/index.md): contributor and assistant workflow boundaries.
 - [architecture/runtime-specification.md](architecture/runtime-specification.md): centralized technical implementation specification.
 - [quality/evaluation-specification.md](quality/evaluation-specification.md): datasets, scorers, KPI thresholds, and release-gate behavior.
 - [governance/prompt-policy.md](governance/prompt-policy.md): prompt layering, deterministic policy checks, and guardrail controls.
@@ -85,15 +85,15 @@ Use this index to navigate project documentation by purpose:
 - [architecture/system-architecture.md](architecture/system-architecture.md): high-level system architecture, boundaries, and request flow.
 - [architecture/runtime-implementation.md](architecture/runtime-implementation.md): low-level implementation details, runtime behavior, and configuration model.
 - [architecture/backend-package-structure.md](architecture/backend-package-structure.md): backend package structure, request pipeline, DI, subagent types, and policy enforcement.
-- [architecture/design-artifacts/README.md](architecture/design-artifacts/README.md): centralized concept, logical, and deployment diagram set.
+- [architecture/design-artifacts/index.md](architecture/design-artifacts/index.md): centralized concept, logical, and deployment diagram set.
 - [operations/runbook.md](operations/runbook.md): deployment and operations procedures.
 - [development/ai-agent-guidelines.md](development/ai-agent-guidelines.md): unified Claude skill summary, usage order, and operating guidelines.
 - [development/ai-development-lifecycle.md](development/ai-development-lifecycle.md): maps Claude Code skills to AI system development life-cycle stages and documents per-stage best practices.
-- [decisions/README.md](decisions/README.md): architecture decision records and long-lived technical decisions.
+- [decisions/index.md](decisions/index.md): architecture decision records and long-lived technical decisions.
 
 ## Recommended Read Order
 
-1. [architecture/README.md](architecture/README.md)
+1. [architecture/index.md](architecture/index.md)
 2. [ai-solution-current.md](ai-solution-current.md)
 3. [architecture/system-architecture.md](architecture/system-architecture.md)
 4. [reference/business-requirements.md](reference/business-requirements.md)
@@ -110,11 +110,11 @@ Use this index to navigate project documentation by purpose:
 15. [operations/release-tracker.md](operations/release-tracker.md)
 16. [api/contracts.md](api/contracts.md)
 17. [architecture/runtime-implementation.md](architecture/runtime-implementation.md)
-18. [architecture/design-artifacts/README.md](architecture/design-artifacts/README.md)
+18. [architecture/design-artifacts/index.md](architecture/design-artifacts/index.md)
 19. [operations/runbook.md](operations/runbook.md)
 20. [operations/postmortem-template.md](operations/postmortem-template.md)
 21. [development/ai-agent-guidelines.md](development/ai-agent-guidelines.md)
-22. [decisions/README.md](decisions/README.md)
+22. [decisions/index.md](decisions/index.md)
 
 ## Quick Config Snippets
 

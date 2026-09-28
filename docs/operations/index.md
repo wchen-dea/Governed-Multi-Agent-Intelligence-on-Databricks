@@ -2,7 +2,7 @@
 
 ## Scope
 
-This section owns deployment procedures, runtime verification, MLflow operations, cost/performance planning, scripts, and incident materials. Runtime contracts are authoritative in [architecture](../architecture/README.md); this section explains how to operate them.
+This section owns deployment procedures, runtime verification, MLflow operations, cost/performance planning, scripts, and incident materials. Runtime contracts are authoritative in [architecture](../architecture/index.md); this section explains how to operate them.
 
 ## Operational Paths
 

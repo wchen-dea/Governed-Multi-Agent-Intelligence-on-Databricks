@@ -289,10 +289,10 @@ Async publishing requires `MESSAGE_BUS_FAIL_OPEN=true`; the configured backend i
 
 ## Related Docs
 
-- [Architecture guide](README.md): authority map and role-based reading paths
+- [Architecture guide](index.md): authority map and role-based reading paths
 - [Business specifications](../reference/business-requirements.md): business goals and requirements
 - [Runtime technical specifications](runtime-technical-specs.md): centralized technical domain map
 - [Low-level design](runtime-behavior-and-implementation.md): implementation details
-- [Design artifacts](design-artifacts/README.md): concept, logical, deployment, and runtime diagrams
+- [Design artifacts](design-artifacts/index.md): concept, logical, deployment, and runtime diagrams
 - [Request execution pipeline](design-artifacts/07-runtime-invocation-stream-pipeline.md): invoke/stream staged execution
 - [Operations runbook](../operations/runbook.md): deployment and incident handling
