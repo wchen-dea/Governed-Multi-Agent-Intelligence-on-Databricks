@@ -51,6 +51,56 @@ test("shows the beginning of the initial chat content", async ({ page }) => {
     .toBe(0);
 });
 
+test("deduplicates replayed SSE text events", async ({ page }) => {
+  await page.unroute("**/invocations");
+  await page.route("**/invocations", async (route) => {
+    const event = { type: "response.output_text.delta", delta: "Unique answer." };
+    await route.fulfill({
+      status: 200,
+      contentType: "text/event-stream",
+      body: sse([event, event, { type: "response.completed", response: {} }]),
+    });
+  });
+
+  await page.goto("/");
+  await page.getByRole("textbox", { name: "Message" }).fill("Replay test");
+  await page.getByRole("button", { name: "Send" }).click();
+
+  await expect(page.getByText("Unique answer.")).toHaveCount(1);
+  await expect(page.locator(".bubble-assistant").last()).not.toContainText(
+    "Unique answer.Unique answer.",
+  );
+});
+
+test("bounds request history while retaining the visible transcript", async ({ page }) => {
+  const requestInputs: string[][] = [];
+  await page.unroute("**/invocations");
+  await page.route("**/invocations", async (route) => {
+    const body = route.request().postDataJSON() as {
+      input?: Array<{ role: string; content: string }>;
+    };
+    requestInputs.push((body.input ?? []).map((item) => item.content));
+    await route.fulfill({
+      status: 200,
+      contentType: "text/event-stream",
+      body: sse([{ type: "response.output_text.delta", delta: "Acknowledged." }]),
+    });
+  });
+
+  await page.goto("/");
+  const input = page.getByRole("textbox", { name: "Message" });
+  for (let index = 0; index < 12; index += 1) {
+    await input.fill(`Turn ${index}`);
+    await page.getByRole("button", { name: "Send" }).click();
+    await expect(page.getByText("Acknowledged.")).toHaveCount(index + 1);
+  }
+
+  expect(requestInputs).toHaveLength(12);
+  expect(requestInputs.at(-1)).toHaveLength(21);
+  expect(requestInputs.at(-1)?.at(-1)).toBe("Turn 11");
+  await expect(page.getByText("Turn 0")).toBeVisible();
+});
+
 test("clear resets only the conversation content", async ({ page }) => {
   const conversationIds: string[] = [];
   await page.route("**/invocations", async (route) => {
