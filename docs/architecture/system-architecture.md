@@ -6,7 +6,7 @@ Describe the system shape, major boundaries, and end-to-end request flow.
 
 ## Scope
 
-This document covers high-level architecture only. See [low-level design](runtime-behavior-and-implementation.md) for implementation details and the [operations runbook](../operations/runbook.md) for procedures.
+This document covers high-level architecture only. See [low-level design](runtime-implementation.md) for implementation details and the [operations runbook](../operations/runbook.md) for procedures.
 
 ## Current Status
 
@@ -291,8 +291,8 @@ Async publishing requires `MESSAGE_BUS_FAIL_OPEN=true`; the configured backend i
 
 - [Architecture guide](index.md): authority map and role-based reading paths
 - [Business specifications](../reference/business-requirements.md): business goals and requirements
-- [Runtime technical specifications](runtime-technical-specs.md): centralized technical domain map
-- [Low-level design](runtime-behavior-and-implementation.md): implementation details
+- [Runtime technical specifications](runtime-specification.md): centralized technical domain map
+- [Low-level design](runtime-implementation.md): implementation details
 - [Design artifacts](design-artifacts/index.md): concept, logical, deployment, and runtime diagrams
 - [Request execution pipeline](design-artifacts/07-runtime-invocation-stream-pipeline.md): invoke/stream staged execution
 - [Operations runbook](../operations/runbook.md): deployment and incident handling

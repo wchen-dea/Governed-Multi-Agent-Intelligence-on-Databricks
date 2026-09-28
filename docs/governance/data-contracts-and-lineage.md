@@ -74,7 +74,7 @@ Approval records are a separate durable contract from lifecycle events. They are
 
 ## Related Documents
 
-- business-semantics-metadata.md
+- business-semantics.md
 - ../architecture/runtime-specification.md
 - ../architecture/tool-and-model-registry.md
 - ../operations/runbook.md

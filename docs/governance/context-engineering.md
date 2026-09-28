@@ -1,12 +1,12 @@
 # Context Engineering Guidelines
 
-Hands-on conventions for controlling what information enters model context in this project. Complements [prompt-engineering-guidelines.md](prompt-engineering-guidelines.md) (how to write prompts) with rules for what context to assemble, retrieve, remember, and discard.
+Hands-on conventions for controlling what information enters model context in this project. Complements [prompt-engineering.md](prompt-engineering.md) (how to write prompts) with rules for what context to assemble, retrieve, remember, and discard.
 
 ## Scope
 
 Context engineering here means: which subagents/tools are visible to the orchestrator per request, what conversation state is recalled, what schema/evidence is retrieved just-in-time versus statically embedded, and what a tool result must contain to be trustworthy input for further reasoning.
 
-For the aspirational, not-yet-implemented target-state pipeline (composite relevance scoring, ontology resolution, compression/deduplication), see [../ai-solution-blueprint.md](../ai-solution-blueprint.md) section 6. Do not treat that section as current behavior.
+For the aspirational, not-yet-implemented target-state pipeline (composite relevance scoring, ontology resolution, compression/deduplication), see [../architecture/target-state-architecture.md](../architecture/target-state-architecture.md) section 6. Do not treat that section as current behavior.
 
 ## Implemented Mechanisms and Rules
 
@@ -37,12 +37,12 @@ For the aspirational, not-yet-implemented target-state pipeline (composite relev
 ### 5. Retrieval-grounded context with enforced provenance
 
 - Source: `flink_support_agent`, `product_index_assistant` prompts (AI Search MCP) + `src/aiserver/application/guardrails/checks.py`.
-- Rule: any tool whose prompt instructs citation output must have `requires_evidence: true` so the guardrail deterministically rejects ungrounded output — do not rely on the prompt alone to guarantee provenance (see [prompt-engineering-guidelines.md](prompt-engineering-guidelines.md) consistency checklist).
+- Rule: any tool whose prompt instructs citation output must have `requires_evidence: true` so the guardrail deterministically rejects ungrounded output — do not rely on the prompt alone to guarantee provenance (see [prompt-engineering.md](prompt-engineering.md) consistency checklist).
 - Rule: for fuzzy/semantic retrieval (AI Search), require the model to state explicitly when only approximate matches were found rather than presenting them as exact.
 
 ### 6. Shared semantic context (avoid re-deriving meaning per query)
 
-- Source: [business-semantics-metadata.md](business-semantics-metadata.md), Metric Views and AI Search indexes built by the semantics layer.
+- Source: [business-semantics.md](business-semantics.md), Metric Views and AI Search indexes built by the semantics layer.
 - Rule: canonical entity/metric definitions are built once and referenced by subagent prompts; do not let individual subagent prompts redefine a metric (e.g., "delight score") independently — update the shared semantics doc and propagate.
 
 ### 7. Cross-tool composite context (multi-step comparisons)
@@ -66,7 +66,7 @@ uv run pytest tests/test_route_planner.py tests/test_memory_service.py tests/tes
 
 ## Possible Improvements to Level Up
 
-- **Relevance scoring pipeline.** The blueprint's composite score (semantic + lexical + entity + freshness + trust + ontology distance, see [../ai-solution-blueprint.md](../ai-solution-blueprint.md) section 6) is not implemented. Even a lightweight version — scoring which subagent's retrieved evidence to prioritize when two tools return overlapping information — would reduce reliance on prompt-only judgment.
+- **Relevance scoring pipeline.** The blueprint's composite score (semantic + lexical + entity + freshness + trust + ontology distance, see [../architecture/target-state-architecture.md](../architecture/target-state-architecture.md) section 6) is not implemented. Even a lightweight version — scoring which subagent's retrieved evidence to prioritize when two tools return overlapping information — would reduce reliance on prompt-only judgment.
 - **Token/context budget telemetry.** Add a metric for assembled orchestrator instruction size and per-tool result size so context growth (e.g., from adding subagents or verbose tool descriptions) is visible before it degrades latency or cost.
 - **Sticky-route and memory staleness checks.** Add an automated test or monitor that flags when `ROUTE_STICKINESS_TTL_SECONDS` or memory retention settings drift from what evaluation data supports, instead of relying on manual review before changing the TTL.
 - **Cross-tool join validation.** Add an eval case that exercises the composite-comparison flow (e.g., top appointment stores vs. top sales stores) end to end and asserts the orchestrator's final answer correctly identifies overlap, catching regressions in the entity-identifier convention (Rule 7).
@@ -74,9 +74,9 @@ uv run pytest tests/test_route_planner.py tests/test_memory_service.py tests/tes
 
 ## Related Documents
 
-- [prompt-engineering-guidelines.md](prompt-engineering-guidelines.md)
-- [agent-harness-engineering-guidelines.md](agent-harness-engineering-guidelines.md)
-- [prompt-policy-controls.md](prompt-policy-controls.md)
-- [data-contracts-lineage.md](data-contracts-lineage.md)
+- [prompt-engineering.md](prompt-engineering.md)
+- [agent-harness-guidelines.md](agent-harness-guidelines.md)
+- [prompt-policy.md](prompt-policy.md)
+- [data-contracts-and-lineage.md](data-contracts-and-lineage.md)
 - [../architecture/tool-and-model-registry.md](../architecture/tool-and-model-registry.md)
-- [../ai-solution-blueprint.md](../ai-solution-blueprint.md)
+- [../architecture/target-state-architecture.md](../architecture/target-state-architecture.md)

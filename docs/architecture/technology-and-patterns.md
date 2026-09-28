@@ -56,15 +56,15 @@ The active tool names, targets, owners, identities, classifications, and freshne
 | `deploy` | Validates and deploys the Databricks bundle by target. |
 | `quickstart` | Bootstraps local development and baseline Databricks configuration. |
 | `run-locally` | Starts and validates backend and frontend runtime paths. |
-| [runtime-routing](../../.claude/skills/runtime-routing/SKILL.md) | Implements and validates policy-aware routing. |
-| [runtime-guardrails](../../.claude/skills/runtime-guardrails/SKILL.md) | Implements response-policy and evidence controls. |
-| [runtime-auth-obo](../../.claude/skills/runtime-auth-obo/SKILL.md) | Implements app/OBO authorization behavior. |
-| [runtime-audit-observability](../../.claude/skills/runtime-audit-observability/SKILL.md) | Implements lifecycle audit and observability behavior. |
+| [governance-routing](../../.claude/skills/governance-routing/SKILL.md) | Implements and validates policy-aware routing. |
+| [governance-guardrails](../../.claude/skills/governance-guardrails/SKILL.md) | Implements response-policy and evidence controls. |
+| [governance-auth-obo](../../.claude/skills/governance-auth-obo/SKILL.md) | Implements app/OBO authorization behavior. |
+| [observability-audit](../../.claude/skills/observability-audit/SKILL.md) | Implements lifecycle audit and observability behavior. |
 
 ## Related Documents
 
-- [Runtime technical specifications](runtime-technical-specs.md): implemented runtime facts and configuration behavior.
+- [Runtime technical specifications](runtime-specification.md): implemented runtime facts and configuration behavior.
 - [Tool and model registry](tool-and-model-registry.md): active tool and model inventory by target.
-- [Low-level design](runtime-behavior-and-implementation.md): module responsibilities and detailed design patterns.
+- [Low-level design](runtime-implementation.md): module responsibilities and detailed design patterns.
 - [Governance guide](../governance/index.md): policy, security, semantics, and approval controls.
 - [Operations guide](../operations/index.md): deployment, observability, and incident procedures.

@@ -4,7 +4,7 @@ Use this tracker with the implementation checklist to manage execution status, o
 
 This is a planning template, not a current runtime status record. Use the [MLflow guide](mlflow-guide.md), [evaluation specification](../quality/evaluation-specification.md), and deployment evidence for current implementation state.
 
-Related plan: [MLflow Implementation Checklist](mlflow-rollout-checklist.md)
+Related plan: [MLflow Implementation Checklist](release-checklist.md)
 
 ## Program Status
 

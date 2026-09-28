@@ -109,7 +109,7 @@ Consequence: this repository's semantics-layer responsibility is limited to **AI
 ## Related Docs
 
 - [Tool and model registry](tool-and-model-registry.md): active index/Genie/Lakebase inventory and ownership metadata.
-- [High-level architecture](high-level-architecture.md): system-level view of the Business Semantic Layer and Operational Data Store.
-- [Low-level design](runtime-behavior-and-implementation.md): bundle layout, including `resources/semantics_jobs.yml`.
+- [High-level architecture](system-architecture.md): system-level view of the Business Semantic Layer and Operational Data Store.
+- [Low-level design](runtime-implementation.md): bundle layout, including `resources/semantics_jobs.yml`.
 - [Governance: business semantics metadata](../governance/business-semantics.md): canonical business semantics and AI metadata contract.
 - [src/semantics/README.md](../../src/semantics/README.md): notebook-level build automation details.

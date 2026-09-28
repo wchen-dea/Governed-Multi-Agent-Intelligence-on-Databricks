@@ -159,6 +159,6 @@ Recording `approved` is not an operational dispatch command. A dispatch integrat
 
 ## Related Documents
 
-- [Runtime technical specifications](runtime-technical-specs.md)
+- [Runtime technical specifications](../architecture/runtime-specification.md)
 - [Prompt and policy controls](../governance/prompt-policy.md)
 - [Operations runbook](../operations/runbook.md)

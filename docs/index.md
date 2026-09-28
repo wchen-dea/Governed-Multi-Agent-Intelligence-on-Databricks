@@ -7,7 +7,7 @@ This guide separates current implementation authority from operating procedures,
 | Need | Authoritative location |
 | --- | --- |
 | Current runtime behavior | [Architecture guide](architecture/index.md) and [runtime technical specifications](architecture/runtime-specification.md) |
-| Current solution overview | [AI solution current](ai-solution-current.md) |
+| Current solution overview | [AI solution current](architecture/current-state-architecture.md) |
 | AI frameworks, patterns, tools, and skills | [AI technologies and patterns](architecture/technology-and-patterns.md) |
 | API and stream behavior | [API contracts](api/contracts.md) |
 | Active tools, models, and integration routes | [Tool and model registry](architecture/tool-and-model-registry.md) |
@@ -56,7 +56,7 @@ Use this index to navigate project documentation by purpose:
 
 - [product/index.md](product/index.md): business outcomes, scope, and current capability boundary.
 - [getting-started/agent-usage.md](getting-started/agent-usage.md): what each agent is best at, perfect-match query types, and composite/freshness guidance for end users.
-- [ai-solution-current.md](ai-solution-current.md): consolidated current implementation architecture, runtime flow, deployment, HITL, model routing, and evaluation posture.
+- [architecture/current-state-architecture.md](architecture/current-state-architecture.md): consolidated current implementation architecture, runtime flow, deployment, HITL, model routing, and evaluation posture.
 - [architecture/index.md](architecture/index.md): architecture reading paths, authority map, and current control planes.
 - [architecture/technology-and-patterns.md](architecture/technology-and-patterns.md): concise inventory of AI frameworks, design patterns, tools, data capabilities, and project skills.
 - [governance/index.md](governance/index.md): policy, data, semantic, and security ownership.
@@ -71,7 +71,7 @@ Use this index to navigate project documentation by purpose:
 - [governance/context-engineering.md](governance/context-engineering.md): conventions for what context to assemble, retrieve, remember, and discard (routing instructions, sticky routing, memory, retrieval).
 - [governance/agent-harness-guidelines.md](governance/agent-harness-guidelines.md): conventions for request pipeline, execution contracts, delegation bounds, model selection, and lifecycle observability.
 - [architecture/tool-and-model-registry.md](architecture/tool-and-model-registry.md): inventory of active models, endpoints, and Genie Agents.
-- [architecture/semantics-layer-design.md](architecture/semantics-layer-design.md): semantics layer scope, ownership boundaries, and AI Search index/Metric View build pipelines.
+- [architecture/semantics-layer.md](architecture/semantics-layer.md): semantics layer scope, ownership boundaries, and AI Search index/Metric View build pipelines.
 - [governance/data-contracts-and-lineage.md](governance/data-contracts-and-lineage.md): request and response contracts, sensitivity model, and audit lineage requirements.
 - [governance/business-semantics.md](governance/business-semantics.md): canonical business semantics and required AI metadata contract.
 - [governance/security-threat-model.md](governance/security-threat-model.md): trust boundaries, threats, and implemented controls.
@@ -94,7 +94,7 @@ Use this index to navigate project documentation by purpose:
 ## Recommended Read Order
 
 1. [architecture/index.md](architecture/index.md)
-2. [ai-solution-current.md](ai-solution-current.md)
+2. [architecture/current-state-architecture.md](architecture/current-state-architecture.md)
 3. [architecture/system-architecture.md](architecture/system-architecture.md)
 4. [reference/business-requirements.md](reference/business-requirements.md)
 5. [architecture/runtime-specification.md](architecture/runtime-specification.md)

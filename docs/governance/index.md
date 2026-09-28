@@ -8,25 +8,25 @@ This section defines policy intent, data semantics, lineage expectations, and se
 
 | Document | Owns |
 | --- | --- |
-| [Prompt policy controls](prompt-policy-controls.md) | Prompt layers, policy checks, and guardrail intent |
-| [Prompt engineering guidelines](prompt-engineering-guidelines.md) | Hands-on conventions for writing/reviewing subagent prompts and descriptions |
-| [Context engineering guidelines](context-engineering-guidelines.md) | Conventions for what context to assemble, retrieve, remember, and discard |
-| [Agent harness engineering guidelines](agent-harness-engineering-guidelines.md) | Conventions for request pipeline, execution contracts, delegation, and observability plumbing |
-| [Human-in-the-loop approval](human-in-the-loop.md) | Manager approval state, decision API, persistence, and operational dispatch boundary |
-| [Data contracts and lineage](data-contracts-lineage.md) | Data boundaries, lifecycle lineage, and contract expectations |
-| [Business semantics metadata](business-semantics-metadata.md) | Domain definitions and metadata expectations |
+| [Prompt policy controls](prompt-policy.md) | Prompt layers, policy checks, and guardrail intent |
+| [Prompt engineering guidelines](prompt-engineering.md) | Hands-on conventions for writing/reviewing subagent prompts and descriptions |
+| [Context engineering guidelines](context-engineering.md) | Conventions for what context to assemble, retrieve, remember, and discard |
+| [Agent harness engineering guidelines](agent-harness-guidelines.md) | Conventions for request pipeline, execution contracts, delegation, and observability plumbing |
+| [Human-in-the-loop approval](human-approval.md) | Manager approval state, decision API, persistence, and operational dispatch boundary |
+| [Data contracts and lineage](data-contracts-and-lineage.md) | Data boundaries, lifecycle lineage, and contract expectations |
+| [Business semantics metadata](business-semantics.md) | Domain definitions and metadata expectations |
 | [Security threat model](security-threat-model.md) | Threats, trust boundaries, and hardening priorities |
 
 ## Reading Path
 
 1. [Security threat model](security-threat-model.md)
-2. [Prompt policy controls](prompt-policy-controls.md)
-3. [Prompt engineering guidelines](prompt-engineering-guidelines.md)
-4. [Context engineering guidelines](context-engineering-guidelines.md)
-5. [Agent harness engineering guidelines](agent-harness-engineering-guidelines.md)
-6. [Human-in-the-loop approval](human-in-the-loop.md)
-7. [Data contracts and lineage](data-contracts-lineage.md)
-8. [Business semantics metadata](business-semantics-metadata.md)
+2. [Prompt policy controls](prompt-policy.md)
+3. [Prompt engineering guidelines](prompt-engineering.md)
+4. [Context engineering guidelines](context-engineering.md)
+5. [Agent harness engineering guidelines](agent-harness-guidelines.md)
+6. [Human-in-the-loop approval](human-approval.md)
+7. [Data contracts and lineage](data-contracts-and-lineage.md)
+8. [Business semantics metadata](business-semantics.md)
 
 ## Current Boundary
 

@@ -6,8 +6,8 @@ This section owns contributor and assistant workflow guidance. It does not repla
 
 ## Primary Document
 
-- [Claude skills guide](claude.md): project skill selection, execution order, and operational guidance.
-- [AI development life cycle and skills usage](ai-development-lifecycle-skills.md): maps each skill to its development life-cycle stage and documents best practices per stage.
+- [Claude skills guide](../development/ai-agent-guidelines.md): project skill selection, execution order, and operational guidance.
+- [AI development life cycle and skills usage](../development/ai-development-lifecycle.md): maps each skill to its development life-cycle stage and documents best practices per stage.
 
 ## Current Boundary
 

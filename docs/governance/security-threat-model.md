@@ -50,6 +50,6 @@ Provide a practical security model for prompt injection resilience, auth safety,
 
 ## Related Documents
 
-- prompt-policy-controls.md
-- data-contracts-lineage.md
+- prompt-policy.md
+- data-contracts-and-lineage.md
 - ../operations/runbook.md

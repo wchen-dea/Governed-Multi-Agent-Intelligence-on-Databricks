@@ -45,7 +45,7 @@ When writing a case (charter/one-pager), require:
 2. **Target KPI and measurement method** — must be measurable with data the business already collects or can reasonably instrument within the Discovery stage.
 3. **Capability pattern and governed building blocks** the case expects to use (existing Genie space, AI Search index, Lakebase route, new Metric View, etc.), scoped against the [tool and model registry](../architecture/tool-and-model-registry.md).
 4. **Ambition tier** (see below) and the specific reason the case is pragmatic or ambitious — cases must not default to "ambitious" just to sound strategic.
-5. **Guardrail and evidence requirements** — whether the case's answers require citations/evidence (`requires_evidence`), and what persona/auth-mode boundaries apply, per [prompt-policy-controls.md](../governance/prompt-policy.md).
+5. **Guardrail and evidence requirements** — whether the case's answers require citations/evidence (`requires_evidence`), and what persona/auth-mode boundaries apply, per [prompt-policy.md](../governance/prompt-policy.md).
 6. **Kill criteria** — the specific signal that ends the case at Discovery or Pilot (e.g., "if data quality checks show >15% missing appointment-store linkage, stop").
 7. **Owner assignment** across the seven CoE governance roles in [foundation-governance.md](foundation-governance.md) section "0A" (Executive Sponsor, Business Product Owner, Technical Owner, Data Owner, Security Owner, Model Owner, Operations Owner) before Pilot begins.
 
@@ -54,7 +54,7 @@ When writing a case (charter/one-pager), require:
 | Tier | Definition | Typical Pattern | Time-to-first-signal | Example |
 | --- | --- | --- | --- | --- |
 | **Pragmatic (Tier 1)** | Extends an existing governed capability to a new question set or persona. Low integration risk, fast time-to-value. | New Genie question coverage, new AI Search index over existing gold tables, new Metric View. | 2-4 weeks | Extend `sales_insights_agent` coverage to margin-by-region questions. |
-| **Stretch (Tier 2)** | Combines existing capabilities in a new way, or adds one new governed integration. Moderate risk. | Cross-tool composite reasoning (see [context-engineering-guidelines.md](../governance/context-engineering.md) Rule 7), a new Lakebase-backed subagent over an already-approved database. | 4-8 weeks | Cross-reference top appointment-volume stores against top sales-performing stores in one governed answer. |
+| **Stretch (Tier 2)** | Combines existing capabilities in a new way, or adds one new governed integration. Moderate risk. | Cross-tool composite reasoning (see [context-engineering.md](../governance/context-engineering.md) Rule 7), a new Lakebase-backed subagent over an already-approved database. | 4-8 weeks | Cross-reference top appointment-volume stores against top sales-performing stores in one governed answer. |
 | **Ambitious (Tier 3)** | Requires new predictive/ML capability, new data domain onboarding, or a new automation level (e.g., advisory to human-in-the-loop-action). Higher risk, requires an explicit executive risk acceptance. | Predictive maintenance/service reminders, dynamic pricing simulation, agentic incident drafting with approval gates. | 8-16 weeks to first measurable pilot signal | Proactive tire-wear/service-reminder assistant using mileage and service-history models. |
 
 Tier 3 cases must reference the workflow patterns already sketched in [use-case-workflows.md](use-case-workflows.md) rather than inventing a new architecture pattern from scratch.
@@ -75,7 +75,7 @@ If Tier 3 work exceeds 15% of active capacity, the CoE lead must flag portfolio 
 | --- | --- | --- | --- |
 | **Discover** | BR-CoE-1 through BR-CoE-6 satisfied; owner list drafted. | Data readiness confirmed or a signed data contract; capability pattern validated against a small sample; kill/continue decision documented. | 1-3 weeks |
 | **Pilot** | Discover exit criteria met; all seven governance roles assigned. | Measured KPI movement on a bounded population/time window; guardrail and evidence checks passing; no unresolved security/risk exceptions. | 3-8 weeks |
-| **Scale** | Pilot KPI evidence meets the release-gate thresholds in [evaluation-spec.md](../quality/evaluation-specification.md). | Production deployment through the standard `dev`/`qa`/`stg`/`prd` promotion path; lifecycle audit events flowing; operational runbook in place. | Ongoing |
+| **Scale** | Pilot KPI evidence meets the release-gate thresholds in [evaluation-specification.md](../quality/evaluation-specification.md). | Production deployment through the standard `dev`/`qa`/`stg`/`prd` promotion path; lifecycle audit events flowing; operational runbook in place. | Ongoing |
 | **Institutionalize** | Scale stable for one full reporting cycle. | Capability registered as a reusable building block (subagent, index, Metric View) in the [tool and model registry](../architecture/tool-and-model-registry.md) so future cases can reuse it under Tier 1. | Ongoing |
 
 A case cannot skip a stage gate "because the sponsor is confident" — skipped gates must be logged as an explicit, executive-approved risk acceptance, not a silent shortcut.

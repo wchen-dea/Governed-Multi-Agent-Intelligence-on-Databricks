@@ -6,7 +6,7 @@ This section owns evaluation design, scorers, KPI thresholds, and promotion evid
 
 ## Primary Document
 
-- [Evaluation specification](evaluation-spec.md): datasets, scorer definitions, release-gate semantics, model experiment plan, and current evidence.
+- [Evaluation specification](evaluation-specification.md): datasets, scorer definitions, release-gate semantics, model experiment plan, and current evidence.
 
 ## Current Gate
 

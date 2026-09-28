@@ -27,8 +27,8 @@ configuration, tests, and deployment definitions.
 This document is a reusable enterprise target-state blueprint. The project
 is a working Databricks implementation instance used to validate and evolve
 selected blueprint patterns. Current implementation authority is the
-[architecture guide](architecture/index.md), especially the
-[runtime technical specifications](architecture/runtime-specification.md).
+[architecture guide](index.md), especially the
+[runtime technical specifications](runtime-specification.md).
 
 ### Blueprint-to-Repository Cross-Reference
 
@@ -791,7 +791,7 @@ The current project already provides a pragmatic foundation for the
 first and sixth capabilities: governed tool routing, sales/CDI and
 operational data access, Flink support retrieval, evidence controls,
 manager approval, lifecycle audit, and evaluation gates. The active
-integration inventory remains in the [Tool and model registry](architecture/tool-and-model-registry.md).
+integration inventory remains in the [Tool and model registry](tool-and-model-registry.md).
 
 #### Leading-Edge Architecture, Applied Pragmatically
 
@@ -915,7 +915,7 @@ them:
 This project includes practical implementation playbooks for tool
 integration, agent modification, runtime routing, guardrails, OBO
 authorization, observability, local development, and deployment. See
-[AI technologies and patterns](architecture/technology-and-patterns.md)
+[AI technologies and patterns](technology-and-patterns.md)
 for the current framework/tool inventory and project skill catalog.
 
 ## 12. Conclusion and Recommended Next Step

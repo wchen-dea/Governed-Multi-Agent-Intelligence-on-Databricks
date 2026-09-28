@@ -1,6 +1,6 @@
 # Prompt Engineering Guidelines
 
-Concrete, hands-on conventions for writing and reviewing `system_prompt` and `description` fields in `src/aiserver/contracts/subagents.<target>.json`, and for editing orchestrator instructions in `src/aiserver/application/orchestration/agent.py`. For the layered prompt/policy model, see [prompt-policy-controls.md](prompt-policy-controls.md).
+Concrete, hands-on conventions for writing and reviewing `system_prompt` and `description` fields in `src/aiserver/contracts/subagents.<target>.json`, and for editing orchestrator instructions in `src/aiserver/application/orchestration/agent.py`. For the layered prompt/policy model, see [prompt-policy.md](prompt-policy.md).
 
 ## Scope
 
@@ -30,7 +30,7 @@ Concrete, hands-on conventions for writing and reviewing `system_prompt` and `de
 
 Before merging a prompt/description change, verify:
 
-1. **Evidence flag matches prompt intent.** If the prompt mandates citations, `requires_evidence` must be `true`; if the tool's output is inherently grounded (Genie SQL results) and never includes citation markers, keep it `false`. See the runbook's `evidence_required` guardrail troubleshooting section in [operations-runbook.md](../operations/runbook.md).
+1. **Evidence flag matches prompt intent.** If the prompt mandates citations, `requires_evidence` must be `true`; if the tool's output is inherently grounded (Genie SQL results) and never includes citation markers, keep it `false`. See the runbook's `evidence_required` guardrail troubleshooting section in [runbook.md](../operations/runbook.md).
 2. **All four targets are aligned** (`subagents.dev.json`, `subagents.qa.json`, `subagents.stg.json`, `subagents.prd.json`) unless an environment-specific override is intentional and documented.
 3. **Ranking/cross-reference wording is consistent** across tools that return store- or entity-level rankings, so composite queries (e.g., "top N by A, check against top M by B") can be answered by one orchestrator pass.
 4. **No secrets or environment-specific literals** (hosts, tokens, connection strings) are embedded in `system_prompt` text — those belong in dedicated config fields (`pg_host`, `mcp_url`, etc.).
@@ -65,9 +65,9 @@ uv run pytest tests/test_subagent_config.py tests/test_guardrails_service.py tes
 
 ## Related Documents
 
-- [prompt-policy-controls.md](prompt-policy-controls.md)
-- [context-engineering-guidelines.md](context-engineering-guidelines.md)
-- [agent-harness-engineering-guidelines.md](agent-harness-engineering-guidelines.md)
+- [prompt-policy.md](prompt-policy.md)
+- [context-engineering.md](context-engineering.md)
+- [agent-harness-guidelines.md](agent-harness-guidelines.md)
 - [../operations/runbook.md](../operations/runbook.md)
 - [../architecture/tool-and-model-registry.md](../architecture/tool-and-model-registry.md)
 - [../decisions/0005-governed-routing-policy-and-response-guardrails.md](../decisions/0005-governed-routing-policy-and-response-guardrails.md)

@@ -2,8 +2,8 @@
 
 Project commands are grouped into runtime core and assistant/operations support.
 This file is the command-group index and compatibility reference. The
-[operations runbook](operations-runbook.md) owns deployment sequencing and
-recovery, while the [UI deployment guide](ui-deployment-guide.md) owns frontend
+[operations runbook](runbook.md) owns deployment sequencing and
+recovery, while the [UI deployment guide](ui-deployment.md) owns frontend
 development and packaging details.
 
 ## Runtime Core
@@ -61,4 +61,4 @@ The original `uv run` entry points in `pyproject.toml` remain as compatibility c
 | `make build-app-source TARGET=<target>` | Build the versioned wheel and React app-source payload. |
 | `make stop APP_NAME=<app> HITL_APP_NAME=<app> PROFILE=<profile>` | Stop the configured Databricks Apps. |
 
-See the [operations guide](index.md) and [operations runbook](operations-runbook.md) for command prerequisites and recovery boundaries.
+See the [operations guide](index.md) and [operations runbook](runbook.md) for command prerequisites and recovery boundaries.

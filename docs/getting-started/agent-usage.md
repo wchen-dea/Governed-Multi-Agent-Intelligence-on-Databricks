@@ -134,7 +134,7 @@ flowchart LR
 
 ## Related Documents
 
-- [business-specs.md](business-specs.md)
+- [../reference/business-requirements.md](../reference/business-requirements.md)
 - [../architecture/tool-and-model-registry.md](../architecture/tool-and-model-registry.md)
 - [../governance/context-engineering.md](../governance/context-engineering.md)
 - [../governance/prompt-policy.md](../governance/prompt-policy.md)

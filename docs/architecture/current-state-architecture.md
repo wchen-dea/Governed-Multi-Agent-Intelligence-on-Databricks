@@ -1,6 +1,6 @@
 # AI Solution Current
 
-This document describes the implemented architecture for the governed multi-agent Databricks application. It is the current-solution companion to the broader target-state blueprint in [ai-solution-blueprint.md](ai-solution-blueprint.md).
+This document describes the implemented architecture for the governed multi-agent Databricks application. It is the current-solution companion to the broader target-state blueprint in [target-state-architecture.md](target-state-architecture.md).
 
 ## Executive Summary
 
@@ -39,25 +39,25 @@ flowchart LR
 
 | Area | Current implementation |
 | --- | --- |
-| Backend app/API | [src/aiserver/api/](../src/aiserver/api) |
-| Use-case services | [src/aiserver/application/](../src/aiserver/application) |
-| Concrete tool adapters | [src/aiserver/application/adapters/tools.py](../src/aiserver/application/adapters/tools.py) |
-| Typed contracts and registries | [src/aiserver/contracts/](../src/aiserver/contracts) |
-| Settings | [src/aiserver/config/settings.py](../src/aiserver/config/settings.py) |
-| Infrastructure adapters | [src/aiserver/infrastructure/](../src/aiserver/infrastructure) |
-| React UI | [src/aiweb/](../src/aiweb) |
-| HITL specialist app | [src/hitl-agent/](../src/hitl-agent) |
-| Bundle resources | [resources/](../resources) |
-| Target overlays | [targets/](../targets) |
-| Evaluation | [src/operations/evaluate_agent.py](../src/operations/evaluate_agent.py), [src/evaluation/run_evaluation.py](../src/evaluation/run_evaluation.py) |
+| Backend app/API | [src/aiserver/api/](../../src/aiserver/api) |
+| Use-case services | [src/aiserver/application/](../../src/aiserver/application) |
+| Concrete tool adapters | [src/aiserver/application/adapters/tools.py](../../src/aiserver/application/adapters/tools.py) |
+| Typed contracts and registries | [src/aiserver/contracts/](../../src/aiserver/contracts) |
+| Settings | [src/aiserver/config/settings.py](../../src/aiserver/config/settings.py) |
+| Infrastructure adapters | [src/aiserver/infrastructure/](../../src/aiserver/infrastructure) |
+| React UI | [src/aiweb/](../../src/aiweb) |
+| HITL specialist app | [src/hitl-agent/](../../src/hitl-agent) |
+| Bundle resources | [resources/](../../resources) |
+| Target overlays | [targets/](../../targets) |
+| Evaluation | [src/operations/evaluate_agent.py](../../src/operations/evaluate_agent.py), [src/evaluation/run_evaluation.py](../../src/evaluation/run_evaluation.py) |
 
 ## Request Lifecycle
 
-Both invoke and stream requests apply input guardrails, identity and policy checks, route and model selection, tool/MCP assembly, orchestration, response guardrails, and audit/trace finalization. See [Low-level design: Request Lifecycle](architecture/runtime-implementation.md#request-lifecycle) for the complete control sequence and owning modules.
+Both invoke and stream requests apply input guardrails, identity and policy checks, route and model selection, tool/MCP assembly, orchestration, response guardrails, and audit/trace finalization. See [Low-level design: Request Lifecycle](runtime-implementation.md#request-lifecycle) for the complete control sequence and owning modules.
 
 ## Agent And Tool Inventory
 
-The dev registry currently contains six subagents: two Genie agents, two AI Search MCP routes, one Databricks App HITL specialist, and one Lakebase ODS agent. [Tool and model registry](architecture/tool-and-model-registry.md) is the authoritative inventory for endpoint identifiers, ownership, auth, classification, and environment availability. In dev, the logical `store-intervention-agent` subagent uses the deployed `hitl-app-agent` endpoint.
+The dev registry currently contains six subagents: two Genie agents, two AI Search MCP routes, one Databricks App HITL specialist, and one Lakebase ODS agent. [Tool and model registry](tool-and-model-registry.md) is the authoritative inventory for endpoint identifiers, ownership, auth, classification, and environment availability. In dev, the logical `store-intervention-agent` subagent uses the deployed `hitl-app-agent` endpoint.
 
 ### Tool Adapter Resolution
 
@@ -76,10 +76,10 @@ MCP -> Lakebase -> app endpoint -> delegation
 
 Configuration source:
 
-- [src/aiserver/contracts/subagents.dev.json](../src/aiserver/contracts/subagents.dev.json)
-- [src/aiserver/contracts/subagents.qa.json](../src/aiserver/contracts/subagents.qa.json)
-- [src/aiserver/contracts/subagents.stg.json](../src/aiserver/contracts/subagents.stg.json)
-- [src/aiserver/contracts/subagents.prd.json](../src/aiserver/contracts/subagents.prd.json)
+- [src/aiserver/contracts/subagents.dev.json](../../src/aiserver/contracts/subagents.dev.json)
+- [src/aiserver/contracts/subagents.qa.json](../../src/aiserver/contracts/subagents.qa.json)
+- [src/aiserver/contracts/subagents.stg.json](../../src/aiserver/contracts/subagents.stg.json)
+- [src/aiserver/contracts/subagents.prd.json](../../src/aiserver/contracts/subagents.prd.json)
 
 ## Authorization And Policy
 
@@ -123,9 +123,9 @@ The model selector returns the selected model, task type, reason code, and ratio
 
 Primary implementation:
 
-- [src/aiserver/application/orchestration/model.py](../src/aiserver/application/orchestration/model.py)
-- [src/aiserver/api/invocations.py](../src/aiserver/api/invocations.py)
-- [docs/decisions/0010-environment-aware-model-routing.md](decisions/0010-environment-aware-model-routing.md)
+- [src/aiserver/application/orchestration/model.py](../../src/aiserver/application/orchestration/model.py)
+- [src/aiserver/api/invocations.py](../../src/aiserver/api/invocations.py)
+- [docs/decisions/0010-environment-aware-model-routing.md](../decisions/0010-environment-aware-model-routing.md)
 
 ## OpenAI-Compatible Runtime Contract
 
@@ -226,7 +226,7 @@ The HITL specialist reads environment-specific gold and platinum Unity Catalog t
 | Peer set | `dt_<env>_gold.dwh.brg_store_cluster_membership_group` |
 | Store dimension | `dt_<env>_gold.dwh.dim_store_active` |
 
-DAB deployment passes target-specific values from `targets/<target>.yml` into [resources/hitl_app.yml](../resources/hitl_app.yml). The standalone HITL app config in [src/hitl-agent/app.yaml](../src/hitl-agent/app.yaml) is a local/dev default.
+DAB deployment passes target-specific values from `targets/<target>.yml` into [resources/hitl_app.yml](../../resources/hitl_app.yml). The standalone HITL app config in [src/hitl-agent/app.yaml](../../src/hitl-agent/app.yaml) is a local/dev default.
 
 ## Deployment
 

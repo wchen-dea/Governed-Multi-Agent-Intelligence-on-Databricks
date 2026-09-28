@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Map the project's Claude Code skills (`.claude/skills/`) to the stages of this repository's AI system development life cycle, and document the best practices for using each skill at its stage. This complements [claude.md](claude.md) (skill mechanics and invocation) with a life-cycle view for onboarding and process consistency.
+Map the project's Claude Code skills (`.claude/skills/`) to the stages of this repository's AI system development life cycle, and document the best practices for using each skill at its stage. This complements [../development/ai-agent-guidelines.md](../development/ai-agent-guidelines.md) (skill mechanics and invocation) with a life-cycle view for onboarding and process consistency.
 
 ## Scope
 
@@ -76,13 +76,13 @@ flowchart LR
 
 ## Cross-Cutting Practice
 
-- Explicitly name the skill(s) in your prompt (see the prompt template in [claude.md](claude.md)) so execution stays aligned with the stage's expected inputs/outputs.
+- Explicitly name the skill(s) in your prompt (see the prompt template in [../development/ai-agent-guidelines.md](../development/ai-agent-guidelines.md)) so execution stays aligned with the stage's expected inputs/outputs.
 - Do not skip stages backward-to-forward (e.g., `release-deploy` before `environment-run-local`) except for explicitly read-only or rollback operations.
 - Every skill invocation that changes routing, permissions, guardrails, or auth must be traceable to an updated file listed in its "Key Outputs" column above — an agent behavior change with no corresponding file diff should be treated as incomplete.
 
 ## Related Docs
 
-- [claude.md](claude.md): skill matrix, invocation mechanics, and per-skill commands.
+- [../development/ai-agent-guidelines.md](../development/ai-agent-guidelines.md): skill matrix, invocation mechanics, and per-skill commands.
 - [architecture/technology-and-patterns.md](../architecture/technology-and-patterns.md): skills inventory alongside frameworks, patterns, and tools.
 - [quality/evaluation-specification.md](../quality/evaluation-specification.md): release-gate KPIs and evidence requirements.
 - [operations/monitoring-and-observability.md](../operations/monitoring-and-observability.md): production observability posture.

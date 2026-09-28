@@ -104,7 +104,7 @@ Final pre-release checks:
 
 Use the explicit release workflow below. It is also the troubleshooting and
 partial-recovery sequence for reviewing each deployment boundary. See the [command reference](command-reference.md) for
-the canonical command groups and the [UI deployment guide](ui-deployment-guide.md)
+the canonical command groups and the [UI deployment guide](ui-deployment.md)
 for frontend build and packaging details.
 
 #### 0) Prepare app-source payload (wheel + React UI)
@@ -284,7 +284,7 @@ HITL verification checklist:
 
 These procedures cover backend startup, message buses, persistence, stream
 resilience, and evaluation. For frontend development and browser checks, use
-the [UI deployment guide's local development section](ui-deployment-guide.md#local-development).
+the [UI deployment guide's local development section](ui-deployment.md#local-development).
 
 #### Local startup
 

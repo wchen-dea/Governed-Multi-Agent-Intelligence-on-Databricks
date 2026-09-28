@@ -8,21 +8,21 @@ This section owns deployment procedures, runtime verification, MLflow operations
 
 | Need | Start here |
 | --- | --- |
-| Deploy or recover an app | [Operations runbook](operations-runbook.md) |
-| Deliver the React web UI | [UI deployment guide](ui-deployment-guide.md) |
+| Deploy or recover an app | [Operations runbook](runbook.md) |
+| Deliver the React web UI | [UI deployment guide](ui-deployment.md) |
 | Review commands | [Command reference](command-reference.md) |
 | Trace or evaluate behavior | [MLflow guide](mlflow-guide.md) and [evaluation specification](../quality/evaluation-specification.md) |
-| Understand monitoring coverage and gaps | [AI agent monitoring: observability, evaluation, safety, drift, and cost](ai-agent-monitoring-observability.md) |
-| Plan cost/performance | [Cost and performance budget](cost-performance-budget.md) |
-| Run a release activity | [MLflow rollout checklist](mlflow-rollout-checklist.md) |
+| Understand monitoring coverage and gaps | [AI agent monitoring: observability, evaluation, safety, drift, and cost](monitoring-and-observability.md) |
+| Plan cost/performance | [Cost and performance budget](cost-and-performance.md) |
+| Run a release activity | [MLflow rollout checklist](release-checklist.md) |
 | Capture an incident | [Postmortem template](postmortem-template.md) |
 
 ## Deployment Authority
 
-- The [operations runbook](operations-runbook.md) is authoritative for app-level
+- The [operations runbook](runbook.md) is authoritative for app-level
 	deployment, Databricks resources, permissions, health checks, smoke checks,
 	rollback, and incident recovery.
-- The [UI deployment guide](ui-deployment-guide.md) is authoritative for
+- The [UI deployment guide](ui-deployment.md) is authoritative for
 	frontend-local development, browser checks, and the UI build inputs that feed
 	the app-source payload. It does not replace the app deployment procedure in
 	the runbook.

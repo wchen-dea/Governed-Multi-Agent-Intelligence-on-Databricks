@@ -1,7 +1,7 @@
 # Web UI Delivery Guide
 
 This guide describes the complete delivery path for the React web UI, from local development through the Databricks Apps release artifact.
-The [operations runbook](operations-runbook.md) remains authoritative for
+The [operations runbook](runbook.md) remains authoritative for
 app-level deployment, permissions, health checks, and recovery.
 
 ## Delivery Model
@@ -61,7 +61,7 @@ npm run dev
 Open `http://localhost:5173`. The `.env` file is local-only and must not contain production secrets. The `/token` command accepts a Databricks access token in the browser session for hybrid OBO testing; clear it with `/clear-token` when finished.
 
 For message-bus backends, stream execution tuning, MCP latency controls, and
-backend preflight, see the [backend and deployment local operations](operations-runbook.md#local-operations-backend-and-deployment).
+backend preflight, see the [backend and deployment local operations](runbook.md#local-operations-backend-and-deployment).
 
 The client reads these build-time settings from `src/aiweb/.env`:
 
@@ -150,13 +150,13 @@ The app source snapshot contains the UI and backend together. Existing app servi
 
 ### Manual release flow
 
-Use the [standard deployment procedure in the operations runbook](operations-runbook.md#standard-deployment) when inspecting or recovering a release one boundary at a time. It includes the equivalent manual commands for validation, source import, app deployment, and verification.
+Use the [standard deployment procedure in the operations runbook](runbook.md#standard-deployment) when inspecting or recovering a release one boundary at a time. It includes the equivalent manual commands for validation, source import, app deployment, and verification.
 
 ### Terraform-free fallback
 
 If the bundle deployment fails because the Terraform provider registry is
 unavailable, use the [fallback deployment procedure in the operations
-runbook](operations-runbook.md#fallback-deployment-procedure). It deploys the
+runbook](runbook.md#fallback-deployment-procedure). It deploys the
 packaged UI and backend but does not apply bundle-managed resources or grants.
 Resolve those separately before promoting the release.
 
@@ -197,4 +197,4 @@ For governance-specific verification, provide credentials only through the shell
 - **The app is healthy but the root smoke check is unauthorized:** a `401` or `403` root response is accepted by the structural smoke check; use an authenticated browser/session or invocation check to validate the UI content.
 - **The deployment is locked or still in progress:** rerun the workflow; the Make targets wait for stable compute and active-deployment locks before updating.
 
-For Databricks permissions, target configuration, rollback, and incident handling, continue with the [operations runbook](operations-runbook.md).
+For Databricks permissions, target configuration, rollback, and incident handling, continue with the [operations runbook](runbook.md).

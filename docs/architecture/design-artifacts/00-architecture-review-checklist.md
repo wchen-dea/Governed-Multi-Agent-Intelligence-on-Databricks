@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Use this page as the architecture review entry point. The phase artifacts are the visual source of truth; the canonical narrative facts are maintained in [runtime technical specifications](../runtime-technical-specs.md), [API contracts](../api-contracts.md), [tool and model registry](../tool-and-model-registry.md), and [low-level design](../runtime-behavior-and-implementation.md).
+Use this page as the architecture review entry point. The phase artifacts are the visual source of truth; the canonical narrative facts are maintained in [runtime technical specifications](../runtime-specification.md), [API contracts](../../api/contracts.md), [tool and model registry](../tool-and-model-registry.md), and [low-level design](../runtime-implementation.md).
 
 ## Review Status
 

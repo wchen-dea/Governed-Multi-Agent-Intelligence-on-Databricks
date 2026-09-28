@@ -68,4 +68,4 @@ flowchart TD
 
 ## Current Alignment
 
-Concept views describe business intent only. Current implementation uses native function/MCP calls, payload-redacted delegation status, and buffered stream finalization before the UI renders answer deltas. See [runtime technical specifications](../runtime-technical-specs.md) for executable facts.
+Concept views describe business intent only. Current implementation uses native function/MCP calls, payload-redacted delegation status, and buffered stream finalization before the UI renders answer deltas. See [runtime technical specifications](../runtime-specification.md) for executable facts.

@@ -46,7 +46,7 @@ Each phase is split into high-level (architecture overview) and detailed (engine
 - **Release gate**: auth correctness, safety, and groundedness block promotion; tool-call accuracy is monitored but non-blocking until nested tool spans are scored reliably
 - **Workspace**: dbc-baff2b7f-4402.cloud.databricks.com (dev)
 
-Canonical narrative references: [runtime technical specifications](../runtime-technical-specs.md), [API contracts](../api-contracts.md), [tool and model registry](../tool-and-model-registry.md), and [low-level design](../runtime-behavior-and-implementation.md).
+Canonical narrative references: [runtime technical specifications](../runtime-specification.md), [API contracts](../../api/contracts.md), [tool and model registry](../tool-and-model-registry.md), and [low-level design](../runtime-implementation.md).
 
 ## Ownership and Update Policy
 

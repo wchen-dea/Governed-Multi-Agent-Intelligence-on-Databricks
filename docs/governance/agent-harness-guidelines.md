@@ -1,6 +1,6 @@
 # Agent Harness Engineering Guidelines
 
-Hands-on conventions for the runtime scaffolding that executes, governs, and observes the agent — distinct from [prompt-engineering-guidelines.md](prompt-engineering-guidelines.md) (what to tell the model) and [context-engineering-guidelines.md](context-engineering-guidelines.md) (what information to include). Harness engineering covers request handling, typed execution contracts, delegation/handoff bounds, model selection, and lifecycle observability.
+Hands-on conventions for the runtime scaffolding that executes, governs, and observes the agent — distinct from [prompt-engineering.md](prompt-engineering.md) (what to tell the model) and [context-engineering.md](context-engineering.md) (what information to include). Harness engineering covers request handling, typed execution contracts, delegation/handoff bounds, model selection, and lifecycle observability.
 
 ## Scope
 
@@ -30,7 +30,7 @@ The harness is the `src/aiserver/api/`, `application/`, `bootstrap/`, and `infra
 - Source: `src/aiserver/application/delegation/handoff.py`, `src/aiserver/application/delegation/policy.py`, `src/aiserver/infrastructure/persistence/tasks.py`, `src/aiserver/application/delegation/worker.py`, `src/aiserver/contracts/delegation.py`.
 - Rule: delegation is deny-by-default. A subagent only becomes an eligible delegation target when it has `accepts_delegations_from` including `"orchestrator"`, a registered executor, and non-empty `allowed_task_intents`. Do not bypass `build_delegation_tool`'s eligibility filter to wire a new delegation path.
 - Rule: every delegated task carries a `correlation_id` and a deterministic `idempotency_key` (`{correlation_id}:{target_agent}:{intent}:{payload}`). Preserve this pattern for new delegation payload shapes so retried/duplicate delegations settle idempotently.
-- Rule: delegation failures return a structured `DELEGATION_FAILED category=... code=...` string, not a raw exception or empty string — this is what lets the orchestrator prompt reason about failure category (see [prompt-engineering-guidelines.md](prompt-engineering-guidelines.md)).
+- Rule: delegation failures return a structured `DELEGATION_FAILED category=... code=...` string, not a raw exception or empty string — this is what lets the orchestrator prompt reason about failure category (see [prompt-engineering.md](prompt-engineering.md)).
 
 ### 5. Deterministic model selection per task type
 
@@ -80,9 +80,9 @@ uv run pytest tests/test_agent_delegation.py tests/test_agent_task_bus.py tests/
 
 ## Related Documents
 
-- [prompt-engineering-guidelines.md](prompt-engineering-guidelines.md)
-- [context-engineering-guidelines.md](context-engineering-guidelines.md)
+- [prompt-engineering.md](prompt-engineering.md)
+- [context-engineering.md](context-engineering.md)
 - [../decisions/0001-ownership-based-backend-architecture.md](../decisions/0001-ownership-based-backend-architecture.md)
 - [../decisions/0004-lifecycle-message-bus.md](../decisions/0004-lifecycle-message-bus.md)
 - [../architecture/backend-package-structure.md](../architecture/backend-package-structure.md)
-- [../../.claude/skills/runtime-routing/SKILL.md](../../.claude/skills/runtime-routing/SKILL.md)
+- [../../.claude/skills/governance-routing/SKILL.md](../../.claude/skills/governance-routing/SKILL.md)

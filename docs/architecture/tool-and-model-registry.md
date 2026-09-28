@@ -40,7 +40,7 @@ The configuration files declare available subagent capabilities; they do not con
 ## Semantics Layer Build Automation
 
 - Notebooks: `src/semantics/` (see [src/semantics/README.md](../../src/semantics/README.md))
-- Design and ownership boundaries: [Semantics layer design](semantics-layer-design.md) — this project builds AI Search indexes and Metric Views only; Genie Agent spaces and the Lakebase project are owned by other projects.
+- Design and ownership boundaries: [Semantics layer design](semantics-layer.md) — this project builds AI Search indexes and Metric Views only; Genie Agent spaces and the Lakebase project are owned by other projects.
 - Jobs: `resources/semantics_jobs.yml` (one Databricks Job per notebook, run on demand or scheduled per target)
 - `create_gmai_product_search_index.py` curates `dim_product` and builds/refreshes the `gmai_product_search_index` Vector Search index.
 - `create_gmai_flink_support_index.py` extracts the support KB volume into `flink_support_kb` and builds/refreshes the `gmai_flink_support_index` Vector Search index.
@@ -200,6 +200,6 @@ Conversation/persona memory (`MEMORY_BACKEND=lakebase`) uses a separate Lakebase
 ## Related Documents
 
 - [Architecture guide](index.md)
-- [Runtime technical specifications](runtime-technical-specs.md)
+- [Runtime technical specifications](runtime-specification.md)
 - [Business specifications](../reference/business-requirements.md)
-- [High-level architecture](high-level-architecture.md)
+- [High-level architecture](system-architecture.md)

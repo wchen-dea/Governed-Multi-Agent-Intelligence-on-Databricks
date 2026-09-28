@@ -18,7 +18,7 @@ Application Layer
   -> Governance & Observability (Unity Catalog + MLflow)
 ```
 
-This project already has a target-state blueprint ([docs/architecture/target-state-architecture.md](../ai-solution-blueprint.md)) and an as-built companion ([docs/architecture/current-state-architecture.md](../ai-solution-current.md)) that go materially further than the submitted diagram: zero-trust identity, split platform/domain guardrails, an orchestrator-selection framework, deterministic model routing, a durable lifecycle/audit event bus, and an evaluation KPI release gate. Those decisions are already recorded in ADRs 0002, 0004, 0005, 0006, 0007, 0008, 0009, and 0010.
+This project already has a target-state blueprint ([docs/architecture/target-state-architecture.md](../architecture/target-state-architecture.md)) and an as-built companion ([docs/architecture/current-state-architecture.md](../architecture/current-state-architecture.md)) that go materially further than the submitted diagram: zero-trust identity, split platform/domain guardrails, an orchestrator-selection framework, deterministic model routing, a durable lifecycle/audit event bus, and an evaluation KPI release gate. Those decisions are already recorded in ADRs 0002, 0004, 0005, 0006, 0007, 0008, 0009, and 0010.
 
 Comparing the submitted diagram against those existing decisions and current Databricks/AWS platform capabilities surfaced two kinds of gaps:
 
@@ -35,7 +35,7 @@ Comparing the submitted diagram against those existing decisions and current Dat
 | Model routing | Static autoscaling | Implemented, deterministic + environment-aware — [ADR 0010](0010-environment-aware-model-routing.md) |
 | Audit / observability | "MLflow tracing" only | Implemented, separate durable bus — [ADR 0004](0004-lifecycle-message-bus.md), [ADR 0006](0006-unity-catalog-audit-table-for-lifecycle-events.md) |
 | Release gating | Not shown | Implemented, blocking KPI gate — [ADR 0007](0007-evaluation-kpi-release-gate.md) |
-| Human approval boundary | Absent | Implemented — [docs/governance/human-approval.md](../governance/human-approval.md), [docs/architecture/current-state-architecture.md](../ai-solution-current.md) |
+| Human approval boundary | Absent | Implemented — [docs/governance/human-approval.md](../governance/human-approval.md), [docs/architecture/current-state-architecture.md](../architecture/current-state-architecture.md) |
 | AWS network/security hardening | Absent | Not implemented — new |
 | Data-plane depth (federation, sharing, governed ingestion) | "S3 + Delta Lake" only | Not implemented — new |
 | FinOps / cost + drift monitoring | Absent | Not implemented — new |
@@ -150,7 +150,7 @@ flowchart TB
 ## Alternatives Considered
 
 - Keep the submitted diagram as-is for future reviews. Rejected because it omits controls this project already treats as required (identity, split guardrails, release gating), and would misrepresent the project's actual governance posture to reviewers.
-- Replace [docs/architecture/target-state-architecture.md](../ai-solution-blueprint.md) wholesale with the submitted diagram. Rejected because the existing blueprint is more detailed and already cross-referenced from 8 other ADRs and the architecture guide.
+- Replace [docs/architecture/target-state-architecture.md](../architecture/target-state-architecture.md) wholesale with the submitted diagram. Rejected because the existing blueprint is more detailed and already cross-referenced from 8 other ADRs and the architecture guide.
 - Adopt Databricks Agent Bricks / managed Supervisor Agent as the only orchestration model to match the submitted diagram's "Agent Framework & Agent Bricks" box. Rejected — already decided against for governed, high-control workflows in ADR 0008.
 - Implement all new items (AWS hardening, data-plane depth, FinOps, Bedrock fan-out) immediately. Rejected — these are infrastructure and provider-integration commitments that need their own scoped ADRs and cost/risk sign-off before implementation, consistent with this repo's ADR update policy.
 
@@ -180,7 +180,7 @@ flowchart TB
 
 ## Implementation Notes
 
-- Source blueprint documents: [docs/architecture/target-state-architecture.md](../ai-solution-blueprint.md), [docs/architecture/current-state-architecture.md](../ai-solution-current.md)
+- Source blueprint documents: [docs/architecture/target-state-architecture.md](../architecture/target-state-architecture.md), [docs/architecture/current-state-architecture.md](../architecture/current-state-architecture.md)
 - Architecture guide: [docs/architecture/system-architecture.md](../architecture/system-architecture.md), [docs/architecture/index.md](../architecture/index.md)
 - Referenced ADRs: [0002](0002-hybrid-auth-model.md), [0004](0004-lifecycle-message-bus.md), [0005](0005-governed-routing-policy-and-response-guardrails.md), [0006](0006-unity-catalog-audit-table-for-lifecycle-events.md), [0007](0007-evaluation-kpi-release-gate.md), [0008](0008-custom-orchestrator-vs-databricks-supervisor-agent.md), [0009](0009-unity-ai-gateway-for-llm-traffic.md), [0010](0010-environment-aware-model-routing.md)
 - Human-in-the-loop reference: [docs/governance/human-approval.md](../governance/human-approval.md)
