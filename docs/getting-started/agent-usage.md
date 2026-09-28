@@ -136,5 +136,5 @@ flowchart LR
 
 - [business-specs.md](business-specs.md)
 - [../architecture/tool-and-model-registry.md](../architecture/tool-and-model-registry.md)
-- [../governance/context-engineering-guidelines.md](../governance/context-engineering-guidelines.md)
-- [../governance/prompt-policy-controls.md](../governance/prompt-policy-controls.md)
+- [../governance/context-engineering.md](../governance/context-engineering.md)
+- [../governance/prompt-policy.md](../governance/prompt-policy.md)

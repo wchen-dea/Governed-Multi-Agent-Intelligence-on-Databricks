@@ -53,7 +53,7 @@ flowchart LR
 
 ## Request Lifecycle
 
-Both invoke and stream requests apply input guardrails, identity and policy checks, route and model selection, tool/MCP assembly, orchestration, response guardrails, and audit/trace finalization. See [Low-level design: Request Lifecycle](architecture/runtime-behavior-and-implementation.md#request-lifecycle) for the complete control sequence and owning modules.
+Both invoke and stream requests apply input guardrails, identity and policy checks, route and model selection, tool/MCP assembly, orchestration, response guardrails, and audit/trace finalization. See [Low-level design: Request Lifecycle](architecture/runtime-implementation.md#request-lifecycle) for the complete control sequence and owning modules.
 
 ## Agent And Tool Inventory
 
@@ -125,7 +125,7 @@ Primary implementation:
 
 - [src/aiserver/application/orchestration/model.py](../src/aiserver/application/orchestration/model.py)
 - [src/aiserver/api/invocations.py](../src/aiserver/api/invocations.py)
-- [docs/adrs/0010-environment-aware-model-routing.md](adrs/0010-environment-aware-model-routing.md)
+- [docs/decisions/0010-environment-aware-model-routing.md](decisions/0010-environment-aware-model-routing.md)
 
 ## OpenAI-Compatible Runtime Contract
 

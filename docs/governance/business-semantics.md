@@ -232,4 +232,4 @@ Current repository components aligned to this spec:
 - prompt-policy-controls.md
 - security-threat-model.md
 - ../architecture/tool-and-model-registry.md
-- ../quality/evaluation-spec.md
+- ../quality/evaluation-specification.md

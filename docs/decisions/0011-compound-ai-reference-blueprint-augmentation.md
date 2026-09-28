@@ -18,7 +18,7 @@ Application Layer
   -> Governance & Observability (Unity Catalog + MLflow)
 ```
 
-This project already has a target-state blueprint ([docs/ai-solution-blueprint.md](../ai-solution-blueprint.md)) and an as-built companion ([docs/ai-solution-current.md](../ai-solution-current.md)) that go materially further than the submitted diagram: zero-trust identity, split platform/domain guardrails, an orchestrator-selection framework, deterministic model routing, a durable lifecycle/audit event bus, and an evaluation KPI release gate. Those decisions are already recorded in ADRs 0002, 0004, 0005, 0006, 0007, 0008, 0009, and 0010.
+This project already has a target-state blueprint ([docs/architecture/target-state-architecture.md](../ai-solution-blueprint.md)) and an as-built companion ([docs/architecture/current-state-architecture.md](../ai-solution-current.md)) that go materially further than the submitted diagram: zero-trust identity, split platform/domain guardrails, an orchestrator-selection framework, deterministic model routing, a durable lifecycle/audit event bus, and an evaluation KPI release gate. Those decisions are already recorded in ADRs 0002, 0004, 0005, 0006, 0007, 0008, 0009, and 0010.
 
 Comparing the submitted diagram against those existing decisions and current Databricks/AWS platform capabilities surfaced two kinds of gaps:
 
@@ -35,7 +35,7 @@ Comparing the submitted diagram against those existing decisions and current Dat
 | Model routing | Static autoscaling | Implemented, deterministic + environment-aware — [ADR 0010](0010-environment-aware-model-routing.md) |
 | Audit / observability | "MLflow tracing" only | Implemented, separate durable bus — [ADR 0004](0004-lifecycle-message-bus.md), [ADR 0006](0006-unity-catalog-audit-table-for-lifecycle-events.md) |
 | Release gating | Not shown | Implemented, blocking KPI gate — [ADR 0007](0007-evaluation-kpi-release-gate.md) |
-| Human approval boundary | Absent | Implemented — [docs/governance/human-in-the-loop.md](../governance/human-in-the-loop.md), [docs/ai-solution-current.md](../ai-solution-current.md) |
+| Human approval boundary | Absent | Implemented — [docs/governance/human-approval.md](../governance/human-approval.md), [docs/architecture/current-state-architecture.md](../ai-solution-current.md) |
 | AWS network/security hardening | Absent | Not implemented — new |
 | Data-plane depth (federation, sharing, governed ingestion) | "S3 + Delta Lake" only | Not implemented — new |
 | FinOps / cost + drift monitoring | Absent | Not implemented — new |
@@ -141,7 +141,7 @@ flowchart TB
 | 2 | Zero-trust identity | Already decided — ADR 0002 |
 | 3 | AI Gateway + edge security | Platform half already decided — ADR 0009; AWS edge security (WAF/Shield/PrivateLink) is new, see Follow-up Work |
 | 4 | Orchestration plane | Already decided — ADR 0008; domain guardrails already decided — ADR 0005 |
-| — | Human-in-the-loop boundary | Already implemented — [docs/governance/human-in-the-loop.md](../governance/human-in-the-loop.md) |
+| — | Human-in-the-loop boundary | Already implemented — [docs/governance/human-approval.md](../governance/human-approval.md) |
 | 5 | Model layer | Already decided — ADR 0010; multi-provider Bedrock fan-out is new, see Follow-up Work |
 | 6 | Unified lakehouse | Storage decided implicitly (S3 + Delta already in use); Lakeflow/Federation/Sharing/S3 Tables depth is new, see Follow-up Work |
 | 7 | Governance & observability | Already decided — ADR 0004, ADR 0006, ADR 0007; FinOps/System Tables/Lakehouse Monitoring is new, see Follow-up Work |
@@ -150,7 +150,7 @@ flowchart TB
 ## Alternatives Considered
 
 - Keep the submitted diagram as-is for future reviews. Rejected because it omits controls this project already treats as required (identity, split guardrails, release gating), and would misrepresent the project's actual governance posture to reviewers.
-- Replace [docs/ai-solution-blueprint.md](../ai-solution-blueprint.md) wholesale with the submitted diagram. Rejected because the existing blueprint is more detailed and already cross-referenced from 8 other ADRs and the architecture guide.
+- Replace [docs/architecture/target-state-architecture.md](../ai-solution-blueprint.md) wholesale with the submitted diagram. Rejected because the existing blueprint is more detailed and already cross-referenced from 8 other ADRs and the architecture guide.
 - Adopt Databricks Agent Bricks / managed Supervisor Agent as the only orchestration model to match the submitted diagram's "Agent Framework & Agent Bricks" box. Rejected — already decided against for governed, high-control workflows in ADR 0008.
 - Implement all new items (AWS hardening, data-plane depth, FinOps, Bedrock fan-out) immediately. Rejected — these are infrastructure and provider-integration commitments that need their own scoped ADRs and cost/risk sign-off before implementation, consistent with this repo's ADR update policy.
 
@@ -180,8 +180,8 @@ flowchart TB
 
 ## Implementation Notes
 
-- Source blueprint documents: [docs/ai-solution-blueprint.md](../ai-solution-blueprint.md), [docs/ai-solution-current.md](../ai-solution-current.md)
-- Architecture guide: [docs/architecture/high-level-architecture.md](../architecture/high-level-architecture.md), [docs/architecture/README.md](../architecture/README.md)
+- Source blueprint documents: [docs/architecture/target-state-architecture.md](../ai-solution-blueprint.md), [docs/architecture/current-state-architecture.md](../ai-solution-current.md)
+- Architecture guide: [docs/architecture/system-architecture.md](../architecture/system-architecture.md), [docs/architecture/README.md](../architecture/README.md)
 - Referenced ADRs: [0002](0002-hybrid-auth-model.md), [0004](0004-lifecycle-message-bus.md), [0005](0005-governed-routing-policy-and-response-guardrails.md), [0006](0006-unity-catalog-audit-table-for-lifecycle-events.md), [0007](0007-evaluation-kpi-release-gate.md), [0008](0008-custom-orchestrator-vs-databricks-supervisor-agent.md), [0009](0009-unity-ai-gateway-for-llm-traffic.md), [0010](0010-environment-aware-model-routing.md)
-- Human-in-the-loop reference: [docs/governance/human-in-the-loop.md](../governance/human-in-the-loop.md)
+- Human-in-the-loop reference: [docs/governance/human-approval.md](../governance/human-approval.md)
 - No source code changes accompany this ADR; it is a review/decision record only.

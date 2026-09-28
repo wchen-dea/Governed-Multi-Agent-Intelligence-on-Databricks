@@ -32,7 +32,7 @@ This skill does not cover:
 - `src/aiserver/application/auth/policy.py`
 - `src/aiserver/domain/subagents.<target>.json`
 - `tests/test_guardrails_service.py`
-- `docs/governance/prompt-policy-controls.md`
+- `docs/governance/prompt-policy.md`
 
 ## Workflow
 

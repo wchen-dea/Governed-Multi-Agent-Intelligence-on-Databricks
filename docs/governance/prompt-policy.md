@@ -49,7 +49,7 @@ Separate model instruction strategy from hard policy enforcement and define safe
   - low-confidence sensitive output
 - A subagent's `requires_evidence` flag must match its `system_prompt` citation mandate (see [prompt-engineering-guidelines.md](prompt-engineering-guidelines.md)); a mismatch either silently skips enforcement or blocks output the prompt never asked for citations on.
 - A subagent's `requires_human_approval` flag must match its prompt and runtime `approval_state` behavior. Approval records are submitted through `POST /approval-decisions` and are not dispatch commands.
-- See [Runtime technical specifications: Response Guardrail Specification](../architecture/runtime-technical-specs.md#5-response-guardrail-specification) for implementation details, response budgets, and lifecycle event behavior.
+- See [Runtime technical specifications: Response Guardrail Specification](../architecture/runtime-specification.md#5-response-guardrail-specification) for implementation details, response budgets, and lifecycle event behavior.
 
 ## Decision Logging
 
@@ -81,6 +81,6 @@ For any prompt or policy change:
 
 - business-semantics-metadata.md
 - prompt-engineering-guidelines.md
-- ../architecture/runtime-technical-specs.md
-- ../quality/evaluation-spec.md
-- ../adrs/0005-governed-routing-policy-and-response-guardrails.md
+- ../architecture/runtime-specification.md
+- ../quality/evaluation-specification.md
+- ../decisions/0005-governed-routing-policy-and-response-guardrails.md

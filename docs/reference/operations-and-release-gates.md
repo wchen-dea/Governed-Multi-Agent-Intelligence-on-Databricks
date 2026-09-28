@@ -2,7 +2,7 @@
 
 These are target-state requirements. Current implementation status and known
 evaluation-gate limitations are documented in the
-[evaluation specification](../quality/evaluation-spec.md).
+[evaluation specification](../quality/evaluation-specification.md).
 
 ```mermaid
 flowchart LR

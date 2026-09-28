@@ -157,7 +157,7 @@ Primary implementation:
 
 ## 9. Human-in-the-Loop Approval Specification
 
-Manager approval is a separate, non-dispatch control boundary. The runtime persists an approved, rejected, or more-information decision before it creates any planning-only delegation work. See [Human-in-the-loop approval](../governance/human-in-the-loop.md) for the authoritative workflow, API contract, persistence model, configuration, and operational verification.
+Manager approval is a separate, non-dispatch control boundary. The runtime persists an approved, rejected, or more-information decision before it creates any planning-only delegation work. See [Human-in-the-loop approval](../governance/human-approval.md) for the authoritative workflow, API contract, persistence model, configuration, and operational verification.
 
 ## 10. Deployment and Environment Specification
 
@@ -177,7 +177,7 @@ Primary implementation:
 - targets/qa.yml
 - targets/stg.yml
 - targets/prd.yml
-- docs/operations/operations-runbook.md
+- docs/operations/runbook.md
 
 ## 11. Validation Specification
 
@@ -208,6 +208,6 @@ Primary implementation:
 - [Architecture guide](README.md)
 - [High-level architecture](high-level-architecture.md)
 - [Low-level design](runtime-behavior-and-implementation.md)
-- [Business specifications](../product/business-specs.md)
-- [Operations runbook](../operations/operations-runbook.md)
-- [Architecture decision records](../adrs/README.md)
+- [Business specifications](../reference/business-requirements.md)
+- [Operations runbook](../operations/runbook.md)
+- [Architecture decision records](../decisions/README.md)

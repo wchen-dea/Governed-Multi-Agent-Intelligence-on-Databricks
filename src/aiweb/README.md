@@ -24,7 +24,7 @@ This folder provides the primary TypeScript and React frontend used by the app r
 
 For the complete frontend delivery procedure, including split local development,
 frontend checks, wheel packaging, Databricks Apps deployment, and troubleshooting,
-see [the UI deployment guide](../../docs/operations/ui-deployment-guide.md).
+see [the UI deployment guide](../../docs/operations/ui-deployment.md).
 The operations runbook remains authoritative for app-level deployment,
 permissions, health checks, and recovery.
 

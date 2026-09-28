@@ -38,9 +38,9 @@ Provide a governed enterprise AI assistant that routes requests to the right dat
 | Capability | Current state | Authority |
 | --- | --- | --- |
 | Sales, product, Flink, CDI, and Lakebase requests | Implemented through governed native tool/MCP routes | [Tool and model registry](../architecture/tool-and-model-registry.md) |
-| Bounded agent delegation | Implemented for approved app-auth tasks with UC durable state | [Runtime technical specifications](../architecture/runtime-technical-specs.md) |
+| Bounded agent delegation | Implemented for approved app-auth tasks with UC durable state | [Runtime technical specifications](../architecture/runtime-specification.md) |
 | General asynchronous mailbox workflows | Target capability; not implemented | [Architecture guide](../architecture/README.md) |
-| Release promotion | Blocked by `ToolCallCorrectness = 0.400 < 0.800` | [Evaluation specification](../quality/evaluation-spec.md) |
+| Release promotion | Blocked by `ToolCallCorrectness = 0.400 < 0.800` | [Evaluation specification](../quality/evaluation-specification.md) |
 
 ## Business Requirements
 
@@ -96,8 +96,8 @@ Out of scope:
 ## Related Documents
 
 - [Architecture guide](../architecture/README.md)
-- [Runtime technical specifications](../architecture/runtime-technical-specs.md)
-- [High-level architecture](../architecture/high-level-architecture.md)
-- [Low-level design](../architecture/runtime-behavior-and-implementation.md)
-- [Operations runbook](../operations/operations-runbook.md)
-- [Architecture decision records](../adrs/README.md)
+- [Runtime technical specifications](../architecture/runtime-specification.md)
+- [High-level architecture](../architecture/system-architecture.md)
+- [Low-level design](../architecture/runtime-implementation.md)
+- [Operations runbook](../operations/runbook.md)
+- [Architecture decision records](../decisions/README.md)

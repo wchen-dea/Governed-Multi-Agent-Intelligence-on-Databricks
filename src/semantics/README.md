@@ -3,7 +3,7 @@
 Databricks notebooks that build and refresh the governed data assets behind the
 runtime tools registered in [`docs/architecture/tool-and-model-registry.md`](../../docs/architecture/tool-and-model-registry.md).
 
-See [`docs/architecture/semantics-layer-design.md`](../../docs/architecture/semantics-layer-design.md)
+See [`docs/architecture/semantics-layer.md`](../../docs/architecture/semantics-layer.md)
 for the semantics layer design and ownership boundaries (this project builds AI
 Search indexes and Metric Views only; Genie Agent spaces and the Lakebase
 project are owned by other projects).

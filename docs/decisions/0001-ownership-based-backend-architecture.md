@@ -52,6 +52,6 @@ composition root. `application` must not import `api`, `bootstrap`, or
 
 ## Implementation Notes
 
-- Package and dependency map: [layered agentic architecture](../architecture/layered-agentic-architecture.md)
+- Package and dependency map: [layered agentic architecture](../architecture/layered-agent-architecture.md)
 - Composition root: [src/aiserver/bootstrap/container.py](../../src/aiserver/bootstrap/container.py)
 - Boundary enforcement: [tests/test_layer_isolation.py](../../tests/test_layer_isolation.py)

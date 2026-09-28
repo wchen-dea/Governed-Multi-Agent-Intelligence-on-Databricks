@@ -216,7 +216,7 @@ For each release candidate, capture:
 ## Related Documents
 
 - [Quality guide](README.md)
-- [Runtime technical specifications](../architecture/runtime-technical-specs.md)
-- [Business specifications](../product/business-specs.md)
-- [Operations runbook](../operations/operations-runbook.md)
-- [Evaluation KPI release-gate ADR](../adrs/0007-evaluation-kpi-release-gate.md)
+- [Runtime technical specifications](../architecture/runtime-specification.md)
+- [Business specifications](../reference/business-requirements.md)
+- [Operations runbook](../operations/runbook.md)
+- [Evaluation KPI release-gate ADR](../decisions/0007-evaluation-kpi-release-gate.md)

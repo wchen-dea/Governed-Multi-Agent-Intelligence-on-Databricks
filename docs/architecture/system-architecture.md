@@ -6,7 +6,7 @@ Describe the system shape, major boundaries, and end-to-end request flow.
 
 ## Scope
 
-This document covers high-level architecture only. See [low-level design](runtime-behavior-and-implementation.md) for implementation details and the [operations runbook](../operations/operations-runbook.md) for procedures.
+This document covers high-level architecture only. See [low-level design](runtime-behavior-and-implementation.md) for implementation details and the [operations runbook](../operations/runbook.md) for procedures.
 
 ## Current Status
 
@@ -211,7 +211,7 @@ flowchart TD
 
 ### Human Approval Boundary
 
-The `store-intervention-agent` can analyze revenue and CDI signals and prepare an evidence-backed packet, but it cannot authorize operational dispatch. The response is marked pending when manager approval is required. A manager decision is submitted through `/approval-decisions` and persisted in the UC approval table; any future dispatcher must validate that record independently before acting. See [Human-in-the-loop approval](../governance/human-in-the-loop.md).
+The `store-intervention-agent` can analyze revenue and CDI signals and prepare an evidence-backed packet, but it cannot authorize operational dispatch. The response is marked pending when manager approval is required. A manager decision is submitted through `/approval-decisions` and persisted in the UC approval table; any future dispatcher must validate that record independently before acting. See [Human-in-the-loop approval](../governance/human-approval.md).
 
 The orchestrator uses subagent-level auth configuration (`auth_mode`) to decide execution identity:
 
@@ -290,9 +290,9 @@ Async publishing requires `MESSAGE_BUS_FAIL_OPEN=true`; the configured backend i
 ## Related Docs
 
 - [Architecture guide](README.md): authority map and role-based reading paths
-- [Business specifications](../product/business-specs.md): business goals and requirements
+- [Business specifications](../reference/business-requirements.md): business goals and requirements
 - [Runtime technical specifications](runtime-technical-specs.md): centralized technical domain map
 - [Low-level design](runtime-behavior-and-implementation.md): implementation details
 - [Design artifacts](design-artifacts/README.md): concept, logical, deployment, and runtime diagrams
 - [Request execution pipeline](design-artifacts/07-runtime-invocation-stream-pipeline.md): invoke/stream staged execution
-- [Operations runbook](../operations/operations-runbook.md): deployment and incident handling
+- [Operations runbook](../operations/runbook.md): deployment and incident handling

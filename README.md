@@ -75,7 +75,7 @@ The project provides skills for tool discovery and integration, agent changes, l
 
 HITL workflow details:
 
-- [Human-in-the-loop approval](docs/governance/human-in-the-loop.md): canonical workflow, query examples, API contract, persistence settings, and operational verification.
+- [Human-in-the-loop approval](docs/governance/human-approval.md): canonical workflow, query examples, API contract, persistence settings, and operational verification.
 
 ## Semantic Data Dependencies
 
@@ -113,7 +113,7 @@ Project guidelines and best practices for Unity Catalog-governed backend executi
 
 ## Technology Stack
 
-The application uses Databricks Apps, MLflow Agent Server, the OpenAI Agents SDK, the Databricks OpenAI-compatible Responses API, MCP, Unity Catalog, Lakebase, React, TypeScript, and Vite. See [AI technologies and patterns](docs/architecture/ai-technologies-and-patterns.md) for the canonical framework, pattern, tool, data-capability, and skill inventory.
+The application uses Databricks Apps, MLflow Agent Server, the OpenAI Agents SDK, the Databricks OpenAI-compatible Responses API, MCP, Unity Catalog, Lakebase, React, TypeScript, and Vite. See [AI technologies and patterns](docs/architecture/technology-and-patterns.md) for the canonical framework, pattern, tool, data-capability, and skill inventory.
 
 ## Core Capabilities
 
@@ -210,7 +210,7 @@ High-level request path:
 6. Governed responses are finalized with evidence, guardrail state, and a pending approval state when required.
 7. For store interventions, a manager decision is recorded through the approval API before any future operational dispatcher can act.
 
-For architecture diagrams, see [docs/architecture/high-level-architecture.md](docs/architecture/high-level-architecture.md).
+For architecture diagrams, see [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md).
 
 ## Project Layout
 
@@ -264,7 +264,7 @@ make format
 
 The command uses the pinned `markdownlint-cli2` version through `scripts/lint_markdown.sh` and excludes generated app assets and dependency directories.
 
-If bundle deploy fails due to Terraform provider registry availability, use the operational fallback documented in [docs/operations/operations-runbook.md](docs/operations/operations-runbook.md).
+If bundle deploy fails due to Terraform provider registry availability, use the operational fallback documented in [docs/operations/runbook.md](docs/operations/runbook.md).
 
 For a source-only deployment that does not contact Terraform Registry, run:
 
@@ -324,7 +324,7 @@ This builds versioned wheel and React payloads, clears prior generated remote wh
 - `AGENT_TASK_WORKER_ENABLED`: starts the backend delegation worker when `true`.
 - `AGENT_TASK_WORKER_POLL_SECONDS`: idle polling interval for the delegation worker (default `1.0`).
 
-For the store intervention workflow, start with the [HITL approval guide](docs/governance/human-in-the-loop.md). It documents the discovery query, evidence requirement, approval states, API calls, UC persistence, and post-deployment verification.
+For the store intervention workflow, start with the [HITL approval guide](docs/governance/human-approval.md). It documents the discovery query, evidence requirement, approval states, API calls, UC persistence, and post-deployment verification.
 
 The specialist App is also declared in DAB as `hitl-app-agent`; set `hitl_app_name`, `hitl_sql_warehouse_id`, and the `hitl_*_table` variables in the target overlay before bundle deployment.
 
@@ -358,24 +358,24 @@ MCP connect/probe performance controls:
 
 - [CONTRIBUTING.md](CONTRIBUTING.md): contributor workflow and project docstring standard.
 - [COPYRIGHT](COPYRIGHT): project copyright notice and usage restrictions.
-- [docs/product/business-specs.md](docs/product/business-specs.md): business requirements, constraints, and success metrics.
-- [docs/architecture/runtime-technical-specs.md](docs/architecture/runtime-technical-specs.md): centralized technical implementation map and cross-space contracts.
-- [docs/quality/evaluation-spec.md](docs/quality/evaluation-spec.md): datasets, scorers, KPI thresholds, and release-gate rules.
-- [Proposed Model Experiment Matrix](docs/quality/evaluation-spec.md#proposed-model-experiment-matrix): environment-specific model profile guidance for dev, qa, stg, and prd release planning.
-- [docs/governance/prompt-policy-controls.md](docs/governance/prompt-policy-controls.md): prompt layering and deterministic policy/guardrail behavior.
+- [docs/reference/business-requirements.md](docs/reference/business-requirements.md): business requirements, constraints, and success metrics.
+- [docs/architecture/runtime-specification.md](docs/architecture/runtime-specification.md): centralized technical implementation map and cross-space contracts.
+- [docs/quality/evaluation-specification.md](docs/quality/evaluation-specification.md): datasets, scorers, KPI thresholds, and release-gate rules.
+- [Proposed Model Experiment Matrix](docs/quality/evaluation-specification.md#proposed-model-experiment-matrix): environment-specific model profile guidance for dev, qa, stg, and prd release planning.
+- [docs/governance/prompt-policy.md](docs/governance/prompt-policy.md): prompt layering and deterministic policy/guardrail behavior.
 - [docs/architecture/tool-and-model-registry.md](docs/architecture/tool-and-model-registry.md): registry of active tools, endpoints, and Genie Agents.
-- [docs/governance/data-contracts-lineage.md](docs/governance/data-contracts-lineage.md): data contracts, classification, and lineage requirements.
-- [docs/governance/business-semantics-metadata.md](docs/governance/business-semantics-metadata.md): reliable business semantics and required AI metadata contract.
+- [docs/governance/data-contracts-and-lineage.md](docs/governance/data-contracts-and-lineage.md): data contracts, classification, and lineage requirements.
+- [docs/governance/business-semantics.md](docs/governance/business-semantics.md): reliable business semantics and required AI metadata contract.
 - [docs/governance/security-threat-model.md](docs/governance/security-threat-model.md): trust boundaries, threats, and controls.
-- [docs/operations/cost-performance-budget.md](docs/operations/cost-performance-budget.md): latency/cost budget framework and operating signals.
-- [docs/operations/mlflow-rollout-checklist.md](docs/operations/mlflow-rollout-checklist.md): one-page MLflow rollout checklist with owners, tasks, and acceptance criteria.
-- [docs/operations/mlflow-rollout-tracker.md](docs/operations/mlflow-rollout-tracker.md): live execution tracker template for status, ownership, due dates, dependencies, and evidence.
-- [docs/architecture/api-contracts.md](docs/architecture/api-contracts.md): invoke/stream API contract and error semantics.
+- [docs/operations/cost-and-performance.md](docs/operations/cost-and-performance.md): latency/cost budget framework and operating signals.
+- [docs/operations/release-checklist.md](docs/operations/release-checklist.md): one-page MLflow rollout checklist with owners, tasks, and acceptance criteria.
+- [docs/operations/release-tracker.md](docs/operations/release-tracker.md): live execution tracker template for status, ownership, due dates, dependencies, and evidence.
+- [docs/api/contracts.md](docs/api/contracts.md): invoke/stream API contract and error semantics.
 - [docs/operations/postmortem-template.md](docs/operations/postmortem-template.md): incident and regression postmortem template.
-- [docs/architecture/high-level-architecture.md](docs/architecture/high-level-architecture.md): high-level architecture and request flow
-- [docs/architecture/runtime-behavior-and-implementation.md](docs/architecture/runtime-behavior-and-implementation.md): runtime module design and implementation behavior
+- [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md): high-level architecture and request flow
+- [docs/architecture/runtime-implementation.md](docs/architecture/runtime-implementation.md): runtime module design and implementation behavior
 - [docs/architecture/design-artifacts/README.md](docs/architecture/design-artifacts/README.md): centralized concept, logical, and deployment design diagrams
-- [docs/operations/operations-runbook.md](docs/operations/operations-runbook.md): deployment, operations, incident handling, rollback
+- [docs/operations/runbook.md](docs/operations/runbook.md): deployment, operations, incident handling, rollback
 
 ## Makefile Helpers
 

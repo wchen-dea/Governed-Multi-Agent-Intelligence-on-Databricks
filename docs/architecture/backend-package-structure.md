@@ -206,10 +206,10 @@ Per-environment values are managed via Databricks Asset Bundle variables in `tar
 
 ## Related ADRs
 
-- [ADR 0001: Ownership-based backend architecture](../adrs/0001-ownership-based-backend-architecture.md)
-- [ADR 0002: Hybrid app plus OBO authorization](../adrs/0002-hybrid-auth-model.md)
-- [ADR 0003: Centralized dependency composition](../adrs/0003-centralized-dependency-composition.md)
-- [ADR 0004: Lifecycle message bus](../adrs/0004-lifecycle-message-bus.md)
-- [ADR 0005: Governed routing policy and response guardrails](../adrs/0005-governed-routing-policy-and-response-guardrails.md)
-- [ADR 0009: Unity AI Gateway for LLM traffic](../adrs/0009-unity-ai-gateway-for-llm-traffic.md)
-- [ADR 0007: Evaluation KPI release gate](../adrs/0007-evaluation-kpi-release-gate.md)
+- [ADR 0001: Ownership-based backend architecture](../decisions/0001-ownership-based-backend-architecture.md)
+- [ADR 0002: Hybrid app plus OBO authorization](../decisions/0002-hybrid-auth-model.md)
+- [ADR 0003: Centralized dependency composition](../decisions/0003-centralized-dependency-composition.md)
+- [ADR 0004: Lifecycle message bus](../decisions/0004-lifecycle-message-bus.md)
+- [ADR 0005: Governed routing policy and response guardrails](../decisions/0005-governed-routing-policy-and-response-guardrails.md)
+- [ADR 0009: Unity AI Gateway for LLM traffic](../decisions/0009-unity-ai-gateway-for-llm-traffic.md)
+- [ADR 0007: Evaluation KPI release gate](../decisions/0007-evaluation-kpi-release-gate.md)

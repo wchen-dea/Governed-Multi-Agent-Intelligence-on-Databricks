@@ -6,7 +6,7 @@ Map the project's Claude Code skills (`.claude/skills/`) to the stages of this r
 
 ## Scope
 
-Covers the 12 active skills: `environment-quickstart`, `capability-discover`, `capability-create`, `capability-register`, `behavior-modify`, `governance-routing`, `governance-guardrails`, `governance-auth-obo`, `observability-audit`, `environment-run-local`, `quality-evaluation`, `release-deploy`. Production monitoring remains governed by [operations/ai-agent-monitoring-observability.md](../operations/ai-agent-monitoring-observability.md).
+Covers the 12 active skills: `environment-quickstart`, `capability-discover`, `capability-create`, `capability-register`, `behavior-modify`, `governance-routing`, `governance-guardrails`, `governance-auth-obo`, `observability-audit`, `environment-run-local`, `quality-evaluation`, `release-deploy`. Production monitoring remains governed by [operations/monitoring-and-observability.md](../operations/monitoring-and-observability.md).
 
 ## Life Cycle Stages and Skill Mapping
 
@@ -25,7 +25,7 @@ flowchart LR
 
 | Stage | Skill(s) | When Used | Key Outputs |
 | --- | --- | --- | --- |
-1. Environment bootstrap | `environment-quickstart` | First-time setup, missing `.env`/auth profile/MLflow experiment | Working `.env`, Databricks auth profile, MLflow experiment id |
+| 1. Environment bootstrap | `environment-quickstart` | First-time setup, missing `.env`/auth profile/MLflow experiment | Working `.env`, Databricks auth profile, MLflow experiment id |
 | 2. Capability discovery | `capability-discover` | Before adding or changing any tool/subagent | Genie `space_id`, serving endpoint names, UC resource identifiers |
 | 3. Resource provisioning | `capability-create` | Required Genie space, endpoint, or app resource does not exist yet | New Genie Agent, serving endpoint, or Databricks app resource |
 | 4. Tool & routing integration | `capability-register` | Wiring a discovered/created resource into the app | Updated `src/aiserver/contracts/subagents.<target>.json`, updated `resources/multiagent_app.yml` permissions |
@@ -33,7 +33,7 @@ flowchart LR
 | 6. Local validation | `environment-run-local` | After any code change, before release-deploy | Healthy local app, passing `/invocations` smoke test, `runtime-preflight` checks |
 | 7. Evaluation & release gate | `quality-evaluation` | Before promoting past `dev`/`qa` | KPI evidence against release-gate thresholds |
 | 8. Deployment & promotion | `release-deploy` | Shipping evaluation-approved changes to `dev`/`qa`/`stg`/`prd` | Deployed Databricks app, bundle-applied resource grants, post-deploy health check |
-| 9. Operate & observe | *(no dedicated skill — see [operations/ai-agent-monitoring-observability.md](../operations/ai-agent-monitoring-observability.md))* | Continuously in deployed environments | Lifecycle/audit events, MLflow traces, incident detection |
+| 9. Operate & observe | *(no dedicated skill — see [operations/monitoring-and-observability.md](../operations/monitoring-and-observability.md))* | Continuously in deployed environments | Lifecycle/audit events, MLflow traces, incident detection |
 
 ## Best Practices by Stage
 
@@ -68,10 +68,10 @@ flowchart LR
 - Always pass `--profile` explicitly; never rely on an implicit default profile across targets.
 
 ### 7. Evaluation & release gate (`quality-evaluation`)
-- Do not promote past `dev`/`qa` without KPI evidence meeting the thresholds in [quality/evaluation-spec.md](../quality/evaluation-spec.md); this is a gate, not a formality.
+- Do not promote past `dev`/`qa` without KPI evidence meeting the thresholds in [quality/evaluation-specification.md](../quality/evaluation-specification.md); this is a gate, not a formality.
 
 ### 9. Operate & observe
-- Confirm lifecycle/audit events are flowing (message bus backend healthy) after every deployment, per [operations/ai-agent-monitoring-observability.md](../operations/ai-agent-monitoring-observability.md).
+- Confirm lifecycle/audit events are flowing (message bus backend healthy) after every deployment, per [operations/monitoring-and-observability.md](../operations/monitoring-and-observability.md).
 - Feed production incidents or drift back into stage 2 (discovery) rather than patching runtime behavior directly in production.
 
 ## Cross-Cutting Practice
@@ -83,6 +83,6 @@ flowchart LR
 ## Related Docs
 
 - [claude.md](claude.md): skill matrix, invocation mechanics, and per-skill commands.
-- [architecture/ai-technologies-and-patterns.md](../architecture/ai-technologies-and-patterns.md): skills inventory alongside frameworks, patterns, and tools.
-- [quality/evaluation-spec.md](../quality/evaluation-spec.md): release-gate KPIs and evidence requirements.
-- [operations/ai-agent-monitoring-observability.md](../operations/ai-agent-monitoring-observability.md): production observability posture.
+- [architecture/technology-and-patterns.md](../architecture/technology-and-patterns.md): skills inventory alongside frameworks, patterns, and tools.
+- [quality/evaluation-specification.md](../quality/evaluation-specification.md): release-gate KPIs and evidence requirements.
+- [operations/monitoring-and-observability.md](../operations/monitoring-and-observability.md): production observability posture.

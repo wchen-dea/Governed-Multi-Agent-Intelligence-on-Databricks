@@ -52,8 +52,8 @@ Supported subagent types:
 
 The dependency direction is `api -> application -> contracts/config`.
 Infrastructure implements application ports, and `bootstrap` is the only composition root.
-See `docs/architecture/layered-agentic-architecture.md` for the full package map
-and enforced import rules. See [Low-level design](../../docs/architecture/runtime-behavior-and-implementation.md) for detailed module responsibilities and design patterns.
+See `docs/architecture/layered-agent-architecture.md` for the full package map
+and enforced import rules. See [Low-level design](../../docs/architecture/runtime-implementation.md) for detailed module responsibilities and design patterns.
 
 ## Local Run
 

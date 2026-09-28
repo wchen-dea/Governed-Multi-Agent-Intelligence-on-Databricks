@@ -120,9 +120,9 @@ Typical source pattern for Genie Agents:
 - Specialist privileges: apply warehouse `CAN_USE`, UC catalog/schema use, and table-level `SELECT` through the approved deployment procedure
 - Status: active
 
-This agent prepares an approval packet from revenue and CDI signals. It is not a dispatch executor. See [Human-in-the-loop approval](../governance/human-in-the-loop.md).
+This agent prepares an approval packet from revenue and CDI signals. It is not a dispatch executor. See [Human-in-the-loop approval](../governance/human-approval.md).
 
-The App specialist is deployed as Databricks App `hitl-app-agent` in dev; its logical subagent name remains `store-intervention-agent`. Its source is exported under `src/hitl-agent/`. Follow the [creation procedure](../governance/human-in-the-loop.md#create-store-intervention-agent) for a new environment and use the update/grant helpers for ongoing changes.
+The App specialist is deployed as Databricks App `hitl-app-agent` in dev; its logical subagent name remains `store-intervention-agent`. Its source is exported under `src/hitl-agent/`. Follow the [creation procedure](../governance/human-approval.md#create-store-intervention-agent) for a new environment and use the update/grant helpers for ongoing changes.
 
 ## Other Environments
 
@@ -150,7 +150,7 @@ Selection rationale:
 | reasoning | Better fit for multi-step planning, SQL generation, and troubleshooting. | Higher cost is justified when it reduces failed tool attempts and support triage. | Improves first-pass task completion on operational questions. |
 | synthesis | Better fit for comparative analysis, executive summaries, and recommendations. | Reserved for requests where quality affects decisions or approval packets. | Reduces back-and-forth on complex summary work. |
 
-Auth correctness, safety, and groundedness remain blocking promotion KPIs. [ToolCallCorrectness](../quality/evaluation-spec.md) is monitored but non-blocking while the MLflow scorer cannot reliably assess nested tool spans.
+Auth correctness, safety, and groundedness remain blocking promotion KPIs. [ToolCallCorrectness](../quality/evaluation-specification.md) is monitored but non-blocking while the MLflow scorer cannot reliably assess nested tool spans.
 
 ## Environment Model Profiles
 
@@ -201,5 +201,5 @@ Conversation/persona memory (`MEMORY_BACKEND=lakebase`) uses a separate Lakebase
 
 - [Architecture guide](README.md)
 - [Runtime technical specifications](runtime-technical-specs.md)
-- [Business specifications](../product/business-specs.md)
+- [Business specifications](../reference/business-requirements.md)
 - [High-level architecture](high-level-architecture.md)

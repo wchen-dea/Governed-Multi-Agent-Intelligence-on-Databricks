@@ -82,7 +82,7 @@ uv run pytest tests/test_agent_delegation.py tests/test_agent_task_bus.py tests/
 
 - [prompt-engineering-guidelines.md](prompt-engineering-guidelines.md)
 - [context-engineering-guidelines.md](context-engineering-guidelines.md)
-- [../adrs/0001-ownership-based-backend-architecture.md](../adrs/0001-ownership-based-backend-architecture.md)
-- [../adrs/0004-lifecycle-message-bus.md](../adrs/0004-lifecycle-message-bus.md)
-- [../architecture/backend-package-structure-and-layers.md](../architecture/backend-package-structure-and-layers.md)
+- [../decisions/0001-ownership-based-backend-architecture.md](../decisions/0001-ownership-based-backend-architecture.md)
+- [../decisions/0004-lifecycle-message-bus.md](../decisions/0004-lifecycle-message-bus.md)
+- [../architecture/backend-package-structure.md](../architecture/backend-package-structure.md)
 - [../../.claude/skills/runtime-routing/SKILL.md](../../.claude/skills/runtime-routing/SKILL.md)

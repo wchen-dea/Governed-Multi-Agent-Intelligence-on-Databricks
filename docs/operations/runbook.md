@@ -7,7 +7,7 @@ Use it as the execution reference for target-based releases.
 
 ## Scope
 
-This document covers deployment and operations only. High-level system context is in `docs/architecture/high-level-architecture.md`, and implementation details are in `docs/architecture/runtime-behavior-and-implementation.md`.
+This document covers deployment and operations only. High-level system context is in `docs/architecture/system-architecture.md`, and implementation details are in `docs/architecture/runtime-implementation.md`.
 
 ## Current Status
 
@@ -46,7 +46,7 @@ For target values:
 
 - Confirm target (`dev` / `qa` / `stg` / `prd`) and CLI profile.
 - Confirm target variables in `targets/*.yml` are correct.
-- Confirm the target's HITL App, `hitl-app-agent` in dev, exists or is bound to DAB resource `hitl-app-agent`, is running, and grants the orchestrator service principal `CAN_USE`; follow the [HITL specialist creation procedure](../governance/human-in-the-loop.md#create-store-intervention-agent) when onboarding it.
+- Confirm the target's HITL App, `hitl-app-agent` in dev, exists or is bound to DAB resource `hitl-app-agent`, is running, and grants the orchestrator service principal `CAN_USE`; follow the [HITL specialist creation procedure](../governance/human-approval.md#create-store-intervention-agent) when onboarding it.
 - Use the Databricks Apps source deployment procedure in the HITL guide for source-only HITL deploys; it creates the App only when missing and otherwise verifies the existing service principal is preserved.
 - Confirm the HITL App service principal has the current SQL warehouse, UC schema, and table `SELECT` grants through the approved grant procedure after changing its data sources.
 - Confirm the app service principal has a Lakebase OAuth role and the app has the target `postgres` resource grant.
@@ -90,7 +90,7 @@ Then verify CI/deployment environment variables are set for evaluation gate thre
 
 Model profile selection by environment is documented in:
 
-- [Proposed Model Experiment Matrix](../quality/evaluation-spec.md#proposed-model-experiment-matrix)
+- [Proposed Model Experiment Matrix](../quality/evaluation-specification.md#proposed-model-experiment-matrix)
 
 Final pre-release checks:
 
@@ -501,9 +501,9 @@ After:
 
 ## Related Docs
 
-- `docs/architecture/high-level-architecture.md`: high-level architecture
-- `docs/architecture/runtime-behavior-and-implementation.md`: low-level design
-- `docs/internal/claude.md`: Claude skill usage and operator workflow
+- `docs/architecture/system-architecture.md`: high-level architecture
+- `docs/architecture/runtime-implementation.md`: low-level design
+- `docs/development/ai-agent-guidelines.md`: Claude skill usage and operator workflow
 
 ## Agent Use Cases (Web UI Verification)
 

@@ -6,12 +6,12 @@ These documents are target-state enterprise reference material for retail AI sys
 
 ## Files
 
-1. [00-architecture-diagrams.md](00-architecture-diagrams.md)
-2. [01-foundation-governance.md](01-foundation-governance.md)
-3. [02-functional-requirements.md](02-functional-requirements.md)
-4. [03-security-risk-controls.md](03-security-risk-controls.md)
-5. [04-operations-release-gates.md](04-operations-release-gates.md)
-6. [05-platform-comparison.md](05-platform-comparison.md)
-7. [06-traceability-matrix.md](06-traceability-matrix.md)
-8. [07-use-case-workflows.md](07-use-case-workflows.md)
-9. [08-ai-coe-business-requirements-and-case-design-rules.md](08-ai-coe-business-requirements-and-case-design-rules.md)
+1. [architecture-diagrams.md](architecture-diagrams.md)
+2. [foundation-governance.md](foundation-governance.md)
+3. [functional-requirements.md](functional-requirements.md)
+4. [security-risk-controls.md](security-risk-controls.md)
+5. [operations-and-release-gates.md](operations-and-release-gates.md)
+6. [platform-comparison.md](platform-comparison.md)
+7. [traceability-matrix.md](traceability-matrix.md)
+8. [use-case-workflows.md](use-case-workflows.md)
+9. [ai-coe-business-requirements-and-case-design-rules.md](ai-coe-business-requirements-and-case-design-rules.md)
