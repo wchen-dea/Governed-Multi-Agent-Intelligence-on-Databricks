@@ -1,6 +1,6 @@
 """MLflow Agent Server adapter for the application runtime port."""
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from typing import Any
 
 from mlflow.types.responses import ResponsesAgentRequest
@@ -29,16 +29,20 @@ def _event_dict(event: Any) -> dict[str, Any]:
 class MlflowAgentRuntime:
     """Delegate execution to the existing MLflow-registered handlers."""
 
-    async def invoke(self, request: ChatRequest) -> dict[str, Any]:
-        from aiserver.api.invocations import invoke_handler
+    def __init__(
+        self,
+        invoke_handler: Callable[[ResponsesAgentRequest], Awaitable[Any]],
+        stream_handler: Callable[[ResponsesAgentRequest], AsyncIterator[Any]],
+    ) -> None:
+        self._invoke_handler = invoke_handler
+        self._stream_handler = stream_handler
 
-        response = await invoke_handler(_runtime_request(request))
+    async def invoke(self, request: ChatRequest) -> dict[str, Any]:
+        response = await self._invoke_handler(_runtime_request(request))
         return response.model_dump() if hasattr(response, "model_dump") else dict(response)
 
     async def stream(self, request: ChatRequest) -> AsyncIterator[dict[str, Any]]:
-        from aiserver.api.invocations import stream_handler
-
-        async for event in stream_handler(_runtime_request(request)):
+        async for event in self._stream_handler(_runtime_request(request)):
             raw = _event_dict(event)
             event_type = raw.get("type")
             if event_type == "response.output_text.delta":

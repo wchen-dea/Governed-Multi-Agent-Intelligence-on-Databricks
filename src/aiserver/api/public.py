@@ -7,19 +7,21 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from aiserver.contracts.public_api import ChatRequest
-from aiserver.infrastructure.runtime.mlflow import MlflowAgentRuntime
 
 router = APIRouter(prefix="/api")
-_runtime = MlflowAgentRuntime()
+v1_router = APIRouter(prefix="/api/v1")
 
 
 def _sse(event: dict[str, object]) -> str:
     return f"data: {json.dumps(event, separators=(',', ':'))}\n\n"
 
 
-async def _chat_events(request: ChatRequest) -> AsyncIterator[str]:
+async def _chat_events(request: Request, payload: ChatRequest) -> AsyncIterator[str]:
+    runtime = request.app.state.runtime
     try:
-        async for event in _runtime.stream(request):
+        async for event in runtime.stream(payload):
+            if await request.is_disconnected():
+                return
             yield _sse(event)
     except Exception:
         yield _sse(
@@ -34,13 +36,20 @@ async def _chat_events(request: ChatRequest) -> AsyncIterator[str]:
 
 
 @router.post("/chat")
+@v1_router.post("/chat")
 async def chat(payload: ChatRequest, request: Request):
     """Execute a public chat request using SSE by default."""
-    del request
+    runtime = request.app.state.runtime
+    request_id = getattr(request.state, "request_id", "")
+    headers = {
+        "Cache-Control": "no-cache",
+        "X-Accel-Buffering": "no",
+        "X-Request-ID": request_id,
+    }
     if payload.stream:
         return StreamingResponse(
-            _chat_events(payload),
+            _chat_events(request, payload),
             media_type="text/event-stream",
-            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+            headers=headers,
         )
-    return JSONResponse(await _runtime.invoke(payload))
+    return JSONResponse(await runtime.invoke(payload), headers=headers)
