@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from fastapi.testclient import TestClient
 
 from aiserver.api.server import create_app
+from aiserver.contracts.public_api import ChatRequest
 
 
 class RecordingLifecycle:
@@ -23,13 +24,22 @@ class RecordingLifecycle:
         self.closed += 1
 
 
-def _app(tmp_path, name: str):
+class RecordingRuntime:
+    def __init__(self) -> None:
+        self.requests: list[ChatRequest] = []
+
+    async def invoke(self, payload: ChatRequest) -> dict[str, str]:
+        self.requests.append(payload)
+        return {"type": "completed"}
+
+
+def _app(tmp_path, name: str, runtime: object | None = None):
     ui_dist = tmp_path / name
     ui_dist.mkdir()
     (ui_dist / "index.html").write_text(f"<html>{name}</html>")
     lifecycle = RecordingLifecycle()
     container = SimpleNamespace(name=name)
-    runtime = SimpleNamespace(name=name)
+    runtime = runtime or SimpleNamespace(name=name)
     approval_service = SimpleNamespace(name=name)
     app = create_app(
         container=container,
@@ -67,3 +77,31 @@ def test_factory_request_id_middleware_preserves_or_generates_id(tmp_path):
     assert supplied.headers["X-Request-ID"] == "request-123"
     assert generated.headers["X-Request-ID"]
     assert generated.headers["X-Request-ID"] != "request-123"
+
+
+def test_public_chat_accepts_browser_message_contract(tmp_path):
+    runtime = RecordingRuntime()
+    app, *_ = _app(tmp_path, "public-chat", runtime=runtime)
+    payload = {
+        "messages": [
+            {
+                "role": "user",
+                "content": (
+                    "Using the latest available season, which stores had the highest "
+                    "total net_sales in the last 30 days? Include Store Code and total "
+                    "net sales."
+                ),
+            }
+        ],
+        "conversation_id": "store-manager-regression",
+        "persona": "store-manager",
+        "stream": False,
+    }
+
+    with TestClient(app) as client:
+        response = client.post("/api/chat", json=payload)
+
+    assert response.status_code == 200
+    assert response.json() == {"type": "completed"}
+    assert len(runtime.requests) == 1
+    assert runtime.requests[0].model_dump() == payload

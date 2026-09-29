@@ -230,7 +230,7 @@ For architecture diagrams, see [docs/architecture/system-architecture.md](docs/a
 
 Prerequisites:
 
-- Python 3.12
+- Python 3.11 or 3.12 (Databricks Apps currently runs Python 3.11)
 - uv
 - Databricks CLI
 

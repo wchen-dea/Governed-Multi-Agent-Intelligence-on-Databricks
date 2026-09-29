@@ -55,8 +55,8 @@ def _prepare_react_assets() -> None:
 
     package_lock = REACT_UI_DIR / "package-lock.json"
     build_env = os.environ.copy()
-    # Use same-origin backend proxy endpoint served by the backend directly.
-    build_env.setdefault("VITE_API_PROXY", "/invocations")
+    # Use the stable public API contract rather than the MLflow-specific route.
+    build_env.setdefault("VITE_API_PROXY", "/api/chat")
 
     if package_lock.exists():
         _run(["npm", "ci"], cwd=REACT_UI_DIR, env=build_env)

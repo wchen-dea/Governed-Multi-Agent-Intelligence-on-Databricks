@@ -4,7 +4,7 @@ This folder provides the primary TypeScript and React frontend used by the app r
 
 ## Current Scope
 
-- Chat request and streaming response rendering through backend `/invocations`.
+- Chat request and streaming response rendering through backend `/api/chat`.
 - Session commands:
   - `/token <databricks_access_token>`
   - `/clear-token`
@@ -84,6 +84,6 @@ Coverage includes desktop and mobile layouts, incremental streaming, governance 
 
 ## Notes
 
-- Default backend URL for local frontend-only development is `http://localhost:8000/invocations`.
+- Default backend URL for local frontend-only development is `http://localhost:8000/api/chat`.
 - The built React UI is bundled into the backend wheel (`src/aiserver/static/`, produced by `prepare_app_source.py`) and served in-process by `src/aiserver/api/server.py` — same origin, no separate proxy process.
 - Project automation lives in the root Makefile; use `make help` for the current command set and `make build-app-source` to assemble the deployable payload.

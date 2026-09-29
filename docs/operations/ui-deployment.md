@@ -12,7 +12,7 @@ The UI is a Vite-built React application in `src/aiweb`. It is not deployed as a
 2. `runtime-build-source` copies that output into `src/aiserver/static`.
 3. `uv build --wheel` packages the Python backend and static UI into one wheel.
 4. The wheel is placed in `.databricks_app_source/wheels` with `app.yml`.
-5. Databricks Apps runs one process. FastAPI serves the UI and `/invocations` from the same origin.
+5. Databricks Apps runs one process. FastAPI serves the UI and `/api/chat` from the same origin.
 
 The generated directories `src/aiweb/dist`, `src/aiserver/static`, `.databricks_app_source`, and `dist` are build outputs. Do not edit them directly.
 
@@ -20,7 +20,7 @@ The generated directories `src/aiweb/dist`, `src/aiserver/static`, `.databricks_
 
 Install and authenticate the tools used by the repository:
 
-- Python 3.12 with `uv`
+- Python 3.11 or 3.12 with `uv`; use Python 3.11 to match the Databricks Apps runtime
 - Node.js and `npm`
 - Databricks CLI, `jq`, and a configured Databricks CLI profile for deployment
 - Access to the target workspace, app, model/tool resources, and required permissions
@@ -54,7 +54,7 @@ In another terminal, configure the Vite client to call that backend and start Vi
 ```bash
 cd src/aiweb
 cp .env.example .env
-printf '\nVITE_API_PROXY=http://localhost:8000/invocations\n' >> .env
+printf '\nVITE_API_PROXY=http://localhost:8000/api/chat\n' >> .env
 npm run dev
 ```
 
@@ -65,7 +65,7 @@ backend preflight, see the [backend and deployment local operations](runbook.md#
 
 The client reads these build-time settings from `src/aiweb/.env`:
 
-- `VITE_API_PROXY`: backend invocation URL; use the deployed same-origin default `/invocations` for the packaged app.
+- `VITE_API_PROXY`: backend chat URL; use the deployed same-origin default `/api/chat` for the packaged app.
 - `VITE_CHAT_GREETING`, `VITE_CHAT_COMPANY_NAME`, and `VITE_CHAT_COMPANY_TAGLINE`: display text.
 - `VITE_CHAT_PROXY_TIMEOUT_SECONDS`: browser request deadline.
 - `VITE_FORWARDED_ACCESS_TOKEN_HEADER`: forwarded-token header name.
@@ -175,7 +175,7 @@ Expected health values are:
 - `app_status.state`: `RUNNING`
 - `compute_status.state`: `ACTIVE` or the platform's running equivalent
 - Root response contains `<div id="root"></div>` when the UI is public to the smoke request
-- `/invocations` is reachable and does not return `404`
+- `/api/chat` is reachable and does not return `404`
 
 For an authenticated functional check, use a Databricks bearer token without putting it in source control:
 
@@ -191,7 +191,7 @@ For governance-specific verification, provide credentials only through the shell
 ## Troubleshooting
 
 - **The browser shows the backend JSON status instead of the UI:** run `make build-app-source`; the wheel only contains the UI when Vite has built and the preparation script has copied the assets.
-- **The Vite page cannot reach the API:** set `VITE_API_PROXY=http://localhost:8000/invocations` for split local development. The deployed app must use `/invocations`.
+- **The Vite page cannot reach the API:** set `VITE_API_PROXY=http://localhost:8000/api/chat` for split local development. The deployed app must use `/api/chat`.
 - **A deployed update uses old UI code:** rebuild with `make build-app-source`, import the regenerated `.databricks_app_source`, and deploy a new snapshot. `apps deploy` does not rebuild local assets.
 - **The app source path is missing:** retrieve `default_source_code_path` with `databricks apps get`, then import the generated `.databricks_app_source` directory as described in the operations runbook.
 - **The app is healthy but the root smoke check is unauthorized:** a `401` or `403` root response is accepted by the structural smoke check; use an authenticated browser/session or invocation check to validate the UI content.

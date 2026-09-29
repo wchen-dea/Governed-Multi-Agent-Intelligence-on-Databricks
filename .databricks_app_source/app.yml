@@ -91,7 +91,7 @@ env:
 - name: MEMORY_PG_HOST
   value: ep-falling-cake-d1j29nc5.database.us-west-2.cloud.databricks.com
 - name: MEMORY_PG_USER
-  value: 718a84e4-78d1-4bb5-bca3-ddbc603c2dc6
+  value: 56601234-5191-4e58-abfe-13727e634556
 - name: ROUTE_AFFINITY_BACKEND
   value: lakebase
 - name: ROUTE_AFFINITY_PROJECT_ID
@@ -105,7 +105,7 @@ env:
 - name: ROUTE_AFFINITY_PG_HOST
   value: ep-falling-cake-d1j29nc5.database.us-west-2.cloud.databricks.com
 - name: ROUTE_AFFINITY_PG_USER
-  value: 718a84e4-78d1-4bb5-bca3-ddbc603c2dc6
+  value: 56601234-5191-4e58-abfe-13727e634556
 - name: ROUTE_AFFINITY_TABLE
   value: agent_route_affinity
 - name: ROUTE_AFFINITY_TTL_SECONDS

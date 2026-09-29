@@ -146,7 +146,7 @@ class PermissionManager:
         Raises:
             CliError: If the subagent file exists but contains invalid JSON.
         """
-        config_file = Path("src/aiserver/domain") / f"subagents.{self.target}.json"
+        config_file = Path("src/aiserver/contracts") / f"subagents.{self.target}.json"
         if not config_file.exists():
             return [], [], [], []
 

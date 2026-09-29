@@ -13,7 +13,7 @@ It talks to a **FastAPI** backend in `src/aiserver`. That backend is not hand-ro
 
 The two tiers ship as **one artifact**. `make build-app-source` builds the Vite bundle and packages it into `src/aiserver/static/`, which FastAPI serves in-process (`/assets` mount, `/` index, `/{path:path}` SPA fallback). There is **no reverse proxy and no separate frontend server in production** — the browser, the API, and the static assets are all the same origin.
 
-Treat that same-origin design as an invariant. It is why no CORS middleware exists anywhere in `src/aiserver`, and why `VITE_API_PROXY` defaults to the relative path `/invocations`.
+Treat that same-origin design as an invariant. It is why no CORS middleware exists anywhere in `src/aiserver`, and why `VITE_API_PROXY` defaults to the relative path `/api/chat`.
 
 General React + TypeScript streaming conventions live in the user-level
 `react-typescript-streaming-frontend` instructions. This file covers only what is
@@ -38,7 +38,7 @@ pure — both are load-bearing here specifically because `App.tsx` is large.
 
 ## Backend Contract
 
-Primary call: `POST /invocations`, streaming.
+Primary call: `POST /api/chat`, streaming.
 
 ```jsonc
 {
@@ -55,7 +55,7 @@ Rules when touching the wire format:
 
 - **Persona travels in `custom_inputs.persona`** — not a header, not a query param. Valid values are constrained by `DEFINED_AGENT_PERSONAS` in `config.ts`; legacy names are remapped there, so extend that map rather than special-casing at call sites.
 - **The OBO token travels in the `x-forwarded-access-token` header**, whose name is configurable via `settings.forwardedAccessTokenHeader`. It is held in memory for the session only — never persist it to `localStorage`, never log it, and mask it with `maskToken` before it reaches the transcript.
-- **Derive sibling endpoints from `settings.backendUrl`** the way `submitApprovalDecision` does (strip the trailing `/invocations`). Do not introduce a second base-URL setting.
+- **Derive sibling endpoints from `settings.backendUrl`** the way `submitApprovalDecision` does (strip the trailing `/api/chat`). Do not introduce a second base-URL setting.
 - **Any change to the response envelope must be mirrored in `types.ts`** (`GovernanceMetadata`, `HumanApprovalState`, `OpenAIAgentRunMetadata`, `RoutePlan`) and in `src/aiserver/contracts/responses.py`. These two files are a matched pair.
 
 ## Streaming
