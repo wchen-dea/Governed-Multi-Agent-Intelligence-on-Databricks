@@ -92,9 +92,11 @@ jobs:
           echo "$HOME/.databricks/bin" >> "$GITHUB_PATH"
 
       - name: Run tests
-        run: uv run pytest -q
+        run: uv run pytest -q --junitxml=dist/pytest-results.xml
 
       - name: Run agent quality evaluation
+        id: evaluation
+        continue-on-error: true
         env:
           EVAL_MIN_TOOL_CALL_ACCURACY: "0.80"
           EVAL_MIN_AUTH_CORRECTNESS: "0.90"
@@ -103,7 +105,22 @@ jobs:
           EVAL_REQUIRE_ALL_KPIS: "true"
           EVAL_JUDGE_MODEL: "databricks:/databricks-claude-sonnet-5"
           EVAL_SIMULATOR_USER_MODEL: "databricks:/databricks-claude-sonnet-5"
+          EVAL_EVIDENCE_PATH: dist/evaluation-evidence.json
         run: uv run assistant-evaluate
+
+      - name: Upload PR release-gate evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-gate-${{ github.event.pull_request.head.sha }}-${{ github.base_ref }}
+          path: |
+            dist/pytest-results.xml
+            dist/evaluation-evidence.json
+          if-no-files-found: error
+
+      - name: Enforce evaluation result
+        if: steps.evaluation.outcome != 'success'
+        run: exit 1
 
       - name: Build app-source payload
         run: make build-app-source
@@ -219,9 +236,11 @@ jobs:
           export_if_concrete HITL_TREND_WINDOW_DAYS "$(value_for hitl_trend_window_days)"
 
       - name: Run tests
-        run: uv run pytest -q
+        run: uv run pytest -q --junitxml=dist/pytest-results.xml
 
       - name: Run agent quality evaluation
+        id: evaluation
+        continue-on-error: true
         env:
           EVAL_MIN_TOOL_CALL_ACCURACY: "0.80"
           EVAL_MIN_AUTH_CORRECTNESS: "0.90"
@@ -230,7 +249,22 @@ jobs:
           EVAL_REQUIRE_ALL_KPIS: "true"
           EVAL_JUDGE_MODEL: "databricks:/databricks-claude-sonnet-5"
           EVAL_SIMULATOR_USER_MODEL: "databricks:/databricks-claude-sonnet-5"
+          EVAL_EVIDENCE_PATH: dist/evaluation-evidence.json
         run: uv run assistant-evaluate
+
+      - name: Upload evaluation gate evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-gate-${{ github.sha }}-${{ env.TARGET }}
+          path: |
+            dist/pytest-results.xml
+            dist/evaluation-evidence.json
+          if-no-files-found: error
+
+      - name: Enforce evaluation result
+        if: steps.evaluation.outcome != 'success'
+        run: exit 1
 
       - name: Build wheel and app-source payload
         run: uv run runtime-build-source
@@ -277,3 +311,34 @@ jobs:
             fi
             printf 'Healthy app %s: deployment=%s app=%s\n' "$app" "$DEPLOYMENT_STATE" "$APP_STATE"
           done
+
+      - name: Verify durable worker Job
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          JOB_NAME="delegation_worker_${TARGET}"
+          databricks jobs list --name "$JOB_NAME" --output json > dist/worker-job.json
+          JOB_COUNT="$(jq '[.jobs[] | select(.settings.name == "'"$JOB_NAME"'")] | length' dist/worker-job.json)"
+          test "$JOB_COUNT" -eq 1
+          PAUSE_STATUS="$(jq -r '.jobs[] | select(.settings.name == "'"$JOB_NAME"'") | .settings.continuous.pause_status' dist/worker-job.json)"
+          test "$PAUSE_STATUS" = "UNPAUSED"
+
+      - name: Write immutable release manifest
+        run: |
+          uv run release-controller \
+            --target "$TARGET" \
+            --profile "" \
+            --manifest dist/release-manifest.json \
+            --manifest-only
+
+      - name: Upload deployment evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-evidence-${{ github.sha }}-${{ env.TARGET }}
+          path: |
+            dist/pytest-results.xml
+            dist/evaluation-evidence.json
+            dist/release-manifest.json
+            dist/worker-job.json
+          if-no-files-found: error

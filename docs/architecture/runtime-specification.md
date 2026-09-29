@@ -138,13 +138,13 @@ Primary implementation:
 ## 8. Agent Delegation Specification
 
 - Agent-to-agent delegation uses typed tasks with correlation IDs, idempotency keys, bounded retries, leases, expiry, and dead-letter states.
-- The default `AGENT_TASK_BACKEND=memory` is suitable for synchronous, single-process handoffs only; dev is configured for `uc_table`.
+- The default `AGENT_TASK_BACKEND=memory` is suitable for local tests only; every deployed target is configured for `uc_table`.
 - `AGENT_TASK_BACKEND=uc_table` persists tasks and state transitions in separate Unity Catalog Delta task and event tables through the SQL Statement API.
 - The UC backend is fail-closed. It requires `AGENT_TASK_WAREHOUSE_ID`, `AGENT_TASK_CATALOG`, and `AGENT_TASK_SCHEMA`; missing configuration or failed writes stop delegation rather than dropping work.
 - Delegation is deny-by-default, app-auth-only, and restricted by each target agent's allowed source, intent, and depth configuration.
 - The first enabled dev handoff is `orchestrator -> lakebase_ods_agent` with intent `appointment_summary`.
-- Dev provisions `quickstart_catalog.multi_agent_schema.agent_delegation_tasks` and `agent_delegation_events`, with exact-table `SELECT, MODIFY` access for the app identity.
-- When `AGENT_TASK_WORKER_ENABLED=true`, the backend lifespan starts a bounded background worker that leases durable tasks at `AGENT_TASK_WORKER_POLL_SECONDS` intervals and stops it cleanly at shutdown.
+- Dev provisions `quickstart_catalog.multi_agent_schema.agent_delegation_tasks` and `agent_delegation_events`, with exact-table `SELECT, MODIFY` access for the worker identity.
+- A continuous singleton Lakeflow Job runs the `delegation-worker` wheel entrypoint. The Databricks App never claims tasks, so web replicas remain stateless.
 - `GET /delegations/{task_id}` exposes a payload-redacted task status view through the backend.
 
 Primary implementation:
@@ -154,6 +154,21 @@ Primary implementation:
 - src/aiserver/application/delegation/worker.py
 - src/aiserver/application/delegation/handoff.py
 - src/aiserver/application/delegation/policy.py
+- src/aiserver/worker/main.py
+- resources/delegation_worker_job.yml
+
+## 8.1 Shared Route Affinity
+
+- Confident routes are stored behind the framework-neutral `RouteAffinityStore` port.
+- Deployed targets use Lakebase so follow-up requests may land on any App replica without losing route affinity.
+- Records use absolute, timezone-aware expiry and are deleted when expired or when all remembered candidates are no longer policy-allowed.
+- `memory` is reserved for local development and tests; `disabled` removes sticky routing without retaining process-local state.
+
+Primary implementation:
+
+- src/aiserver/application/ports/routing.py
+- src/aiserver/application/orchestration/routing.py
+- src/aiserver/infrastructure/persistence/routing.py
 
 ## 9. Human-in-the-Loop Approval Specification
 

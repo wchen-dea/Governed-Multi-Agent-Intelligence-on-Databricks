@@ -25,6 +25,7 @@ class ReleaseManifest:
     bundle_name: str
     workspace_file_path: str
     apps: tuple[str, ...]
+    job_ids: dict[str, int]
     source_paths: dict[str, str]
     artifact_digests: dict[str, str]
 
@@ -59,20 +60,11 @@ def _sha256(path: Path) -> str:
 
 def _bundle_file_path(target: str, profile: str) -> str:
     """Resolve the workspace payload root from bundle validation output."""
-    raw = _run(
-        [
-            "databricks",
-            "bundle",
-            "validate",
-            "-t",
-            target,
-            "--profile",
-            profile,
-            "--output",
-            "json",
-        ],
-        output=True,
-    )
+    command = ["databricks", "bundle", "validate", "-t", target]
+    if profile:
+        command.extend(["--profile", profile])
+    command.extend(["--output", "json"])
+    raw = _run(command, output=True)
     payload = json.loads(raw)
     file_path = payload.get("workspace", {}).get("file_path")
     if not file_path:
@@ -82,21 +74,31 @@ def _bundle_file_path(target: str, profile: str) -> str:
 
 def _import_source(local_path: Path, workspace_path: str, profile: str) -> None:
     """Synchronize a local source directory into the workspace payload."""
-    _run(
-        [
-            "databricks",
-            "workspace",
-            "import-dir",
-            str(local_path),
-            workspace_path,
-            "--overwrite",
-            "--profile",
-            profile,
-        ]
-    )
+    command = [
+        "databricks",
+        "workspace",
+        "import-dir",
+        str(local_path),
+        workspace_path,
+        "--overwrite",
+    ]
+    if profile:
+        command.extend(["--profile", profile])
+    _run(command)
 
 
-def build_manifest(target: str, workspace_file_path: str, app_names: tuple[str, ...]) -> ReleaseManifest:
+def _workspace_client(profile: str) -> WorkspaceClient:
+    """Use an explicit local profile or ambient CI credentials."""
+    return WorkspaceClient(profile=profile) if profile else WorkspaceClient()
+
+
+def build_manifest(
+    target: str,
+    workspace_file_path: str,
+    app_names: tuple[str, ...],
+    *,
+    job_ids: dict[str, int] | None = None,
+) -> ReleaseManifest:
     """Build a release manifest from the current source payload."""
     source_paths = {
         app_names[0]: f"{workspace_file_path}/src/hitl-agent",
@@ -115,9 +117,21 @@ def build_manifest(target: str, workspace_file_path: str, app_names: tuple[str, 
         bundle_name="multiagent-app-on-databricks",
         workspace_file_path=workspace_file_path,
         apps=app_names,
+        job_ids=job_ids or {},
         source_paths=source_paths,
         artifact_digests=digests,
     )
+
+
+def _resolve_worker_job_id(client: WorkspaceClient, target: str) -> int:
+    """Resolve the deployed durable worker Job and reject ambiguous evidence."""
+    job_name = f"delegation_worker_{target}"
+    matches = [job for job in client.jobs.list(name=job_name) if job.settings.name == job_name]
+    if len(matches) != 1 or matches[0].job_id is None:
+        raise RuntimeError(
+            f"Expected exactly one deployed worker Job named {job_name!r}; found {len(matches)}"
+        )
+    return matches[0].job_id
 
 
 def _default_app_names(target: str) -> tuple[str, str]:
@@ -133,13 +147,33 @@ def start_and_check(
     *, profile: str, app_names: tuple[str, ...], timeout_seconds: float
 ) -> list[AppHealth]:
     """Start Apps and wait until every App has a healthy active deployment."""
-    client = DatabricksAppsClient(WorkspaceClient(profile=profile))
+    client = DatabricksAppsClient(_workspace_client(profile))
     for app_name in app_names:
         client.start(app_name)
     return [
         client.wait_for_health(app_name, timeout_seconds=timeout_seconds)
         for app_name in app_names
     ]
+
+
+def write_manifest_only(
+    *,
+    target: str,
+    profile: str,
+    app_names: tuple[str, ...],
+    manifest_path: Path,
+) -> ReleaseManifest:
+    """Capture immutable App and worker identifiers without changing deployment state."""
+    workspace_file_path = _bundle_file_path(target, profile)
+    client = _workspace_client(profile)
+    manifest = build_manifest(
+        target,
+        workspace_file_path,
+        app_names,
+        job_ids={"delegation_worker": _resolve_worker_job_id(client, target)},
+    )
+    manifest.write(manifest_path)
+    return manifest
 
 
 def release(
@@ -165,8 +199,15 @@ def release(
     _import_source(hitl_local, f"{workspace_file_path}/src/hitl-agent", profile)
     _import_source(app_local, f"{workspace_file_path}/.databricks_app_source", profile)
 
-    client = DatabricksAppsClient(WorkspaceClient(profile=profile))
-    manifest = build_manifest(target, workspace_file_path, app_names)
+    workspace_client = _workspace_client(profile)
+    client = DatabricksAppsClient(workspace_client)
+    worker_job_id = _resolve_worker_job_id(workspace_client, target)
+    manifest = build_manifest(
+        target,
+        workspace_file_path,
+        app_names,
+        job_ids={"delegation_worker": worker_job_id},
+    )
     manifest.write(manifest_path)
     for app_name in app_names:
         client.deploy_snapshot(app_name, manifest.source_paths[app_name])
@@ -192,12 +233,24 @@ def main() -> int:
     parser.add_argument("--skip-start", action="store_true")
     parser.add_argument("--start-and-check", action="store_true")
     parser.add_argument("--check-only", action="store_true")
+    parser.add_argument("--manifest-only", action="store_true")
     args = parser.parse_args()
 
     default_hitl, default_app = _default_app_names(args.target)
     names = (args.hitl_app_name or default_hitl, args.app_name or default_app)
+    if args.check_only and args.manifest_only:
+        parser.error("--check-only and --manifest-only are mutually exclusive")
+    if args.manifest_only:
+        manifest = write_manifest_only(
+            target=args.target,
+            profile=args.profile,
+            app_names=names,
+            manifest_path=(REPO_ROOT / args.manifest).resolve(),
+        )
+        print(json.dumps(asdict(manifest), sort_keys=True))
+        return 0
     if args.check_only:
-        client = DatabricksAppsClient(WorkspaceClient(profile=args.profile))
+        client = DatabricksAppsClient(_workspace_client(args.profile))
         health = [
             client.wait_for_health(name, timeout_seconds=args.timeout_seconds)
             for name in names

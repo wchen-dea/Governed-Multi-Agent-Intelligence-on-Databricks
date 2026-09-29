@@ -3,9 +3,9 @@
 from typing import Any, Protocol
 
 from databricks_openai import AsyncDatabricksOpenAI
-from mlflow.types.responses import ResponsesAgentRequest
 
 from aiserver.application.runtime.identity import RequestIdentityContext
+from aiserver.contracts.execution import GovernedExecutionRequest
 
 
 class IdentityContextProvider(Protocol):
@@ -17,7 +17,7 @@ class IdentityContextProvider(Protocol):
 class SessionIdProvider(Protocol):
     """Extract a session id from an incoming request payload."""
 
-    def __call__(self, request: ResponsesAgentRequest) -> str | None: ...
+    def __call__(self, request: GovernedExecutionRequest) -> str | None: ...
 
 
 class OboClientFactory(Protocol):

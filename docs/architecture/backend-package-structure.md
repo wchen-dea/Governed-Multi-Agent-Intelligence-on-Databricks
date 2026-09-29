@@ -11,21 +11,25 @@ The runtime is deployed as a Databricks App and uses the OpenAI Agents SDK (`ope
 ```
 src/aiserver/
 ├── api/                  ← HTTP delivery layer
-│   ├── server.py         # MLflow AgentServer bootstrap
-│   └── invocations.py   # @invoke / @stream request pipeline
+│   ├── server.py         # Production entrypoint/default composition
+│   ├── web.py            # AgentServer/FastAPI application factory
+│   └── invocations.py   # Thin @invoke / @stream delivery adapter
 ├── application/          ← Request-time use cases and ports
 │   ├── adapters/          # Concrete tool adapter implementations
 │   ├── auth/             # Context and policy
 │   ├── delegation/       # Handoff, policy, worker
+│   ├── execution/        # Governed invoke/stream pipeline and response policy
 │   ├── guardrails/       # Deterministic checks
 │   ├── orchestration/    # Agent assembly, routing, model selection
 │   ├── ports/            # Capability-specific protocols
 │   └── runtime/          # Identity, requests, streaming
 ├── bootstrap/            ← Dependency composition root
-│   └── container.py
+│   ├── container.py
+│   └── web_lifecycle.py  # App-scoped startup/shutdown collaborators
 ├── config/               ← Environment settings
 │   └── settings.py
 ├── contracts/            ← Typed cross-layer contracts and registries
+│   ├── execution.py      # Framework-neutral execution boundary
 │   ├── subagents.py      # SubagentConfig dataclass, validation, loading
 │   ├── delegation.py     # Typed delegation contracts
 │   ├── responses.py      # Routing, execution, response contracts
@@ -52,7 +56,8 @@ Dependencies flow inward: `api -> application -> contracts/config`; infrastructu
 
 ## Request Pipeline
 
-Both `@invoke` and `@stream` handlers share a staged pipeline:
+Both `@invoke` and `@stream` adapters delegate to `GovernedAgentService`, which
+owns the staged pipeline:
 
 ```
 Request → Prepare → Connect → Execute → Finalize → Response
@@ -92,10 +97,15 @@ The composition root (`bootstrap/container.py`) uses a frozen dataclass containe
 AppDependencyContainer
 ├── OrchestratorDependencies   → trace metadata, tool wrappers, MCP factory, message bus
 ├── RuntimeAuthDependencies    → identity, OBO client, tool/MCP builders, policy filter
-└── HandlerDependencies        → composed callables consumed by handlers
+├── GovernedAgentService       → request execution use case
+├── OpenAIAgentsRunner         → agent SDK adapter
+├── MessageBus                 → shared lifecycle and audit sink
+└── AgentTaskBus               → durable delegation queue
 ```
 
-Services are composed at import time via `build_dependency_container()`. Handlers receive a flat `HandlerDependencies` object — no service locator, no runtime DI framework.
+Services are composed via `build_dependency_container()`. MLflow handlers call
+the injected execution service and do not own routing, memory, guardrails, or
+agent execution.
 
 ## Tool Adapter Registry
 

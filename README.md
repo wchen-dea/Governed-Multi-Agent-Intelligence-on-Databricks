@@ -321,8 +321,9 @@ This builds versioned wheel and React payloads, clears prior generated remote wh
 - `AGENT_TASK_SCHEMA`: Unity Catalog schema for durable delegation tables.
 - `AGENT_TASK_TABLE`: task table name (default `agent_delegation_tasks`).
 - `AGENT_TASK_EVENT_TABLE`: task event table name (default `agent_delegation_events`).
-- `AGENT_TASK_WORKER_ENABLED`: starts the backend delegation worker when `true`.
-- `AGENT_TASK_WORKER_POLL_SECONDS`: idle polling interval for the delegation worker (default `1.0`).
+- `AGENT_TASK_WORKER_POLL_SECONDS`: idle polling interval for the standalone Lakeflow Job worker (default `1.0`).
+- `ROUTE_AFFINITY_BACKEND`: route-affinity backend; deployed targets use `lakebase` so sticky routing is shared across App replicas.
+- `ROUTE_AFFINITY_TTL_SECONDS`: lifetime of a confident conversation route (default `600`).
 
 For the store intervention workflow, start with the [HITL approval guide](docs/governance/human-approval.md). It documents the discovery query, evidence requirement, approval states, API calls, UC persistence, and post-deployment verification.
 
@@ -350,7 +351,7 @@ MCP connect/probe performance controls:
 - The orchestrator selects a configured Databricks model by task type and records the selected model, task type, and reason in `routing.plan.selected` lifecycle metadata.
 - The UI renders `response.output_text.delta` events and source/tool badges. It does not render raw function, MCP, or tool-output events.
 - Local source deploys are lifecycle-gated, but bundle-managed resource changes still require a successful bundle apply.
-- Dev uses the UC-backed delegation task store with `agent_delegation_tasks` and `agent_delegation_events`; the backend lifespan starts a bounded worker and exposes payload-redacted status at `GET /delegations/{task_id}`.
+- Deployed targets use the UC-backed delegation task store with `agent_delegation_tasks` and `agent_delegation_events`; a continuous singleton Lakeflow Job executes tasks while the App exposes payload-redacted status at `GET /delegations/{task_id}`.
 - The app deployment and durable-task round trip are verified. Direct authenticated endpoint probes still encounter the known platform `502` before backend responses are available.
 - Auth correctness, safety, and groundedness block the evaluation release gate. Tool-call accuracy is monitored with `DataToolAttempt` and trace triage but remains non-blocking while MLflow cannot reliably score nested tool spans.
 

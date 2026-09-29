@@ -1,0 +1,32 @@
+resources:
+  jobs:
+    delegation_worker:
+      name: "delegation_worker_${bundle.target}"
+      tags:
+        purpose: durable-agent-delegation
+      continuous:
+        pause_status: ${var.delegation_worker_pause_status}
+      max_concurrent_runs: 1
+      tasks:
+      - task_key: process_delegations
+        environment_key: worker_env
+        python_wheel_task:
+          package_name: multiagent
+          entry_point: delegation-worker
+          parameters:
+          - --task-backend
+          - ${var.agent_task_backend}
+          - --warehouse-id
+          - ${var.agent_task_warehouse_id}
+          - --catalog
+          - ${var.agent_task_catalog}
+          - --schema
+          - ${var.agent_task_schema}
+          - --poll-seconds
+          - ${var.agent_task_worker_poll_seconds}
+      environments:
+      - environment_key: worker_env
+        spec:
+          environment_version: "2"
+          dependencies:
+          - ../dist/multiagent-*.whl

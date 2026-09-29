@@ -1,22 +1,17 @@
 """Application dependency composition for backend API handlers."""
 
-from collections.abc import Awaitable, Callable
-from contextlib import AsyncExitStack
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any
 
 from databricks_openai import AsyncDatabricksOpenAI
-from mlflow.types.responses import ResponsesAgentRequest
 
-from aiserver.application.auth.context import (
-    RuntimeAuthContext,
-    RuntimeAuthDependencies,
-    build_runtime_auth_context,
+from aiserver.application.auth.context import RuntimeAuthDependencies, build_runtime_auth_context
+from aiserver.application.execution.service import (
+    GovernedAgentService,
+    GovernedAgentServiceDependencies,
 )
 from aiserver.application.guardrails.checks import (
-    GuardrailResult,
-    InputGuardrailResult,
     evaluate_input_guardrails,
     evaluate_response_guardrails,
 )
@@ -29,32 +24,24 @@ from aiserver.application.orchestration.agent import (
     connect_healthy_mcp_servers,
     create_orchestrator_agent,
 )
+from aiserver.application.orchestration.model import select_model
+from aiserver.application.orchestration.routing import build_route_plan
 from aiserver.application.ports.audit import MessageBus
-from aiserver.application.ports.memory import ConversationMemory
 from aiserver.application.ports.tasks import AgentTaskBus
+from aiserver.application.runtime.identity import (
+    build_request_identity_context,
+    get_session_id,
+)
 from aiserver.config.settings import get_settings
-from aiserver.contracts.subagents import SubagentConfig
+from aiserver.contracts.subagents import SUBAGENTS
 from aiserver.infrastructure.databricks.lakebase import connect_lakebase
 from aiserver.infrastructure.messaging.bus import default_message_bus
 from aiserver.infrastructure.observability.tracing import update_trace_metadata
 from aiserver.infrastructure.persistence.memory import default_conversation_memory
+from aiserver.infrastructure.persistence.routing import default_route_affinity_store
 from aiserver.infrastructure.persistence.tasks import default_agent_task_bus
-
-
-@dataclass(frozen=True)
-class HandlerDependencies:
-    """Injectable dependencies for invoke/stream orchestration handlers."""
-
-    runtime_auth_builder: Callable[
-        [ResponsesAgentRequest, list[SubagentConfig], AsyncDatabricksOpenAI],
-        RuntimeAuthContext,
-    ]
-    mcp_connector: Callable[[AsyncExitStack, list], Awaitable[tuple[list, list[str]]]]
-    orchestrator_factory: Callable[[str, list[SubagentConfig], list, list, list[str] | None], Any]
-    guardrails_evaluator: Callable[[str, list[SubagentConfig]], GuardrailResult]
-    input_guardrails_evaluator: Callable[..., InputGuardrailResult]
-    message_bus: MessageBus
-    memory: ConversationMemory
+from aiserver.infrastructure.runtime.openai_agents import OpenAIAgentsRunner
+from aiserver.infrastructure.runtime.request_identity import get_forwarded_access_token
 
 
 @dataclass(frozen=True)
@@ -63,7 +50,9 @@ class AppDependencyContainer:
 
     orchestrator: OrchestratorDependencies
     runtime_auth: RuntimeAuthDependencies
-    handlers: HandlerDependencies
+    execution_service: GovernedAgentService
+    app_client: AsyncDatabricksOpenAI
+    message_bus: MessageBus
     delegation_task_bus: AgentTaskBus
 
 
@@ -74,8 +63,10 @@ def build_dependency_container() -> AppDependencyContainer:
     for custom environments or advanced integration testing.
     """
     settings = get_settings()
+    app_client = _build_openai_client()
     bus = default_message_bus(settings)
     memory = default_conversation_memory(settings)
+    route_affinity_store = default_route_affinity_store(settings)
     orchestrator_deps = OrchestratorDependencies(
         message_bus=bus,
         trace_metadata_updater=update_trace_metadata,
@@ -84,6 +75,13 @@ def build_dependency_container() -> AppDependencyContainer:
     delegation_task_bus = default_agent_task_bus(settings)
 
     runtime_auth_deps = RuntimeAuthDependencies(
+        identity_context_provider=lambda: build_request_identity_context(
+            get_forwarded_access_token()
+        ),
+        session_id_provider=lambda request: get_session_id(
+            request,
+            get_forwarded_access_token(),
+        ),
         subagent_tools_builder=lambda subagents, app_client, obo_client: build_subagent_tools(
             subagents,
             app_client,
@@ -112,25 +110,40 @@ def build_dependency_container() -> AppDependencyContainer:
         trace_metadata_updater=update_trace_metadata,
     )
 
-    handler_deps = HandlerDependencies(
-        runtime_auth_builder=lambda request, subagents, app_client: build_runtime_auth_context(
-            request,
-            subagents,
-            app_client,
-            deps=runtime_auth_deps,
-        ),
-        mcp_connector=connect_healthy_mcp_servers,
-        orchestrator_factory=create_orchestrator_agent,
-        guardrails_evaluator=evaluate_response_guardrails,
-        input_guardrails_evaluator=evaluate_input_guardrails,
-        message_bus=bus,
-        memory=memory,
+    execution_service = GovernedAgentService(
+        GovernedAgentServiceDependencies(
+            settings=settings,
+            subagents=tuple(SUBAGENTS),
+            runtime_auth_builder=lambda request: build_runtime_auth_context(
+                request,
+                SUBAGENTS,
+                app_client,
+                deps=runtime_auth_deps,
+            ),
+            mcp_connector=connect_healthy_mcp_servers,
+            orchestrator_factory=create_orchestrator_agent,
+            route_planner=lambda question, subagents, conversation_id: build_route_plan(
+                question,
+                subagents,
+                conversation_id,
+                affinity_store=route_affinity_store,
+                affinity_ttl_seconds=settings.route_affinity_ttl_seconds,
+            ),
+            model_selector=select_model,
+            input_guardrails_evaluator=evaluate_input_guardrails,
+            response_guardrails_evaluator=evaluate_response_guardrails,
+            message_bus=bus,
+            memory=memory,
+            runner=OpenAIAgentsRunner(),
+        )
     )
 
     return AppDependencyContainer(
         orchestrator=orchestrator_deps,
         runtime_auth=runtime_auth_deps,
-        handlers=handler_deps,
+        execution_service=execution_service,
+        app_client=app_client,
+        message_bus=bus,
         delegation_task_bus=delegation_task_bus,
     )
 
@@ -141,6 +154,20 @@ def get_app_dependency_container() -> AppDependencyContainer:
     return build_dependency_container()
 
 
-def get_handler_dependencies() -> HandlerDependencies:
-    """Return handler dependencies from the default composition container."""
-    return get_app_dependency_container().handlers
+def get_execution_service() -> GovernedAgentService:
+    """Return the shared governed execution service for delivery adapters."""
+    return get_app_dependency_container().execution_service
+
+
+def _build_openai_client() -> AsyncDatabricksOpenAI:
+    settings = get_settings()
+    kwargs: dict[str, Any] = {}
+    if settings.openai_base_url.strip():
+        kwargs["base_url"] = settings.openai_base_url.strip()
+    elif settings.openai_use_ai_gateway_native_api:
+        kwargs["use_ai_gateway_native_api"] = True
+    elif settings.openai_use_ai_gateway:
+        kwargs["use_ai_gateway"] = True
+    if settings.openai_timeout_seconds > 0:
+        kwargs["timeout"] = settings.openai_timeout_seconds
+    return AsyncDatabricksOpenAI(**kwargs)

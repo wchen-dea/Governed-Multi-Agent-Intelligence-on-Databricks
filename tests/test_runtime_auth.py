@@ -1,12 +1,11 @@
 from types import SimpleNamespace
 
-from mlflow.types.responses import ResponsesAgentRequest
-
 from aiserver.application.auth.context import (
     RuntimeAuthDependencies,
     build_runtime_auth_context,
 )
 from aiserver.application.runtime.identity import get_session_id
+from aiserver.contracts.execution import ExecutionMessage, GovernedExecutionRequest
 from aiserver.contracts.subagents import SubagentConfig
 from aiserver.infrastructure.persistence.tasks import InMemoryAgentTaskBus
 
@@ -33,8 +32,14 @@ def _sample_subagents() -> list[SubagentConfig]:
     ]
 
 
+def _request() -> GovernedExecutionRequest:
+    return GovernedExecutionRequest(
+        messages=(ExecutionMessage(role="user", content="test request"),)
+    )
+
+
 def test_get_session_id_returns_none_without_session_identity():
-    request = ResponsesAgentRequest(input=[])
+    request = _request()
 
     assert get_session_id(request) is None
 
@@ -83,7 +88,7 @@ def test_build_runtime_auth_context_without_user_identity():
         mcp_servers_builder=lambda s, ctx: (["mcp-a"], ["missing-obo"]),
     )
 
-    request = ResponsesAgentRequest(input=[])
+    request = _request()
     ctx = build_runtime_auth_context(
         request=request,
         subagents=subagents,
@@ -148,7 +153,7 @@ def test_build_runtime_auth_context_with_user_identity():
         mcp_servers_builder=lambda s, ctx: (["mcp-b"], []),
     )
 
-    request = ResponsesAgentRequest(input=[])
+    request = _request()
     ctx = build_runtime_auth_context(
         request=request,
         subagents=subagents,
@@ -207,7 +212,7 @@ def test_build_runtime_auth_context_applies_policy_filter_denials():
         mcp_servers_builder=lambda s, ctx: ([], []),
     )
 
-    request = ResponsesAgentRequest(input=[])
+    request = _request()
     ctx = build_runtime_auth_context(
         request=request,
         subagents=subagents,
@@ -265,7 +270,7 @@ def test_runtime_auth_exposes_native_handoff_for_approved_lakebase_target():
     )
 
     ctx = build_runtime_auth_context(
-        request=ResponsesAgentRequest(input=[]),
+        request=_request(),
         subagents=[lakebase],
         app_client=object(),
         deps=deps,

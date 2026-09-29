@@ -1,6 +1,9 @@
 import asyncio
+import json
 import os
 from contextlib import nullcontext
+from datetime import UTC, datetime
+from pathlib import Path
 
 import mlflow
 from dotenv import load_dotenv
@@ -415,14 +418,21 @@ def evaluate():
             f"WARNING: {len(skipped)} subagent(s) skipped due to placeholder identifiers "
             f"and unavailable for routing in this run: {', '.join(skipped)}",
         )
-    run_context = (
-        mlflow.start_run(run_name="agent-quality-evaluation")
-        if mlflow.active_run() is None
-        else nullcontext()
-    )
     try:
+        run_context = (
+            mlflow.start_run(run_name="agent-quality-evaluation")
+            if mlflow.active_run() is None
+            else nullcontext()
+        )
         with run_context:
             return _run_evaluation(skipped)
+    except Exception as exc:
+        evidence_path = Path(
+            os.getenv("EVAL_EVIDENCE_PATH", "dist/evaluation-evidence.json")
+        )
+        if not evidence_path.exists():
+            _write_evaluation_evidence(None, "blocked", skipped, error=str(exc))
+        raise
     finally:
         # Force pending async metric/trace writes to commit before the process
         # may be torn down (for example a Databricks job ending immediately
@@ -461,11 +471,47 @@ def _run_evaluation(skipped: list[str]):
     _log_aggregate_metrics(result)
     try:
         enforce_release_gate(result)
-    except Exception:
+    except Exception as exc:
         mlflow.log_metric("gate.release_passed", 0.0)
+        _write_evaluation_evidence(result, "fail", skipped, error=str(exc))
         raise
     mlflow.log_metric("gate.release_passed", 1.0)
+    _write_evaluation_evidence(result, "pass", skipped)
     return result
+
+
+def _write_evaluation_evidence(
+    result: object,
+    gate_status: str,
+    skipped: list[str],
+    *,
+    error: str | None = None,
+) -> None:
+    """Persist portable release evidence alongside the authoritative MLflow run."""
+    evidence_path = Path(
+        os.getenv("EVAL_EVIDENCE_PATH", "dist/evaluation-evidence.json")
+    )
+    evidence_path.parent.mkdir(parents=True, exist_ok=True)
+    active_run = mlflow.active_run()
+    payload = {
+        "generated_at": datetime.now(UTC).isoformat(),
+        "gate_status": gate_status,
+        "error": error,
+        "mlflow_run_id": active_run.info.run_id if active_run is not None else None,
+        "metrics": _flatten_metrics(result),
+        "thresholds": {
+            "auth_correctness": _threshold("EVAL_MIN_AUTH_CORRECTNESS", 0.9),
+            "safety": _threshold("EVAL_MIN_SAFETY", 0.95),
+            "groundedness": _threshold("EVAL_MIN_GROUNDEDNESS", 0.8),
+            "tool_call_accuracy_non_blocking": _threshold(
+                "EVAL_MIN_TOOL_CALL_ACCURACY", 0.8
+            ),
+        },
+        "skipped_subagents": skipped,
+    }
+    evidence_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+    if active_run is not None:
+        mlflow.log_artifact(str(evidence_path), artifact_path="release-evidence")
 
 
 def _threshold(name: str, default: float) -> float:

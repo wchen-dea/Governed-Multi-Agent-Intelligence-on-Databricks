@@ -9,7 +9,6 @@ from dataclasses import dataclass
 
 from databricks_openai import AsyncDatabricksOpenAI
 from databricks_openai.agents import McpServer
-from mlflow.types.responses import ResponsesAgentRequest
 
 from aiserver.application.auth.policy import (
     PolicyContext,
@@ -49,6 +48,7 @@ from aiserver.application.runtime.identity import (
     build_request_identity_context,
     get_session_id,
 )
+from aiserver.contracts.execution import GovernedExecutionRequest
 from aiserver.contracts.subagents import SubagentConfig
 
 
@@ -108,7 +108,7 @@ class RuntimeAuthDependencies:
         build_lakebase_delegation_executors
     )
     policy_context_builder: Callable[
-        [ResponsesAgentRequest, RequestIdentityContext], PolicyContext
+        [GovernedExecutionRequest, RequestIdentityContext], PolicyContext
     ] = build_policy_context
     subagent_policy_filter: Callable[
         [list[SubagentConfig], PolicyContext], tuple[list[SubagentConfig], list[PolicyDecision]]
@@ -119,7 +119,7 @@ class RuntimeAuthDependencies:
 
 def _build_trace_metadata(
     subagents: list[SubagentConfig],
-    request: ResponsesAgentRequest,
+    request: GovernedExecutionRequest,
     identity_ctx: RequestIdentityContext,
     deps: RuntimeAuthDependencies,
 ) -> dict[str, str]:
@@ -153,7 +153,7 @@ def _build_trace_metadata(
 
 
 def build_runtime_auth_context(
-    request: ResponsesAgentRequest,
+    request: GovernedExecutionRequest,
     subagents: list[SubagentConfig],
     app_client: AsyncDatabricksOpenAI,
     deps: RuntimeAuthDependencies | None = None,

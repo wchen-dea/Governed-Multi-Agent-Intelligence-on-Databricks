@@ -18,10 +18,10 @@ src/aiserver/
 │   ├── delegation/            # Agent handoff and durable task processing
 │   ├── guardrails/            # Input and response governance controls
 │   ├── orchestration/         # Routing, tool assembly, and model selection
-│   └── ports/                 # Interfaces owned by application code
+│   └── ports/                 # Execution, routing, persistence, and adapter interfaces
 ├── bootstrap/                 # Composition root for concrete dependencies
 ├── config/                    # Dependency-neutral environment settings
-├── contracts/                 # Typed cross-layer contracts and target registries
+├── contracts/                 # Framework-neutral execution and cross-layer contracts
 ├── infrastructure/            # Concrete external-system adapters
 │   ├── databricks/            # Lakebase OAuth and PostgreSQL connectivity
 │   ├── messaging/             # Lifecycle event publishers
@@ -47,11 +47,15 @@ flowchart LR
 
 `application` must not import `api`, `bootstrap`, or `infrastructure`.
 Application use cases depend on ports such as `MessageBus`, `ConversationMemory`,
-`TraceMetadataUpdater`, `ToolAdapter`, and `ToolRegistry`. The concrete tool
-adapter registry is application code: it resolves direct function-tool strategies
-without coupling orchestration to a particular subagent kind. The composition root in
-`aiserver.bootstrap.container` constructs concrete MLflow, messaging, and
-persistence implementations and injects them into those use cases.
+`TraceMetadataUpdater`, `AgentExecutionService`, `AgentRunner`,
+`RouteAffinityStore`, `ToolAdapter`, and `ToolRegistry`. Execution requests,
+results, stream events, and route-affinity records are defined in
+`aiserver.contracts.execution` without FastAPI, MLflow Agent Server, or Starlette
+types. The concrete tool adapter registry is application code: it resolves direct
+function-tool strategies without coupling orchestration to a particular subagent
+kind. The composition root in `aiserver.bootstrap.container` constructs concrete
+MLflow, messaging, and persistence implementations and injects them into those use
+cases.
 
 `contracts` and `config` are foundational and must not import higher layers.
 `infrastructure` can implement application ports but must not import `api` or

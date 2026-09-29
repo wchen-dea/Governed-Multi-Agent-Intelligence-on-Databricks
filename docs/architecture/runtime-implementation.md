@@ -12,6 +12,7 @@ This document covers low-level design and implementation details. See [high-leve
 
 - Runtime uses an ownership-based backend package structure (`src/aiserver/api`, `src/aiserver/application`, `src/aiserver/bootstrap`, `src/aiserver/config`, `src/aiserver/contracts`, and `src/aiserver/infrastructure`).
 - Dependency composition and protocol-driven DI are centralized in `src/aiserver/bootstrap/container.py` and focused modules under `src/aiserver/application/ports/`.
+- Web construction is isolated in `src/aiserver/api/web.py`; each factory call owns its FastAPI state, UI path, middleware, and lifecycle manager.
 - Local and hosted-app startup resolves the bind port from `DATABRICKS_APP_PORT`/`PORT`/`CHAT_APP_PORT` in `src/aiserver/api/server.py` (`main()`, `_resolve_port()`), run via the `runtime-serve-app` entry point.
 
 ## Main Content
@@ -21,21 +22,41 @@ This document covers low-level design and implementation details. See [high-leve
 #### Backend Runtime
 
 - `src/aiserver/api/invocations.py`
-  - Defines `invoke_handler` and `stream_handler`
-  - Builds orchestrator agent at request time
-  - Connects healthy MCP servers per request
-  - Converts request payloads into normalized messages
+  - Defines thin MLflow `invoke_handler` and `stream_handler` delivery adapters
+  - Translates MLflow Responses requests into framework-neutral execution contracts
+  - Translates governed results and stream events back to MLflow response types
+
+- `src/aiserver/application/execution/service.py`
+  - Owns the governed invoke and stream lifecycle
+  - Prepares memory and auth context, plans routes, connects tools, executes agents, applies guardrails, and publishes lifecycle events
+  - Depends on application ports rather than FastAPI or MLflow Agent Server delivery types
+
+- `src/aiserver/application/execution/memory.py`, `src/aiserver/application/execution/response_policy.py`
+  - Own conversation hydration/persistence and response attribution/approval/output shaping
+
+- `src/aiserver/infrastructure/runtime/openai_agents.py`
+  - Implements the application runner port with the OpenAI Agents SDK
+  - Normalizes SDK output and stream events before they enter application policy
 
 - `src/aiserver/bootstrap/container.py`
   - Central composition root for API/service dependencies
-  - Builds default dependency container for handlers, runtime auth, and orchestrator services
+  - Builds the governed execution service, runner adapter, runtime auth, and orchestrator dependencies
   - Provides single override point for environment-specific wiring
 
 - `src/aiserver/api/server.py`
   - Loads `.env`
-  - Initializes `AgentServer("ResponsesAgent", enable_chat_proxy=True)`
-  - Exposes root route and application startup
-  - Validates approval submissions with the strict `ApprovalDecisionInput` Pydantic request model before persistence or delegation
+  - Composes default web dependencies and exports the stable `app` entrypoint
+  - Resolves hosted ports and worker counts for the CLI
+
+- `src/aiserver/api/web.py`
+  - Constructs independent `AgentServer("ResponsesAgent", enable_chat_proxy=True)` applications
+  - Registers API routers, request-ID middleware, application state, static assets, and SPA fallback
+  - Wraps AgentServer lifespan behavior with an injected app-scoped lifecycle manager
+
+- `src/aiserver/bootstrap/web_lifecycle.py`
+  - Owns shutdown behavior for the stateless web application
+  - Flushes the message bus during graceful shutdown
+  - Does not claim or execute delegation tasks; the standalone Lakeflow Job owns that work
 
 - `src/aiserver/application/auth/context.py`
   - Builds request-scoped hybrid auth context (app + optional OBO user identity)
@@ -139,7 +160,9 @@ This document covers low-level design and implementation details. See [high-leve
   - Loads typed runtime settings from frontend environment variables
 
 - `src/aiserver/api/server.py`
-  - Mounts built React static assets and SPA fallback directly on the backend FastAPI app; falls back to a JSON status payload if the UI isn't bundled
+  - Composes the default factory inputs and exports `aiserver.api.server:app`
+- `src/aiserver/api/web.py`
+  - Mounts built React static assets and SPA fallback on each constructed FastAPI app; falls back to a JSON status payload if the UI isn't bundled
 
 ### Runtime Startup
 
@@ -155,7 +178,9 @@ This document covers low-level design and implementation details. See [high-leve
 - Policy/strategy blend: runtime auth selection varies by subagent `auth_mode` (`app`, `obo`) under a unified tool interface.
 - Configuration object pattern: typed subagent configuration with centralized validation reduces runtime misconfiguration.
 - Factory/builder pattern: tool and server construction is encapsulated in dedicated builder functions.
+- Application factory pattern: web state and lifecycle are injected into independently constructible FastAPI applications rather than mutated through server-module globals.
 - Dependency injection pattern: handlers/services support typed dependency containers for testability and decoupling.
+- Application service pattern: `GovernedAgentService` owns execution while delivery adapters only translate contracts.
 - Event bus pattern: lifecycle events are published through an abstract message bus interface.
 - Adapter pattern: request and error normalization provides a stable internal payload shape.
 - Environment overlay pattern: shared bundle config plus per-target overrides (`dev`, `qa`, `stg`, `prd`).
@@ -297,12 +322,14 @@ Direct non-interactive Databricks Apps invocation tests should use:
 
 | File | Responsibility |
 | ---- | -------------- |
-| `src/aiserver/api/invocations.py` | Handler entrypoints and orchestration wiring |
+| `src/aiserver/api/invocations.py` | MLflow delivery translation into the governed execution service |
 | `src/aiserver/application/orchestration/agent.py` | Tool/server construction and orchestrator assembly |
 | `src/aiserver/application/adapters/tools.py` | Concrete tool adapters and default registry |
 | `src/aiserver/application/ports/tools.py` | Tool adapter and registry protocol contracts |
 | `src/aiserver/contracts/subagents.py` | Typed subagent definitions and validation |
-| `src/aiserver/api/server.py` | MLflow Agent Server bootstrap, hosted-port resolution |
+| `src/aiserver/api/server.py` | Production web composition and hosted-port resolution |
+| `src/aiserver/api/web.py` | Testable AgentServer/FastAPI application factory |
+| `src/aiserver/bootstrap/web_lifecycle.py` | Per-app worker startup and graceful shutdown |
 | `src/aiserver/infrastructure/persistence/memory.py` | No-op and Lakebase-backed conversation/persona memory |
 | `src/aiweb/src/App.tsx` | Primary chat UI and command flow |
 

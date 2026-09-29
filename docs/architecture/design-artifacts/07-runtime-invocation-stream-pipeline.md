@@ -1,7 +1,9 @@
 # Runtime Invocation and Stream Pipeline
 
-These diagrams focus on request execution in `src/aiserver/api/invocations.py` using the staged-pipeline pattern.
-They separate the invoke and stream pipeline views while showing the shared stages.
+These diagrams show the delivery-neutral staged pipeline in
+`src/aiserver/application/execution/service.py`. The MLflow adapter in
+`src/aiserver/api/invocations.py` only translates requests, results, and stream
+events.
 
 ## Invoke Pipeline
 
@@ -18,32 +20,33 @@ class ResponsesAgentResponse {
 }
 class AsyncExitStack
 
-class RequestStage {
-    +request: ResponsesAgentRequest
+class PreparedExecution {
+    +request: GovernedExecutionRequest
     +runtime_auth: RuntimeAuthContext
-    +messages: list
-    +conversation_id: str?
 }
 
-class ConnectedStage {
+class ConnectedExecution {
+    +prepared: PreparedExecution
     +runtime_auth: RuntimeAuthContext
     +unavailable: list~str~
     +agent: Agent
 }
 
-class InvokeFinalizedStage {
+class FinalizedInvoke {
     +output_items: list~dict~
     +unavailable: list~str~
     +envelope: ResponseEnvelope
 }
 
-class HandlerDependencies {
-    +runtime_auth_builder(request, subagents, client)
+class GovernedAgentServiceDependencies {
+    +runtime_auth_builder(request)
     +mcp_connector(stack, mcp_servers)
     +orchestrator_factory(model, subagents, servers, tools, unavailable)
-    +guardrails_evaluator(text, subagents)
+    +response_guardrails_evaluator(text, subagents)
     +input_guardrails_evaluator(input, max_input_chars)
     +message_bus: MessageBus
+    +memory: ConversationMemory
+    +runner: AgentRunner
 }
 class RuntimeAuthContext {
     +subagent_tools: list
@@ -63,11 +66,12 @@ class AppToolAdapter {
     +build(subagent, app_client, obo_client, deps) Callable
 }
 
-class InvokePipeline {
-    +_prepare_request_stage(request) RequestStage
-    +_connect_request_stage(stack, prepared) ConnectedStage
-    +_execute_invoke_stage(connected, messages) RunnerResult
-    +_finalize_invoke_stage(result, connected) InvokeFinalizedStage
+class GovernedAgentService {
+    +invoke(request) GovernedExecutionResult
+    +_prepare(request) PreparedExecution
+    +_connect(stack, prepared) ConnectedExecution
+    +_run_with_retry(connected, request) RunnerExecutionResult
+    +_finalize_invoke(items, connected) FinalizedInvoke
 }
 
 class GuardrailHelpers {
@@ -76,18 +80,17 @@ class GuardrailHelpers {
     +_append_source_to_output_items(items, suffix)
 }
 
-HandlerDependencies ..> InvokePipeline : drives
-InvokePipeline ..> RequestStage : prepare
-InvokePipeline ..> ConnectedStage : connect
-InvokePipeline ..> InvokeFinalizedStage : finalize
-InvokePipeline --> ResponsesAgentResponse : returns
-InvokePipeline ..> GuardrailHelpers : evaluate + attribute
-RequestStage --> ResponsesAgentRequest
-RequestStage --> RuntimeAuthContext
+GovernedAgentServiceDependencies ..> GovernedAgentService : configures
+GovernedAgentService ..> PreparedExecution : prepare
+GovernedAgentService ..> ConnectedExecution : connect
+GovernedAgentService ..> FinalizedInvoke : finalize
+GovernedAgentService --> ResponsesAgentResponse : adapter translates result
+GovernedAgentService ..> GuardrailHelpers : evaluate + attribute
+PreparedExecution --> RuntimeAuthContext
 RuntimeAuthDependencies ..> SubagentToolsBuilder
 SubagentToolsBuilder ..> ToolRegistry : builder implementation resolves direct tools
 ToolRegistry --> AppToolAdapter : direct app/endpoint adapter
-InvokePipeline ..> AsyncExitStack : MCP lifecycle
+GovernedAgentService ..> AsyncExitStack : MCP lifecycle
 ```
 
 ## Stream Pipeline
@@ -103,13 +106,13 @@ class ResponsesAgentRequest {
 class ResponsesAgentStreamEvent
 class AsyncExitStack
 
-class RequestStage {
-    +request: ResponsesAgentRequest
+class PreparedExecution {
+    +request: GovernedExecutionRequest
     +runtime_auth: RuntimeAuthContext
-    +messages: list
 }
 
-class ConnectedStage {
+class ConnectedExecution {
+    +prepared: PreparedExecution
     +runtime_auth: RuntimeAuthContext
     +unavailable: list~str~
     +agent: Agent
@@ -133,13 +136,15 @@ class StreamFinalizedStage {
     +envelope: ResponseEnvelope
 }
 
-class HandlerDependencies {
-    +runtime_auth_builder(request, subagents, client)
+class GovernedAgentServiceDependencies {
+    +runtime_auth_builder(request)
     +mcp_connector(stack, mcp_servers)
     +orchestrator_factory(model, subagents, servers, tools, unavailable)
-    +guardrails_evaluator(text, subagents)
+    +response_guardrails_evaluator(text, subagents)
     +input_guardrails_evaluator(input, max_input_chars)
     +message_bus: MessageBus
+    +memory: ConversationMemory
+    +runner: AgentRunner
 }
 class RuntimeAuthContext {
     +subagent_tools: list
@@ -159,11 +164,12 @@ class AppToolAdapter {
     +build(subagent, app_client, obo_client, deps) Callable
 }
 
-class StreamPipeline {
-    +_prepare_request_stage(request) RequestStage
-    +_connect_request_stage(stack, prepared) ConnectedStage
-    +_execute_stream_stage(connected, messages) StreamExecutedStage
-    +_finalize_stream_stage(executed, connected) StreamFinalizedStage
+class GovernedAgentService {
+    +stream(request) AsyncIterator~ExecutionStreamEvent~
+    +_prepare(request) PreparedExecution
+    +_connect(stack, prepared) ConnectedExecution
+    +_stream_with_retry(connected, request) StreamExecutedStage
+    +_finalize_stream(executed, connected) StreamFinalizedStage
 }
 
 class StreamHelpers {
@@ -173,27 +179,26 @@ class StreamHelpers {
     +_governed_source_suffix(used_subagents) str
 }
 
-HandlerDependencies ..> StreamPipeline : drives
-StreamPipeline ..> RequestStage : prepare
-StreamPipeline ..> ConnectedStage : connect
-StreamPipeline ..> StreamExecutedStage : execute
-StreamPipeline ..> StreamFinalizedStage : finalize
-StreamPipeline --> ResponsesAgentStreamEvent : yields
-StreamPipeline ..> StreamHelpers : track + attribute
-RequestStage --> ResponsesAgentRequest
-RequestStage --> RuntimeAuthContext
+GovernedAgentServiceDependencies ..> GovernedAgentService : configures
+GovernedAgentService ..> PreparedExecution : prepare
+GovernedAgentService ..> ConnectedExecution : connect
+GovernedAgentService ..> StreamExecutedStage : execute
+GovernedAgentService ..> StreamFinalizedStage : finalize
+GovernedAgentService --> ResponsesAgentStreamEvent : adapter translates events
+GovernedAgentService ..> StreamHelpers : track + attribute
+PreparedExecution --> RuntimeAuthContext
 RuntimeAuthDependencies ..> SubagentToolsBuilder
 SubagentToolsBuilder ..> ToolRegistry : builder implementation resolves direct tools
 ToolRegistry --> AppToolAdapter : direct app/endpoint adapter
-StreamPipeline ..> AsyncExitStack : MCP lifecycle
+GovernedAgentService ..> AsyncExitStack : MCP lifecycle
 ```
 
 ## Notes
 
-- Shared stages (`_prepare_request_stage`, `_connect_request_stage`) enforce a common pipeline contract for invoke and stream.
+- Shared stages (`_prepare`, `_connect`) enforce a common pipeline contract for invoke and stream.
 - Stream path buffers all events in one pass, tracks `used_subagents` and `has_tool_activity`, then applies guardrails post-execution.
 - Buffered events become user-visible answer text only after finalization; the UI renders `response.output_text.delta` and keeps other events as metadata.
 - Guardrail block behavior diverges by mode:
-  - invoke: raises `UserError` — caller sees authorization error
+  - invoke: raises `GovernedExecutionError`, translated to the delivery framework's user error
   - stream: emits `response.output_text.delta` with block message and terminates
 - Source attribution (`_governed_source_suffix`) appends Genie space freshness SLA citations for governed subagents.

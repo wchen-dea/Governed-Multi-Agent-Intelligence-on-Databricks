@@ -1,53 +1,61 @@
 """Build inspectable, conservative route plans before model orchestration."""
 
 import re
-import threading
-import time
+from datetime import UTC, datetime, timedelta
 
+from aiserver.application.ports.routing import RouteAffinityStore
+from aiserver.contracts.execution import RouteAffinity
 from aiserver.contracts.responses import RoutePlan
 from aiserver.contracts.subagents import SubagentConfig
 
 MIN_ROUTE_CONFIDENCE = 0.60
 ROUTE_STICKINESS_TTL_SECONDS = 600.0
 
-# Per-conversation memory of the last confidently matched route. This lets
-# follow-up turns ("follow up on promoter vs detractor counts") that lack
-# strong lexical overlap with any subagent stay routed to the same subagent
-# instead of broadening to every candidate (or picking the wrong one).
-_sticky_routes: dict[str, tuple[float, tuple[str, ...]]] = {}
-_sticky_lock = threading.Lock()
 
-
-def _remember_sticky_route(conversation_id: str | None, candidate_names: tuple[str, ...]) -> None:
+def _remember_sticky_route(
+    affinity_store: RouteAffinityStore | None,
+    conversation_id: str | None,
+    candidate_names: tuple[str, ...],
+    ttl_seconds: float,
+) -> None:
     """Record the last confidently matched route for a conversation."""
-    if not conversation_id:
+    if not conversation_id or affinity_store is None:
         return
-    with _sticky_lock:
-        _sticky_routes[conversation_id] = (
-            time.monotonic() + ROUTE_STICKINESS_TTL_SECONDS,
-            candidate_names,
+    affinity_store.put(
+        RouteAffinity(
+            conversation_id=conversation_id,
+            candidate_names=candidate_names,
+            expires_at=datetime.now(UTC) + timedelta(seconds=ttl_seconds),
         )
+    )
 
 
-def _recall_sticky_route(conversation_id: str | None, allowed_names: set[str]) -> tuple[str, ...]:
+def _recall_sticky_route(
+    affinity_store: RouteAffinityStore | None,
+    conversation_id: str | None,
+    allowed_names: set[str],
+) -> tuple[str, ...]:
     """Return the previously matched route for a conversation, if still valid."""
-    if not conversation_id:
+    if not conversation_id or affinity_store is None:
         return ()
-    with _sticky_lock:
-        entry = _sticky_routes.get(conversation_id)
-        if not entry:
-            return ()
-        expires_at, candidate_names = entry
-        if expires_at < time.monotonic():
-            del _sticky_routes[conversation_id]
-            return ()
-    return tuple(name for name in candidate_names if name in allowed_names)
+    affinity = affinity_store.get(conversation_id)
+    if affinity is None:
+        return ()
+    candidates = tuple(
+        name for name in affinity.candidate_names if name in allowed_names
+    )
+    if not candidates:
+        affinity_store.delete(conversation_id)
+    return candidates
 
 
 def build_route_plan(
     question: str,
     subagents: list[SubagentConfig],
     conversation_id: str | None = None,
+    *,
+    affinity_store: RouteAffinityStore | None = None,
+    affinity_ttl_seconds: float = ROUTE_STICKINESS_TTL_SECONDS,
 ) -> tuple[RoutePlan, list[SubagentConfig]]:
     """Select capability-matching subagents, or retain all on ambiguity.
 
@@ -118,7 +126,7 @@ def build_route_plan(
 
     if not scored:
         allowed_names = {subagent.name for subagent in subagents}
-        sticky = _recall_sticky_route(conversation_id, allowed_names)
+        sticky = _recall_sticky_route(affinity_store, conversation_id, allowed_names)
         if sticky:
             sticky_candidates = [subagent for subagent in subagents if subagent.name in sticky]
             return RoutePlan(
@@ -146,7 +154,7 @@ def build_route_plan(
     )
     if plan.confidence < MIN_ROUTE_CONFIDENCE:
         allowed_names = {subagent.name for subagent in subagents}
-        sticky = _recall_sticky_route(conversation_id, allowed_names)
+        sticky = _recall_sticky_route(affinity_store, conversation_id, allowed_names)
         if sticky:
             sticky_candidates = [subagent for subagent in subagents if subagent.name in sticky]
             return RoutePlan(
@@ -162,5 +170,10 @@ def build_route_plan(
             requires_evidence=any(subagent.requires_evidence for subagent in subagents),
         ), subagents
 
-    _remember_sticky_route(conversation_id, plan.candidates)
+    _remember_sticky_route(
+        affinity_store,
+        conversation_id,
+        plan.candidates,
+        affinity_ttl_seconds,
+    )
     return plan, candidates

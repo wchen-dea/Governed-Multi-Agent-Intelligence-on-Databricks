@@ -1,24 +1,25 @@
-from agents.exceptions import UserError
-
-from aiserver.api.invocations import (
-    _append_approval_message_to_output_items,
-    _append_source_to_output_items,
-    _approval_state_for_subagents,
-    _event_has_tool_activity,
-    _governed_source_suffix,
-    _governed_source_suffix_with_fallback,
-    _guardrail_block_message,
-    _guardrail_scope_subagents,
-    _select_route_tools,
-    _stream_progress_event,
-    _used_subagents_from_payloads,
-    _user_error_failure_reason,
+from aiserver.application.exceptions import GovernedExecutionError
+from aiserver.application.execution.response_policy import (
+    append_approval_message,
+    append_text_to_last_assistant,
+    approval_state_for_subagents,
+    event_has_tool_activity,
+    governed_source_suffix,
+    governed_source_suffix_with_fallback,
+    guardrail_block_message,
+    guardrail_scope_subagents,
+    used_subagents_from_payloads,
+)
+from aiserver.application.execution.service import (
+    progress_event,
+    select_route_tools,
+    user_error_failure_reason,
 )
 from aiserver.contracts.subagents import SubagentConfig
 
 
 def test_guardrail_block_message_mentions_reason_and_remediation():
-    message = _guardrail_block_message(("evidence_required",))
+    message = guardrail_block_message(("evidence_required",))
 
     assert "evidence_required" in message
     assert "[1]" in message
@@ -26,14 +27,24 @@ def test_guardrail_block_message_mentions_reason_and_remediation():
 
 
 def test_user_error_failure_reason_distinguishes_guardrail_from_authorization():
-    assert _user_error_failure_reason(UserError("Response blocked by guardrails")) == "guardrail"
-    assert _user_error_failure_reason(UserError("This tool requires user authorization")) == "authorization"
+    assert (
+        user_error_failure_reason(
+            GovernedExecutionError("Response blocked by guardrails")
+        )
+        == "guardrail"
+    )
+    assert (
+        user_error_failure_reason(
+            GovernedExecutionError("This tool requires user authorization")
+        )
+        == "authorization"
+    )
 
 
 def test_stream_progress_event_is_non_content_heartbeat():
-    event = _stream_progress_event("executing")
+    event = progress_event("executing").to_payload()
 
-    assert event["type"] == "response.progress"
+    assert event["type"] == "progress"
     assert event["stage"] == "executing"
     assert "delta" not in event
 
@@ -53,13 +64,13 @@ def test_approval_state_requires_manager_signoff_for_intervention_agent():
         requires_human_approval=True,
     )
 
-    approval = _approval_state_for_subagents([intervention])
+    approval = approval_state_for_subagents([intervention])
 
     assert approval.required is True
     assert approval.status == "pending"
     assert "approval" in (approval.reason or "").lower()
 
-    updated = _append_approval_message_to_output_items(
+    updated = append_approval_message(
         [{"role": "assistant", "content": "Store 123 has strong revenue but declining CDI."}],
         approval,
     )
@@ -81,11 +92,11 @@ def test_governed_source_suffix_uses_detected_tool_metadata():
         description="sales",
     )
 
-    used = _used_subagents_from_payloads(
+    used = used_subagents_from_payloads(
         [{"type": "response.output_item.added", "item": {"name": sales_agent.tool_name}}],
         [sales_agent],
     )
-    suffix = _governed_source_suffix(used)
+    suffix = governed_source_suffix(used)
 
     assert used == [sales_agent]
     assert suffix.startswith("\n\nSource: ")
@@ -100,7 +111,7 @@ def test_append_source_to_output_items_updates_last_assistant_message():
         {"role": "assistant", "content": "Revenue is up 4%."},
     ]
 
-    updated = _append_source_to_output_items(output_items, "\n\nSource: sales_insights_agent")
+    updated = append_text_to_last_assistant(output_items, "\n\nSource: sales_insights_agent")
 
     assert updated[-1]["content"].endswith("Source: sales_insights_agent")
 
@@ -119,7 +130,7 @@ def test_governed_source_suffix_fallback_for_tool_activity_without_named_subagen
         description="sales",
     )
 
-    suffix = _governed_source_suffix_with_fallback(
+    suffix = governed_source_suffix_with_fallback(
         [
             {
                 "type": "response.output_item.done",
@@ -148,7 +159,7 @@ def test_governed_source_suffix_fallback_for_unlabelled_invoke_output():
         description="sales",
     )
 
-    suffix = _governed_source_suffix_with_fallback(
+    suffix = governed_source_suffix_with_fallback(
         [{"role": "assistant", "content": "Draft governed answer."}],
         [sales_agent],
     )
@@ -164,7 +175,7 @@ def test_event_has_tool_activity_detects_generic_tool_event_shapes():
         }
     ]
 
-    assert _event_has_tool_activity(payloads) is True
+    assert event_has_tool_activity(payloads) is True
 
 
 def test_event_has_tool_activity_detects_responses_function_call_output():
@@ -175,7 +186,7 @@ def test_event_has_tool_activity_detects_responses_function_call_output():
         }
     ]
 
-    assert _event_has_tool_activity(payloads) is True
+    assert event_has_tool_activity(payloads) is True
 
 
 def test_guardrail_scope_subagents_empty_when_no_tool_activity():
@@ -192,7 +203,7 @@ def test_guardrail_scope_subagents_empty_when_no_tool_activity():
         description="sales",
     )
 
-    scoped = _guardrail_scope_subagents(
+    scoped = guardrail_scope_subagents(
         [{"type": "response.output_text.delta", "delta": "Draft answer"}],
         [sales_agent],
     )
@@ -236,7 +247,7 @@ def test_confident_mcp_route_does_not_fallback_to_unrelated_function_tool():
         description="product catalog",
     )
 
-    assert _select_route_tools([LakebaseTool()], [product], "capability_match") == []
+    assert select_route_tools([LakebaseTool()], [product], "capability_match") == []
 
 
 def test_confident_lakebase_route_selects_wrapped_tool_name():
@@ -256,4 +267,4 @@ def test_confident_lakebase_route_selects_wrapped_tool_name():
 
     tool = LakebaseTool()
 
-    assert _select_route_tools([tool], [lakebase], "capability_match") == [tool]
+    assert select_route_tools([tool], [lakebase], "capability_match") == [tool]

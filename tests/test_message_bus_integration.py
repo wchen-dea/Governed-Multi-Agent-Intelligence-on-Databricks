@@ -1,7 +1,5 @@
 from types import SimpleNamespace
 
-from mlflow.types.responses import ResponsesAgentRequest
-
 from aiserver.application.auth.context import (
     RuntimeAuthDependencies,
     build_runtime_auth_context,
@@ -12,6 +10,7 @@ from aiserver.application.orchestration.agent import (
 )
 from aiserver.bootstrap import container as container_module
 from aiserver.bootstrap.container import build_dependency_container
+from aiserver.contracts.execution import ExecutionMessage, GovernedExecutionRequest
 from aiserver.contracts.subagents import SubagentConfig
 
 
@@ -26,7 +25,7 @@ class RecordingBus:
 def test_dependency_container_shares_bus_across_services():
     container = build_dependency_container()
     assert container.orchestrator.message_bus is container.runtime_auth.message_bus
-    assert container.runtime_auth.message_bus is container.handlers.message_bus
+    assert container.message_bus is container.runtime_auth.message_bus
 
 
 def test_dependency_container_injects_shared_dependencies_into_lakebase_tools(monkeypatch):
@@ -71,7 +70,9 @@ def test_runtime_auth_publishes_context_events():
         message_bus=bus,
     )
 
-    request = ResponsesAgentRequest(input=[])
+    request = GovernedExecutionRequest(
+        messages=(ExecutionMessage(role="user", content="test request"),)
+    )
     build_runtime_auth_context(request, subagents, app_client=object(), deps=deps)
 
     event_types = [event_type for event_type, _ in bus.events]

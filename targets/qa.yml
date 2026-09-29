@@ -60,8 +60,28 @@ targets:
       # Example: Unity Catalog schema name, e.g. "observability"
       uc_audit_schema: "<QA-UC-AUDIT-SCHEMA>"
       uc_audit_table: agent_lifecycle_events
+      memory_backend: lakebase
+      memory_project_id: "<QA-LAKEBASE-PROJECT-ID>"
+      memory_branch_id: "<QA-LAKEBASE-BRANCH-ID>"
+      memory_endpoint_id: "<QA-LAKEBASE-ENDPOINT-ID>"
+      memory_database: "<QA-LAKEBASE-DATABASE>"
+      memory_pg_host: "<QA-LAKEBASE-PG-HOST>"
+      memory_pg_user: "<QA-LAKEBASE-PG-USER>"
+      route_affinity_backend: lakebase
+      route_affinity_project_id: "<QA-LAKEBASE-PROJECT-ID>"
+      route_affinity_branch_id: "<QA-LAKEBASE-BRANCH-ID>"
+      route_affinity_endpoint_id: "<QA-LAKEBASE-ENDPOINT-ID>"
+      route_affinity_database: "<QA-LAKEBASE-DATABASE>"
+      route_affinity_pg_host: "<QA-LAKEBASE-PG-HOST>"
+      route_affinity_pg_user: "<QA-LAKEBASE-PG-USER>"
       approval_backend: uc_table
       approval_warehouse_id: "<QA-UC-AUDIT-WAREHOUSE-ID>"
       approval_catalog: "<QA-UC-AUDIT-CATALOG>"
       approval_schema: "<QA-UC-AUDIT-SCHEMA>"
       approval_table: agent_approval_decisions
+      agent_task_backend: uc_table
+      agent_task_warehouse_id: "<QA-UC-AUDIT-WAREHOUSE-ID>"
+      agent_task_catalog: "<QA-UC-AUDIT-CATALOG>"
+      agent_task_schema: "<QA-UC-AUDIT-SCHEMA>"
+      agent_task_worker_poll_seconds: "1"
+      delegation_worker_pause_status: UNPAUSED

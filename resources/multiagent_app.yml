@@ -116,10 +116,6 @@ resources:
           value: ${var.agent_task_catalog}
         - name: AGENT_TASK_SCHEMA
           value: ${var.agent_task_schema}
-        - name: AGENT_TASK_WORKER_ENABLED
-          value: ${var.agent_task_worker_enabled}
-        - name: AGENT_TASK_WORKER_POLL_SECONDS
-          value: ${var.agent_task_worker_poll_seconds}
         - name: MEMORY_BACKEND
           value: ${var.memory_backend}
         - name: MEMORY_PROJECT_ID
@@ -134,6 +130,24 @@ resources:
           value: ${var.memory_pg_host}
         - name: MEMORY_PG_USER
           value: ${var.memory_pg_user}
+        - name: ROUTE_AFFINITY_BACKEND
+          value: ${var.route_affinity_backend}
+        - name: ROUTE_AFFINITY_PROJECT_ID
+          value: ${var.route_affinity_project_id}
+        - name: ROUTE_AFFINITY_BRANCH_ID
+          value: ${var.route_affinity_branch_id}
+        - name: ROUTE_AFFINITY_ENDPOINT_ID
+          value: ${var.route_affinity_endpoint_id}
+        - name: ROUTE_AFFINITY_DATABASE
+          value: ${var.route_affinity_database}
+        - name: ROUTE_AFFINITY_PG_HOST
+          value: ${var.route_affinity_pg_host}
+        - name: ROUTE_AFFINITY_PG_USER
+          value: ${var.route_affinity_pg_user}
+        - name: ROUTE_AFFINITY_TABLE
+          value: ${var.route_affinity_table}
+        - name: ROUTE_AFFINITY_TTL_SECONDS
+          value: ${var.route_affinity_ttl_seconds}
       # Resources which this app has access to
       resources:
       - name: 'sales_genie_space'

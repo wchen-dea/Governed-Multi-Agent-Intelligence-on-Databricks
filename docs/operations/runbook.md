@@ -806,7 +806,7 @@ databricks postgres generate-database-credential --json '{"endpoint": "projects/
 
 ### Unity Catalog delegation task store
 
-The durable agent-delegation backend is opt-in by environment. Dev enables the UC backend and bounded worker; other targets remain on the in-memory task bus until their UC tables and grants are provisioned.
+Every deployed environment uses the durable UC agent-delegation backend and a dedicated continuous Lakeflow Job. The in-memory backend is for local tests only.
 
 To enable the UC backend, provide these runtime values and grant the app service principal `USE CATALOG`, `USE SCHEMA`, `CREATE TABLE`, `SELECT`, `INSERT`, and `UPDATE` in the selected schema:
 
@@ -815,13 +815,12 @@ AGENT_TASK_BACKEND=uc_table
 AGENT_TASK_WAREHOUSE_ID=<warehouse-id>
 AGENT_TASK_CATALOG=<catalog>
 AGENT_TASK_SCHEMA=<schema>
-AGENT_TASK_WORKER_ENABLED=true
 AGENT_TASK_WORKER_POLL_SECONDS=1
 ```
 
 On initialization, the backend creates `agent_delegation_tasks` and `agent_delegation_events` when absent. Dev preprovisions these two tables in `quickstart_catalog.multi_agent_schema` and grants the app identity exact-table `SELECT, MODIFY` access. The backend is fail-closed: a configuration or SQL write failure prevents the delegated task from being accepted.
 
-The worker is managed through the backend FastAPI lifespan, so it starts after the AgentServer runtime and stops cleanly before backend shutdown. Query the payload-redacted task state through authenticated `GET /delegations/{task_id}`; do not expose task SQL or result payloads through operational dashboards.
+The `delegation_worker_<target>` continuous Job owns task execution and must remain unpaused with `max_concurrent_runs: 1`. The Databricks App only submits and queries tasks. Query the payload-redacted task state through authenticated `GET /delegations/{task_id}`; do not expose task SQL or result payloads through operational dashboards.
 
 ### Vector Search index "table does not exist" during setup
 

@@ -19,24 +19,28 @@ Primary entrypoint:
 ## Structure
 
 - `src/aiserver/api/`
-  - `server.py`: AgentServer bootstrap and app startup.
-  - `invocations.py`: `@invoke` and `@stream` request handlers.
+  - `server.py`: production entrypoint and default web dependency composition.
+  - `web.py`: dependency-driven AgentServer/FastAPI application factory.
+  - `invocations.py`: thin MLflow request/result/event translation.
 - `src/aiserver/application/`
   - `adapters/`: concrete tool adapters and the default adapter registry for direct function tools.
+  - `execution/`: governed invoke/stream use case, memory handling, response policy, and typed stages.
   - `orchestration/`: orchestration assembly, routing, model selection, MCP server construction, and Lakebase tool builders.
   - `auth/`: request-scoped app/OBO authorization and deterministic policy checks.
   - `delegation/`: native agent handoffs, delegation policy, and bounded task worker.
   - `guardrails/`: deterministic request and response guardrail checks.
-  - `ports/`: protocols for message buses, memory, delegation tasks, and tracing.
+  - `ports/`: protocols for execution, routing, message buses, memory, delegation tasks, and tracing.
 - `src/aiserver/infrastructure/`
   - `messaging/`: structured logging, noop, Kafka, RabbitMQ, and UC table message-bus adapters.
   - `observability/`: MLflow trace metadata adapter.
   - `persistence/`: in-memory/UC Delta delegation task bus and Lakebase memory adapters.
 - `src/aiserver/bootstrap/`
   - `container.py`: composition root that injects infrastructure adapters into application use cases.
+  - `web_lifecycle.py`: app-scoped shutdown behavior for the stateless web process.
 - `src/aiserver/config/`
   - `settings.py`: Pydantic Settings model with validated, dependency-neutral runtime configuration.
 - `src/aiserver/contracts/`
+  - `execution.py`: framework-neutral execution requests, results, stream events, and route affinity.
   - `subagents.py`: typed config model and validation.
   - `delegation.py`: typed contracts for bounded agent-to-agent delegation.
   - `responses.py`: typed contracts shared by routing, execution, and response policy layers.
@@ -82,7 +86,9 @@ Use this workflow when iterating on orchestration logic:
 
 Most common edit locations:
 
-- `src/aiserver/api/invocations.py`: invoke/stream flow and guardrail enforcement.
+- `src/aiserver/application/execution/service.py`: invoke/stream lifecycle and orchestration.
+- `src/aiserver/application/execution/response_policy.py`: source attribution, approval messaging, and output shaping.
+- `src/aiserver/api/invocations.py`: MLflow delivery translation only.
 - `src/aiserver/application/auth/context.py`: auth context and tool availability.
 - `src/aiserver/application/auth/policy.py`: deterministic policy checks.
 - `src/aiserver/application/orchestration/agent.py`: tool and MCP orchestration behavior.

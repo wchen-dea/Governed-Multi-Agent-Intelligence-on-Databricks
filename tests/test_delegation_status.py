@@ -1,9 +1,7 @@
 """Tests for user-safe delegation status responses."""
 
-from types import SimpleNamespace
-
-from aiserver.api import server
 from aiserver.api.server import _delegation_status_payload
+from aiserver.bootstrap.web_lifecycle import WebProcessLifecycle
 from aiserver.contracts.delegation import DelegationTask, DelegationTaskRecord
 
 
@@ -24,7 +22,7 @@ def test_delegation_status_does_not_expose_task_sql_payload():
     assert "payload" not in payload
 
 
-def test_close_message_bus_closes_closeable_adapter(monkeypatch):
+def test_worker_lifecycle_closes_closeable_adapter():
     class CloseableBus:
         closed = False
 
@@ -32,9 +30,9 @@ def test_close_message_bus_closes_closeable_adapter(monkeypatch):
             self.closed = True
 
     message_bus = CloseableBus()
-    container = SimpleNamespace(handlers=SimpleNamespace(message_bus=message_bus))
-    monkeypatch.setattr(server, "get_app_dependency_container", lambda: container)
+    container = type("Container", (), {"message_bus": message_bus})()
+    lifecycle = WebProcessLifecycle(container)
 
-    server._close_message_bus()
+    lifecycle.close()
 
     assert message_bus.closed is True

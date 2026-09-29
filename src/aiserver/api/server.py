@@ -1,33 +1,31 @@
-"""Server bootstrap for the MLflow AgentServer runtime."""
+"""Production entrypoint and default composition for the web application."""
 
-import asyncio
 import logging
 import os
 import sys
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
 from pathlib import Path
-from uuid import uuid4
 
 from dotenv import load_dotenv
-from fastapi import HTTPException, Request
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
-from mlflow.genai.agent_server import AgentServer, setup_mlflow_git_based_version_tracking
+from fastapi import FastAPI
+from mlflow.genai.agent_server import setup_mlflow_git_based_version_tracking
 
-from aiserver.api.approvals import router as approval_router
+from aiserver.api import invocations
 from aiserver.api.health import router as health_router
-from aiserver.api.invocations import invoke_handler, stream_handler
-from aiserver.api.public import router as public_api_router
-from aiserver.api.public import v1_router as public_api_v1_router
-from aiserver.application.approvals.service import ApprovalService, delegation_status_payload
-from aiserver.application.delegation.worker import AgentTaskWorker
-from aiserver.application.orchestration.agent import (
-    build_lakebase_delegation_executors,
+from aiserver.api.web import (
+    WebAppDependencies,
+    WebApplication,
+    create_web_application,
 )
-from aiserver.application.runtime.identity import build_request_identity_context
-from aiserver.bootstrap.container import get_app_dependency_container
-from aiserver.config.settings import get_settings
+from aiserver.application.approvals.service import (
+    ApprovalService,
+    delegation_status_payload,
+)
+from aiserver.bootstrap.container import (
+    AppDependencyContainer,
+    get_app_dependency_container,
+)
+from aiserver.bootstrap.web_lifecycle import WebProcessLifecycle
+from aiserver.config.settings import AppSettings, get_settings
 from aiserver.contracts.subagents import SUBAGENTS
 from aiserver.infrastructure.observability.logging import configure_logging
 from aiserver.infrastructure.persistence.approvals import default_approval_repository
@@ -39,162 +37,61 @@ configure_logging(get_settings())
 if not os.getenv("MLFLOW_EXPERIMENT_ID", "").strip():
     os.environ.pop("MLFLOW_EXPERIMENT_ID", None)
 
-# Ensure @invoke/@stream handlers are registered.
-import aiserver.api.invocations  # noqa: E402, F401
-
-agent_server = AgentServer("ResponsesAgent", enable_chat_proxy=True)
-app = agent_server.app
-app.include_router(public_api_router)
-app.include_router(public_api_v1_router)
-app.include_router(approval_router)
-app.include_router(health_router)
-app.state.container = get_app_dependency_container()
-app.state.approval_service = ApprovalService(
-    repository=default_approval_repository(),
-    task_bus=app.state.container.delegation_task_bus,
-    message_bus=app.state.container.handlers.message_bus,
-    settings=get_settings(),
-    subagents=SUBAGENTS,
-)
 UI_DIST_DIR = Path(
     os.environ.get("AIWEB_DIST_DIR", str(Path(__file__).resolve().parent.parent / "static"))
 )
-app.state.ui_dist_dir = UI_DIST_DIR
-app.state.runtime = MlflowAgentRuntime(
-    invoke_handler=invoke_handler,
-    stream_handler=stream_handler,
-)
 
 
-@app.middleware("http")
-async def request_id_middleware(request: Request, call_next):
-    request_id = request.headers.get("X-Request-ID") or str(uuid4())
-    request.state.request_id = request_id
-    response = await call_next(request)
-    response.headers["X-Request-ID"] = request_id
-    return response
+def build_web_dependencies(
+    *,
+    container: AppDependencyContainer | None = None,
+    settings: AppSettings | None = None,
+    ui_dist_dir: Path | None = None,
+    approval_service: ApprovalService | None = None,
+    runtime: MlflowAgentRuntime | None = None,
+    lifecycle: WebProcessLifecycle | None = None,
+) -> WebAppDependencies:
+    """Compose default web dependencies with injectable test seams."""
+    resolved_container = container or get_app_dependency_container()
+    resolved_settings = settings or get_settings()
+    resolved_approval_service = approval_service or ApprovalService(
+        repository=default_approval_repository(),
+        task_bus=resolved_container.delegation_task_bus,
+        message_bus=resolved_container.message_bus,
+        settings=resolved_settings,
+        subagents=SUBAGENTS,
+    )
+    resolved_runtime = runtime or MlflowAgentRuntime(
+        invoke_handler=invocations.invoke_handler,
+        stream_handler=invocations.stream_handler,
+    )
+    resolved_lifecycle = lifecycle or WebProcessLifecycle(resolved_container)
+    return WebAppDependencies(
+        container=resolved_container,
+        approval_service=resolved_approval_service,
+        runtime=resolved_runtime,
+        ui_dist_dir=ui_dist_dir or UI_DIST_DIR,
+        lifecycle=resolved_lifecycle,
+    )
 
+
+def create_app(**dependency_overrides: object) -> FastAPI:
+    """Create an independent FastAPI application for tests or alternate hosts."""
+    dependencies = build_web_dependencies(**dependency_overrides)
+    return create_web_application(dependencies).app
+
+
+def _create_default_web_application() -> WebApplication:
+    return create_web_application(build_web_dependencies())
+
+
+_web_application = _create_default_web_application()
+agent_server = _web_application.agent_server
+app = _web_application.app
 
 # Compatibility exports for callers that imported these helpers from server.py.
 health = health_router.routes[0].endpoint
 _delegation_status_payload = delegation_status_payload
-_worker_stop_event: asyncio.Event | None = None
-_worker_task: asyncio.Task[None] | None = None
-_agent_server_lifespan = app.router.lifespan_context
-
-# Built React UI assets, bundled inside this package's wheel (see
-# prepare_app_source.py). Override with AIWEB_DIST_DIR for local iteration
-# against a dist/ built outside the installed package.
-
-
-async def _start_delegation_worker() -> None:
-    """Start the opt-in worker that processes durable delegation tasks."""
-    global _worker_stop_event, _worker_task
-    settings = get_settings()
-    if not settings.agent_task_worker_enabled:
-        return
-    container = get_app_dependency_container()
-    executors = build_lakebase_delegation_executors(
-        SUBAGENTS,
-        build_request_identity_context(),
-        deps=container.orchestrator,
-    )
-    settings = get_settings()
-    if settings.approval_delegation_enabled:
-
-        async def execute_post_approval_planning(payload: dict[str, object]) -> dict[str, object]:
-            return {
-                "result": "approved_planning_task_recorded",
-                "approval_request_id": payload.get("approval_request_id"),
-                "planning_only": True,
-                "dispatch_authorized": False,
-            }
-
-        executors[settings.approval_delegation_target_agent] = execute_post_approval_planning
-
-    async def execute(task):
-        executor = executors.get(task.target_agent)
-        if executor is None:
-            raise ValueError("delegation_target_unavailable")
-        return await executor(task.payload)
-
-    _worker_stop_event = asyncio.Event()
-    worker = AgentTaskWorker(
-        worker_id=f"app-worker:{os.getpid()}",
-        task_bus=container.delegation_task_bus,
-        subagents=SUBAGENTS,
-        executor=execute,
-        message_bus=container.handlers.message_bus,
-    )
-    _worker_task = asyncio.create_task(
-        worker.run_forever(_worker_stop_event, settings.agent_task_worker_poll_seconds)
-    )
-
-
-async def _stop_delegation_worker() -> None:
-    """Stop the delegation worker cleanly during backend shutdown."""
-    global _worker_stop_event, _worker_task
-    if _worker_stop_event is not None:
-        _worker_stop_event.set()
-    if _worker_task is not None:
-        await _worker_task
-    _worker_stop_event = None
-    _worker_task = None
-
-
-def _close_message_bus() -> None:
-    """Flush closeable lifecycle event adapters during graceful shutdown."""
-    message_bus = get_app_dependency_container().handlers.message_bus
-    close = getattr(message_bus, "close", None)
-    if callable(close):
-        close()
-
-
-@asynccontextmanager
-async def _lifespan(_: object) -> AsyncIterator[None]:
-    """Preserve AgentServer lifecycle behavior while managing delegation work."""
-    async with _agent_server_lifespan(app):
-        await _start_delegation_worker()
-        try:
-            yield
-        finally:
-            await _stop_delegation_worker()
-            _close_message_bus()
-
-
-app.router.lifespan_context = _lifespan
-
-# Serve the built React UI (assets + SPA fallback) in-process. Registered
-# after every API route above so it never shadows /invocations, /delegations,
-# or MLflow AgentServer's own routes — Starlette matches routes in
-# registration order.
-_ui_assets_dir = UI_DIST_DIR / "assets"
-if _ui_assets_dir.exists():
-    app.mount("/assets", StaticFiles(directory=_ui_assets_dir), name="ui-assets")
-
-
-@app.get("/")
-def index():
-    index_path = UI_DIST_DIR / "index.html"
-    if index_path.exists():
-        return FileResponse(index_path)
-    return {
-        "status": "ok",
-        "message": "Service is running. Use /invocations for agent requests.",
-    }
-
-
-@app.get("/{path:path}")
-def spa_fallback(path: str):
-    # Resolve and confirm containment before serving, since "path" is
-    # attacker-controlled and may contain traversal segments (e.g. "../../etc/passwd").
-    candidate = (UI_DIST_DIR / path).resolve()
-    if candidate.is_relative_to(UI_DIST_DIR.resolve()) and candidate.is_file():
-        return FileResponse(candidate)
-    index_path = UI_DIST_DIR / "index.html"
-    if index_path.exists():
-        return FileResponse(index_path)
-    raise HTTPException(status_code=404, detail="Not found")
 
 
 try:
@@ -206,12 +103,7 @@ except Exception as exc:
 
 
 def _resolve_port() -> int | None:
-    """Resolve the bind port Databricks Apps (or a local override) expects.
-
-    Priority: an explicit --port already on argv (leave AgentServer's own
-    parsing alone), then DATABRICKS_APP_PORT/PORT/CHAT_APP_PORT, else None to
-    keep AgentServer's built-in default (8000).
-    """
+    """Resolve the platform bind port while respecting explicit CLI arguments."""
     if "--port" in sys.argv:
         return None
     for env_var in ("DATABRICKS_APP_PORT", "PORT", "CHAT_APP_PORT"):
@@ -237,8 +129,8 @@ def _resolve_workers() -> int | None:
     return None
 
 
-def main():
-    """Run the AgentServer application, binding to the platform-provided port."""
+def main() -> None:
+    """Run the AgentServer application on the platform-provided port."""
     port = _resolve_port()
     if port is not None:
         sys.argv += ["--port", str(port)]

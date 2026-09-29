@@ -10,7 +10,9 @@ As services gained protocol-based dependencies (runtime auth, orchestration, mes
 
 ## Decision
 
-Use `src/aiserver/bootstrap/container.py` as the single composition root. This module builds three nested dependency containers and exposes a single entrypoint for invocation handling:
+Use `src/aiserver/bootstrap/container.py` as the single composition root. This
+module builds infrastructure adapters and application services, then exposes a
+single execution-service entrypoint to delivery handlers:
 
 ```
 AppDependencyContainer
@@ -31,18 +33,20 @@ AppDependencyContainer
 │   ├── subagent_policy_filter
 │   ├── message_bus: MessageBus
 │   └── delegation_task_bus: AgentTaskBus | None
-├── HandlerDependencies
-│   ├── runtime_auth_builder
-│   ├── mcp_connector
-│   ├── orchestrator_factory
-│   ├── guardrails_evaluator
-│   ├── input_guardrails_evaluator
-│   ├── message_bus: MessageBus
-│   └── memory: ConversationMemory
+├── GovernedAgentService
+│   └── GovernedAgentServiceDependencies
+│       ├── runtime auth, routing, model selection, and orchestration factories
+│       ├── input and response guardrails
+│       ├── AgentRunner
+│       ├── ConversationMemory
+│       └── MessageBus
+├── app_client: AsyncDatabricksOpenAI
+├── message_bus: MessageBus
 └── delegation_task_bus: AgentTaskBus
 ```
 
-Handlers receive only `HandlerDependencies` — a flat, frozen dataclass of composed callables.
+MLflow handlers translate delivery contracts and call `GovernedAgentService`;
+they do not receive a parallel dependency container or own execution policy.
 
 ## Alternatives Considered
 
@@ -67,10 +71,10 @@ Handlers receive only `HandlerDependencies` — a flat, frozen dataclass of comp
 
 ## Implementation Notes
 
-- Composition root: [src/aiserver/bootstrap/container.py](../../src/aiserver/bootstrap/container.py) (`build_dependency_container`, `get_handler_dependencies`)
+- Composition root: [src/aiserver/bootstrap/container.py](../../src/aiserver/bootstrap/container.py) (`build_dependency_container`, `get_execution_service`)
 - Protocol contracts: [src/aiserver/application/ports/](../../src/aiserver/application/ports)
 - Concrete direct-tool adapters and default registry: [src/aiserver/application/adapters/tools.py](../../src/aiserver/application/adapters/tools.py)
-- Handler consumption: [src/aiserver/api/invocations.py](../../src/aiserver/api/invocations.py) (`HANDLER_DEPS = get_handler_dependencies()`)
+- Handler consumption: [src/aiserver/api/invocations.py](../../src/aiserver/api/invocations.py) (framework translation into `GovernedExecutionRequest`)
 - All containers use frozen dataclasses — no runtime mutation after construction.
 
 The default adapter registry is an application-level implementation of the `ToolAdapter` and `ToolRegistry` ports. `build_subagent_tools()` uses it for direct serving-endpoint and App function tools; MCP server construction, Lakebase tool construction, and task-bus delegation remain dedicated runtime paths.

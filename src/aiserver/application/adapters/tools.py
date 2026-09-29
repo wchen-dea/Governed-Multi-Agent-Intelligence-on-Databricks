@@ -6,9 +6,9 @@ from collections.abc import Callable
 from time import monotonic
 from typing import Any, cast
 
-from agents.exceptions import UserError
 from databricks_openai import AsyncDatabricksOpenAI
 
+from aiserver.application.exceptions import GovernedExecutionError
 from aiserver.application.ports.tools import ToolAdapter
 from aiserver.contracts.responses import ToolExecutionResult
 from aiserver.contracts.subagents import SubagentConfig
@@ -207,7 +207,7 @@ class AppToolAdapter:
         if not subagent.is_obo:
             return app_client
         if obo_client is None:
-            raise UserError(
+            raise GovernedExecutionError(
                 "This tool requires user authorization (OBO), but no forwarded "
                 "access token was provided. Re-authenticate and try again."
             )

@@ -4,6 +4,7 @@ bundle:
 include:
 - resources/app_creation_job.yml
 - resources/evaluation_job.yml
+- resources/delegation_worker_job.yml
 - resources/resource_cleanup_job.yml
 - resources/semantics_jobs.yml
 - resources/hitl_snapshot_job.yml
@@ -186,6 +187,33 @@ variables:
   memory_pg_user:
     description: Lakebase Postgres role for conversation/persona memory persistence
     default: ""
+  route_affinity_backend:
+    description: Conversation route affinity backend (disabled, memory, or lakebase)
+    default: disabled
+  route_affinity_project_id:
+    description: Lakebase project ID for shared route affinity
+    default: ""
+  route_affinity_branch_id:
+    description: Lakebase branch ID for shared route affinity
+    default: ""
+  route_affinity_endpoint_id:
+    description: Lakebase endpoint ID for shared route affinity
+    default: ""
+  route_affinity_database:
+    description: Lakebase database name for shared route affinity
+    default: ""
+  route_affinity_pg_host:
+    description: Lakebase Postgres host for shared route affinity
+    default: ""
+  route_affinity_pg_user:
+    description: Lakebase Postgres role for shared route affinity
+    default: ""
+  route_affinity_table:
+    description: Lakebase table for expiring conversation route affinity
+    default: agent_route_affinity
+  route_affinity_ttl_seconds:
+    description: Route affinity lifetime in seconds
+    default: "600"
   uc_audit_warehouse_id:
     description: SQL warehouse id used for UC audit table writes
     default: ""
@@ -237,12 +265,12 @@ variables:
   agent_task_schema:
     description: Unity Catalog schema for delegation task tables
     default: ""
-  agent_task_worker_enabled:
-    description: Whether the backend starts the durable delegation worker
-    default: "false"
   agent_task_worker_poll_seconds:
     description: Idle poll interval in seconds for the durable delegation worker
     default: "1"
+  delegation_worker_pause_status:
+    description: Continuous delegation worker state (PAUSED or UNPAUSED)
+    default: PAUSED
   app_telemetry_logs_table:
     description: Unity Catalog table for Databricks Apps telemetry export
     default: quickstart_catalog.multi_agent_schema.app_logs

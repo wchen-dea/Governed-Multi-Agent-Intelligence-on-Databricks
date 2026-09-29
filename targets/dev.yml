@@ -49,6 +49,14 @@ targets:
       memory_database: "agent_memory"
       memory_pg_host: "ep-falling-cake-d1j29nc5.database.us-west-2.cloud.databricks.com"
       memory_pg_user: "718a84e4-78d1-4bb5-bca3-ddbc603c2dc6"
+      route_affinity_backend: "lakebase"
+      route_affinity_project_id: "ore"
+      route_affinity_branch_id: "production"
+      route_affinity_endpoint_id: "primary"
+      route_affinity_database: "agent_memory"
+      route_affinity_pg_host: "ep-falling-cake-d1j29nc5.database.us-west-2.cloud.databricks.com"
+      route_affinity_pg_user: "718a84e4-78d1-4bb5-bca3-ddbc603c2dc6"
+      route_affinity_table: "agent_route_affinity"
       lakebase_sql_warehouse_id: "ep-falling-cake-d1j29nc5"
       message_bus_backend: uc_table
       message_bus_topic: agent-lifecycle-events
@@ -65,5 +73,5 @@ targets:
       agent_task_warehouse_id: "b20f70f71c2f52e2"
       agent_task_catalog: "quickstart_catalog"
       agent_task_schema: "multi_agent_schema"
-      agent_task_worker_enabled: "true"
       agent_task_worker_poll_seconds: "1"
+      delegation_worker_pause_status: UNPAUSED

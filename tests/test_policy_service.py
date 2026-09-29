@@ -1,12 +1,11 @@
 from types import SimpleNamespace
 
-from mlflow.types.responses import ResponsesAgentRequest
-
 from aiserver.application.auth.policy import (
     build_policy_context,
     filter_subagents_by_policy,
 )
 from aiserver.config.settings import get_settings
+from aiserver.contracts.execution import ExecutionMessage, GovernedExecutionRequest
 from aiserver.contracts.subagents import SubagentConfig
 
 
@@ -34,9 +33,10 @@ def _subagents() -> list[SubagentConfig]:
 
 
 def test_build_policy_context_reads_persona():
-    request = ResponsesAgentRequest(
-        input=[],
-        custom_inputs={"persona": "Analyst", "tool": "query_public_docs", "confidence": 0.9},
+    request = GovernedExecutionRequest(
+        messages=(ExecutionMessage(role="user", content="test request"),),
+        persona="Analyst",
+        metadata={"tool": "query_public_docs", "confidence": 0.9},
     )
     identity_ctx = SimpleNamespace(has_user_identity=True)
 
@@ -51,7 +51,9 @@ def test_build_policy_context_reads_persona():
 def test_build_policy_context_uses_default_persona(monkeypatch):
     monkeypatch.setenv("DEFAULT_REQUEST_PERSONA", "manager")
     get_settings.cache_clear()
-    request = ResponsesAgentRequest(input=[])
+    request = GovernedExecutionRequest(
+        messages=(ExecutionMessage(role="user", content="test request"),)
+    )
     identity_ctx = SimpleNamespace(has_user_identity=True)
 
     ctx = build_policy_context(request, identity_ctx)

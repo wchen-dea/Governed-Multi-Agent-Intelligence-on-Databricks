@@ -3,9 +3,10 @@
 from collections.abc import Iterable
 from typing import Any
 
-from agents.exceptions import UserError
 from agents.items import TResponseInputItem
 from openai.types.responses.easy_input_message_param import EasyInputMessageParam
+
+from aiserver.application.exceptions import GovernedExecutionError
 
 
 def to_messages(input_items: Iterable[Any]) -> list[TResponseInputItem]:
@@ -40,17 +41,19 @@ def to_messages(input_items: Iterable[Any]) -> list[TResponseInputItem]:
     return messages
 
 
-def extract_mcp_errors(exc: Exception) -> list[UserError]:
-    """Extract UserError instances from direct exceptions or ExceptionGroups.
+def extract_mcp_errors(exc: Exception) -> list[GovernedExecutionError]:
+    """Extract governed execution errors from an exception or exception group.
 
     Args:
         exc: Raised exception captured from handler execution.
 
     Returns:
-        List of UserError instances found within the exception.
+        List of governed execution errors found within the exception.
     """
-    if isinstance(exc, UserError):
+    if isinstance(exc, GovernedExecutionError):
         return [exc]
     if isinstance(exc, BaseExceptionGroup):
-        return [err for err in exc.exceptions if isinstance(err, UserError)]
+        return [
+            err for err in exc.exceptions if isinstance(err, GovernedExecutionError)
+        ]
     return []

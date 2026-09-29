@@ -1,0 +1,1 @@
+"""Standalone delegation-worker process."""

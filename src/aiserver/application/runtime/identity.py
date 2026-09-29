@@ -4,12 +4,13 @@ These helpers centralize request-scoped Databricks client construction,
 forwarded-token handling, and stream event normalization used by the backend.
 """
 
+import hashlib
 import logging
 from dataclasses import dataclass
 
 from databricks.sdk import WorkspaceClient
-from mlflow.genai.agent_server import get_request_headers
-from mlflow.types.responses import ResponsesAgentRequest
+
+from aiserver.contracts.execution import GovernedExecutionRequest
 
 FORWARDED_ACCESS_TOKEN_HEADER = "x-forwarded-access-token"
 logger = logging.getLogger(__name__)
@@ -28,24 +29,18 @@ class RequestIdentityContext:
         return bool(self.user_workspace_client and self.forwarded_access_token)
 
 
-def get_session_id(request: ResponsesAgentRequest) -> str | None:
+def get_session_id(
+    request: GovernedExecutionRequest,
+    forwarded_access_token: str | None = None,
+) -> str | None:
     """Extract a stable session identifier from request context or custom inputs."""
-    if request.context and request.context.conversation_id:
-        return request.context.conversation_id
-    if request.custom_inputs and isinstance(request.custom_inputs, dict):
-        sid = request.custom_inputs.get("session_id")
-        if sid:
-            return sid
-    # Fallback: derive a stable session ID from the forwarded access token header.
-    import hashlib
-
-    try:
-        headers = get_request_headers() or {}
-        fwd_token = headers.get("x-forwarded-access-token", "")
-        if fwd_token:
-            return hashlib.sha256(fwd_token[:64].encode()).hexdigest()[:24]
-    except Exception:
-        pass
+    if request.conversation_id:
+        return request.conversation_id
+    sid = request.metadata.get("session_id")
+    if isinstance(sid, str) and sid.strip():
+        return sid.strip()
+    if forwarded_access_token:
+        return hashlib.sha256(forwarded_access_token[:64].encode()).hexdigest()[:24]
     return None
 
 
@@ -67,9 +62,9 @@ def build_mcp_url(path: str, workspace_client: WorkspaceClient | None = None) ->
     return f"{hostname}{path}"
 
 
-def get_user_workspace_client() -> WorkspaceClient:
+def get_user_workspace_client(forwarded_access_token: str | None) -> WorkspaceClient:
     """Create a workspace client authenticated with the forwarded user token."""
-    token = get_forwarded_access_token()
+    token = forwarded_access_token.strip() if forwarded_access_token else None
     if not token:
         raise ValueError(
             f"Missing required forwarded access token header: {FORWARDED_ACCESS_TOKEN_HEADER}"
@@ -77,20 +72,12 @@ def get_user_workspace_client() -> WorkspaceClient:
     return WorkspaceClient(token=token, auth_type="pat")
 
 
-def get_forwarded_access_token() -> str | None:
-    """Read the forwarded user token from inbound request headers."""
-    headers = get_request_headers() or {}
-    token = headers.get(FORWARDED_ACCESS_TOKEN_HEADER)
-    if not token:
-        return None
-    stripped = token.strip()
-    return stripped or None
-
-
-def build_request_identity_context() -> RequestIdentityContext:
+def build_request_identity_context(
+    forwarded_access_token: str | None = None,
+) -> RequestIdentityContext:
     """Build the request-scoped app and optional user identity clients."""
     app_workspace_client = WorkspaceClient()
-    token = get_forwarded_access_token()
+    token = forwarded_access_token.strip() if forwarded_access_token else None
     user_workspace_client = WorkspaceClient(token=token, auth_type="pat") if token else None
     return RequestIdentityContext(
         app_workspace_client=app_workspace_client,

@@ -132,7 +132,9 @@ class AppSettings {
 class AppDependencyContainer {
     +orchestrator: OrchestratorDependencies
     +runtime_auth: RuntimeAuthDependencies
-    +handlers: HandlerDependencies
+    +execution_service: GovernedAgentService
+    +app_client: AsyncDatabricksOpenAI
+    +message_bus: MessageBus
     +delegation_task_bus: AgentTaskBus
 }
 
@@ -159,12 +161,15 @@ class RuntimeAuthDependencies {
     +delegation_task_bus: AgentTaskBus?
 }
 
-class HandlerDependencies {
+class GovernedAgentService {
+    +invoke(request) GovernedExecutionResult
+    +stream(request) AsyncIterator~ExecutionStreamEvent~
+}
+class GovernedAgentServiceDependencies {
     +runtime_auth_builder
-    +mcp_connector
-    +orchestrator_factory
-    +guardrails_evaluator
-    +input_guardrails_evaluator
+    +route_planner
+    +model_selector
+    +runner: AgentRunner
     +message_bus: MessageBus
     +memory: ConversationMemory
 }
@@ -231,7 +236,7 @@ class DefaultToolRegistry {
 
 AppDependencyContainer o-- OrchestratorDependencies
 AppDependencyContainer o-- RuntimeAuthDependencies
-AppDependencyContainer o-- HandlerDependencies
+AppDependencyContainer o-- GovernedAgentService
 AppDependencyContainer ..> AppSettings
 
 OrchestratorDependencies ..> MessageBus
@@ -253,7 +258,8 @@ RuntimeAuthDependencies ..> McpServersBuilder
 RuntimeAuthDependencies ..> LakebaseToolsBuilder
 RuntimeAuthDependencies ..> MessageBus
 
-HandlerDependencies ..> MessageBus
+GovernedAgentService o-- GovernedAgentServiceDependencies
+GovernedAgentServiceDependencies ..> MessageBus
 ```
 
 ## 3. Handler Runtime Pipeline Stages

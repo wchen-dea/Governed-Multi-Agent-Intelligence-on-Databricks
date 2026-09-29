@@ -61,7 +61,6 @@ class AppSettings(BaseSettings):
     agent_task_schema: str = ""
     agent_task_table: str = "agent_delegation_tasks"
     agent_task_event_table: str = "agent_delegation_events"
-    agent_task_worker_enabled: bool = False
     agent_task_worker_poll_seconds: float = Field(1.0, gt=0.0)
     memory_backend: str = "disabled"
     memory_project_id: str = ""
@@ -74,6 +73,15 @@ class AppSettings(BaseSettings):
     memory_preference_table: str = "agent_preferences"
     memory_max_turns: int = Field(20, ge=0)
     memory_fail_open: bool = True
+    route_affinity_backend: str = "disabled"
+    route_affinity_project_id: str = ""
+    route_affinity_branch_id: str = ""
+    route_affinity_endpoint_id: str = ""
+    route_affinity_database: str = ""
+    route_affinity_pg_host: str = ""
+    route_affinity_pg_user: str = ""
+    route_affinity_table: str = "agent_route_affinity"
+    route_affinity_ttl_seconds: float = Field(600.0, gt=0.0)
     approval_backend: str = "memory"
     approval_warehouse_id: str = ""
     approval_catalog: str = ""

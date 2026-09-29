@@ -8,10 +8,9 @@ enforce and audit.
 from dataclasses import dataclass
 from typing import Literal
 
-from mlflow.types.responses import ResponsesAgentRequest
-
 from aiserver.application.runtime.identity import RequestIdentityContext
 from aiserver.config.settings import get_settings
+from aiserver.contracts.execution import GovernedExecutionRequest
 from aiserver.contracts.subagents import SubagentConfig
 
 
@@ -60,7 +59,7 @@ class PolicyDecision:
 
 
 def build_policy_context(
-    request: ResponsesAgentRequest,
+    request: GovernedExecutionRequest,
     identity_ctx: RequestIdentityContext,
 ) -> PolicyContext:
     """Build the normalized policy context for a request.
@@ -81,17 +80,14 @@ def build_policy_context(
     default_persona = get_settings().default_request_persona.strip().lower() or None
     requested_tool: str | None = None
     request_confidence: float | None = None
-    custom_inputs = request.custom_inputs
-    if isinstance(custom_inputs, dict):
-        raw = custom_inputs.get("persona")
-        if isinstance(raw, str) and raw.strip():
-            persona = raw.strip().lower()
-        raw_tool = custom_inputs.get("tool")
-        if isinstance(raw_tool, str) and raw_tool.strip():
-            requested_tool = raw_tool.strip()
-        raw_confidence = custom_inputs.get("confidence")
-        if isinstance(raw_confidence, (int, float)):
-            request_confidence = float(raw_confidence)
+    if request.persona:
+        persona = request.persona.strip().lower()
+    raw_tool = request.metadata.get("tool")
+    if isinstance(raw_tool, str) and raw_tool.strip():
+        requested_tool = raw_tool.strip()
+    raw_confidence = request.metadata.get("confidence")
+    if isinstance(raw_confidence, (int, float)):
+        request_confidence = float(raw_confidence)
 
     if persona is None:
         persona = default_persona

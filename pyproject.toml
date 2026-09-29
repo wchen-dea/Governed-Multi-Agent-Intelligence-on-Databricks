@@ -307,6 +307,7 @@ runtime-serve-app = "aiserver.api.server:main"
 runtime-serve-backend = "aiserver.api.server:main"
 runtime-preflight = "operations.preflight:main"
 runtime-build-source = "operations.prepare_app_source:main"
+delegation-worker = "aiserver.worker.main:main"
 # Assistant and operations: evaluation, discovery, setup, permissions, and diagnostics.
 assistant-bootstrap = "operations.quickstart:main"
 assistant-evaluate = "operations.evaluate_agent:evaluate"

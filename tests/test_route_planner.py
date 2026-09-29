@@ -1,5 +1,9 @@
+from datetime import UTC, datetime, timedelta
+
 from aiserver.application.orchestration.routing import build_route_plan
+from aiserver.contracts.execution import RouteAffinity
 from aiserver.contracts.subagents import SubagentConfig
+from aiserver.infrastructure.persistence.routing import InMemoryRouteAffinityStore
 
 
 def test_route_planner_selects_best_capability_match():
@@ -136,6 +140,7 @@ def test_route_planner_keeps_all_tools_for_weak_matches():
 
 
 def test_route_planner_sticky_route_reused_for_weak_followup():
+    affinity_store = InMemoryRouteAffinityStore()
     subagents = [
         SubagentConfig(
             name="flink_support_agent",
@@ -150,6 +155,7 @@ def test_route_planner_sticky_route_reused_for_weak_followup():
         "Flink streaming job has increasing consumer lag",
         subagents,
         conversation_id="conv-sticky-1",
+        affinity_store=affinity_store,
     )
     assert first_plan.reason == "capability_match"
     assert first_plan.candidates == ("flink_support_agent",)
@@ -158,6 +164,7 @@ def test_route_planner_sticky_route_reused_for_weak_followup():
         "any recommendations on tuning",
         subagents,
         conversation_id="conv-sticky-1",
+        affinity_store=affinity_store,
     )
 
     assert followup_plan.reason == "sticky_route"
@@ -166,6 +173,7 @@ def test_route_planner_sticky_route_reused_for_weak_followup():
 
 
 def test_route_planner_sticky_route_ignored_when_subagent_no_longer_allowed():
+    affinity_store = InMemoryRouteAffinityStore()
     subagents = [
         SubagentConfig(
             name="flink_support_agent",
@@ -180,16 +188,19 @@ def test_route_planner_sticky_route_ignored_when_subagent_no_longer_allowed():
         "Flink streaming job has increasing consumer lag",
         subagents,
         conversation_id="conv-sticky-2",
+        affinity_store=affinity_store,
     )
 
     followup_plan, followup_selected = build_route_plan(
         "any recommendations on tuning",
         [subagents[1]],
         conversation_id="conv-sticky-2",
+        affinity_store=affinity_store,
     )
 
     assert followup_plan.reason == "ambiguous_fallback"
     assert followup_selected == [subagents[1]]
+    assert affinity_store.get("conv-sticky-2") is None
 
 
 def test_route_planner_no_sticky_route_without_conversation_id():
@@ -209,3 +220,63 @@ def test_route_planner_no_sticky_route_without_conversation_id():
 
     assert followup_plan.reason == "ambiguous_fallback"
     assert followup_selected == subagents
+
+
+def test_route_planner_shares_affinity_across_service_instances():
+    affinity_store = InMemoryRouteAffinityStore()
+    subagents = [
+        SubagentConfig(
+            name="flink_support_agent",
+            kind="mcp",
+            mcp_url="/flink",
+            description="flink streaming troubleshooting support",
+        ),
+        SubagentConfig(name="sales", kind="app", endpoint="sales", description="revenue"),
+    ]
+
+    def first_instance(question):
+        return build_route_plan(
+            question,
+            subagents,
+            "conv-shared",
+            affinity_store=affinity_store,
+        )
+
+    def second_instance(question):
+        return build_route_plan(
+            question,
+            subagents,
+            "conv-shared",
+            affinity_store=affinity_store,
+        )
+
+    first_instance("Flink streaming consumer lag")
+    plan, selected = second_instance("what should I tune")
+
+    assert plan.reason == "sticky_route"
+    assert [subagent.name for subagent in selected] == ["flink_support_agent"]
+
+
+def test_route_planner_ignores_expired_affinity():
+    affinity_store = InMemoryRouteAffinityStore()
+    affinity_store.put(
+        RouteAffinity(
+            conversation_id="conv-expired",
+            candidate_names=("sales",),
+            expires_at=datetime.now(UTC) - timedelta(seconds=1),
+        )
+    )
+    subagents = [
+        SubagentConfig(name="sales", kind="app", endpoint="sales", description="revenue")
+    ]
+
+    plan, selected = build_route_plan(
+        "hello",
+        subagents,
+        "conv-expired",
+        affinity_store=affinity_store,
+    )
+
+    assert plan.reason == "ambiguous_fallback"
+    assert selected == subagents
+    assert affinity_store.get("conv-expired") is None

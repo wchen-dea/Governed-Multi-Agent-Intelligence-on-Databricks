@@ -113,4 +113,4 @@ flowchart LR
 
 ## Current Alignment
 
-The backend lifespan owns the optional bounded delegation worker. UC delegation state is fail-closed, uses leases and dead-letter states, and requires explicit warehouse/schema/table permissions. Auth correctness, safety, and groundedness block promotion; tool-call accuracy remains monitored but non-blocking while nested tool spans cannot be scored reliably.
+A continuous singleton Lakeflow Job owns delegation execution; the App lifespan owns only web resources. UC delegation state is fail-closed, uses leases and dead-letter states, and requires explicit warehouse/schema/table permissions. Auth correctness, safety, and groundedness block promotion; tool-call accuracy remains monitored but non-blocking while nested tool spans cannot be scored reliably.
