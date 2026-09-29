@@ -93,6 +93,18 @@ def create_web_application(
     return WebApplication(agent_server=agent_server, app=app)
 
 
+def create_web_app(
+    dependencies: WebAppDependencies,
+    *,
+    agent_server_factory: Callable[..., AgentServer] = AgentServer,
+) -> FastAPI:
+    """Construct and return the FastAPI application compatibility surface."""
+    return create_web_application(
+        dependencies,
+        agent_server_factory=agent_server_factory,
+    ).app
+
+
 def _register_ui_routes(app: FastAPI, ui_dist_dir: Path) -> None:
     assets_dir = ui_dist_dir / "assets"
     if assets_dir.exists():

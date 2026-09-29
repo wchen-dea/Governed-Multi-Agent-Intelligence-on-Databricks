@@ -19,7 +19,10 @@ from aiserver.application.runtime.identity import (
     RequestIdentityContext,
     build_request_identity_context,
 )
-from aiserver.config.settings import AppSettings, get_settings
+from aiserver.config.settings import (
+    AppSettings,
+    get_settings,
+)
 from aiserver.contracts.delegation import DelegationTask
 from aiserver.contracts.subagents import SUBAGENTS, SubagentConfig
 from aiserver.infrastructure.databricks.lakebase import connect_lakebase
@@ -45,9 +48,7 @@ def build_worker_dependencies(settings: AppSettings | None = None) -> WorkerDepe
     """Compose worker-only dependencies without constructing the web runtime."""
     resolved_settings = settings or get_settings()
     if resolved_settings.agent_task_backend.strip().lower() != "uc_table":
-        raise ValueError(
-            "Standalone delegation worker requires AGENT_TASK_BACKEND=uc_table"
-        )
+        raise ValueError("Standalone delegation worker requires AGENT_TASK_BACKEND=uc_table")
     message_bus = default_message_bus(resolved_settings)
     orchestrator = OrchestratorDependencies(
         message_bus=message_bus,
@@ -79,8 +80,7 @@ class DelegationWorkerProcess:
         self._worker_id = worker_id
         self._identity_context_provider = identity_context_provider
 
-    async def run(self, stop_event: asyncio.Event, *, once: bool = False) -> int:
-        """Process one task or poll continuously until cancellation."""
+    async def _build_worker(self) -> AgentTaskWorker:
         executors = build_lakebase_delegation_executors(
             self._deps.subagents,
             self._identity_context_provider(),
@@ -108,13 +108,17 @@ class DelegationWorkerProcess:
                 raise ValueError("delegation_target_unavailable")
             return await executor(task.payload)
 
-        worker = AgentTaskWorker(
+        return AgentTaskWorker(
             worker_id=self._worker_id,
             task_bus=self._deps.task_bus,
             subagents=self._deps.subagents,
             executor=execute,
             message_bus=self._deps.message_bus,
         )
+
+    async def run(self, stop_event: asyncio.Event, *, once: bool = False) -> int:
+        """Process one task or poll continuously until cancellation."""
+        worker = await self._build_worker()
         if once:
             return await worker.run_once()
         await worker.run_forever(
@@ -122,6 +126,17 @@ class DelegationWorkerProcess:
             self._deps.settings.agent_task_worker_poll_seconds,
         )
         return 0
+
+    async def run_batch(self, stop_event: asyncio.Event) -> int:
+        """Run a bounded batch and return non-zero when task execution fails."""
+        del stop_event
+        worker = await self._build_worker()
+        result = await worker.run_batch(
+            max_tasks=self._deps.settings.agent_task_worker_max_tasks,
+            idle_timeout_seconds=self._deps.settings.agent_task_worker_idle_timeout_seconds,
+            poll_seconds=self._deps.settings.agent_task_worker_poll_seconds,
+        )
+        return 1 if result.failed else 0
 
     def close(self) -> None:
         """Flush a closeable worker message bus."""
@@ -140,6 +155,8 @@ def _settings_from_args(args: argparse.Namespace) -> AppSettings:
             "agent_task_catalog": args.catalog,
             "agent_task_schema": args.schema,
             "agent_task_worker_poll_seconds": args.poll_seconds,
+            "agent_task_worker_max_tasks": args.max_tasks,
+            "agent_task_worker_idle_timeout_seconds": args.idle_timeout_seconds,
         }.items()
         if value is not None
     }
@@ -161,7 +178,9 @@ async def _run(args: argparse.Namespace) -> int:
         except NotImplementedError:
             pass
     try:
-        return await process.run(stop_event, once=args.once)
+        if args.once:
+            return await process.run(stop_event, once=True)
+        return await process.run_batch(stop_event)
     finally:
         process.close()
 
@@ -176,4 +195,6 @@ def main() -> int:
     parser.add_argument("--catalog")
     parser.add_argument("--schema")
     parser.add_argument("--poll-seconds", type=float)
+    parser.add_argument("--max-tasks", type=int)
+    parser.add_argument("--idle-timeout-seconds", type=float)
     return asyncio.run(_run(parser.parse_args()))

@@ -25,7 +25,11 @@ from aiserver.bootstrap.container import (
     get_app_dependency_container,
 )
 from aiserver.bootstrap.web_lifecycle import WebProcessLifecycle
-from aiserver.config.settings import AppSettings, get_settings
+from aiserver.config.settings import (
+    AppSettings,
+    get_settings,
+    validate_durable_runtime_configuration,
+)
 from aiserver.contracts.subagents import SUBAGENTS
 from aiserver.infrastructure.observability.logging import configure_logging
 from aiserver.infrastructure.persistence.approvals import default_approval_repository
@@ -54,6 +58,7 @@ def build_web_dependencies(
     """Compose default web dependencies with injectable test seams."""
     resolved_container = container or get_app_dependency_container()
     resolved_settings = settings or get_settings()
+    validate_durable_runtime_configuration(resolved_settings)
     resolved_approval_service = approval_service or ApprovalService(
         repository=default_approval_repository(),
         task_bus=resolved_container.delegation_task_bus,

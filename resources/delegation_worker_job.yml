@@ -24,6 +24,10 @@ resources:
           - ${var.agent_task_schema}
           - --poll-seconds
           - ${var.agent_task_worker_poll_seconds}
+          - --max-tasks
+          - ${var.agent_task_worker_max_tasks}
+          - --idle-timeout-seconds
+          - ${var.agent_task_worker_idle_timeout_seconds}
       environments:
       - environment_key: worker_env
         spec:

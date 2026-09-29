@@ -5,7 +5,7 @@ import asyncio
 import pytest
 
 from aiserver.application.orchestration.agent import OrchestratorDependencies
-from aiserver.config.settings import AppSettings
+from aiserver.config.settings import AppSettings, validate_durable_runtime_configuration
 from aiserver.contracts.delegation import DelegationTask
 from aiserver.contracts.subagents import SubagentConfig
 from aiserver.infrastructure.persistence.tasks import InMemoryAgentTaskBus
@@ -104,3 +104,12 @@ def test_worker_process_executes_one_durable_task_and_closes_bus(monkeypatch):
         assert message_bus.closed is True
 
     asyncio.run(run())
+
+
+def test_production_requires_durable_correctness_backends():
+    with pytest.raises(ValueError, match="Durable backends are required"):
+        validate_durable_runtime_configuration(AppSettings(deployment_environment="production"))
+
+
+def test_local_runtime_allows_in_memory_backends():
+    validate_durable_runtime_configuration(AppSettings(deployment_environment="local"))

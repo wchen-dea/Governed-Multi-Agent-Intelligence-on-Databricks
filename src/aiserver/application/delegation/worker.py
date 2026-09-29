@@ -2,6 +2,8 @@
 
 import asyncio
 from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
+from time import monotonic
 from typing import Any
 
 from aiserver.application.delegation.policy import (
@@ -11,6 +13,14 @@ from aiserver.application.ports.audit import MessageBus
 from aiserver.application.ports.tasks import AgentTaskBus
 from aiserver.contracts.delegation import DelegationResult, DelegationTask
 from aiserver.contracts.subagents import SubagentConfig
+
+
+@dataclass(frozen=True)
+class WorkerBatchResult:
+    """Summary of a bounded worker batch."""
+
+    processed: int
+    failed: int
 
 
 class AgentTaskWorker:
@@ -29,6 +39,7 @@ class AgentTaskWorker:
         self._subagents = subagents
         self._executor = executor
         self._message_bus = message_bus
+        self._last_run_failed = 0
 
     async def run_once(self, task_id: str | None = None) -> int:
         """Process one named task or the next available task."""
@@ -61,6 +72,7 @@ class AgentTaskWorker:
             try:
                 output = await self._executor(task)
             except Exception as exc:
+                self._last_run_failed += 1
                 record = await self._task_bus.fail(
                     task.task_id, self._worker_id, type(exc).__name__
                 )
@@ -85,6 +97,37 @@ class AgentTaskWorker:
                 {"task_id": task.task_id, "correlation_id": task.correlation_id},
             )
         return len(claimed)
+
+    async def run_batch(
+        self,
+        *,
+        max_tasks: int,
+        idle_timeout_seconds: float,
+        poll_seconds: float = 1.0,
+    ) -> WorkerBatchResult:
+        """Process up to ``max_tasks`` and stop after an idle timeout."""
+        if max_tasks < 1:
+            raise ValueError("max_tasks must be at least 1")
+        if idle_timeout_seconds <= 0:
+            raise ValueError("idle_timeout_seconds must be positive")
+
+        processed = 0
+        failed = 0
+        idle_since = monotonic()
+        self._last_run_failed = 0
+        while processed < max_tasks:
+            before_failed = self._last_run_failed
+            claimed = await self.run_once()
+            processed += claimed
+            failed += self._last_run_failed - before_failed
+            if claimed:
+                idle_since = monotonic()
+                continue
+            remaining = idle_timeout_seconds - (monotonic() - idle_since)
+            if remaining <= 0:
+                break
+            await asyncio.sleep(min(max(poll_seconds, 0.1), remaining))
+        return WorkerBatchResult(processed=processed, failed=failed)
 
     async def run_forever(self, stop_event: asyncio.Event, poll_seconds: float = 1.0) -> None:
         """Continuously claim work until application shutdown signals cancellation."""

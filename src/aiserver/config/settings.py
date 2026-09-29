@@ -11,6 +11,17 @@ class AppSettings(BaseSettings):
 
     model_config = SettingsConfigDict(case_sensitive=False, extra="ignore", populate_by_name=True)
 
+    deployment_environment: str = Field(
+        "local",
+        validation_alias=AliasChoices("DEPLOYMENT_ENVIRONMENT", "DATABRICKS_ENVIRONMENT"),
+    )
+    multi_instance_enabled: bool = Field(
+        False,
+        validation_alias=AliasChoices(
+            "MULTI_INSTANCE_ENABLED", "DATABRICKS_APP_MULTI_INSTANCE_ENABLED"
+        ),
+    )
+
     orchestrator_model: str = "databricks-gpt-5-6-luna"
     model_routing_enabled: bool = True
     model_routing_default_model: str = Field(
@@ -35,12 +46,8 @@ class AppSettings(BaseSettings):
     log_date_format: str = Field("%Y-%m-%d %H:%M:%S", validation_alias="BACKEND_LOG_DATE_FORMAT")
     message_bus_backend: str = "structured_logging"
     message_bus_topic: str = "agent-lifecycle-events"
-    message_bus_kafka_bootstrap_servers: str = Field(
-        "", validation_alias="KAFKA_BOOTSTRAP_SERVERS"
-    )
-    message_bus_kafka_client_id: str = Field(
-        "multiagent-app", validation_alias="KAFKA_CLIENT_ID"
-    )
+    message_bus_kafka_bootstrap_servers: str = Field("", validation_alias="KAFKA_BOOTSTRAP_SERVERS")
+    message_bus_kafka_client_id: str = Field("multiagent-app", validation_alias="KAFKA_CLIENT_ID")
     message_bus_rabbitmq_url: str = Field(
         "amqp://guest:guest@localhost:5672/", validation_alias="RABBITMQ_URL"
     )
@@ -62,6 +69,8 @@ class AppSettings(BaseSettings):
     agent_task_table: str = "agent_delegation_tasks"
     agent_task_event_table: str = "agent_delegation_events"
     agent_task_worker_poll_seconds: float = Field(1.0, gt=0.0)
+    agent_task_worker_max_tasks: int = Field(100, ge=1)
+    agent_task_worker_idle_timeout_seconds: float = Field(30.0, gt=0.0)
     memory_backend: str = "disabled"
     memory_project_id: str = ""
     memory_branch_id: str = ""
@@ -105,3 +114,28 @@ class AppSettings(BaseSettings):
 def get_settings() -> AppSettings:
     """Load backend runtime settings from environment variables."""
     return AppSettings()
+
+
+def validate_durable_runtime_configuration(settings: AppSettings) -> None:
+    """Reject process-local correctness state in production-like deployments."""
+    environment = settings.deployment_environment.strip().lower()
+    if environment not in {"prod", "production", "staging", "stage"} and not (
+        settings.multi_instance_enabled
+    ):
+        return
+
+    required_backends = {
+        "approval_backend": "uc_table",
+        "agent_task_backend": "uc_table",
+        "route_affinity_backend": "lakebase",
+    }
+    invalid = [
+        f"{field}={getattr(settings, field)!r} (expected {expected!r})"
+        for field, expected in required_backends.items()
+        if getattr(settings, field).strip().lower() != expected
+    ]
+    if invalid:
+        raise ValueError(
+            "Durable backends are required for production or multi-instance deployments: "
+            + ", ".join(invalid)
+        )
