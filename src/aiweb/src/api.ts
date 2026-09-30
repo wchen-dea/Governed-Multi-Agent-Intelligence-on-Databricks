@@ -38,14 +38,41 @@ function metadataFromEvent(
   const envelope = (event.response_envelope ?? event.governance) as
     Record<string, unknown> | undefined;
   if (!envelope || typeof envelope !== "object") return fallback;
-  const openaiRun = envelope.openai_run;
+  const openaiRun =
+    envelope.openai_run && typeof envelope.openai_run === "object"
+      ? (envelope.openai_run as Record<string, unknown>)
+      : null;
+  const selectedTools = Array.isArray(openaiRun?.selected_tool_names)
+    ? openaiRun.selected_tool_names.filter(
+        (item): item is string => typeof item === "string",
+      )
+    : [];
+  const unavailableTools = Array.isArray(openaiRun?.unavailable_tool_details)
+    ? openaiRun.unavailable_tool_details.filter(
+        (item): item is string => typeof item === "string",
+      )
+    : fallback.unavailableTools;
+  const tools = [...new Set([...fallback.tools, ...selectedTools])];
+  const sourceCategories = new Set(fallback.sourceCategories);
+  for (const tool of selectedTools) {
+    sourceCategories.add(
+      tool.startsWith("query_") ? "Serving Endpoint Tool" : "Function Tool",
+    );
+  }
   return {
     ...fallback,
+    routePlan:
+      envelope.route_plan && typeof envelope.route_plan === "object"
+        ? (envelope.route_plan as GovernanceMetadata["routePlan"])
+        : fallback.routePlan,
+    tools,
+    sourceCategories: Array.from(sourceCategories),
     guardrailReasons: Array.isArray(envelope.guardrail_reasons)
       ? envelope.guardrail_reasons.filter(
           (item): item is string => typeof item === "string",
         )
       : fallback.guardrailReasons,
+    unavailableTools,
     truncated: envelope.truncated === true,
     status:
       typeof envelope.status === "string" ? envelope.status : fallback.status,
@@ -53,10 +80,9 @@ function metadataFromEvent(
       envelope.approval_state && typeof envelope.approval_state === "object"
         ? (envelope.approval_state as HumanApprovalState)
         : fallback.approvalState,
-    openaiRun:
-      openaiRun && typeof openaiRun === "object"
-        ? (openaiRun as OpenAIAgentRunMetadata)
-        : fallback.openaiRun,
+    openaiRun: openaiRun
+      ? (openaiRun as OpenAIAgentRunMetadata)
+      : fallback.openaiRun,
   };
 }
 

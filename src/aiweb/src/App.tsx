@@ -386,6 +386,13 @@ export default function App() {
       ),
     [persona],
   );
+  const visibleGroups = useMemo(
+    () =>
+      persona
+        ? STARTER_GROUPS.filter((item) => item.persona === persona)
+        : STARTER_GROUPS,
+    [persona],
+  );
   const visibleStarters = useMemo(
     () => STARTERS.filter((starter) => starter.group === starterGroup),
     [starterGroup],
@@ -497,7 +504,7 @@ export default function App() {
       </section>
       <section className="starter-area">
         <div className="starter-tabs">
-          {STARTER_GROUPS.map(({ group, persona: owner }) => (
+          {visibleGroups.map(({ group, persona: owner }) => (
             <button
               key={group}
               type="button"

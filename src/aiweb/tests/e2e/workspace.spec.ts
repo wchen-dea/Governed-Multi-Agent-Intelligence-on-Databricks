@@ -24,15 +24,24 @@ test.beforeEach(async ({ page }) => {
           },
         ]
       : [
-          {
-            type: "response.output_item.added",
-            item: { type: "tool_call_output_item", name: "query_sales" },
-          },
           { type: "text_delta", delta: "First " },
           { type: "text_delta", delta: "answer." },
           {
             type: "metadata",
-            metadata: { status: "succeeded", truncated: false },
+            metadata: {
+              status: "succeeded",
+              truncated: false,
+              route_plan: {
+                candidates: ["sales"],
+                reason: "keyword_match",
+                confidence: 1,
+                requires_evidence: false,
+              },
+              openai_run: {
+                selected_tool_names: ["query_sales"],
+                unavailable_tool_details: [],
+              },
+            },
           },
         ];
     await route.fulfill({
@@ -165,16 +174,18 @@ test("renders incremental answer and run context on desktop", async ({
   await page.goto("/");
   await expect(page.getByRole("button", { name: "Commands" })).toHaveCount(0);
   await expect(
-    page.getByRole("button", { name: "DE", exact: true }),
+    page.getByRole("button", { name: "Flink Support", exact: true }),
   ).toBeVisible();
   await expect(page.getByRole("combobox", { name: "Persona" })).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "DE", exact: true }),
+    page.getByRole("button", { name: "Flink Support", exact: true }),
   ).toBeDisabled();
   await page
     .getByRole("combobox", { name: "Persona" })
     .selectOption("de-support");
-  await page.getByRole("button", { name: "DE", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Flink Support", exact: true })
+    .click();
   await expect(
     page.getByText("Flink streaming job has increasing consumer lag."),
   ).toBeVisible();
@@ -184,7 +195,7 @@ test("renders incremental answer and run context on desktop", async ({
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByText("First answer.")).toBeVisible();
   await page.getByText("Run context").click();
-  await expect(page.getByText("App identity", { exact: true })).toBeVisible();
+  await expect(page.getByText("query_sales", { exact: true })).toBeVisible();
 });
 
 test("limits starter tabs and queries to the selected persona", async ({
@@ -192,42 +203,45 @@ test("limits starter tabs and queries to the selected persona", async ({
 }) => {
   await page.goto("/");
   await expect(
-    page.getByRole("button", { name: "Operations", exact: true }),
+    page.getByRole("button", { name: "Sales Insights", exact: true }),
   ).toBeDisabled();
   await expect(
-    page.getByRole("button", { name: "Insights", exact: true }),
+    page.getByRole("button", { name: "Store Intervention", exact: true }),
   ).toBeDisabled();
   await expect(
-    page.getByRole("button", { name: "HITL", exact: true }),
+    page.getByRole("button", { name: "Product Index", exact: true }),
   ).toBeDisabled();
   await expect(
-    page.getByRole("button", { name: "DE", exact: true }),
+    page.getByRole("button", { name: "Flink Support", exact: true }),
   ).toBeDisabled();
 
   await page
     .getByRole("combobox", { name: "Persona" })
     .selectOption("executive");
   await expect(
-    page.getByRole("button", { name: "Insights", exact: true }),
+    page.getByRole("button", { name: "Sales Insights", exact: true }),
   ).toBeEnabled();
   await expect(
-    page.getByRole("button", { name: "HITL", exact: true }),
+    page.getByRole("button", { name: "Store Intervention", exact: true }),
   ).toBeEnabled();
   await expect(
-    page.getByRole("button", { name: "Operations", exact: true }),
-  ).toBeDisabled();
+    page.getByRole("button", { name: "Exec Cross-Agent", exact: true }),
+  ).toBeEnabled();
   await expect(
-    page.getByRole("button", { name: "DE", exact: true }),
-  ).toBeDisabled();
-  await expect(
-    page.getByText(
-      "What are the top 5 stores by appointment count, and are they also in the top 20 stores by sales?",
-    ),
-  ).toBeVisible();
-  await expect(
-    page.getByText(/Using the 2025-08-30 to 2026-04-30 time window/),
+    page.getByRole("button", { name: "Product Index", exact: true }),
   ).toHaveCount(0);
-  await page.getByRole("button", { name: "HITL", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Lakebase ODS", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Store Cross-Agent", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Flink Support", exact: true }),
+  ).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Store Intervention", exact: true })
+    .click();
   await expect(
     page.getByText("Find stores with strong revenue but declining CDI scores"),
   ).toBeVisible();

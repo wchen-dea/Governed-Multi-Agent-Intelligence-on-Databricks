@@ -51,8 +51,4 @@ class MlflowAgentRuntime:
                     yield {"type": "text_delta", "delta": delta}
             elif event_type == "response.governance":
                 yield {"type": "metadata", "metadata": raw.get("response_envelope", {})}
-            elif event_type not in {"response.progress", "response.output_item.added"}:
-                # Preserve useful runtime metadata without exposing runtime event names.
-                if event_type:
-                    yield {"type": "metadata", "metadata": raw}
         yield {"type": "completed"}
