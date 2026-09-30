@@ -227,7 +227,7 @@ customer delight is worsening — a pattern that historically precedes revenue c
 if unaddressed.
 
 ## Evidence
-Source: {REVENUE_TABLE}, {CDI_TABLE}, {PEER_SET_TABLE}, {STORE_DIMENSION_TABLE}
+Source: {SNAPSHOT_TABLE} (curated revenue, CDI, peer-set, and store snapshot)
 Query timestamp: {query_ts}
 Data freshness: Within 24h of query execution (governed by source pipeline SLA)
 
@@ -296,7 +296,7 @@ async def create_response(req: ResponsesRequest) -> ResponsesResponse:
         no_results = (
             "No stores currently match the discovery criteria "
             "(top-quartile revenue with declining CDI trend).\n\n"
-            f"Source: {REVENUE_TABLE}, {CDI_TABLE} | Query: {query_ts}"
+            f"Source: {SNAPSHOT_TABLE} | Query: {query_ts}"
         )
         return _build_response(no_results, query_ts)
 

@@ -6,12 +6,10 @@ command:
 - --port
 - "8000"
 env:
-- name: REVENUE_TABLE
-  value: "dt_dev_platinum.enterprise.store_sales_performance"
-- name: CDI_TABLE
-  value: "dt_dev_gold.dwh.fct_cdi_daily"
-- name: PEER_SET_TABLE
-  value: "dt_dev_gold.dwh.brg_store_cluster_membership_group"
+- name: HITL_ENV
+  value: "dev"
+- name: SNAPSHOT_TABLE
+  value: "quickstart_catalog.multi_agent_schema.hitl_source_snapshot"
 - name: SQL_WAREHOUSE_ID
   value: "b20f70f71c2f52e2"
 - name: TREND_WINDOW_DAYS
