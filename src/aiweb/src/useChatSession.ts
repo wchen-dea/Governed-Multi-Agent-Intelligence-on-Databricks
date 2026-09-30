@@ -32,13 +32,13 @@ export function createWelcomeMessage(
     role: "assistant",
     content:
       "### Available Agents\n\n" +
-      "| Agent | Type | Description |\n| --- | --- | --- |\n" +
-      "| Sales Insights | Genie | Revenue trends, store performance, seasonal comparisons |\n" +
-      "| CDI Metrics | Genie | Customer Delight Index scores, promoter/detractor analysis |\n" +
-      "| Product Index | AI Search | Product catalog lookups by code, brand, or description |\n" +
-      "| Flink Support | AI Search | Flink troubleshooting, configuration guidance, best practices |\n" +
-      "| Store Intervention | Databricks App | Human-in-the-loop store risk review and intervention planning |\n" +
-      "| Lakebase ODS | Lakebase | Operational data — appointments, orders, invoices, etc. |\n\n" +
+      "| Agent | Type | Description | Persona |\n| --- | --- | --- | --- |\n" +
+      "| Sales Insights | Genie | Revenue trends, store performance, seasonal comparisons | executive |\n" +
+      "| CDI Metrics | Genie | Customer Delight Index scores, promoter/detractor analysis | executive |\n" +
+      "| Store Intervention | Databricks App | Human-in-the-loop store risk review and intervention planning | executive |\n" +
+      "| Product Index | AI Search | Product catalog lookups by code, brand, or description | store-manager |\n" +
+      "| Lakebase ODS | Lakebase | Operational data — appointments, orders, invoices, etc. | store-manager |\n" +
+      "| Flink Support | AI Search | Flink troubleshooting, configuration guidance, best practices | de-support |\n\n" +
       "### Persona Selection\n\nSelect a persona from the dropdown above the chat.\n\n" +
       "### Session Commands\n\n/token <databricks_access_token>\n/clear-token\n\n" +
       statusLines(token, persona),

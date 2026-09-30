@@ -6,7 +6,11 @@ from collections.abc import AsyncIterator
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
+from aiserver.application.runtime.identity import FORWARDED_ACCESS_TOKEN_HEADER
 from aiserver.contracts.public_api import ChatRequest
+from aiserver.infrastructure.runtime.request_identity import (
+    forwarded_access_token_context,
+)
 
 router = APIRouter(prefix="/api")
 v1_router = APIRouter(prefix="/api/v1")
@@ -19,10 +23,13 @@ def _sse(event: dict[str, object]) -> str:
 async def _chat_events(request: Request, payload: ChatRequest) -> AsyncIterator[str]:
     runtime = request.app.state.runtime
     try:
-        async for event in runtime.stream(payload):
-            if await request.is_disconnected():
-                return
-            yield _sse(event)
+        with forwarded_access_token_context(
+            request.headers.get(FORWARDED_ACCESS_TOKEN_HEADER)
+        ):
+            async for event in runtime.stream(payload):
+                if await request.is_disconnected():
+                    return
+                yield _sse(event)
     except Exception:
         yield _sse(
             {
@@ -52,4 +59,8 @@ async def chat(payload: ChatRequest, request: Request):
             media_type="text/event-stream",
             headers=headers,
         )
-    return JSONResponse(await runtime.invoke(payload), headers=headers)
+    with forwarded_access_token_context(
+        request.headers.get(FORWARDED_ACCESS_TOKEN_HEADER)
+    ):
+        response = await runtime.invoke(payload)
+    return JSONResponse(response, headers=headers)

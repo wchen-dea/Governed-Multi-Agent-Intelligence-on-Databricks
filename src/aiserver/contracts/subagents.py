@@ -26,6 +26,7 @@ DELEGATION_LIST_FIELDS = (
     "accepts_delegations_from",
     "allowed_task_intents",
 )
+STRING_LIST_FIELDS = (*DELEGATION_LIST_FIELDS, "routing_keywords")
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,8 @@ class SubagentConfig:
     accepts_delegations_from: tuple[str, ...] = ()
     allowed_task_intents: tuple[str, ...] = ()
     max_delegation_depth: int = 0
+    # Explicit domain terms used to detect composite (multi-agent) requests.
+    routing_keywords: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.name:
@@ -100,7 +103,7 @@ class SubagentConfig:
             raise ValueError(f"Non-genie subagent {self.name!r} must define endpoint")
         if any(not persona.strip() for persona in self.allowed_personas):
             raise ValueError(f"Subagent {self.name!r} has invalid allowed_personas entry")
-        for field_name in DELEGATION_LIST_FIELDS:
+        for field_name in STRING_LIST_FIELDS:
             values = getattr(self, field_name)
             if any(not value.strip() for value in values):
                 raise ValueError(f"Subagent {self.name!r} has invalid {field_name} entry")
@@ -165,7 +168,7 @@ class SubagentConfig:
             )
         try:
             delegation_values: dict[str, tuple[str, ...]] = {}
-            for field_name in DELEGATION_LIST_FIELDS:
+            for field_name in STRING_LIST_FIELDS:
                 raw_values = value.get(field_name, [])
                 if not isinstance(raw_values, list) or not all(
                     isinstance(item, str) for item in raw_values
@@ -200,6 +203,9 @@ class SubagentConfig:
                 accepts_delegations_from=delegation_values["accepts_delegations_from"],
                 allowed_task_intents=delegation_values["allowed_task_intents"],
                 max_delegation_depth=int(value.get("max_delegation_depth", 0)),
+                routing_keywords=tuple(
+                    keyword.strip().lower() for keyword in delegation_values["routing_keywords"]
+                ),
             )
         except KeyError as exc:
             raise ValueError(f"Subagent config missing required key: {exc}") from exc

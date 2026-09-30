@@ -68,7 +68,7 @@ def eval_simulator_user_model() -> str:
 # `restricted_tools` name must exist, and each case's persona must be in that
 # subagent's `allowed_personas`, or the expectation is policy-denied before
 # routing ever runs. Coverage goals per subagent/persona:
-# - gmai-genie-agent-sales-insights (store-manager), gmai-mcp-agent-product-search-index
+# - gmai-genie-agent-sales-insights (executive), gmai-mcp-agent-product-search-index
 #   (store-manager), gmai-mcp-agent-flink-support-index (de-support),
 #   gmai-genie-agent-cdi (executive): exercise the model's
 #   sticky, per-conversation routing (`route_planner.build_route_plan`) via a
@@ -77,14 +77,16 @@ def eval_simulator_user_model() -> str:
 #   de-support is intentionally restricted to gmai-mcp-agent-flink-support-index only.
 # - gmai-mcp-agent-flink-support-index additionally asserts `requires_evidence`/
 #   `freshness_sla`, matching its system_prompt's explicit citation mandate.
-# - Three composite cases (store-manager persona) cover the orchestrator's cross-tool
-#   comparison rule: appointments-vs-sales, sales-vs-CDI, and appointments-vs-
-#   sales-ranking, matching the homepage "Insight" tab starters.
+# - Composite cases cover the orchestrator's cross-tool comparison rule (driven by
+#   contract `routing_keywords` -> `composite_match`) for the executive-authorized
+#   Sales + CDI and store-manager Product + ODS combinations, and assert that ODS x Sales
+#   comparisons are policy-restricted because those tools belong to different
+#   personas (store-manager vs executive).
 test_cases = [
     {
         "goal": "Find out the top 3 stores by revenue for the current season",
-        "persona": "A store manager who wants a quick revenue summary.",
-        "context": {"custom_inputs": {"persona": "store-manager"}},
+        "persona": "An executive who wants a quick revenue summary.",
+        "context": {"custom_inputs": {"persona": "executive"}},
         "expectations": {"expected_tool_calls": [{"name": "gmai-genie-agent-sales-insights"}]},
         "simulation_guidelines": [
             "Ask for the top stores by revenue.",
@@ -158,23 +160,20 @@ test_cases = [
         ],
     },
     {
-        "goal": "Cross-reference top appointment-count stores against top sales-performing stores",
-        "persona": "A store manager who wants to know if high-appointment stores are also high-sales stores.",
-        "context": {"custom_inputs": {"persona": "store-manager"}},
+        "goal": "Confirm executives cannot pull operational appointment data into a sales comparison",
+        "persona": "An executive who wants to know if high-appointment stores are also high-sales stores.",
+        "context": {"custom_inputs": {"persona": "executive"}},
         "expectations": {
             "requires_tool_attempt": True,
-            "expected_tool_calls": [
-                {"name": "gmai-lakebase-agent-ods"},
-                {"name": "gmai-genie-agent-sales-insights"},
-            ],
+            "expected_tool_calls": [{"name": "gmai-genie-agent-sales-insights"}],
+            "restricted_tools": ["gmai-lakebase-agent-ods"],
         },
         "simulation_guidelines": [
             "Ask for the top 5 stores by appointment count, then ask whether those same stores "
             "are also in the top 20 stores by sales.",
-            "Expect both the operational data tool and the sales tool to be called once each, "
-            "and the final answer to state which stores overlap and which do not.",
-            "Expect each source's freshness to be disclosed separately (appointment data vs sales data) "
-            "rather than presented as one combined as-of snapshot.",
+            "Expect the sales tool to be used for the sales ranking while the operational data "
+            "tool is blocked because Lakebase ODS is only authorized for store managers.",
+            "Expect the answer to state that appointment counts are unavailable under the executive persona.",
         ],
     },
     {
@@ -184,31 +183,48 @@ test_cases = [
         "expectations": {
             "requires_tool_attempt": True,
             "expected_tool_calls": [
+                {"name": "gmai-genie-agent-sales-insights"},
                 {"name": "gmai-genie-agent-cdi"},
             ],
-            "restricted_tools": ["gmai-genie-agent-sales-insights"],
         },
         "simulation_guidelines": [
             "Ask which stores have strong sales performance but below-average CDI scores.",
-            "Expect the CDI tool to be called for customer delight analysis, while the sales tool is restricted under executive policy.",
-            "Expect source freshness to be disclosed for the CDI data.",
+            "Expect both the sales tool and the CDI tool to be called once each, and the final "
+            "answer to identify stores with high revenue and below-average customer delight.",
+            "Expect each source's freshness to be disclosed separately (sales data vs CDI data).",
         ],
     },
     {
-        "goal": "Identify stores where appointment demand outpaces sales ranking",
-        "persona": "A store manager looking for stores with high service demand but comparatively lower sales rank.",
+        "goal": "Check the lifecycle status of catalog products in operational article data",
+        "persona": "A store manager verifying whether catalog tires are still active before recommending them.",
         "context": {"custom_inputs": {"persona": "store-manager"}},
         "expectations": {
             "requires_tool_attempt": True,
             "expected_tool_calls": [
+                {"name": "gmai-mcp-agent-product-search-index"},
                 {"name": "gmai-lakebase-agent-ods"},
-                {"name": "gmai-genie-agent-sales-insights"},
             ],
         },
         "simulation_guidelines": [
+            "Ask to find Cooper CS5 Ultra Touring tires in 225/60R18, then check each product "
+            "code's lifecycle status in the operational article data.",
+            "Expect the product tool to return exact product codes and the operational data tool "
+            "to match them on article_number, reporting discontinued or end-of-life items.",
+        ],
+    },
+    {
+        "goal": "Confirm store managers cannot pull sales rankings into an appointment comparison",
+        "persona": "A store manager looking for stores with high service demand but comparatively lower sales rank.",
+        "context": {"custom_inputs": {"persona": "store-manager"}},
+        "expectations": {
+            "requires_tool_attempt": True,
+            "expected_tool_calls": [{"name": "gmai-lakebase-agent-ods"}],
+            "restricted_tools": ["gmai-genie-agent-sales-insights"],
+        },
+        "simulation_guidelines": [
             "Ask which stores have appointment demand outpacing their sales ranking.",
-            "Expect both the operational data tool and the sales tool to be called once each, and "
-            "the final answer to identify the specific stores with a demand-versus-sales gap.",
+            "Expect the operational data tool to be used for appointment demand while the sales "
+            "tool is blocked because Sales Insights is only authorized for executives.",
         ],
     },
     {

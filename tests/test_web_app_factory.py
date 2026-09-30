@@ -6,6 +6,9 @@ from fastapi.testclient import TestClient
 
 from aiserver.api.server import create_app
 from aiserver.contracts.public_api import ChatRequest
+from aiserver.infrastructure.runtime.request_identity import (
+    get_forwarded_access_token,
+)
 
 
 class RecordingLifecycle:
@@ -27,10 +30,17 @@ class RecordingLifecycle:
 class RecordingRuntime:
     def __init__(self) -> None:
         self.requests: list[ChatRequest] = []
+        self.forwarded_tokens: list[str | None] = []
 
     async def invoke(self, payload: ChatRequest) -> dict[str, str]:
         self.requests.append(payload)
+        self.forwarded_tokens.append(get_forwarded_access_token())
         return {"type": "completed"}
+
+    async def stream(self, payload: ChatRequest):
+        self.requests.append(payload)
+        self.forwarded_tokens.append(get_forwarded_access_token())
+        yield {"type": "completed"}
 
 
 def _app(tmp_path, name: str, runtime: object | None = None):
@@ -105,3 +115,24 @@ def test_public_chat_accepts_browser_message_contract(tmp_path):
     assert response.json() == {"type": "completed"}
     assert len(runtime.requests) == 1
     assert runtime.requests[0].model_dump() == payload
+
+
+def test_public_chat_preserves_forwarded_token_during_stream(tmp_path):
+    runtime = RecordingRuntime()
+    app, *_ = _app(tmp_path, "public-chat-token", runtime=runtime)
+    payload = {
+        "messages": [{"role": "user", "content": "Compare appointments and sales."}],
+        "conversation_id": "executive-regression",
+        "persona": "executive",
+        "stream": True,
+    }
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/chat",
+            json=payload,
+            headers={"x-forwarded-access-token": "user-token"},
+        )
+
+    assert response.status_code == 200
+    assert runtime.forwarded_tokens == ["user-token"]

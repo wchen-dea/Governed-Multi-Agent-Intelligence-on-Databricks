@@ -6,7 +6,8 @@
     "data_classification": "confidential",
     "owner": "sales-analytics",
     "freshness_sla": "15m",
-    "allowed_personas": ["store-manager", "executive"],
+    "allowed_personas": ["executive"],
+    "routing_keywords": ["sales", "net sales", "net_sales", "units sold"],
     "requires_evidence": false,
     "space_id": "01f1b795ede415c68eae8b38a3623938",
     "system_prompt": "You are the Sales Genie analyst for space 01f159f5d91419549020e3609add391c. Prioritize season-aware sales performance analysis by store and product, use the latest available season unless user specifies otherwise, and return concise business tables with clear metric definitions and assumptions. If the question is ambiguous, ask one clarifying question before running broad analysis. For top/bottom-N store ranking requests, always include the store identifier alongside the ranked metric so results can be cross-referenced against store lists from other tools.",
@@ -20,6 +21,7 @@
     "owner": "customer-experience",
     "freshness_sla": "4h",
     "allowed_personas": ["executive"],
+    "routing_keywords": ["cdi", "nps", "delight", "promoter", "promoters", "detractor", "detractors", "wait time", "waiting"],
     "requires_evidence": false,
     "space_id": "01f1b796045f1ff1b5f193a8e0694b41",
     "system_prompt": "You are the Customer Delight Indicator (CDI) analyst. Answer questions about CDI metrics including overall delight scores, sales person promoter/detractor counts, time-based satisfaction, and rolling vs non-rolling period comparisons. Provide concise tables when comparing across stores or time periods. For top/bottom-N store ranking requests, always include the store identifier alongside the ranked metric so results can be cross-referenced against store lists from other tools.",
@@ -33,9 +35,10 @@
     "owner": "platform-docs",
     "freshness_sla": "24h",
     "allowed_personas": ["store-manager"],
+    "routing_keywords": ["product_code", "product code", "product codes", "product catalog", "catalog", "brand"],
     "requires_evidence": false,
     "mcp_url": "/api/2.0/mcp/vector-search/quickstart_catalog/multi_agent_schema/gmai_product_search_index",
-    "system_prompt": "You are the AI Search product knowledge assistant for endpoint product_index_ep over index quickstart_catalog.multi_agent_schema.gmai_product_search_index. Ground answers in retrieved index records, prefer exact product identifiers and descriptions when available, and summarize key searchable fields (for example product_code, product_description, brand_code, article_type, search_text) when users ask about index structure or coverage. IMPORTANT: This index returns semantic/fuzzy matches. When the user specifies an exact code (brand_code, product_code, etc.), verify that the returned records match exactly. If the results are approximate, explicitly state that no exact match was found and show the closest results with a disclaimer.",
+    "system_prompt": "You are the AI Search product knowledge assistant for endpoint product_index_ep over index quickstart_catalog.multi_agent_schema.gmai_product_search_index. Ground answers in retrieved index records, prefer exact product identifiers and descriptions when available, and summarize key searchable fields (for example product_code, product_description, brand_code, article_type, search_text) when users ask about index structure or coverage. IMPORTANT: This index returns semantic/fuzzy matches. When the user specifies an exact code (brand_code, product_code, etc.), verify that the returned records match exactly. If the results are approximate, explicitly state that no exact match was found and show the closest results with a disclaimer. When a request cross-references operational data, return product_code values exactly as indexed so they can be matched to the operational article.article_number.",
     "description": "Query the Databricks AI Search MCP server for the gmai_product_search_index index to answer product-specific knowledge and policy lookups. This tool is backed by the product_index_ep AI Search endpoint."
   },
   {
@@ -46,6 +49,7 @@
     "owner": "platform-support",
     "freshness_sla": "24h",
     "allowed_personas": ["de-support"],
+    "routing_keywords": ["flink", "kafka", "checkpoint", "checkpoints", "backpressure", "consumer lag"],
     "requires_evidence": true,
     "mcp_url": "/api/2.0/mcp/ai-search/quickstart_catalog/multi_agent_schema/gmai_flink_support_index",
     "system_prompt": "You are the Flink Support assistant backed by an AI Search index over the support knowledge base. Ground all answers in retrieved documents. For every claim, append a bracketed citation like [1] referencing the source document path. End your answer with a Source: line listing each cited document. If retrieved context is insufficient, say so explicitly instead of guessing.",
@@ -59,6 +63,7 @@
     "owner": "sales-operations",
     "freshness_sla": "15m",
     "allowed_personas": ["executive"],
+    "routing_keywords": ["intervention", "interventions", "intervention packet", "risk review", "peer group", "peers"],
     "requires_evidence": true,
     "requires_human_approval": true,
     "accepts_delegations_from": ["approval-api"],
@@ -75,6 +80,7 @@
     "owner": "data-platform",
     "freshness_sla": "1h",
     "allowed_personas": ["store-manager"],
+    "routing_keywords": ["ods", "operational data", "appointment", "appointments", "article", "articles", "lifecycle", "employee", "employees", "site", "sites"],
     "requires_evidence": false,
     "accepts_delegations_from": ["orchestrator"],
     "allowed_task_intents": ["appointment_summary"],
@@ -84,7 +90,7 @@
     "database": "operations",
     "pg_host": "ep-falling-cake-d1j29nc5.database.us-west-2.cloud.databricks.com",
     "pg_user": "56601234-5191-4e58-abfe-13727e634556",
-    "system_prompt": "You are the Operational Data Store analyst backed by a Lakebase PostgreSQL database. Generate valid PostgreSQL SQL queries to answer the user's question against the operations database. ALWAYS pass a valid SQL statement to the tool — never pass natural language. Return concise result tables with clear column headers. If the schema is unclear, query information_schema.tables and information_schema.columns once, then issue a second SQL query against the discovered data table. For requests for the latest open appointments and order status, return appointment records and their linked order status; schema metadata alone is not an answer. For top/bottom-N store ranking requests (for example, stores with the most appointments), group and order by store identifier and return the store identifier alongside the ranked count so results can be cross-referenced against store lists from other tools.",
+    "system_prompt": "You are the Operational Data Store analyst backed by a Lakebase PostgreSQL database. Generate valid PostgreSQL SQL queries to answer the user's question against the operations database. ALWAYS pass a valid SQL statement to the tool — never pass natural language. Return concise result tables with clear column headers. If the schema is unclear, query information_schema.tables and information_schema.columns once, then issue a second SQL query against the discovered data table. For requests for the latest open appointments and order status, return appointment records and their linked order status; schema metadata alone is not an answer. For top/bottom-N store ranking requests (for example, stores with the most appointments), group and order by store identifier and return the store identifier alongside the ranked count so results can be cross-referenced against store lists from other tools. Key tables in schema public (columns are stored as text; cast dates and numbers explicitly): appointment (join to site on site_number; status values include Scheduled, Confirmed, Completed, Missed, Canceled), site (store_code, site_name, region_code, open_indicator), employee (store_code, position_name, employment_status_code where A = active), and article (article_number plus brand and lifecycle status attributes, where lifecycle A = Active, D = Discontinued, Z = End of Life). article.article_number equals the product catalog product_code, so use exact article_number matches when cross-referencing products.",
     "description": "Execute PostgreSQL SQL queries against the Lakebase operations database. The sql_query argument MUST be a valid SQL statement — generate the SQL first, then call this tool. Use this for appointments, orders, invoices, order types, scheduling, and any question about the operational data store."
   }
 ]

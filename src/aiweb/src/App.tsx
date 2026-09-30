@@ -11,45 +11,101 @@ const THEMES = [
   { value: "deep-sky-blue", label: "Deep sky blue" },
 ] as const;
 type ThemeValue = (typeof THEMES)[number]["value"];
-type StarterGroup = "Operations" | "Insights" | "HITL" | "DE";
-const STARTER_GROUPS: StarterGroup[] = ["Operations", "Insights", "HITL", "DE"];
-const PERSONA_STARTER_GROUPS: Record<string, readonly StarterGroup[]> = {
-  "store-manager": ["Operations"],
-  executive: ["Insights", "HITL"],
-  "de-support": ["DE"],
-};
+// One tab per governed agent, plus one cross-agent tab per persona whose
+// questions span several of that persona's agents (backend `composite_match`
+// routing via contract routing_keywords). Each tab is enabled only for the
+// persona that owns it in src/aiserver/contracts/subagents.<target>.json.
+type StarterGroup =
+  | "Sales Insights"
+  | "CDI Metrics"
+  | "Store Intervention"
+  | "Exec Cross-Agent"
+  | "Product Index"
+  | "Lakebase ODS"
+  | "Store Cross-Agent"
+  | "Flink Support";
+const STARTER_GROUPS: { group: StarterGroup; persona: string }[] = [
+  { group: "Sales Insights", persona: "executive" },
+  { group: "CDI Metrics", persona: "executive" },
+  { group: "Store Intervention", persona: "executive" },
+  { group: "Exec Cross-Agent", persona: "executive" },
+  { group: "Product Index", persona: "store-manager" },
+  { group: "Lakebase ODS", persona: "store-manager" },
+  { group: "Store Cross-Agent", persona: "store-manager" },
+  { group: "Flink Support", persona: "de-support" },
+];
 const STARTERS: { group: StarterGroup; text: string }[] = [
   {
-    group: "Operations",
-    text: "Using the latest available season, which stores had the highest total net_sales in the last 30 days? Include Store Code and total net sales.",
+    group: "Sales Insights",
+    text: "Which 10 stores had the highest total net sales over the last 30 days? Include Store Code, region, total net sales, and total units, and state the exact date range.",
   },
   {
-    group: "Operations",
-    text: "Look up product_code '000000000000183662' and return product_description, brand_code, and article_type.",
+    group: "Sales Insights",
+    text: "Compare month-to-date total net sales and units by region against the same period last year using day-over-day logic. Which regions grew or declined the most?",
   },
   {
-    group: "Operations",
-    text: "List the latest open appointments and include the current status of each linked order.",
+    group: "CDI Metrics",
+    text: "For the most recent week, which 10 stores have the lowest rolling Overall Delight NPS? Include Store Code, promoter, detractor, and response counts.",
   },
   {
-    group: "DE",
+    group: "CDI Metrics",
+    text: "For last month, which regions had the highest share of customers waiting more than 45 minutes, and how does that compare with their Time NPS?",
+  },
+  {
+    group: "Store Intervention",
+    text: "Find stores with strong revenue but declining CDI scores, compare each store with its peers and recent trend, prepare an evidence-backed customer-experience intervention packet, and pause for manager approval before any operational dispatch.",
+  },
+  {
+    group: "Store Intervention",
+    text: "Which top-quartile revenue stores show the steepest CDI decline over the last 90 days? Compare each with its peer group's average daily revenue and CDI.",
+  },
+  {
+    group: "Exec Cross-Agent",
+    text: "Which of the top 20 stores by total net sales over the last 30 days have a rolling Overall Delight NPS below the company average? Show Store Code, net sales, NPS, and promoter/detractor counts.",
+  },
+  {
+    group: "Exec Cross-Agent",
+    text: "For each region, compare the month-over-month change in net sales with the change in Time NPS and the share of customers waiting more than 45 minutes. Where is sales growth coming with worse wait times?",
+  },
+  {
+    group: "Exec Cross-Agent",
+    text: "Find stores with top-quartile revenue but declining CDI, confirm their last-30-day net sales and weekly NPS trend, and prepare an intervention packet for approval.",
+  },
+  {
+    group: "Product Index",
+    text: "Look up product_code '000000000000019887' and return product_description, brand_code, and article_type.",
+  },
+  {
+    group: "Product Index",
+    text: "Find Cooper CS5 Ultra Touring tires in size 225/60R18 and list their product codes and descriptions.",
+  },
+  {
+    group: "Lakebase ODS",
+    text: "List the next 20 Scheduled or Confirmed appointments with Store Code, site name, order type, and scheduled start time.",
+  },
+  {
+    group: "Lakebase ODS",
+    text: "What are the top 5 stores by appointment count in the most recent 30 days of appointment data? Include Store Code, site name, and the missed and canceled rate.",
+  },
+  {
+    group: "Store Cross-Agent",
+    text: "Find Cooper CS5 Ultra Touring tires in 225/60R18, then check each product code's lifecycle status in the operational article data. Which ones are discontinued or end-of-life?",
+  },
+  {
+    group: "Store Cross-Agent",
+    text: "Look up product_code '000000000000019887', then list active alternatives from the same brand in the operational article data.",
+  },
+  {
+    group: "Store Cross-Agent",
+    text: "Which stores have the most Scheduled or Confirmed appointments this week, and how many active Store Managers and Tire Technicians does each have?",
+  },
+  {
+    group: "Flink Support",
     text: "Flink streaming job has increasing consumer lag. What are the common causes and how do we fix it?",
   },
   {
-    group: "DE",
-    text: "Using the ORE platform and pipeline support articles, what Flink configuration checks should DE support perform first when backpressure appears?",
-  },
-  {
-    group: "Insights",
-    text: "What are the top 5 stores by appointment count, and are they also in the top 20 stores by sales?",
-  },
-  {
-    group: "Insights",
-    text: "Compare the latest rolling CDI NPS with total net_sales by Store Code. Which high-revenue stores have below-average customer delight, and what are their promoter, detractor, and response counts?",
-  },
-  {
-    group: "HITL",
-    text: "Find stores with strong revenue but declining CDI scores, compare each store with its peers and recent trend, prepare an evidence-backed customer-experience intervention packet, and pause for manager approval before any operational dispatch.",
+    group: "Flink Support",
+    text: "Which Flink alarms and thresholds does ORE monitor for backpressure and checkpoint failures, and what does the Kafka/Flink operations runbook say to check first?",
   },
 ];
 
@@ -297,7 +353,8 @@ function useTranscription(
 export default function App() {
   const [input, setInput] = useState("");
   const [persona, setPersona] = useState<string | null>(null);
-  const [starterGroup, setStarterGroup] = useState<StarterGroup>("Operations");
+  const [starterGroup, setStarterGroup] =
+    useState<StarterGroup>("Sales Insights");
   const [theme, setTheme] = useState<ThemeValue>(() => {
     const stored =
       typeof window === "undefined"
@@ -323,7 +380,10 @@ export default function App() {
   } = useTranscription(input, isSending, setInput);
   const chatLogRef = useRef<HTMLElement>(null);
   const enabledGroups = useMemo(
-    () => (persona ? (PERSONA_STARTER_GROUPS[persona] ?? []) : []),
+    () =>
+      STARTER_GROUPS.filter((item) => item.persona === persona).map(
+        (item) => item.group,
+      ),
     [persona],
   );
   const visibleStarters = useMemo(
@@ -335,8 +395,8 @@ export default function App() {
     window.localStorage.setItem("chat-ui-theme", theme);
   }, [theme]);
   useEffect(() => {
-    if (!enabledGroups.includes(starterGroup))
-      setStarterGroup(enabledGroups[0] ?? "Operations");
+    if (enabledGroups.length && !enabledGroups.includes(starterGroup))
+      setStarterGroup(enabledGroups[0]);
   }, [enabledGroups, starterGroup]);
   useEffect(() => {
     const log = chatLogRef.current;
@@ -437,13 +497,14 @@ export default function App() {
       </section>
       <section className="starter-area">
         <div className="starter-tabs">
-          {STARTER_GROUPS.map((group) => (
+          {STARTER_GROUPS.map(({ group, persona: owner }) => (
             <button
               key={group}
               type="button"
               className={starterGroup === group ? "active" : ""}
               onClick={() => setStarterGroup(group)}
               disabled={!enabledGroups.includes(group)}
+              title={`Persona: ${owner}`}
             >
               {group}
             </button>

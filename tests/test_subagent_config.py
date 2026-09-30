@@ -1,8 +1,11 @@
 import json
+from pathlib import Path
 
 import pytest
 
 from aiserver.contracts.subagents import load_subagents, parse_subagents
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_load_subagents_valid_defaults(tmp_path):
@@ -238,6 +241,23 @@ def test_parse_subagents_accepts_human_approval_agent():
     assert subagents[0].requires_human_approval is True
 
 
+@pytest.mark.parametrize("target", ["dev", "qa", "stg", "prd"])
+def test_subagent_persona_assignments(target):
+    config_path = REPOSITORY_ROOT / "src" / "aiserver" / "contracts" / f"subagents.{target}.json"
+    subagents = json.loads(config_path.read_text())
+
+    assignments = {agent["name"]: agent["allowed_personas"] for agent in subagents}
+
+    assert assignments == {
+        "gmai-genie-agent-sales-insights": ["executive"],
+        "gmai-genie-agent-cdi": ["executive"],
+        "gmai-mcp-agent-product-search-index": ["store-manager"],
+        "gmai-mcp-agent-flink-support-index": ["de-support"],
+        "gmai-app-agent-store-intervention": ["executive"],
+        "gmai-lakebase-agent-ods": ["store-manager"],
+    }
+
+
 def test_parse_subagents_accepts_mcp_subagent():
     subagents = parse_subagents(
         [
@@ -359,3 +379,56 @@ def test_load_subagents_raises_helpful_error_when_unresolvable(tmp_path, monkeyp
 
     with pytest.raises(ValueError, match="Could not resolve subagent configuration file"):
         subagent_config.load_subagents()
+
+
+@pytest.mark.parametrize("target", ["dev", "qa", "stg", "prd"])
+@pytest.mark.parametrize(
+    ("persona", "question", "expected"),
+    [
+        (
+            "executive",
+            "Which of the top 20 stores by total net sales over the last 30 days have a "
+            "rolling Overall Delight NPS below the company average?",
+            {"gmai-genie-agent-sales-insights", "gmai-genie-agent-cdi"},
+        ),
+        (
+            "executive",
+            "Find stores with top-quartile revenue but declining CDI, confirm their last-30-day "
+            "net sales and weekly NPS trend, and prepare an intervention packet for approval.",
+            {
+                "gmai-genie-agent-sales-insights",
+                "gmai-genie-agent-cdi",
+                "gmai-app-agent-store-intervention",
+            },
+        ),
+        (
+            "store-manager",
+            "Look up product_code '000000000000019887', then list active alternatives from the "
+            "same brand in the operational article data.",
+            {"gmai-mcp-agent-product-search-index", "gmai-lakebase-agent-ods"},
+        ),
+        (
+            "store-manager",
+            "Which stores have the most Scheduled or Confirmed appointments this week, and how "
+            "many active Store Managers and Tire Technicians does each have?",
+            {"gmai-lakebase-agent-ods"},
+        ),
+    ],
+)
+def test_contract_routing_keywords_route_cross_agent_questions(target, persona, question, expected):
+    from aiserver.application.orchestration.routing import build_route_plan
+
+    subagents = [
+        subagent
+        for subagent in parse_subagents(
+            json.loads(
+                (
+                    REPOSITORY_ROOT / "src" / "aiserver" / "contracts" / f"subagents.{target}.json"
+                ).read_text()
+            )
+        )
+        if persona in subagent.allowed_personas
+    ]
+    plan, _ = build_route_plan(question, subagents)
+
+    assert set(plan.candidates) == expected

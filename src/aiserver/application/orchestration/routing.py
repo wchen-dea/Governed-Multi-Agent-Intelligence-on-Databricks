@@ -49,6 +49,23 @@ def _recall_sticky_route(
     return candidates
 
 
+def _keyword_matches(question: str, subagents: list[SubagentConfig]) -> list[SubagentConfig]:
+    """Return subagents whose configured routing keywords appear in the question.
+
+    Keywords match on word boundaries (underscore counts as a word character),
+    so `article` does not match `article_type`.
+    """
+    text = question.lower()
+    return [
+        subagent
+        for subagent in subagents
+        if any(
+            re.search(rf"(?<![a-z0-9_]){re.escape(keyword)}(?![a-z0-9_])", text)
+            for keyword in subagent.routing_keywords
+        )
+    ]
+
+
 def build_route_plan(
     question: str,
     subagents: list[SubagentConfig],
@@ -65,6 +82,25 @@ def build_route_plan(
         conversation_id: Optional session id used to keep follow-up turns
             routed to the same subagent when lexical matching is weak.
     """
+    # Contract-declared domain keywords take precedence over lexical scoring. When the
+    # question names the domains of two or more policy-allowed subagents, expose all of
+    # them (`composite_match`) so the model can combine results.
+    keyword_matched = _keyword_matches(question, subagents)
+    if keyword_matched:
+        plan = RoutePlan(
+            candidates=tuple(subagent.name for subagent in keyword_matched),
+            reason="composite_match" if len(keyword_matched) > 1 else "keyword_match",
+            confidence=1.0,
+            requires_evidence=any(subagent.requires_evidence for subagent in keyword_matched),
+        )
+        _remember_sticky_route(
+            affinity_store,
+            conversation_id,
+            plan.candidates,
+            affinity_ttl_seconds,
+        )
+        return plan, keyword_matched
+
     stop_words = {
         "a",
         "an",

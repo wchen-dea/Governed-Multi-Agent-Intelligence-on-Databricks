@@ -266,9 +266,7 @@ def test_route_planner_ignores_expired_affinity():
             expires_at=datetime.now(UTC) - timedelta(seconds=1),
         )
     )
-    subagents = [
-        SubagentConfig(name="sales", kind="app", endpoint="sales", description="revenue")
-    ]
+    subagents = [SubagentConfig(name="sales", kind="app", endpoint="sales", description="revenue")]
 
     plan, selected = build_route_plan(
         "hello",
@@ -280,3 +278,74 @@ def test_route_planner_ignores_expired_affinity():
     assert plan.reason == "ambiguous_fallback"
     assert selected == subagents
     assert affinity_store.get("conv-expired") is None
+
+
+def _keyword_subagents():
+    return [
+        SubagentConfig(
+            name="sales",
+            kind="app",
+            endpoint="sales",
+            description="revenue analytics",
+            routing_keywords=("net sales", "sales"),
+            requires_evidence=False,
+        ),
+        SubagentConfig(
+            name="cdi",
+            kind="app",
+            endpoint="cdi",
+            description="customer delight",
+            routing_keywords=("nps", "cdi"),
+            requires_evidence=True,
+        ),
+        SubagentConfig(
+            name="ods",
+            kind="app",
+            endpoint="ods",
+            description="operational data",
+            routing_keywords=("article", "appointment"),
+        ),
+    ]
+
+
+def test_route_planner_composite_match_exposes_every_keyword_domain():
+    affinity_store = InMemoryRouteAffinityStore()
+    plan, selected = build_route_plan(
+        "Which of the top 20 stores by net sales have NPS below average?",
+        _keyword_subagents(),
+        "conv-composite",
+        affinity_store=affinity_store,
+    )
+
+    assert plan.reason == "composite_match"
+    assert plan.candidates == ("sales", "cdi")
+    assert plan.requires_evidence is True
+    assert [subagent.name for subagent in selected] == ["sales", "cdi"]
+    affinity = affinity_store.get("conv-composite")
+    assert affinity is not None
+    assert affinity.candidate_names == ("sales", "cdi")
+
+
+def test_route_planner_single_keyword_match_routes_to_one_subagent():
+    plan, selected = build_route_plan(
+        "Compare month-to-date net sales by region", _keyword_subagents()
+    )
+
+    assert plan.reason == "keyword_match"
+    assert [subagent.name for subagent in selected] == ["sales"]
+
+
+def test_route_planner_keywords_match_on_word_boundaries():
+    plan, _ = build_route_plan("Return the article_type for each product", _keyword_subagents())
+
+    assert plan.reason not in {"keyword_match", "composite_match"}
+
+
+def test_route_planner_composite_respects_policy_filtered_subagents():
+    allowed = [subagent for subagent in _keyword_subagents() if subagent.name != "ods"]
+    plan, selected = build_route_plan(
+        "Top 5 stores by appointment count and their net sales rank", allowed
+    )
+
+    assert plan.reason == "keyword_match"
+    assert [subagent.name for subagent in selected] == ["sales"]
